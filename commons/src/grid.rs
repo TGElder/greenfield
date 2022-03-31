@@ -1,16 +1,21 @@
 use std::borrow::Borrow;
-use std::ops::{Index, IndexMut};
+use std::fmt::Display;
+use std::ops::{Add, Div, Index, IndexMut, Mul, Range, Rem};
 
 #[derive(Debug)]
-struct Grid<T> {
-    width: usize,
-    height: usize,
-    elements: Vec<T>,
+struct Grid<T, U> {
+    width: T,
+    height: T,
+    elements: Vec<U>,
 }
 
-impl<T> Grid<T> {
-    pub fn from_vec(width: usize, height: usize, elements: Vec<T>) -> Grid<T> {
-        let len = width * height;
+impl<T, U> Grid<T, U>
+where
+    T: Add + Copy + Default + Display + Div + Mul + Into<usize> + Rem + PartialOrd,
+    Range<T>: Iterator<Item = T>,
+{
+    pub fn from_vec(width: T, height: T, elements: Vec<U>) -> Grid<T, U> {
+        let len = width.into() * height.into();
         if elements.len() != len {
             panic!(
                 "Number of elements {} does not equal (width={} * height={} = {})",
@@ -27,13 +32,13 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn from_fn<F>(width: usize, height: usize, mut function: F) -> Grid<T>
+    pub fn from_fn<F>(width: T, height: T, mut function: F) -> Grid<T, U>
     where
-        F: FnMut((usize, usize)) -> T,
+        F: FnMut((T, T)) -> U,
     {
-        let mut elements = Vec::with_capacity(width * height);
-        for y in 0..height {
-            for x in 0..width {
+        let mut elements = Vec::with_capacity(width.into() * height.into());
+        for y in T::default()..height {
+            for x in T::default()..width {
                 elements.push(function((x, y)));
             }
         }
@@ -46,10 +51,10 @@ impl<T> Grid<T> {
 
     pub fn index<R>(&self, xy: R) -> usize
     where
-        R: Borrow<(usize, usize)>,
+        R: Borrow<(T, T)>,
     {
         let (x, y) = xy.borrow();
-        x + y * self.width
+        (*x).into() + (*y).into() * self.width.into()
     }
 
     pub fn xy<R>(&self, index: R) -> (usize, usize)
@@ -57,12 +62,12 @@ impl<T> Grid<T> {
         R: Borrow<usize>,
     {
         let index = index.borrow();
-        (index % self.width, index / self.width)
+        (index % self.width.into(), index / self.width.into())
     }
 
     pub fn in_bounds<R>(&self, xy: R) -> bool
     where
-        R: Borrow<(usize, usize)>,
+        R: Borrow<(T, T)>,
     {
         let (x, y) = xy.borrow();
         *x < self.width && *y < self.height
@@ -70,25 +75,25 @@ impl<T> Grid<T> {
 
     pub fn for_each<F>(&self, mut function: F)
     where
-        F: FnMut((usize, usize), &T),
+        F: FnMut((T, T), &U),
     {
         let mut index = 0;
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for y in T::default()..self.height {
+            for x in T::default()..self.width {
                 function((x, y), &self.elements[index]);
                 index += 1;
             }
         }
     }
 
-    pub fn map<F, U>(&self, mut function: F) -> Grid<U>
+    pub fn map<F, V>(&self, mut function: F) -> Grid<T, V>
     where
-        F: FnMut((usize, usize), &T) -> U,
+        F: FnMut((T, T), &U) -> V,
     {
         let mut elements = Vec::with_capacity(self.elements.len());
         let mut index = 0;
-        for y in 0..self.height {
-            for x in 0..self.width {
+        for y in T::default()..self.height {
+            for x in T::default()..self.width {
                 elements.push(function((x, y), &self.elements[index]));
                 index += 1;
             }
@@ -101,60 +106,68 @@ impl<T> Grid<T> {
     }
 }
 
-impl<T> Grid<T>
+impl<T, U> Grid<T, U>
 where
-    T: Default,
+    T: Copy + Default + Into<usize>,
+    Range<T>: Iterator<Item = T>,
+    U: Default,
 {
-    pub fn new(width: usize, height: usize) -> Grid<T> {
+    pub fn new(width: T, height: T) -> Grid<T, U> {
         Grid {
-            elements: (0..width * height).map(|_| T::default()).collect(),
+            elements: (0..width.into() * height.into())
+                .map(|_| U::default())
+                .collect(),
             width,
             height,
         }
     }
 }
 
-impl<T> Grid<T>
+impl<T, U> Grid<T, U>
 where
-    T: Clone,
+    T: Copy + Into<usize>,
+    U: Clone,
 {
-    pub fn from_element(width: usize, height: usize, element: T) -> Grid<T> {
+    pub fn from_element(width: T, height: T, element: U) -> Grid<T, U> {
         Grid {
-            elements: vec![element; width * height],
+            elements: vec![element; width.into() * height.into()],
             width,
             height,
         }
     }
 }
 
-impl<T> PartialEq for Grid<T>
+impl<T, U> PartialEq for Grid<T, U>
 where
     T: PartialEq,
+    U: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         self.width == other.width && self.height == other.height && self.elements == other.elements
     }
 }
 
-impl<T> Index<(usize, usize)> for Grid<T> {
-    type Output = T;
+impl<T, U> Index<(T, T)> for Grid<T, U>
+where
+    T: Add + Copy + Default + Display + Div + Mul + Into<usize> + Rem + PartialOrd,
+    Range<T>: Iterator<Item = T>,
+{
+    type Output = U;
 
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
+    fn index(&self, index: (T, T)) -> &Self::Output {
         &self.elements[self.index(index)]
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for Grid<T> {
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+impl<T, U> IndexMut<(T, T)> for Grid<T, U>
+where
+    T: Add + Copy + Default + Display + Div + Mul + Into<usize> + Rem + PartialOrd,
+    Range<T>: Iterator<Item = T>,
+{
+    fn index_mut(&mut self, index: (T, T)) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
     }
-}
-
-struct ForEachIterator<'a, T> {
-    x: usize,
-    y: usize,
-    grid: &'a Grid<T>,
 }
 
 #[cfg(test)]
@@ -163,7 +176,7 @@ mod tests {
 
     #[test]
     fn test_new() {
-        let grid: Grid<bool> = Grid::new(4, 5);
+        let grid: Grid<u8, bool> = Grid::new(4, 5);
 
         assert_eq!(
             grid,
@@ -177,7 +190,7 @@ mod tests {
 
     #[test]
     fn test_from_element() {
-        let grid = Grid::from_element(4, 5, Some(3));
+        let grid: Grid<u8, Option<u8>> = Grid::from_element(4, 5, Some(3));
 
         assert_eq!(
             grid,
@@ -191,7 +204,7 @@ mod tests {
 
     #[test]
     fn test_from_vec() {
-        let grid = Grid::from_vec(
+        let grid: Grid<u8, (u8, u8)> = Grid::from_vec(
             2,
             3,
             vec![
@@ -224,12 +237,12 @@ mod tests {
     #[test]
     #[should_panic(expected = "Number of elements 1 does not equal (width=2 * height=3 = 6)")]
     fn test_from_vec_of_wrong_length() {
-        Grid::from_vec(2, 3, vec![false]);
+        Grid::<u8, bool>::from_vec(2, 3, vec![false]);
     }
 
     #[test]
     fn test_from_fn() {
-        let grid = Grid::from_fn(2, 3, |t| t);
+        let grid = Grid::<u8, (u8, u8)>::from_fn(2, 3, |t| t);
 
         assert_eq!(
             grid,
@@ -250,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_index() {
-        let grid = Grid::from_element(2, 3, false);
+        let grid = Grid::<u8, bool>::from_element(2, 3, false);
 
         assert_eq!(grid.index((0, 0)), 0);
         assert_eq!(grid.index((1, 0)), 1);
@@ -262,7 +275,7 @@ mod tests {
 
     #[test]
     fn test_xy() {
-        let grid = Grid::from_element(2, 3, false);
+        let grid = Grid::<u8, bool>::from_element(2, 3, false);
 
         assert_eq!(grid.xy(0), (0, 0));
         assert_eq!(grid.xy(1), (1, 0));
@@ -274,7 +287,7 @@ mod tests {
 
     #[test]
     fn test_in_bounds() {
-        let grid = Grid::from_element(2, 3, false);
+        let grid = Grid::<u8, bool>::from_element(2, 3, false);
 
         assert!(grid.in_bounds((0, 0)));
         assert!(grid.in_bounds((1, 0)));
@@ -292,7 +305,7 @@ mod tests {
 
     #[test]
     fn test_map() {
-        let grid = Grid::from_element(2, 3, 1);
+        let grid = Grid::<u8, u8>::from_element(2, 3, 1);
 
         assert_eq!(
             grid.map(|(x, y), z| x + y + z),
@@ -311,7 +324,7 @@ mod tests {
     #[test]
     fn test_for_each() {
         // given
-        let grid = Grid::from_element(2, 3, 1);
+        let grid = Grid::<u8, u8>::from_element(2, 3, 1);
 
         // when
         let mut acc = 0;
