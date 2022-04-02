@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
 #[derive(Debug)]
-struct Grid<T> {
+pub struct Grid<T> {
     width: u32,
     height: u32,
     elements: Vec<T>,
@@ -100,12 +100,16 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn offset(&self, xy: (u32, u32), offset: (i32, i32)) -> Option<(u32, u32)> {
-        let (x, y) = xy;
-        let (dx, dy) = offset;
+    pub fn offset<R, S>(&self, xy: R, offset: S) -> Option<(u32, u32)>
+    where
+        R: Borrow<(u32, u32)>,
+        S: Borrow<(i32, i32)>,
+    {
+        let (x, y) = xy.borrow();
+        let (dx, dy) = offset.borrow();
 
-        let nx = x as i64 + dx as i64;
-        let ny = y as i64 + dy as i64;
+        let nx = (*x) as i64 + (*dx) as i64;
+        let ny = (*y) as i64 + (*dy) as i64;
 
         let nx: u32 = nx.try_into().ok()?;
         let ny: u32 = ny.try_into().ok()?;
@@ -115,6 +119,19 @@ impl<T> Grid<T> {
         }
 
         Some((nx, ny))
+    }
+
+    pub fn offsets<'a>(
+        &'a self,
+        xy: (u32, u32),
+        offsets: &'a [(i32, i32)],
+    ) -> impl Iterator<Item = (u32, u32)> + 'a {
+        offsets.iter().flat_map(move |o| self.offset(xy, o))
+    }
+
+    pub fn neighbours_4(&self, xy: (u32, u32)) -> impl Iterator<Item = (u32, u32)> + '_ {
+        const OFFSETS_4: [(i32, i32); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
+        self.offsets(xy, &OFFSETS_4)
     }
 }
 
@@ -172,6 +189,10 @@ impl<T> IndexMut<(u32, u32)> for Grid<T> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
+    use maplit::hashset;
+
     use super::*;
 
     #[test]
@@ -336,7 +357,6 @@ mod tests {
 
     #[test]
     fn test_offset() {
-        // given
         let grid = Grid::from_element(2, 3, false);
 
         assert_eq!(grid.offset((1, 1), (-1, 1)), Some((0, 2)));
@@ -344,7 +364,6 @@ mod tests {
 
     #[test]
     fn test_offset_out_of_bounds_negative() {
-        // given
         let grid = Grid::from_element(2, 3, false);
 
         assert_eq!(grid.offset((0, 1), (-1, 1)), None);
@@ -352,15 +371,13 @@ mod tests {
 
     #[test]
     fn test_offset_out_of_bounds_positive() {
-        // given
         let grid = Grid::from_element(2, 3, false);
 
         assert_eq!(grid.offset((1, 1), (2, 1)), None);
     }
 
     #[test]
-    fn test_offset_to_u32_max() {
-        // given
+    fn test_offset_to_max_u32() {
         let grid = Grid::from_element(u32::MAX, 2, false);
 
         assert_eq!(
@@ -371,9 +388,39 @@ mod tests {
 
     #[test]
     fn test_offset_overflow() {
-        // given
         let grid = Grid::from_element(u32::MAX, 2, false);
 
         assert_eq!(grid.offset((u32::MAX, 0), (1, 1)), None);
+    }
+
+    #[test]
+    fn test_offsets() {
+        let grid = Grid::from_element(2, 3, false);
+
+        assert_eq!(
+            grid.offsets((0, 1), &[(1, 0), (0, 1), (-1, -1)])
+                .collect::<HashSet<_>>(),
+            hashset! {(1, 1), (0, 2)}
+        );
+    }
+
+    #[test]
+    fn test_neighbours_4_in_middle() {
+        let grid = Grid::from_element(3, 3, false);
+
+        assert_eq!(
+            grid.neighbours_4((1, 1)).collect::<HashSet<_>>(),
+            hashset! {(2, 1), (1, 2), (0, 1), (1, 0)}
+        );
+    }
+
+    #[test]
+    fn test_neighbours_4_in_corner() {
+        let grid = Grid::from_element(3, 3, false);
+
+        assert_eq!(
+            grid.neighbours_4((0, 0)).collect::<HashSet<_>>(),
+            hashset! {(1, 0), (0, 1)}
+        );
     }
 }
