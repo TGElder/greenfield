@@ -1,17 +1,19 @@
 use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
+type I = u32;
+
 #[derive(Debug)]
 struct Grid<T> {
-    width: usize,
-    height: usize,
+    width: I,
+    height: I,
     elements: Vec<T>,
 }
 
 impl<T> Grid<T> {
-    pub fn from_vec(width: usize, height: usize, elements: Vec<T>) -> Grid<T> {
+    pub fn from_vec(width: I, height: I, elements: Vec<T>) -> Grid<T> {
         let len = width * height;
-        if elements.len() != len {
+        if elements.len() != len as usize {
             panic!(
                 "Number of elements {} does not equal (width={} * height={} = {})",
                 elements.len(),
@@ -27,11 +29,11 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn from_fn<F>(width: usize, height: usize, mut function: F) -> Grid<T>
+    pub fn from_fn<F>(width: I, height: I, mut function: F) -> Grid<T>
     where
-        F: FnMut((usize, usize)) -> T,
+        F: FnMut((I, I)) -> T,
     {
-        let mut elements = Vec::with_capacity(width * height);
+        let mut elements = Vec::with_capacity((width * height) as usize);
         for y in 0..height {
             for x in 0..width {
                 elements.push(function((x, y)));
@@ -46,10 +48,10 @@ impl<T> Grid<T> {
 
     pub fn index<R>(&self, xy: R) -> usize
     where
-        R: Borrow<(usize, usize)>,
+        R: Borrow<(I, I)>,
     {
         let (x, y) = xy.borrow();
-        x + y * self.width
+        (*x as usize) + (*y as usize) * self.width as usize
     }
 
     pub fn xy<R>(&self, index: R) -> (usize, usize)
@@ -57,12 +59,12 @@ impl<T> Grid<T> {
         R: Borrow<usize>,
     {
         let index = index.borrow();
-        (index % self.width, index / self.width)
+        (index % self.width as usize, index / self.width as usize)
     }
 
     pub fn in_bounds<R>(&self, xy: R) -> bool
     where
-        R: Borrow<(usize, usize)>,
+        R: Borrow<(I, I)>,
     {
         let (x, y) = xy.borrow();
         *x < self.width && *y < self.height
@@ -70,7 +72,7 @@ impl<T> Grid<T> {
 
     pub fn for_each<F>(&self, mut function: F)
     where
-        F: FnMut((usize, usize), &T),
+        F: FnMut((I, I), &T),
     {
         let mut index = 0;
         for y in 0..self.height {
@@ -83,7 +85,7 @@ impl<T> Grid<T> {
 
     pub fn map<F, U>(&self, mut function: F) -> Grid<U>
     where
-        F: FnMut((usize, usize), &T) -> U,
+        F: FnMut((I, I), &T) -> U,
     {
         let mut elements = Vec::with_capacity(self.elements.len());
         let mut index = 0;
@@ -105,7 +107,7 @@ impl<T> Grid<T>
 where
     T: Default,
 {
-    pub fn new(width: usize, height: usize) -> Grid<T> {
+    pub fn new(width: I, height: I) -> Grid<T> {
         Grid {
             elements: (0..width * height).map(|_| T::default()).collect(),
             width,
@@ -118,9 +120,9 @@ impl<T> Grid<T>
 where
     T: Clone,
 {
-    pub fn from_element(width: usize, height: usize, element: T) -> Grid<T> {
+    pub fn from_element(width: I, height: I, element: T) -> Grid<T> {
         Grid {
-            elements: vec![element; width * height],
+            elements: vec![element; (width * height) as usize],
             width,
             height,
         }
@@ -136,25 +138,19 @@ where
     }
 }
 
-impl<T> Index<(usize, usize)> for Grid<T> {
+impl<T> Index<(I, I)> for Grid<T> {
     type Output = T;
 
-    fn index(&self, index: (usize, usize)) -> &Self::Output {
+    fn index(&self, index: (I, I)) -> &Self::Output {
         &self.elements[self.index(index)]
     }
 }
 
-impl<T> IndexMut<(usize, usize)> for Grid<T> {
-    fn index_mut(&mut self, index: (usize, usize)) -> &mut Self::Output {
+impl<T> IndexMut<(I, I)> for Grid<T> {
+    fn index_mut(&mut self, index: (I, I)) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
     }
-}
-
-struct ForEachIterator<'a, T> {
-    x: usize,
-    y: usize,
-    grid: &'a Grid<T>,
 }
 
 #[cfg(test)]
