@@ -13,7 +13,7 @@ impl<T> Grid<T> {
         let len = width as usize * height as usize;
         if elements.len() != len {
             panic!(
-                "Number of elements {} does not equal (width={} * height={} = {})",
+                "Number of elements {} does not equal (width={} * height={}) = {}",
                 elements.len(),
                 width,
                 height,
@@ -111,8 +111,8 @@ impl<T> Grid<T> {
         let nx = (*x) as i64 + (*dx) as i64;
         let ny = (*y) as i64 + (*dy) as i64;
 
-        let nx: u32 = nx.try_into().ok()?;
-        let ny: u32 = ny.try_into().ok()?;
+        let nx = nx.try_into().ok()?;
+        let ny = ny.try_into().ok()?;
 
         if !self.in_bounds((nx, ny)) {
             return None;
@@ -139,7 +139,7 @@ impl<T> Grid<T>
 where
     T: Default,
 {
-    pub fn new(width: u32, height: u32) -> Grid<T> {
+    pub fn default(width: u32, height: u32) -> Grid<T> {
         Grid {
             elements: (0..(width as usize * height as usize))
                 .map(|_| T::default())
@@ -196,8 +196,8 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_new() {
-        let grid: Grid<bool> = Grid::new(4, 5);
+    fn test_default() {
+        let grid = Grid::<bool>::default(4, 5);
 
         assert_eq!(
             grid,
@@ -208,6 +208,12 @@ mod tests {
             }
         );
     }
+
+    // Too slow
+    // #[test]
+    // fn test_default_max_u32() {
+    //     Grid::<bool>::default(u32::MAX, 2);
+    // }
 
     #[test]
     fn test_from_element() {
@@ -221,6 +227,11 @@ mod tests {
                 elements: vec![Some(3); 20],
             }
         );
+    }
+
+    #[test]
+    fn test_from_element_max_u32() {
+        Grid::from_element(u32::MAX, 2, false);
     }
 
     #[test]
@@ -256,7 +267,12 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "Number of elements 1 does not equal (width=2 * height=3 = 6)")]
+    fn test_from_vec_max_u32() {
+        Grid::from_vec(u32::MAX, 2, vec![false; u32::MAX as usize * 2]);
+    }
+
+    #[test]
+    #[should_panic(expected = "Number of elements 1 does not equal (width=2 * height=3) = 6")]
     fn test_from_vec_of_wrong_length() {
         Grid::from_vec(2, 3, vec![false]);
     }
@@ -281,6 +297,12 @@ mod tests {
             }
         );
     }
+
+    // Too slow
+    // #[test]
+    // fn test_from_fn_max_u32() {
+    //     Grid::from_fn(u32::MAX, 2, |_| false);
+    // }
 
     #[test]
     fn test_index() {
@@ -377,7 +399,7 @@ mod tests {
     }
 
     #[test]
-    fn test_offset_to_max_u32() {
+    fn test_offset_with_max_u32() {
         let grid = Grid::from_element(u32::MAX, 2, false);
 
         assert_eq!(
@@ -387,10 +409,30 @@ mod tests {
     }
 
     #[test]
+    fn test_offset_with_max_i32() {
+        let grid = Grid::from_element(u32::MAX, 1, false);
+
+        assert_eq!(
+            grid.offset((u32::MAX - i32::MAX as u32 - 1, 0), (i32::MAX, 0)),
+            Some((u32::MAX - 1, 0))
+        );
+    }
+
+    #[test]
+    fn test_offset_with_min_i32() {
+        let grid = Grid::from_element(u32::MAX, 1, false);
+
+        assert_eq!(
+            grid.offset((i32::MAX as u32 + 1, 0), (i32::MIN, 0)),
+            Some((0, 0))
+        );
+    }
+
+    #[test]
     fn test_offset_overflow() {
         let grid = Grid::from_element(u32::MAX, 2, false);
 
-        assert_eq!(grid.offset((u32::MAX, 0), (1, 1)), None);
+        assert_eq!(grid.offset((u32::MAX, 0), (i32::MAX, 1)), None);
     }
 
     #[test]
