@@ -1,19 +1,17 @@
 use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
-type I = u32;
-
 #[derive(Debug)]
 struct Grid<T> {
-    width: I,
-    height: I,
+    width: u32,
+    height: u32,
     elements: Vec<T>,
 }
 
 impl<T> Grid<T> {
-    pub fn from_vec(width: I, height: I, elements: Vec<T>) -> Grid<T> {
-        let len = width * height;
-        if elements.len() != len as usize {
+    pub fn from_vec(width: u32, height: u32, elements: Vec<T>) -> Grid<T> {
+        let len = width as usize * height as usize;
+        if elements.len() != len {
             panic!(
                 "Number of elements {} does not equal (width={} * height={} = {})",
                 elements.len(),
@@ -29,11 +27,11 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn from_fn<F>(width: I, height: I, mut function: F) -> Grid<T>
+    pub fn from_fn<F>(width: u32, height: u32, mut function: F) -> Grid<T>
     where
-        F: FnMut((I, I)) -> T,
+        F: FnMut((u32, u32)) -> T,
     {
-        let mut elements = Vec::with_capacity((width * height) as usize);
+        let mut elements = Vec::with_capacity(width as usize * height as usize);
         for y in 0..height {
             for x in 0..width {
                 elements.push(function((x, y)));
@@ -48,7 +46,7 @@ impl<T> Grid<T> {
 
     pub fn index<R>(&self, xy: R) -> usize
     where
-        R: Borrow<(I, I)>,
+        R: Borrow<(u32, u32)>,
     {
         let (x, y) = xy.borrow();
         (*x as usize) + (*y as usize) * self.width as usize
@@ -64,7 +62,7 @@ impl<T> Grid<T> {
 
     pub fn in_bounds<R>(&self, xy: R) -> bool
     where
-        R: Borrow<(I, I)>,
+        R: Borrow<(u32, u32)>,
     {
         let (x, y) = xy.borrow();
         *x < self.width && *y < self.height
@@ -72,7 +70,7 @@ impl<T> Grid<T> {
 
     pub fn for_each<F>(&self, mut function: F)
     where
-        F: FnMut((I, I), &T),
+        F: FnMut((u32, u32), &T),
     {
         let mut index = 0;
         for y in 0..self.height {
@@ -85,7 +83,7 @@ impl<T> Grid<T> {
 
     pub fn map<F, U>(&self, mut function: F) -> Grid<U>
     where
-        F: FnMut((I, I), &T) -> U,
+        F: FnMut((u32, u32), &T) -> U,
     {
         let mut elements = Vec::with_capacity(self.elements.len());
         let mut index = 0;
@@ -101,15 +99,34 @@ impl<T> Grid<T> {
             elements,
         }
     }
+
+    pub fn offset(&self, xy: (u32, u32), offset: (i32, i32)) -> Option<(u32, u32)> {
+        let (x, y) = xy;
+        let (dx, dy) = offset;
+
+        let nx = x as i64 + dx as i64;
+        let ny = y as i64 + dy as i64;
+
+        let nx: u32 = nx.try_into().ok()?;
+        let ny: u32 = ny.try_into().ok()?;
+
+        if !self.in_bounds((nx, ny)) {
+            return None;
+        }
+
+        Some((nx, ny))
+    }
 }
 
 impl<T> Grid<T>
 where
     T: Default,
 {
-    pub fn new(width: I, height: I) -> Grid<T> {
+    pub fn new(width: u32, height: u32) -> Grid<T> {
         Grid {
-            elements: (0..width * height).map(|_| T::default()).collect(),
+            elements: (0..(width as usize * height as usize))
+                .map(|_| T::default())
+                .collect(),
             width,
             height,
         }
@@ -120,9 +137,9 @@ impl<T> Grid<T>
 where
     T: Clone,
 {
-    pub fn from_element(width: I, height: I, element: T) -> Grid<T> {
+    pub fn from_element(width: u32, height: u32, element: T) -> Grid<T> {
         Grid {
-            elements: vec![element; (width * height) as usize],
+            elements: vec![element; width as usize * height as usize],
             width,
             height,
         }
@@ -138,16 +155,16 @@ where
     }
 }
 
-impl<T> Index<(I, I)> for Grid<T> {
+impl<T> Index<(u32, u32)> for Grid<T> {
     type Output = T;
 
-    fn index(&self, index: (I, I)) -> &Self::Output {
+    fn index(&self, index: (u32, u32)) -> &Self::Output {
         &self.elements[self.index(index)]
     }
 }
 
-impl<T> IndexMut<(I, I)> for Grid<T> {
-    fn index_mut(&mut self, index: (I, I)) -> &mut Self::Output {
+impl<T> IndexMut<(u32, u32)> for Grid<T> {
+    fn index_mut(&mut self, index: (u32, u32)) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
     }
@@ -315,5 +332,48 @@ mod tests {
 
         // then
         assert_eq!(acc, 15);
+    }
+
+    #[test]
+    fn test_offset() {
+        // given
+        let grid = Grid::from_element(2, 3, false);
+
+        assert_eq!(grid.offset((1, 1), (-1, 1)), Some((0, 2)));
+    }
+
+    #[test]
+    fn test_offset_out_of_bounds_negative() {
+        // given
+        let grid = Grid::from_element(2, 3, false);
+
+        assert_eq!(grid.offset((0, 1), (-1, 1)), None);
+    }
+
+    #[test]
+    fn test_offset_out_of_bounds_positive() {
+        // given
+        let grid = Grid::from_element(2, 3, false);
+
+        assert_eq!(grid.offset((1, 1), (2, 1)), None);
+    }
+
+    #[test]
+    fn test_offset_to_u32_max() {
+        // given
+        let grid = Grid::from_element(u32::MAX, 2, false);
+
+        assert_eq!(
+            grid.offset((u32::MAX - 2, 0), (1, 1)),
+            Some((u32::MAX - 1, 1))
+        );
+    }
+
+    #[test]
+    fn test_offset_overflow() {
+        // given
+        let grid = Grid::from_element(u32::MAX, 2, false);
+
+        assert_eq!(grid.offset((u32::MAX, 0), (1, 1)), None);
     }
 }
