@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::ops::{Index, IndexMut};
+use std::ops::{Add, Index, IndexMut, Sub};
 
 #[derive(Debug)]
 pub struct Grid<T> {
@@ -192,6 +192,41 @@ impl<T> IndexMut<(u32, u32)> for Grid<T> {
     fn index_mut(&mut self, index: (u32, u32)) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
+    }
+}
+
+impl<T> Add for Grid<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = Grid<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        if self.width != rhs.width || self.height != rhs.height {
+            panic!(
+                "Trying to add grid with dimensions {}x{} to grid with dimensions {}x{}",
+                self.width, self.height, rhs.width, rhs.height
+            );
+        }
+        self.map(|xy, value| *value + rhs[xy])
+    }
+}
+
+impl<T> Sub for Grid<T>
+where
+    T: Sub<Output = T> + Copy,
+{
+    type Output = Grid<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        if self.width != rhs.width || self.height != rhs.height {
+            panic!(
+                "Trying to subtract grid with dimensions {}x{} from grid with dimensions {}x{}",
+                rhs.width, rhs.height, self.width, self.height
+            );
+        }
+
+        self.map(|xy, value| *value - rhs[xy])
     }
 }
 
@@ -486,5 +521,41 @@ mod tests {
             grid.neighbours_4((0, 0)).collect::<HashSet<_>>(),
             hashset! {(1, 0), (0, 1)}
         );
+    }
+
+    #[test]
+    fn test_add() {
+        let a = Grid::from_element(2, 3, 4);
+        let b = Grid::from_element(2, 3, 5);
+
+        assert_eq!(a + b, Grid::from_element(2, 3, 9));
+    }
+
+    #[test]
+    #[should_panic(expected = "Trying to add grid with dimensions 2x3 to grid with dimensions 4x5")]
+    fn test_add_dimension_mismatch() {
+        let a = Grid::from_element(2, 3, 4);
+        let b = Grid::from_element(4, 5, 5);
+
+        let _ = a + b;
+    }
+
+    #[test]
+    fn test_sub() {
+        let a = Grid::from_element(2, 3, 5);
+        let b = Grid::from_element(2, 3, 4);
+
+        assert_eq!(a - b, Grid::from_element(2, 3, 1));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "Trying to subtract grid with dimensions 4x5 from grid with dimensions 2x3"
+    )]
+    fn test_sub_dimension_mismatch() {
+        let a = Grid::from_element(2, 3, 5);
+        let b = Grid::from_element(4, 5, 4);
+
+        let _ = a - b;
     }
 }
