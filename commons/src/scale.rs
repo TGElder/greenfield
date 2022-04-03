@@ -51,7 +51,7 @@ mod tests {
     }
 
     #[test]
-    fn test_scale_above_below_input_range() {
+    fn test_scale_below_input_range() {
         let scale = Scale::<f64>::new((1.0, 11.0), (0.0, 4.0));
 
         assert_eq!(scale.scale(-1.5), -1.0);
