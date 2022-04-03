@@ -9,6 +9,14 @@ pub struct Grid<T> {
 }
 
 impl<T> Grid<T> {
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
+    }
+
     pub fn from_vec(width: u32, height: u32, elements: Vec<T>) -> Grid<T> {
         let len = width as usize * height as usize;
         if elements.len() != len {
@@ -194,6 +202,20 @@ mod tests {
     use maplit::hashset;
 
     use super::*;
+
+    #[test]
+    fn test_width() {
+        let grid = Grid::<bool>::default(4, 5);
+
+        assert_eq!(grid.width(), 4);
+    }
+
+    #[test]
+    fn test_height() {
+        let grid = Grid::<bool>::default(4, 5);
+
+        assert_eq!(grid.width(), 5);
+    }
 
     #[test]
     fn test_default() {
