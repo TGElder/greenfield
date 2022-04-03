@@ -214,7 +214,7 @@ mod tests {
     fn test_height() {
         let grid = Grid::<bool>::default(4, 5);
 
-        assert_eq!(grid.width(), 5);
+        assert_eq!(grid.height(), 5);
     }
 
     #[test]
