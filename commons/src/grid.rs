@@ -362,18 +362,6 @@ mod tests {
     // }
 
     #[test]
-    fn test_index() {
-        let grid = Grid::from_element(2, 3, false);
-
-        assert_eq!(grid.index((0, 0)), 0);
-        assert_eq!(grid.index((1, 0)), 1);
-        assert_eq!(grid.index((0, 1)), 2);
-        assert_eq!(grid.index((1, 1)), 3);
-        assert_eq!(grid.index((0, 2)), 4);
-        assert_eq!(grid.index((1, 2)), 5);
-    }
-
-    #[test]
     fn test_xy() {
         let grid = Grid::from_element(2, 3, false);
 
@@ -521,6 +509,22 @@ mod tests {
             grid.neighbours_4((0, 0)).collect::<HashSet<_>>(),
             hashset! {(1, 0), (0, 1)}
         );
+    }
+
+    #[test]
+    fn test_indexing() {
+        let grid = Grid::from_fn(2, 3, |(x, y)| x + y);
+
+        assert_eq!(grid[(1, 2)], 3);
+    }
+
+    #[test]
+    fn test_mut_indexing() {
+        let mut grid = Grid::from_element(2, 3, false);
+
+        grid[(1, 2)] = true;
+
+        assert!(grid[(1, 2)]);
     }
 
     #[test]
