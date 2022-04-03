@@ -1,5 +1,7 @@
 on: [pull_request]
 
+name: rust
+
 jobs:
   test:
     name: test
