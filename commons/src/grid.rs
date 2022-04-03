@@ -141,6 +141,40 @@ impl<T> Grid<T> {
         const OFFSETS_4: [(i32, i32); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
         self.offsets(xy, &OFFSETS_4)
     }
+
+    pub fn iter(&self) -> GridIterator<T> {
+        GridIterator {
+            x: 0,
+            y: 0,
+            grid: self,
+        }
+    }
+}
+
+pub struct GridIterator<'a, T> {
+    grid: &'a Grid<T>,
+    x: u32,
+    y: u32,
+}
+
+impl<'a, T> Iterator for GridIterator<'a, T> {
+    type Item = &'a T;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.x >= self.grid.width {
+            self.x = 0;
+            self.y += 1;
+            if self.y >= self.grid.height {
+                return None;
+            }
+        }
+
+        let out = Some(&self.grid[(self.x, self.y)]);
+
+        self.x += 1;
+
+        out
+    }
 }
 
 impl<T> Grid<T>
@@ -524,19 +558,14 @@ mod tests {
     }
 
     #[test]
-    fn test_indexing() {
-        let grid = Grid::from_fn(2, 3, |(x, y)| x + y);
+    fn test_iter() {
+        let grid = Grid::from_fn(2, 3, |t| t);
 
-        assert_eq!(grid[(1, 2)], 3);
-    }
-
-    #[test]
-    fn test_mut_indexing() {
-        let mut grid = Grid::from_element(2, 3, false);
-
-        grid[(1, 2)] = true;
-
-        assert!(grid[(1, 2)]);
+        // when
+        assert_eq!(
+            grid.iter().copied().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2),]
+        );
     }
 
     #[test]
