@@ -76,19 +76,6 @@ impl<T> Grid<T> {
         *x < self.width && *y < self.height
     }
 
-    pub fn for_each<F>(&self, mut function: F)
-    where
-        F: FnMut((u32, u32), &T),
-    {
-        let mut index = 0;
-        for y in 0..self.height {
-            for x in 0..self.width {
-                function((x, y), &self.elements[index]);
-                index += 1;
-            }
-        }
-    }
-
     pub fn map<F, U>(&self, mut function: F) -> Grid<U>
     where
         F: FnMut((u32, u32), &T) -> U,
@@ -158,7 +145,7 @@ pub struct GridIterator<'a, T> {
 }
 
 impl<'a, T> Iterator for GridIterator<'a, T> {
-    type Item = &'a T;
+    type Item = ((u32, u32), &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.x >= self.grid.width {
@@ -169,7 +156,7 @@ impl<'a, T> Iterator for GridIterator<'a, T> {
             }
         }
 
-        let out = Some(&self.grid[(self.x, self.y)]);
+        let out = Some(((self.x, self.y), &self.grid[(self.x, self.y)]));
 
         self.x += 1;
 
@@ -456,19 +443,6 @@ mod tests {
     }
 
     #[test]
-    fn test_for_each() {
-        // given
-        let grid = Grid::from_element(2, 3, 1);
-
-        // when
-        let mut acc = 0;
-        grid.for_each(|(x, y), z| acc += x + y + z);
-
-        // then
-        assert_eq!(acc, 15);
-    }
-
-    #[test]
     fn test_offset() {
         let grid = Grid::from_element(2, 3, false);
 
@@ -559,12 +533,19 @@ mod tests {
 
     #[test]
     fn test_iter() {
-        let grid = Grid::from_fn(2, 3, |t| t);
+        let grid = Grid::from_element(2, 3, 1);
 
         // when
         assert_eq!(
-            grid.iter().copied().collect::<Vec<_>>(),
-            vec![(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2),]
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![
+                ((0, 0), 1),
+                ((1, 0), 1),
+                ((0, 1), 1),
+                ((1, 1), 1),
+                ((0, 2), 1),
+                ((1, 2), 1),
+            ]
         );
     }
 
