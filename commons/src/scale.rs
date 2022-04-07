@@ -1,6 +1,7 @@
 use num::Float;
 use std::borrow::Borrow;
 
+#[derive(Debug)]
 pub struct Scale<T>
 where
     T: Float,
