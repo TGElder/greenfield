@@ -1,5 +1,3 @@
-use std::fmt::Display;
-
 use image::{ImageBuffer, Luma};
 use num::Float;
 
@@ -9,7 +7,7 @@ use crate::unsafe_ordering;
 
 impl<T> Grid<T>
 where
-    T: Float + Display,
+    T: Float,
 {
     pub fn min(&self) -> T {
         *self.iter().map(|(_, x)| x).min_by(unsafe_ordering).unwrap()
@@ -30,12 +28,15 @@ where
         if min == max {
             max = T::one(); // avoids divide by zero, results in black output
         }
-
         let scale = Scale::new((min, max), (T::zero(), T::one()));
 
         let image = ImageBuffer::from_fn(self.width(), self.height(), |x, y| {
             let scaled = scale.scale(self[(x, y)]);
-            Luma([(scaled * T::from(255u8).unwrap()).floor().to_u8().unwrap()])
+
+            let luma = scaled * T::from(255u8).unwrap();
+            let luma = luma.round();
+            let luma = luma.to_u8().unwrap();
+            Luma([luma])
         });
 
         image.save(file_name).unwrap();

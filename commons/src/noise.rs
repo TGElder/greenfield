@@ -19,7 +19,7 @@ pub fn simplex_noise(power: u32, seed: i32, octave_weights: &[f32]) -> Grid<f32>
 }
 
 fn usize_to_f32(value: usize) -> f32 {
-    u8::try_from(value).unwrap().try_into().unwrap()
+    u16::try_from(value).unwrap().try_into().unwrap()
 }
 
 fn sum_vectors(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
