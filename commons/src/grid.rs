@@ -201,16 +201,22 @@ where
     }
 }
 
-impl<T> Index<(u32, u32)> for Grid<T> {
+impl<R, T> Index<R> for Grid<T>
+where
+    R: Borrow<(u32, u32)>,
+{
     type Output = T;
 
-    fn index(&self, index: (u32, u32)) -> &Self::Output {
+    fn index(&self, index: R) -> &Self::Output {
         &self.elements[self.index(index)]
     }
 }
 
-impl<T> IndexMut<(u32, u32)> for Grid<T> {
-    fn index_mut(&mut self, index: (u32, u32)) -> &mut Self::Output {
+impl<R, T> IndexMut<R> for Grid<T>
+where
+    R: Borrow<(u32, u32)>,
+{
+    fn index_mut(&mut self, index: R) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
     }
