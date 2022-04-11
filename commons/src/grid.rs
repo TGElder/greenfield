@@ -116,15 +116,21 @@ impl<T> Grid<T> {
         Some((nx, ny))
     }
 
-    pub fn offsets<'a>(
+    pub fn offsets<'a, R>(
         &'a self,
-        xy: (u32, u32),
+        xy: R,
         offsets: &'a [(i32, i32)],
-    ) -> impl Iterator<Item = (u32, u32)> + 'a {
+    ) -> impl Iterator<Item = (u32, u32)> + 'a
+    where
+        R: Borrow<(u32, u32)> + Copy + 'a,
+    {
         offsets.iter().flat_map(move |o| self.offset(xy, o))
     }
 
-    pub fn neighbours_4(&self, xy: (u32, u32)) -> impl Iterator<Item = (u32, u32)> + '_ {
+    pub fn neighbours_4<'a, R>(&'a self, xy: R) -> impl Iterator<Item = (u32, u32)> + 'a
+    where
+        R: Borrow<(u32, u32)> + Copy + 'a,
+    {
         const OFFSETS_4: [(i32, i32); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
         self.offsets(xy, &OFFSETS_4)
     }
