@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
 use std::ops::{Add, Index, IndexMut, Sub};
 
+use maplit::hashset;
+
 #[derive(Debug)]
 pub struct Grid<T> {
     width: u32,
@@ -142,6 +144,14 @@ impl<T> Grid<T> {
             grid: self,
         }
     }
+
+    pub fn edge_xys(&self) -> EdgeIterator<T> {
+        EdgeIterator {
+            x: 0,
+            y: 0,
+            grid: self,
+        }
+    }
 }
 
 pub struct GridIterator<'a, T> {
@@ -154,6 +164,10 @@ impl<'a, T> Iterator for GridIterator<'a, T> {
     type Item = ((u32, u32), &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
+        if self.grid.width == 0 || self.grid.height == 0 {
+            return None;
+        }
+
         if self.x >= self.grid.width {
             self.x = 0;
             self.y += 1;
@@ -165,6 +179,40 @@ impl<'a, T> Iterator for GridIterator<'a, T> {
         let out = Some(((self.x, self.y), &self.grid[(self.x, self.y)]));
 
         self.x += 1;
+
+        out
+    }
+}
+
+pub struct EdgeIterator<'a, T> {
+    grid: &'a Grid<T>,
+    x: u32,
+    y: u32,
+}
+
+impl<'a, T> Iterator for EdgeIterator<'a, T> {
+    type Item = (u32, u32);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.grid.width == 0 || self.grid.height == 0 {
+            return None;
+        }
+
+        if self.x >= self.grid.width {
+            self.x = 0;
+            self.y += 1;
+            if self.y >= self.grid.height {
+                return None;
+            }
+        }
+
+        let out = Some((self.x, self.y));
+
+        if self.x == self.grid.width - 1 || self.y == 0 || self.y == self.grid.height - 1 {
+            self.x += 1;
+        } else {
+            self.x = self.grid.width - 1
+        }
 
         out
     }
@@ -544,7 +592,128 @@ mod tests {
     }
 
     #[test]
-    fn test_iter() {
+    fn test_iter_0x0() {
+        let grid = Grid::from_element(0, 0, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_0x1() {
+        let grid = Grid::from_element(0, 1, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_0x2() {
+        let grid = Grid::from_element(0, 2, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_0x3() {
+        let grid = Grid::from_element(0, 3, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_1x0() {
+        let grid = Grid::from_element(0, 0, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_1x1() {
+        let grid = Grid::from_element(1, 1, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_1x2() {
+        let grid = Grid::from_element(1, 2, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1), ((0, 1), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_1x3() {
+        let grid = Grid::from_element(1, 3, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1), ((0, 1), 1), ((0, 2), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x0() {
+        let grid = Grid::from_element(2, 0, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x1() {
+        let grid = Grid::from_element(2, 1, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1), ((1, 0), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x2() {
+        let grid = Grid::from_element(2, 2, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1), ((1, 0), 1), ((0, 1), 1), ((1, 1), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x3() {
         let grid = Grid::from_element(2, 3, 1);
 
         // when
@@ -557,6 +726,67 @@ mod tests {
                 ((1, 1), 1),
                 ((0, 2), 1),
                 ((1, 2), 1),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x0() {
+        let grid = Grid::from_element(3, 0, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x1() {
+        let grid = Grid::from_element(3, 1, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![((0, 0), 1), ((1, 0), 1), ((2, 0), 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x2() {
+        let grid = Grid::from_element(3, 2, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![
+                ((0, 0), 1),
+                ((1, 0), 1),
+                ((2, 0), 1),
+                ((0, 1), 1),
+                ((1, 1), 1),
+                ((2, 1), 1),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x3() {
+        let grid = Grid::from_element(3, 3, 1);
+
+        // when
+        assert_eq!(
+            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            vec![
+                ((0, 0), 1),
+                ((1, 0), 1),
+                ((2, 0), 1),
+                ((0, 1), 1),
+                ((1, 1), 1),
+                ((2, 1), 1),
+                ((0, 2), 1),
+                ((1, 2), 1),
+                ((2, 2), 1),
             ]
         );
     }
@@ -595,5 +825,159 @@ mod tests {
         let b = Grid::from_element(4, 5, 4);
 
         let _ = a - b;
+    }
+
+    #[test]
+    fn edge_iter_0x0() {
+        let grid = Grid::<bool>::default(0, 0);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_0x1() {
+        let grid = Grid::<bool>::default(0, 1);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_0x2() {
+        let grid = Grid::<bool>::default(0, 2);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_0x3() {
+        let grid = Grid::<bool>::default(0, 3);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_1x0() {
+        let grid = Grid::<bool>::default(1, 0);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_1x1() {
+        let grid = Grid::<bool>::default(1, 1);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {(0, 0)});
+        assert_eq!(grid.edge_xys().count(), 1);
+    }
+
+    #[test]
+    fn edge_iter_1x2() {
+        let grid = Grid::<bool>::default(1, 2);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (0, 1)}
+        );
+        assert_eq!(grid.edge_xys().count(), 2);
+    }
+
+    #[test]
+    fn edge_iter_1x3() {
+        let grid = Grid::<bool>::default(1, 3);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (0, 1), (0, 2)}
+        );
+        assert_eq!(grid.edge_xys().count(), 3);
+    }
+
+    #[test]
+    fn edge_iter_2x0() {
+        let grid = Grid::<bool>::default(2, 0);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_2x1() {
+        let grid = Grid::<bool>::default(2, 1);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (1, 0)}
+        );
+        assert_eq!(grid.edge_xys().count(), 2);
+    }
+
+    #[test]
+    fn edge_iter_2x2() {
+        let grid = Grid::<bool>::default(2, 2);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (1, 0), (1, 1), (0, 1)}
+        );
+        assert_eq!(grid.edge_xys().count(), 4);
+    }
+
+    #[test]
+    fn edge_iter_2x3() {
+        let grid = Grid::<bool>::default(2, 3);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (1, 0), (1, 1), (1, 2), (0, 2), (0, 1)}
+        );
+        assert_eq!(grid.edge_xys().count(), 6);
+    }
+
+    #[test]
+    fn edge_iter_3x0() {
+        let grid = Grid::<bool>::default(3, 0);
+
+        assert_eq!(grid.edge_xys().collect::<HashSet<_>>(), hashset! {});
+    }
+
+    #[test]
+    fn edge_iter_3x1() {
+        let grid = Grid::<bool>::default(3, 1);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (1, 0), (2, 0)}
+        );
+        assert_eq!(grid.edge_xys().count(), 3);
+    }
+
+    #[test]
+    fn edge_iter_3x2() {
+        let grid = Grid::<bool>::default(3, 2);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {(0, 0), (1, 0), (2, 0), (2, 1), (1, 1), (0, 1)}
+        );
+        assert_eq!(grid.edge_xys().count(), 6);
+    }
+
+    #[test]
+    fn edge_iter_3x3() {
+        let grid = Grid::<bool>::default(3, 3);
+
+        assert_eq!(
+            grid.edge_xys().collect::<HashSet<_>>(),
+            hashset! {
+                (0, 0), (1, 0), (2, 0), (2, 1), (2, 2), (1, 2), (0, 2), (0, 1)
+            }
+        );
+        assert_eq!(grid.edge_xys().count(), 8);
+    }
+
+    #[test]
+    fn edge_xys_each_position_appears_once() {
+        let grid = Grid::<bool>::default(4, 3);
+
+        assert_eq!(grid.edge_xys().count(), 10);
     }
 }
