@@ -543,7 +543,7 @@ mod tests {
 
     #[test]
     fn test_iter_1x0() {
-        let grid = Grid::<bool>::default(0, 0);
+        let grid = Grid::<bool>::default(1, 0);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
