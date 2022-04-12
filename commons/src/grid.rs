@@ -1,8 +1,6 @@
 use std::borrow::Borrow;
 use std::ops::{Add, Index, IndexMut, Sub};
 
-use maplit::hashset;
-
 #[derive(Debug)]
 pub struct Grid<T> {
     width: u32,
@@ -161,7 +159,7 @@ pub struct GridIterator<'a, T> {
 }
 
 impl<'a, T> Iterator for GridIterator<'a, T> {
-    type Item = ((u32, u32), &'a T);
+    type Item = (u32, u32);
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.grid.width == 0 || self.grid.height == 0 {
@@ -176,7 +174,7 @@ impl<'a, T> Iterator for GridIterator<'a, T> {
             }
         }
 
-        let out = Some(((self.x, self.y), &self.grid[(self.x, self.y)]));
+        let out = Some((self.x, self.y));
 
         self.x += 1;
 
@@ -596,10 +594,7 @@ mod tests {
         let grid = Grid::from_element(0, 0, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -607,10 +602,7 @@ mod tests {
         let grid = Grid::from_element(0, 1, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -618,10 +610,7 @@ mod tests {
         let grid = Grid::from_element(0, 2, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -629,10 +618,7 @@ mod tests {
         let grid = Grid::from_element(0, 3, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -640,10 +626,7 @@ mod tests {
         let grid = Grid::from_element(0, 0, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -651,10 +634,7 @@ mod tests {
         let grid = Grid::from_element(1, 1, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1),]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0),]);
     }
 
     #[test]
@@ -662,10 +642,7 @@ mod tests {
         let grid = Grid::from_element(1, 2, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1), ((0, 1), 1),]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (0, 1),]);
     }
 
     #[test]
@@ -674,8 +651,8 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1), ((0, 1), 1), ((0, 2), 1),]
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (0, 1), (0, 2),]
         );
     }
 
@@ -684,10 +661,7 @@ mod tests {
         let grid = Grid::from_element(2, 0, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -695,10 +669,7 @@ mod tests {
         let grid = Grid::from_element(2, 1, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1), ((1, 0), 1),]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (1, 0),]);
     }
 
     #[test]
@@ -707,8 +678,8 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1), ((1, 0), 1), ((0, 1), 1), ((1, 1), 1),]
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (0, 1), (1, 1),]
         );
     }
 
@@ -718,15 +689,8 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![
-                ((0, 0), 1),
-                ((1, 0), 1),
-                ((0, 1), 1),
-                ((1, 1), 1),
-                ((0, 2), 1),
-                ((1, 2), 1),
-            ]
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2),]
         );
     }
 
@@ -735,10 +699,7 @@ mod tests {
         let grid = Grid::from_element(3, 0, 1);
 
         // when
-        assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![]
-        );
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
@@ -747,8 +708,8 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![((0, 0), 1), ((1, 0), 1), ((2, 0), 1),]
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (2, 0),]
         );
     }
 
@@ -758,15 +719,8 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
-            vec![
-                ((0, 0), 1),
-                ((1, 0), 1),
-                ((2, 0), 1),
-                ((0, 1), 1),
-                ((1, 1), 1),
-                ((2, 1), 1),
-            ]
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1),]
         );
     }
 
@@ -776,17 +730,17 @@ mod tests {
 
         // when
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            grid.iter().collect::<Vec<_>>(),
             vec![
-                ((0, 0), 1),
-                ((1, 0), 1),
-                ((2, 0), 1),
-                ((0, 1), 1),
-                ((1, 1), 1),
-                ((2, 1), 1),
-                ((0, 2), 1),
-                ((1, 2), 1),
-                ((2, 2), 1),
+                (0, 0),
+                (1, 0),
+                (2, 0),
+                (0, 1),
+                (1, 1),
+                (2, 1),
+                (0, 2),
+                (1, 2),
+                (2, 2),
             ]
         );
     }
