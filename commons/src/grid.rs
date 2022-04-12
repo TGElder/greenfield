@@ -139,13 +139,6 @@ impl<T> Grid<T> {
         (0..self.height).flat_map(|y| (0..self.width).map(move |x| (x, y)))
     }
 
-    pub fn is_border<R>(&self, xy: R) -> bool
-    where
-        R: Borrow<(u32, u32)>,
-    {
-        let (x, y) = xy.borrow();
-        *x == 0 || *y == 0 || *x == self.width - 1 || *y == self.height - 1
-    }
 }
 
 pub struct EdgeIterator<'a, T> {
@@ -709,21 +702,6 @@ mod tests {
                 (2, 2),
             ]
         );
-    }
-
-    #[test]
-    fn test_is_border() {
-        let grid = Grid::from_element(3, 3, false);
-
-        assert!(grid.is_border((0, 0)));
-        assert!(grid.is_border((1, 0)));
-        assert!(grid.is_border((2, 0)));
-        assert!(grid.is_border((0, 1)));
-        assert!(!grid.is_border((1, 1)));
-        assert!(grid.is_border((2, 1)));
-        assert!(grid.is_border((0, 2)));
-        assert!(grid.is_border((1, 2)));
-        assert!(grid.is_border((2, 2)));
     }
 
     #[test]
