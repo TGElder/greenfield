@@ -10,11 +10,19 @@ where
     T: Float,
 {
     pub fn min(&self) -> T {
-        *self.iter().map(|(_, x)| x).min_by(unsafe_ordering).unwrap()
+        *self
+            .iter()
+            .map(|xy| &self[xy])
+            .min_by(unsafe_ordering)
+            .unwrap()
     }
 
     pub fn max(&self) -> T {
-        *self.iter().map(|(_, x)| x).max_by(unsafe_ordering).unwrap()
+        *self
+            .iter()
+            .map(|xy| &self[xy])
+            .max_by(unsafe_ordering)
+            .unwrap()
     }
 
     pub fn normalize(&self) -> Grid<T> {

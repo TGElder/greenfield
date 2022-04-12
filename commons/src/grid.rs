@@ -135,38 +135,8 @@ impl<T> Grid<T> {
         self.offsets(xy, &OFFSETS_4)
     }
 
-    pub fn iter(&self) -> GridIterator<T> {
-        GridIterator {
-            x: 0,
-            y: 0,
-            grid: self,
-        }
-    }
-}
-
-pub struct GridIterator<'a, T> {
-    grid: &'a Grid<T>,
-    x: u32,
-    y: u32,
-}
-
-impl<'a, T> Iterator for GridIterator<'a, T> {
-    type Item = ((u32, u32), &'a T);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.x >= self.grid.width {
-            self.x = 0;
-            self.y += 1;
-            if self.y >= self.grid.height {
-                return None;
-            }
-        }
-
-        let out = Some(((self.x, self.y), &self.grid[(self.x, self.y)]));
-
-        self.x += 1;
-
-        out
+    pub fn iter(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
+        (0..self.height).flat_map(|y| (0..self.width).map(move |x| (x, y)))
     }
 }
 
@@ -544,19 +514,141 @@ mod tests {
     }
 
     #[test]
-    fn test_iter() {
-        let grid = Grid::from_element(2, 3, 1);
+    fn test_iter_0x0() {
+        let grid = Grid::<bool>::default(0, 0);
 
-        // when
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_0x1() {
+        let grid = Grid::<bool>::default(0, 1);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_0x2() {
+        let grid = Grid::<bool>::default(0, 2);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_0x3() {
+        let grid = Grid::<bool>::default(0, 3);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_1x0() {
+        let grid = Grid::<bool>::default(1, 0);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_1x1() {
+        let grid = Grid::<bool>::default(1, 1);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0),]);
+    }
+
+    #[test]
+    fn test_iter_1x2() {
+        let grid = Grid::<bool>::default(1, 2);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (0, 1),]);
+    }
+
+    #[test]
+    fn test_iter_1x3() {
+        let grid = Grid::<bool>::default(1, 3);
+
         assert_eq!(
-            grid.iter().map(|(xy, v)| (xy, *v)).collect::<Vec<_>>(),
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (0, 1), (0, 2),]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x0() {
+        let grid = Grid::<bool>::default(2, 0);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_2x1() {
+        let grid = Grid::<bool>::default(2, 1);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (1, 0),]);
+    }
+
+    #[test]
+    fn test_iter_2x2() {
+        let grid = Grid::<bool>::default(2, 2);
+
+        assert_eq!(
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (0, 1), (1, 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_2x3() {
+        let grid = Grid::<bool>::default(2, 3);
+
+        assert_eq!(
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2),]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x0() {
+        let grid = Grid::<bool>::default(3, 0);
+
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
+    }
+
+    #[test]
+    fn test_iter_3x1() {
+        let grid = Grid::<bool>::default(3, 1);
+
+        assert_eq!(
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (2, 0),]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x2() {
+        let grid = Grid::<bool>::default(3, 2);
+
+        assert_eq!(
+            grid.iter().collect::<Vec<_>>(),
+            vec![(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1),]
+        );
+    }
+
+    #[test]
+    fn test_iter_3x3() {
+        let grid = Grid::<bool>::default(3, 3);
+
+        assert_eq!(
+            grid.iter().collect::<Vec<_>>(),
             vec![
-                ((0, 0), 1),
-                ((1, 0), 1),
-                ((0, 1), 1),
-                ((1, 1), 1),
-                ((0, 2), 1),
-                ((1, 2), 1),
+                (0, 0),
+                (1, 0),
+                (2, 0),
+                (0, 1),
+                (1, 1),
+                (2, 1),
+                (0, 2),
+                (1, 2),
+                (2, 2),
             ]
         );
     }
