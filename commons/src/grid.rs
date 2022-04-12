@@ -76,6 +76,14 @@ impl<T> Grid<T> {
         *x < self.width && *y < self.height
     }
 
+    pub fn is_border<R>(&self, xy: R) -> bool
+    where
+        R: Borrow<(u32, u32)>,
+    {
+        let (x, y) = xy.borrow();
+        *x == 0 || *y == 0 || *x == self.width - 1 || *y == self.height - 1
+    }
+
     pub fn map<F, U>(&self, mut function: F) -> Grid<U>
     where
         F: FnMut((u32, u32), &T) -> U,
@@ -404,6 +412,21 @@ mod tests {
         assert!(!grid.in_bounds((0, 3)));
         assert!(!grid.in_bounds((1, 3)));
         assert!(!grid.in_bounds((2, 3)));
+    }
+
+    #[test]
+    fn test_is_border() {
+        let grid = Grid::from_element(3, 3, false);
+
+        assert!(grid.is_border((0, 0)));
+        assert!(grid.is_border((1, 0)));
+        assert!(grid.is_border((2, 0)));
+        assert!(grid.is_border((0, 1)));
+        assert!(!grid.is_border((1, 1)));
+        assert!(grid.is_border((2, 1)));
+        assert!(grid.is_border((0, 2)));
+        assert!(grid.is_border((1, 2)));
+        assert!(grid.is_border((2, 2)));
     }
 
     #[test]
