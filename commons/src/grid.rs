@@ -138,41 +138,6 @@ impl<T> Grid<T> {
     pub fn iter(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
         (0..self.height).flat_map(|y| (0..self.width).map(move |x| (x, y)))
     }
-
-}
-
-pub struct EdgeIterator<'a, T> {
-    grid: &'a Grid<T>,
-    x: u32,
-    y: u32,
-}
-
-impl<'a, T> Iterator for EdgeIterator<'a, T> {
-    type Item = (u32, u32);
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.grid.width == 0 || self.grid.height == 0 {
-            return None;
-        }
-
-        if self.x >= self.grid.width {
-            self.x = 0;
-            self.y += 1;
-            if self.y >= self.grid.height {
-                return None;
-            }
-        }
-
-        let out = Some((self.x, self.y));
-
-        if self.x == self.grid.width - 1 || self.y == 0 || self.y == self.grid.height - 1 {
-            self.x += 1;
-        } else {
-            self.x = self.grid.width - 1
-        }
-
-        out
-    }
 }
 
 impl<T> Grid<T>
