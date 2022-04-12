@@ -515,56 +515,56 @@ mod tests {
 
     #[test]
     fn test_iter_0x0() {
-        let grid = Grid::from_element(0, 0, 1);
+        let grid = Grid::<bool>::default(0, 0);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_0x1() {
-        let grid = Grid::from_element(0, 1, 1);
+        let grid = Grid::<bool>::default(0, 1);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_0x2() {
-        let grid = Grid::from_element(0, 2, 1);
+        let grid = Grid::<bool>::default(0, 2);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_0x3() {
-        let grid = Grid::from_element(0, 3, 1);
+        let grid = Grid::<bool>::default(0, 3);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_1x0() {
-        let grid = Grid::from_element(0, 0, 1);
+        let grid = Grid::<bool>::default(0, 0);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_1x1() {
-        let grid = Grid::from_element(1, 1, 1);
+        let grid = Grid::<bool>::default(1, 1);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0),]);
     }
 
     #[test]
     fn test_iter_1x2() {
-        let grid = Grid::from_element(1, 2, 1);
+        let grid = Grid::<bool>::default(1, 2);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (0, 1),]);
     }
 
     #[test]
     fn test_iter_1x3() {
-        let grid = Grid::from_element(1, 3, 1);
+        let grid = Grid::<bool>::default(1, 3);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
@@ -574,21 +574,21 @@ mod tests {
 
     #[test]
     fn test_iter_2x0() {
-        let grid = Grid::from_element(2, 0, 1);
+        let grid = Grid::<bool>::default(2, 0);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_2x1() {
-        let grid = Grid::from_element(2, 1, 1);
+        let grid = Grid::<bool>::default(2, 1);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (1, 0),]);
     }
 
     #[test]
     fn test_iter_2x2() {
-        let grid = Grid::from_element(2, 2, 1);
+        let grid = Grid::<bool>::default(2, 2);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
@@ -598,7 +598,7 @@ mod tests {
 
     #[test]
     fn test_iter_2x3() {
-        let grid = Grid::from_element(2, 3, 1);
+        let grid = Grid::<bool>::default(2, 3);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
@@ -608,14 +608,14 @@ mod tests {
 
     #[test]
     fn test_iter_3x0() {
-        let grid = Grid::from_element(3, 0, 1);
+        let grid = Grid::<bool>::default(3, 0);
 
         assert_eq!(grid.iter().collect::<Vec<_>>(), vec![]);
     }
 
     #[test]
     fn test_iter_3x1() {
-        let grid = Grid::from_element(3, 1, 1);
+        let grid = Grid::<bool>::default(3, 1);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
@@ -625,7 +625,7 @@ mod tests {
 
     #[test]
     fn test_iter_3x2() {
-        let grid = Grid::from_element(3, 2, 1);
+        let grid = Grid::<bool>::default(3, 2);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
@@ -635,7 +635,7 @@ mod tests {
 
     #[test]
     fn test_iter_3x3() {
-        let grid = Grid::from_element(3, 3, 1);
+        let grid = Grid::<bool>::default(3, 3);
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
