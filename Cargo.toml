@@ -2,4 +2,5 @@
 
 members = [
     "commons",
+    "terrain_gen"
 ]

@@ -666,6 +666,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "terrain_gen"
+version = "0.1.0"
+dependencies = [
+ "commons",
+ "image",
+]
+
+[[package]]
 name = "threadpool"
 version = "1.8.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
