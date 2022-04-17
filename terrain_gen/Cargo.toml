@@ -1,5 +1,5 @@
 [package]
-name = "creeper"
+name = "terrain_gen"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,3 +7,4 @@ edition = "2021"
 
 [dependencies]
 commons = { path = "../commons" }
+image = "0.24.1"

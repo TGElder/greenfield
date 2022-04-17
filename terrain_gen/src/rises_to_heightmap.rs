@@ -4,7 +4,7 @@ use std::collections::BinaryHeap;
 use commons::grid::Grid;
 use commons::unsafe_ordering;
 
-pub fn generate_heightmap(rises: Grid<f32>) -> Grid<f32> {
+pub fn rises_to_heightmap(rises: Grid<f32>) -> Grid<f32> {
     let mut visited = Grid::<bool>::default(rises.width(), rises.height());
     let mut out = Grid::from_fn(rises.width(), rises.height(), |xy| {
         if visited.is_border(xy) {
@@ -25,8 +25,6 @@ pub fn generate_heightmap(rises: Grid<f32>) -> Grid<f32> {
             continue;
         }
 
-        // println!("{:?}, {}", xy, z);
-
         visited[xy] = true;
 
         let unvisited_neighbours = out
@@ -35,16 +33,14 @@ pub fn generate_heightmap(rises: Grid<f32>) -> Grid<f32> {
             .collect::<Vec<_>>();
 
         for neighbour in unvisited_neighbours {
-            let candidate_z = z + rises[neighbour];
-            out[neighbour] = out[neighbour].min(candidate_z);
+            let neighbour_z_through_xy = z + rises[neighbour];
+            out[neighbour] = out[neighbour].min(neighbour_z_through_xy);
             heap.push(HeapElement {
                 xy: neighbour,
-                z: candidate_z,
+                z: neighbour_z_through_xy,
             });
         }
     }
-
-    println!("MAX {}", out.max());
 
     out.normalize()
 }
@@ -76,20 +72,33 @@ impl Eq for HeapElement {}
 
 #[cfg(test)]
 mod tests {
+    use std::env::temp_dir;
+
     use commons::noise::simplex_noise;
 
-    use crate::generate_heightmap;
+    use crate::rises_to_heightmap;
 
     #[test]
     fn test() {
-        let power = 11;
+        // given
+        let power = 8;
         let weights = (0..power + 1)
             .map(|i| 1.0f32 / 1.125f32.powf((power - i) as f32))
             .collect::<Vec<_>>();
         let rises = simplex_noise(power, 1987, &weights)
             .normalize()
             .map(|_, z| (0.5 - z).abs() / 0.5);
-        let heightmap = generate_heightmap(rises);
-        heightmap.to_image("test_resources/test.png");
+
+        // when
+        let heightmap = rises_to_heightmap(rises);
+
+        // then
+        let temp_path = temp_dir().join("test.png");
+        let temp_path = temp_path.to_str().unwrap();
+        heightmap.to_image(temp_path);
+
+        let actual = image::open(temp_path).unwrap();
+        let expected = image::open("test_resources/rises_to_heightmap/test.png").unwrap();
+        assert_eq!(actual, expected);
     }
 }

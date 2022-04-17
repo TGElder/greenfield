@@ -49,6 +49,7 @@ where
 
         image.save(file_name).unwrap();
     }
+
 }
 
 #[cfg(test)]
