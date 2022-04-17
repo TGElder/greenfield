@@ -95,7 +95,7 @@ mod tests {
         // then
         let temp_path = temp_dir().join("test.png");
         let temp_path = temp_path.to_str().unwrap();
-        heightmap.to_image(temp_path);
+        heightmap.to_image(temp_path).unwrap();
 
         let actual = image::open(temp_path).unwrap();
         let expected = image::open("test_resources/rises_to_heightmap/test.png").unwrap();
