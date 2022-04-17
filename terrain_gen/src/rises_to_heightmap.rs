@@ -50,6 +50,14 @@ struct HeapElement {
     z: f32,
 }
 
+impl Eq for HeapElement {}
+
+impl PartialEq for HeapElement {
+    fn eq(&self, other: &Self) -> bool {
+        self.xy == other.xy
+    }
+}
+
 impl Ord for HeapElement {
     fn cmp(&self, other: &Self) -> Ordering {
         unsafe_ordering(&other.z, &self.z)
@@ -61,14 +69,6 @@ impl PartialOrd for HeapElement {
         Some(self.cmp(other))
     }
 }
-
-impl PartialEq for HeapElement {
-    fn eq(&self, other: &Self) -> bool {
-        self.xy == other.xy
-    }
-}
-
-impl Eq for HeapElement {}
 
 #[cfg(test)]
 mod tests {
