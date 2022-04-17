@@ -30,7 +30,7 @@ where
         self.map(|_, value| scale.scale(value))
     }
 
-    pub fn to_image(&self, file_name: &str) {
+    pub fn to_image(&self, file_name: &str) -> Result<(), String> {
         let min = self.min();
         let mut max = self.max();
         if min == max {
@@ -47,7 +47,7 @@ where
             Luma([luma])
         });
 
-        image.save(file_name).unwrap();
+        image.save(file_name).map_err(|error| error.to_string())
     }
 }
 
@@ -105,7 +105,7 @@ mod tests {
         // when
         let temp_path = temp_dir().join("test_to_image.png");
         let temp_path = temp_path.to_str().unwrap();
-        grid.to_image(temp_path);
+        grid.to_image(temp_path).unwrap();
 
         // then
         let actual = image::open(temp_path).unwrap();
@@ -120,7 +120,7 @@ mod tests {
         // when
         let temp_path = temp_dir().join("test_all_zeros_to_image.png");
         let temp_path = temp_path.to_str().unwrap();
-        grid.to_image(temp_path);
+        grid.to_image(temp_path).unwrap();
 
         // then
         let actual = image::open(temp_path).unwrap();

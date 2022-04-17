@@ -44,7 +44,7 @@ mod tests {
         // when
         let temp_path = temp_dir().join("test.png");
         let temp_path = temp_path.to_str().unwrap();
-        noise.to_image(temp_path);
+        noise.to_image(temp_path).unwrap();
 
         // then
         let actual = image::open(temp_path).unwrap();
