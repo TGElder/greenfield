@@ -2,7 +2,7 @@ use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
 use commons::grid::Grid;
-use commons::unsafe_ordering;
+use commons::unsafe_float_ordering;
 
 pub fn rises_to_heightmap(rises: Grid<f32>) -> Grid<f32> {
     let mut visited = Grid::<bool>::default(rises.width(), rises.height());
@@ -60,7 +60,7 @@ impl PartialEq for HeapElement {
 
 impl Ord for HeapElement {
     fn cmp(&self, other: &Self) -> Ordering {
-        unsafe_ordering(&other.z, &self.z)
+        unsafe_float_ordering(&other.z, &self.z)
     }
 }
 

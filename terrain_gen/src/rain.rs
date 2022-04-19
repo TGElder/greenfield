@@ -1,5 +1,5 @@
 use commons::grid::Grid;
-use commons::unsafe_ordering;
+use commons::unsafe_float_ordering;
 
 use crate::Downhill;
 
@@ -12,7 +12,7 @@ impl Rain for Grid<f32> {
         let downhills = self.downhills();
 
         let mut xys = self.iter().collect::<Vec<_>>();
-        xys.sort_by(|a, b| unsafe_ordering(&self[a], &self[b]));
+        xys.sort_by(|a, b| unsafe_float_ordering(&self[a], &self[b]));
 
         let mut out = Grid::default(self.width(), self.height());
         while let Some(xy) = xys.pop() {

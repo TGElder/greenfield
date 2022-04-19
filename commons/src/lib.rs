@@ -7,6 +7,6 @@ pub mod grid;
 pub mod noise;
 pub mod scale;
 
-pub fn unsafe_ordering<T: PartialOrd>(a: &T, b: &T) -> Ordering {
+pub fn unsafe_float_ordering<T: PartialOrd>(a: &T, b: &T) -> Ordering {
     a.partial_cmp(b).unwrap()
 }
