@@ -3,7 +3,7 @@ use num::Float;
 
 use crate::grid::Grid;
 use crate::scale::Scale;
-use crate::unsafe_ordering;
+use crate::unsafe_float_ordering;
 
 impl<T> Grid<T>
 where
@@ -13,7 +13,7 @@ where
         *self
             .iter()
             .map(|xy| &self[xy])
-            .min_by(unsafe_ordering)
+            .min_by(unsafe_float_ordering)
             .unwrap()
     }
 
@@ -21,7 +21,7 @@ where
         *self
             .iter()
             .map(|xy| &self[xy])
-            .max_by(unsafe_ordering)
+            .max_by(unsafe_float_ordering)
             .unwrap()
     }
 

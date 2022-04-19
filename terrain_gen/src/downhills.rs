@@ -1,5 +1,5 @@
 use commons::grid::Grid;
-use commons::unsafe_ordering;
+use commons::unsafe_float_ordering;
 
 pub trait Downhill {
     fn downhills(&self) -> Grid<Option<(i32, i32)>>;
@@ -14,7 +14,7 @@ impl Downhill for Grid<f32> {
 fn lowest_neighbour(grid: &Grid<f32>, xy: &(u32, u32)) -> Option<(u32, u32)> {
     grid.neighbours_4(xy)
         .filter(|neighbour| grid[neighbour] < grid[xy])
-        .min_by(|a, b| unsafe_ordering(&grid[a], &grid[b]))
+        .min_by(|a, b| unsafe_float_ordering(&grid[a], &grid[b]))
 }
 
 fn lowest_neighbour_offset(grid: &Grid<f32>, xy: &(u32, u32)) -> Option<(i32, i32)> {
