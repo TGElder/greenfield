@@ -10,12 +10,12 @@ pub struct Rises {
     rises: Grid<f32>,
 }
 
-pub trait AsRises {
-    fn as_rises(self) -> Rises;
+pub trait ToRises {
+    fn to_rises(self) -> Rises;
 }
 
-impl AsRises for Heightmap {
-    fn as_rises(self) -> Rises {
+impl ToRises for Heightmap {
+    fn to_rises(self) -> Rises {
         Rises { rises: self }
     }
 }
@@ -112,7 +112,7 @@ mod tests {
         let rises = simplex_noise(power, 1987, &weights)
             .normalize()
             .map(|_, z| (0.5 - z).abs() / 0.5)
-            .as_rises();
+            .to_rises();
 
         // when
         let heightmap = rises.to_heightmap();
