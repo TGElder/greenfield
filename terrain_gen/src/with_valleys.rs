@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 
 use commons::grid::Grid;
 
-use crate::{rises_to_heightmap, Rain};
+use crate::{rises_to_heightmap, Downhill, Rain};
 
 pub struct ValleyParameters {
     rain_threshold: usize,
@@ -22,7 +22,7 @@ impl WithValleys for Grid<f32> {
     {
         let parameters = parameters.borrow();
 
-        let rain = self.rain();
+        let rain = self.downhills().rain();
 
         let rises = self.map(|xy, z| {
             if rain[xy] > parameters.rain_threshold {
