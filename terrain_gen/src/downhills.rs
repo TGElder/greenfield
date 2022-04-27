@@ -11,15 +11,16 @@ impl Downhill for Grid<f32> {
     }
 }
 
-fn lowest_neighbour(grid: &Grid<f32>, xy: &(u32, u32)) -> Option<(u32, u32)> {
-    grid.neighbours_4(xy)
-        .filter(|neighbour| grid[neighbour] < grid[xy])
-        .min_by(|a, b| unsafe_float_ordering(&grid[a], &grid[b]))
+fn lowest_neighbour(heightmap: &Grid<f32>, xy: &(u32, u32)) -> Option<(u32, u32)> {
+    heightmap
+        .neighbours_4(xy)
+        .filter(|neighbour| heightmap[neighbour] < heightmap[xy])
+        .min_by(|a, b| unsafe_float_ordering(&heightmap[a], &heightmap[b]))
 }
 
-fn lowest_neighbour_offset(grid: &Grid<f32>, xy: &(u32, u32)) -> Option<(i32, i32)> {
+fn lowest_neighbour_offset(heightmap: &Grid<f32>, xy: &(u32, u32)) -> Option<(i32, i32)> {
     let (x, y) = xy;
-    lowest_neighbour(grid, xy).map(|(nx, ny)| {
+    lowest_neighbour(heightmap, xy).map(|(nx, ny)| {
         (
             (nx as i64 - *x as i64) as i32,
             (ny as i64 - *y as i64) as i32,
@@ -33,7 +34,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let grid = Grid::from_vec(
+        let heightmap = Grid::from_vec(
             3,
             3,
             vec![
@@ -45,7 +46,7 @@ mod tests {
 
         #[rustfmt::skip]
         assert_eq!(
-            grid.downhills(), 
+            heightmap.downhills(), 
             Grid::from_vec(
                 3,
                 3,

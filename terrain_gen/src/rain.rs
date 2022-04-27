@@ -34,7 +34,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let grid = Grid::from_vec(
+        let heightmap = Grid::from_vec(
             3,
             3,
             vec![
@@ -45,7 +45,7 @@ mod tests {
         );
 
         assert_eq!(
-            grid.rain(),
+            heightmap.rain(),
             Grid::from_vec(
                 3,
                 3,
