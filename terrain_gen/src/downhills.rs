@@ -1,24 +1,28 @@
 use commons::grid::Grid;
 use commons::unsafe_float_ordering;
 
+use crate::Heightmap;
+
+pub type Downhills = Grid<Option<(i32, i32)>>;
+
 pub trait Downhill {
-    fn downhills(&self) -> Grid<Option<(i32, i32)>>;
+    fn downhills(&self) -> Downhills;
 }
 
-impl Downhill for Grid<f32> {
-    fn downhills(&self) -> Grid<Option<(i32, i32)>> {
+impl Downhill for Heightmap {
+    fn downhills(&self) -> Downhills {
         self.map(|xy, _| lowest_neighbour_offset(self, &xy))
     }
 }
 
-fn lowest_neighbour(heightmap: &Grid<f32>, xy: &(u32, u32)) -> Option<(u32, u32)> {
+fn lowest_neighbour(heightmap: &Heightmap, xy: &(u32, u32)) -> Option<(u32, u32)> {
     heightmap
         .neighbours_4(xy)
         .filter(|neighbour| heightmap[neighbour] < heightmap[xy])
         .min_by(|a, b| unsafe_float_ordering(&heightmap[a], &heightmap[b]))
 }
 
-fn lowest_neighbour_offset(heightmap: &Grid<f32>, xy: &(u32, u32)) -> Option<(i32, i32)> {
+fn lowest_neighbour_offset(heightmap: &Heightmap, xy: &(u32, u32)) -> Option<(i32, i32)> {
     let (x, y) = xy;
     lowest_neighbour(heightmap, xy).map(|(nx, ny)| {
         (

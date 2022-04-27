@@ -1,9 +1,12 @@
 mod downhills;
 mod rain;
-mod rises_to_heightmap;
+mod rises;
 mod with_valleys;
 
+use commons::grid::Grid;
 pub use downhills::*;
 pub use rain::*;
-pub use rises_to_heightmap::*;
+pub use rises::*;
 pub use with_valleys::*;
+
+pub type Heightmap = Grid<f32>;
