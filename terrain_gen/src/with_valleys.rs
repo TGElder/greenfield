@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use crate::{Rain, ToHeightmap, AsRises, Heightmap};
+use crate::{AsRises, Heightmap, Rain, ToHeightmap};
 
 pub struct ValleyParameters {
     rain_threshold: usize,
@@ -22,13 +22,15 @@ impl WithValleys for Heightmap {
 
         let rain = self.rain();
 
-        let rises = self.map(|xy, z| {
-            if rain[xy] > parameters.rain_threshold {
-                parameters.rise
-            } else {
-                *z
-            }
-        }).as_rises();
+        let rises = self
+            .map(|xy, z| {
+                if rain[xy] > parameters.rain_threshold {
+                    parameters.rise
+                } else {
+                    *z
+                }
+            })
+            .as_rises();
 
         rises.to_heightmap()
     }
