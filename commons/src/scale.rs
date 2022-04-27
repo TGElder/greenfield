@@ -18,9 +18,9 @@ where
         Scale { from, to }
     }
 
-    pub fn scale<R>(&self, value: R) -> T
+    pub fn scale<B>(&self, value: B) -> T
     where
-        R: Borrow<T>,
+        B: Borrow<T>,
     {
         let value = value.borrow();
 
