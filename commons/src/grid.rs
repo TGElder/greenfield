@@ -52,33 +52,33 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn index<R>(&self, xy: R) -> usize
+    pub fn index<B>(&self, xy: B) -> usize
     where
-        R: Borrow<(u32, u32)>,
+        B: Borrow<(u32, u32)>,
     {
         let (x, y) = xy.borrow();
         (*x as usize) + (*y as usize) * self.width as usize
     }
 
-    pub fn xy<R>(&self, index: R) -> (usize, usize)
+    pub fn xy<B>(&self, index: B) -> (usize, usize)
     where
-        R: Borrow<usize>,
+        B: Borrow<usize>,
     {
         let index = index.borrow();
         (index % self.width as usize, index / self.width as usize)
     }
 
-    pub fn in_bounds<R>(&self, xy: R) -> bool
+    pub fn in_bounds<B>(&self, xy: B) -> bool
     where
-        R: Borrow<(u32, u32)>,
+        B: Borrow<(u32, u32)>,
     {
         let (x, y) = xy.borrow();
         *x < self.width && *y < self.height
     }
 
-    pub fn is_border<R>(&self, xy: R) -> bool
+    pub fn is_border<B>(&self, xy: B) -> bool
     where
-        R: Borrow<(u32, u32)>,
+        B: Borrow<(u32, u32)>,
     {
         let (x, y) = xy.borrow();
         *x == 0 || *y == 0 || *x == self.width - 1 || *y == self.height - 1
@@ -103,10 +103,10 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn offset<R, S>(&self, xy: R, offset: S) -> Option<(u32, u32)>
+    pub fn offset<B, C>(&self, xy: B, offset: C) -> Option<(u32, u32)>
     where
-        R: Borrow<(u32, u32)>,
-        S: Borrow<(i32, i32)>,
+        B: Borrow<(u32, u32)>,
+        C: Borrow<(i32, i32)>,
     {
         let (x, y) = xy.borrow();
         let (dx, dy) = offset.borrow();
@@ -124,20 +124,20 @@ impl<T> Grid<T> {
         Some((nx, ny))
     }
 
-    pub fn offsets<'a, R>(
+    pub fn offsets<'a, B>(
         &'a self,
-        xy: R,
+        xy: B,
         offsets: &'a [(i32, i32)],
     ) -> impl Iterator<Item = (u32, u32)> + 'a
     where
-        R: Borrow<(u32, u32)> + Copy + 'a,
+        B: Borrow<(u32, u32)> + Copy + 'a,
     {
         offsets.iter().flat_map(move |o| self.offset(xy, o))
     }
 
-    pub fn neighbours_4<'a, R>(&'a self, xy: R) -> impl Iterator<Item = (u32, u32)> + 'a
+    pub fn neighbours_4<'a, B>(&'a self, xy: B) -> impl Iterator<Item = (u32, u32)> + 'a
     where
-        R: Borrow<(u32, u32)> + Copy + 'a,
+        B: Borrow<(u32, u32)> + Copy + 'a,
     {
         const OFFSETS_4: [(i32, i32); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
         self.offsets(xy, &OFFSETS_4)
@@ -185,22 +185,22 @@ where
     }
 }
 
-impl<R, T> Index<R> for Grid<T>
+impl<B, T> Index<B> for Grid<T>
 where
-    R: Borrow<(u32, u32)>,
+    B: Borrow<(u32, u32)>,
 {
     type Output = T;
 
-    fn index(&self, index: R) -> &Self::Output {
+    fn index(&self, index: B) -> &Self::Output {
         &self.elements[self.index(index)]
     }
 }
 
-impl<R, T> IndexMut<R> for Grid<T>
+impl<B, T> IndexMut<B> for Grid<T>
 where
-    R: Borrow<(u32, u32)>,
+    B: Borrow<(u32, u32)>,
 {
-    fn index_mut(&mut self, index: R) -> &mut Self::Output {
+    fn index_mut(&mut self, index: B) -> &mut Self::Output {
         let index = self.index(index);
         &mut self.elements[index]
     }
