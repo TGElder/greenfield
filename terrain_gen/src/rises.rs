@@ -109,12 +109,13 @@ mod tests {
         let weights = (0..power + 1)
             .map(|i| 1.0f32 / 1.125f32.powf((power - i) as f32))
             .collect::<Vec<_>>();
-        let noise = simplex_noise(power, 1987, &weights)
+        let rises = simplex_noise(power, 1987, &weights)
             .normalize()
-            .map(|_, z| (0.5 - z).abs() / 0.5);
+            .map(|_, z| (0.5 - z).abs() / 0.5)
+            .as_rises();
 
         // when
-        let heightmap = noise.as_rises().to_heightmap();
+        let heightmap = rises.to_heightmap();
 
         // then
         let temp_path = temp_dir().join("test.png");
