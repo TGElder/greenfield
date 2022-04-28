@@ -6,31 +6,36 @@ use commons::unsafe_float_ordering;
 
 use crate::Heightmap;
 
-pub struct Rises {
-    rises: Grid<f32>,
+pub struct Rises<'a> {
+    rises: &'a Grid<f32>,
 }
 
-pub trait ToRises {
-    fn to_rises(self) -> Rises;
+pub trait AsRises {
+    fn as_rises(&self) -> Rises;
 }
 
-impl ToRises for Heightmap {
-    fn to_rises(self) -> Rises {
+impl AsRises for Heightmap {
+    fn as_rises(&self) -> Rises {
         Rises { rises: self }
     }
 }
 
-pub trait ToHeightmap {
-    fn to_heightmap(self) -> Heightmap;
+pub trait AsHeightmap {
+    fn as_heightmap<F>(&self, origin_fn: F) -> Heightmap
+    where
+        F: FnMut((u32, u32)) -> bool;
 }
 
-impl ToHeightmap for Rises {
-    fn to_heightmap(self) -> Heightmap {
-        let rises = self.rises;
+impl<'a> AsHeightmap for Rises<'a> {
+    fn as_heightmap<F>(&self, mut origin_fn: F) -> Heightmap
+    where
+        F: FnMut((u32, u32)) -> bool,
+    {
+        let rises = &self.rises;
 
         let mut visited = Grid::<bool>::default(rises.width(), rises.height());
         let mut out = Grid::from_fn(rises.width(), rises.height(), |xy| {
-            if visited.is_border(xy) {
+            if origin_fn(xy) {
                 0.0
             } else {
                 f32::MAX
@@ -39,7 +44,7 @@ impl ToHeightmap for Rises {
 
         let mut heap: BinaryHeap<HeapElement> = out
             .iter()
-            .filter(|xy| out.is_border(xy))
+            .filter(|xy| origin_fn(*xy))
             .map(|xy| HeapElement { xy, z: 0.0 })
             .collect();
 
@@ -109,13 +114,12 @@ mod tests {
         let weights = (0..power + 1)
             .map(|i| 1.0f32 / 1.125f32.powf((power - i) as f32))
             .collect::<Vec<_>>();
-        let rises = simplex_noise(power, 1987, &weights)
+        let noise = simplex_noise(power, 1987, &weights)
             .normalize()
-            .map(|_, z| (0.5 - z).abs() / 0.5)
-            .to_rises();
+            .map(|_, z| (0.5 - z).abs() / 0.5);
 
         // when
-        let heightmap = rises.to_heightmap();
+        let heightmap = noise.as_rises().as_heightmap(|xy| noise.is_border(xy));
 
         // then
         let temp_path = temp_dir().join("test.png");
