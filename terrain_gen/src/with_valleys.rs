@@ -1,6 +1,6 @@
 use std::borrow::Borrow;
 
-use crate::{Heightmap, Rain, ToHeightmap, ToRises};
+use crate::{AsHeightmap, AsRises, Heightmap, Rain};
 
 pub struct ValleyParameters {
     rain_threshold: usize,
@@ -22,17 +22,15 @@ impl WithValleys for Heightmap {
 
         let rain = self.rain();
 
-        let rises = self
-            .map(|xy, z| {
-                if rain[xy] > parameters.rain_threshold {
-                    parameters.rise
-                } else {
-                    *z
-                }
-            })
-            .to_rises();
+        let noise = self.map(|xy, z| {
+            if rain[xy] > parameters.rain_threshold {
+                parameters.rise
+            } else {
+                *z
+            }
+        });
 
-        rises.to_heightmap()
+        noise.as_rises().as_heightmap(|xy| noise.is_border(xy))
     }
 }
 
@@ -51,12 +49,11 @@ mod tests {
         let weights = (0..power + 1)
             .map(|i| 1.0f32 / 1.125f32.powf((power - i) as f32))
             .collect::<Vec<_>>();
-        let rises = simplex_noise(power, 1987, &weights)
+        let noise = simplex_noise(power, 1987, &weights)
             .normalize()
-            .map(|_, z| (0.5 - z).abs() / 0.5)
-            .to_rises();
+            .map(|_, z| (0.5 - z).abs() / 0.5);
 
-        let heightmap = rises.to_heightmap();
+        let heightmap = noise.as_rises().as_heightmap(|xy| noise.is_border(xy));
 
         // when
         let with_valleys = heightmap.with_valleys(ValleyParameters {
