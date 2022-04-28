@@ -5,9 +5,9 @@ use commons::scale::Scale;
 use crate::{AsHeightmap, AsRises, Heightmap, Rain};
 
 pub struct ValleyParameters {
-    height_threshold: f32,
-    rain_threshold: usize,
-    rise: f32,
+    pub height_threshold: f32,
+    pub rain_threshold: usize,
+    pub rise: f32,
 }
 
 pub trait WithValleys {
