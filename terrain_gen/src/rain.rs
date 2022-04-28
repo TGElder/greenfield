@@ -1,13 +1,13 @@
 use commons::grid::Grid;
 use commons::unsafe_float_ordering;
 
-use crate::Downhill;
+use crate::{Downhill, Heightmap};
 
 pub trait Rain {
     fn rain(&self) -> Grid<usize>;
 }
 
-impl Rain for Grid<f32> {
+impl Rain for Heightmap {
     fn rain(&self) -> Grid<usize> {
         let downhills = self.downhills();
 

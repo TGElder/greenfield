@@ -1,8 +1,6 @@
 use std::borrow::Borrow;
 
-use commons::grid::Grid;
-
-use crate::{rises_to_heightmap, Rain};
+use crate::{Heightmap, Rain, ToHeightmap, ToRises};
 
 pub struct ValleyParameters {
     rain_threshold: usize,
@@ -10,13 +8,13 @@ pub struct ValleyParameters {
 }
 
 pub trait WithValleys {
-    fn with_valleys<B>(&self, parameters: B) -> Grid<f32>
+    fn with_valleys<B>(&self, parameters: B) -> Heightmap
     where
         B: Borrow<ValleyParameters>;
 }
 
-impl WithValleys for Grid<f32> {
-    fn with_valleys<B>(&self, parameters: B) -> Grid<f32>
+impl WithValleys for Heightmap {
+    fn with_valleys<B>(&self, parameters: B) -> Heightmap
     where
         B: Borrow<ValleyParameters>,
     {
@@ -24,15 +22,17 @@ impl WithValleys for Grid<f32> {
 
         let rain = self.rain();
 
-        let rises = self.map(|xy, z| {
-            if rain[xy] > parameters.rain_threshold {
-                parameters.rise
-            } else {
-                *z
-            }
-        });
+        let rises = self
+            .map(|xy, z| {
+                if rain[xy] > parameters.rain_threshold {
+                    parameters.rise
+                } else {
+                    *z
+                }
+            })
+            .to_rises();
 
-        rises_to_heightmap(rises)
+        rises.to_heightmap()
     }
 }
 
@@ -53,9 +53,10 @@ mod tests {
             .collect::<Vec<_>>();
         let rises = simplex_noise(power, 1987, &weights)
             .normalize()
-            .map(|_, z| (0.5 - z).abs() / 0.5);
+            .map(|_, z| (0.5 - z).abs() / 0.5)
+            .to_rises();
 
-        let heightmap = rises_to_heightmap(rises);
+        let heightmap = rises.to_heightmap();
 
         // when
         let with_valleys = heightmap.with_valleys(ValleyParameters {
