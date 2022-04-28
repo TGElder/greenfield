@@ -1,8 +1,11 @@
 use std::borrow::Borrow;
 
+use commons::scale::Scale;
+
 use crate::{AsHeightmap, AsRises, Heightmap, Rain};
 
 pub struct ValleyParameters {
+    height_threshold: f32,
     rain_threshold: usize,
     rise: f32,
 }
@@ -30,7 +33,18 @@ impl WithValleys for Heightmap {
             }
         });
 
-        noise.as_rises().as_heightmap(|xy| noise.is_border(xy))
+        let valleys = noise
+            .as_rises()
+            .as_heightmap(|xy| self[xy] <= parameters.height_threshold);
+
+        let valleys_scale = Scale::new((0.0, 1.0), (parameters.height_threshold, 1.0));
+        self.map(|xy, z| {
+            if *z > parameters.height_threshold {
+                valleys_scale.scale(valleys[xy])
+            } else {
+                self[xy]
+            }
+        })
     }
 }
 
@@ -57,6 +71,7 @@ mod tests {
 
         // when
         let with_valleys = heightmap.with_valleys(ValleyParameters {
+            height_threshold: 0.25,
             rain_threshold: 128,
             rise: 0.01,
         });
