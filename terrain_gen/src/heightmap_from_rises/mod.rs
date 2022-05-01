@@ -1,3 +1,5 @@
+pub mod with_valleys;
+
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
