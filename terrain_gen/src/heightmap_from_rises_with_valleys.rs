@@ -22,7 +22,6 @@ where
     let parameters = parameters.borrow();
 
     let heightmap = heightmap_from_rises(rises, &parameters.origin_fn);
-
     let rain = heightmap.rain();
 
     let valley_rises = rises.map(|xy, z| {
@@ -32,15 +31,14 @@ where
             *z
         }
     });
-
     let valley_heightmap = heightmap_from_rises(&valley_rises, |xy| {
         heightmap[xy] <= parameters.height_threshold
     });
 
-    let valleys_scale = Scale::new((0.0, 1.0), (parameters.height_threshold, 1.0));
+    let valley_scale = Scale::new((0.0, 1.0), (parameters.height_threshold, 1.0));
     heightmap.map(|xy, z| {
         if *z > parameters.height_threshold {
-            valleys_scale.scale(valley_heightmap[xy])
+            valley_scale.scale(valley_heightmap[xy])
         } else {
             heightmap[xy]
         }
