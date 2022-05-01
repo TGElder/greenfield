@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
@@ -6,14 +7,25 @@ use commons::unsafe_float_ordering;
 
 use crate::{Heightmap, Rises};
 
-pub fn heightmap_from_rises<F>(rises: &Rises, origin_fn: F) -> Heightmap
+pub struct HeightmapParameters<F>
 where
     F: Fn((u32, u32)) -> bool,
 {
+    pub min_rise: f32,
+    pub origin_fn: F,
+}
+
+pub fn heightmap_from_rises<F, B>(rises: &Rises, parameters: B) -> Heightmap
+where
+    B: Borrow<HeightmapParameters<F>>,
+    F: Fn((u32, u32)) -> bool,
+{
+    let parameters = parameters.borrow();
+
     let mut visited = Grid::<bool>::default(rises.width(), rises.height());
     let mut out = Grid::from_fn(rises.width(), rises.height(), |xy| {
-        if origin_fn(xy) {
-            0.0
+        if (parameters.origin_fn)(xy) {
+            parameters.min_rise
         } else {
             f32::MAX
         }
@@ -21,7 +33,7 @@ where
 
     let mut heap: BinaryHeap<HeapElement> = out
         .iter()
-        .filter(|xy| origin_fn(*xy))
+        .filter(|xy| (parameters.origin_fn)(*xy))
         .map(|xy| HeapElement { xy, z: 0.0 })
         .collect();
 
@@ -38,7 +50,7 @@ where
             .collect::<Vec<_>>();
 
         for neighbour in unvisited_neighbours {
-            let neighbour_z_through_xy = z + rises[neighbour];
+            let neighbour_z_through_xy = z + rises[neighbour] + parameters.min_rise;
             out[neighbour] = out[neighbour].min(neighbour_z_through_xy);
             heap.push(HeapElement {
                 xy: neighbour,
@@ -59,7 +71,7 @@ impl Eq for HeapElement {}
 
 impl PartialEq for HeapElement {
     fn eq(&self, other: &Self) -> bool {
-        self.xy == other.xy
+        self.xy == other.xy && self.z == other.z
     }
 }
 
@@ -95,7 +107,13 @@ mod tests {
             .map(|_, z| (0.5 - z).abs() / 0.5);
 
         // when
-        let heightmap = heightmap_from_rises(&rises, |xy| rises.is_border(xy));
+        let heightmap = heightmap_from_rises(
+            &rises,
+            HeightmapParameters {
+                min_rise: 1.0 / 1024.0,
+                origin_fn: |xy| rises.is_border(xy),
+            },
+        );
 
         // then
         let temp_path = temp_dir().join("test.png");

@@ -2,7 +2,7 @@ use std::borrow::Borrow;
 
 use commons::scale::Scale;
 
-use crate::{heightmap_from_rises, Heightmap, Rain, Rises};
+use crate::{heightmap_from_rises, Heightmap, HeightmapParameters, Rain, Rises};
 
 pub struct ValleyParameters<F>
 where
@@ -10,8 +10,7 @@ where
 {
     pub height_threshold: f32,
     pub rain_threshold: usize,
-    pub rise: f32,
-    pub origin_fn: F,
+    pub heightmap: HeightmapParameters<F>,
 }
 
 pub fn heightmap_from_rises_with_valleys<B, F>(rises: &Rises, parameters: B) -> Heightmap
@@ -21,20 +20,24 @@ where
 {
     let parameters = parameters.borrow();
 
-    let heightmap = heightmap_from_rises(rises, &parameters.origin_fn);
+    let heightmap = heightmap_from_rises(rises, &parameters.heightmap);
     let rain = heightmap.rain();
 
     let valley_rises = rises.map(|xy, z| {
         if rain[xy] > parameters.rain_threshold {
-            parameters.rise
+            parameters.heightmap.min_rise
         } else {
             *z
         }
     });
-    let valley_heightmap = heightmap_from_rises(&valley_rises, |xy| {
-        heightmap[xy] <= parameters.height_threshold
-    });
 
+    let valley_heightmap = heightmap_from_rises(
+        &valley_rises,
+        HeightmapParameters {
+            min_rise: parameters.heightmap.min_rise,
+            origin_fn: |xy| heightmap[xy] <= parameters.height_threshold,
+        },
+    );
     let valley_scale = Scale::new((0.0, 1.0), (parameters.height_threshold, 1.0));
     heightmap.map(|xy, z| {
         if *z > parameters.height_threshold {
@@ -70,8 +73,10 @@ mod tests {
             ValleyParameters {
                 height_threshold: 0.25,
                 rain_threshold: 128,
-                rise: 0.01,
-                origin_fn: |xy| rises.is_border(xy),
+                heightmap: HeightmapParameters {
+                    min_rise: 1.0 / 1024.0,
+                    origin_fn: |xy| rises.is_border(xy),
+                },
             },
         );
 
