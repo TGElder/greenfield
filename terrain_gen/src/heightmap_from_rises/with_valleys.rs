@@ -1,5 +1,3 @@
-pub mod with_valleys;
-
 use std::borrow::Borrow;
 
 use commons::scale::Scale;
