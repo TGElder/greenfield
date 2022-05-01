@@ -39,11 +39,13 @@ where
 
         for neighbour in unvisited_neighbours {
             let neighbour_z_through_xy = z + rises[neighbour];
-            out[neighbour] = out[neighbour].min(neighbour_z_through_xy);
-            heap.push(HeapElement {
-                xy: neighbour,
-                z: neighbour_z_through_xy,
-            });
+            if neighbour_z_through_xy < out[neighbour] {
+                out[neighbour] = out[neighbour].min(neighbour_z_through_xy);
+                heap.push(HeapElement {
+                    xy: neighbour,
+                    z: neighbour_z_through_xy,
+                });
+            }
         }
     }
 
@@ -59,7 +61,7 @@ impl Eq for HeapElement {}
 
 impl PartialEq for HeapElement {
     fn eq(&self, other: &Self) -> bool {
-        self.xy == other.xy
+        self.xy == other.xy && self.z == other.z
     }
 }
 
