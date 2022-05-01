@@ -103,7 +103,7 @@ mod tests {
         heightmap.to_image(temp_path).unwrap();
 
         let actual = image::open(temp_path).unwrap();
-        let expected = image::open("test_resources/rises_to_heightmap/test.png").unwrap();
+        let expected = image::open("test_resources/heightmap_from_rises/test.png").unwrap();
         assert_eq!(actual, expected);
     }
 }

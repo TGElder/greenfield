@@ -83,7 +83,8 @@ mod tests {
         heightmap.to_image(temp_path).unwrap();
 
         let actual = image::open(temp_path).unwrap();
-        let expected = image::open("test_resources/with_valleys/test.png").unwrap();
+        let expected =
+            image::open("test_resources/heightmap_from_rises_with_valleys/test.png").unwrap();
         assert_eq!(actual, expected);
     }
 }
