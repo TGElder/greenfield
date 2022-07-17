@@ -7,3 +7,5 @@ edition = "2021"
 
 [dependencies]
 glium = "0.31.0"
+commons = { path = "../commons" }
+terrain_gen = { path = "../terrain_gen" }
