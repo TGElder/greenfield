@@ -100,12 +100,15 @@ fn main() {
 
             in vec3 position;
             out float height;
+            out float depth;
 
             uniform mat4 matrix;
 
             void main() {
                 height = position.z;
-                gl_Position = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
+                vec4 output = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
+                depth = output.z;
+                gl_Position = output;
             }
         "#;
 
@@ -113,38 +116,39 @@ fn main() {
             #version 130
 
             in float height;
+            in float depth;
             out vec4 color;
 
             void main() {
-                color = vec4(height, height, height, 1.0);
+                color = vec4(height, height, height, depth);
             }
         "#;
 
     let screen_vertex_shader_src = r#"
-                #version 130
+            #version 130
 
-                in vec2 position;
-                in vec2 tex_coords;
-                out vec2 v_tex_coords;
-                                
-                void main() {
-                    v_tex_coords = tex_coords;
-                    gl_Position = vec4(position, 0.0, 1.0);
-                }
-            "#;
+            in vec2 position;
+            in vec2 tex_coords;
+            out vec2 v_tex_coords;
+                            
+            void main() {
+                v_tex_coords = tex_coords;
+                gl_Position = vec4(position, 0.0, 1.0);
+            }
+        "#;
 
     let fragment_vertex_shader_src = r#"
-                #version 130
+            #version 130
 
-                in vec2 v_tex_coords;
-                out vec4 color;
-                
-                uniform sampler2D tex;
-                
-                void main() {
-                    color = texture(tex, v_tex_coords);
-                }
-            "#;
+            in vec2 v_tex_coords;
+            out vec4 color;
+            
+            uniform sampler2D tex;
+            
+            void main() {
+                color = texture(tex, v_tex_coords);
+            }
+        "#;
 
     let program =
         glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
@@ -162,8 +166,8 @@ fn main() {
         glium::texture::Texture2d,
         glium::framebuffer::DepthRenderBuffer,
     )> = None;
-    // let pbo: glium::texture::pixel_buffer::PixelBuffer<(f32, f32, f32, f32) >
-    //     = glium::texture::pixel_buffer::PixelBuffer::new_empty(&display, 1);
+    let pbo: glium::texture::pixel_buffer::PixelBuffer<(f32, f32, f32, f32)> =
+        glium::texture::pixel_buffer::PixelBuffer::new_empty(&display, 1);
 
     let params = glium::DrawParameters {
         depth: glium::Depth {
@@ -215,6 +219,10 @@ fn main() {
         //     0.0, 0.0, 0.0, 1.0,
         // ])
         // .transpose()
+        println!(
+            "{:?}",
+            pbo.read().map(|d| d[0]).unwrap_or((0.0, 0.0, 0.0, 0.0))
+        );
 
         let mut target = display.draw();
 
@@ -288,6 +296,31 @@ fn main() {
         }
 
         target.finish().unwrap();
+
+        // committing into the picking pbo
+        if let (Some(&(ref texture, _))) = (attachments.as_ref()) {
+            let read_target = glium::Rect {
+                left: 512,
+                bottom: 512,
+                width: 1,
+                height: 1,
+            };
+
+            if read_target.left < texture.get_width()
+                && read_target.bottom < texture.get_height().unwrap()
+            {
+                texture
+                    .main_level()
+                    .first_layer()
+                    .into_image(None)
+                    .unwrap()
+                    .raw_read_to_pixel_buffer(&read_target, &pbo);
+            } else {
+                pbo.write(&[(0.0, 0.0, 0.0, 0.0)]);
+            }
+        } else {
+            pbo.write(&[(0.0, 0.0, 0.0, 0.0)]);
+        }
     });
 }
 
