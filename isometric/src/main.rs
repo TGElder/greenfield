@@ -9,21 +9,28 @@ use glium::{uniform, Surface};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 #[derive(Copy, Clone)]
-struct Vertex {
+struct Vertex2 {
+    position: [f32; 2],
+    tex_coords: [f32; 2],
+}
+
+#[derive(Copy, Clone)]
+struct Vertex3 {
     position: [f32; 3],
 }
 
-implement_vertex!(Vertex, position);
+implement_vertex!(Vertex2, position, tex_coords);
+implement_vertex!(Vertex3, position);
 
 fn main() {
     // 1. The **winit::EventsLoop** for handling events.
-    let mut event_loop = glium::glutin::event_loop::EventLoop::new();
+    let event_loop = glium::glutin::event_loop::EventLoop::new();
     // 2. Parameters for building the Window.
     let wb = glium::glutin::window::WindowBuilder::new()
         .with_inner_size(glium::glutin::dpi::LogicalSize::new(1024.0, 768.0))
         .with_title("Hello world");
     // 3. Parameters for building the OpenGL context.
-    let cb = glium::glutin::ContextBuilder::new();
+    let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24);
     // 4. Build the Display with the given window and OpenGL context parameters and register the
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
@@ -35,28 +42,56 @@ fn main() {
 
     for x in 0..terrain.width() - 1 {
         for y in 0..terrain.height() - 1 {
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [x as f32, y as f32, terrain[(x, y)]],
             });
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [(x + 1) as f32, (y + 1) as f32, terrain[(x + 1, y + 1)]],
             });
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [(x + 1) as f32, y as f32, terrain[(x + 1, y)]],
             });
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [x as f32, y as f32, terrain[(x, y)]],
             });
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [x as f32, (y + 1) as f32, terrain[(x, y + 1)]],
             });
-            vertices.push(Vertex {
+            vertices.push(Vertex3 {
                 position: [(x + 1) as f32, (y + 1) as f32, terrain[(x + 1, y + 1)]],
             });
         }
     }
 
+    let screen_quad = vec![
+        Vertex2 {
+            position: [-1.0, -1.0],
+            tex_coords: [0.0, 0.0],
+        },
+        Vertex2 {
+            position: [1.0, -1.0],
+            tex_coords: [1.0, 0.0],
+        },
+        Vertex2 {
+            position: [-1.0, 1.0],
+            tex_coords: [0.0, 1.0],
+        },
+        Vertex2 {
+            position: [-1.0, 1.0],
+            tex_coords: [0.0, 1.0],
+        },
+        Vertex2 {
+            position: [1.0, -1.0],
+            tex_coords: [1.0, 0.0],
+        },
+        Vertex2 {
+            position: [1.0, 1.0],
+            tex_coords: [1.0, 1.0],
+        },
+    ];
+
     let vertex_buffer = glium::VertexBuffer::new(&display, &vertices).unwrap();
+    let screen_quad_buffer = glium::VertexBuffer::new(&display, &screen_quad).unwrap();
 
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
@@ -85,9 +120,59 @@ fn main() {
             }
         "#;
 
+    let screen_vertex_shader_src = r#"
+                #version 130
+
+                in vec2 position;
+                in vec2 tex_coords;
+                out vec2 v_tex_coords;
+                                
+                void main() {
+                    v_tex_coords = tex_coords;
+                    gl_Position = vec4(position, 0.0, 1.0);
+                }
+            "#;
+
+    let fragment_vertex_shader_src = r#"
+                #version 130
+
+                in vec2 v_tex_coords;
+                out vec4 color;
+                
+                uniform sampler2D tex;
+                
+                void main() {
+                    color = texture(tex, v_tex_coords);
+                }
+            "#;
+
     let program =
         glium::Program::from_source(&display, vertex_shader_src, fragment_shader_src, None)
             .unwrap();
+
+    let screen_quad_program = glium::Program::from_source(
+        &display,
+        screen_vertex_shader_src,
+        fragment_vertex_shader_src,
+        None,
+    )
+    .unwrap();
+
+    let mut attachments: Option<(
+        glium::texture::Texture2d,
+        glium::framebuffer::DepthRenderBuffer,
+    )> = None;
+    // let pbo: glium::texture::pixel_buffer::PixelBuffer<(f32, f32, f32, f32) >
+    //     = glium::texture::pixel_buffer::PixelBuffer::new_empty(&display, 1);
+
+    let params = glium::DrawParameters {
+        depth: glium::Depth {
+            test: glium::DepthTest::IfLess,
+            write: true,
+            ..Default::default()
+        },
+        ..Default::default()
+    };
 
     let mut t: f32 = -0.5;
     let mut i: f32 = 0.002;
@@ -130,7 +215,45 @@ fn main() {
         //     0.0, 0.0, 0.0, 1.0,
         // ])
         // .transpose()
-        let uniforms = uniform! {
+
+        let mut target = display.draw();
+
+        //update attachments
+        if attachments.is_none()
+            || (
+                attachments.as_ref().unwrap().0.get_width(),
+                attachments.as_ref().unwrap().0.get_height().unwrap(),
+            ) != target.get_dimensions()
+        {
+            let (width, height) = target.get_dimensions();
+            attachments = Some((
+                glium::texture::Texture2d::empty_with_format(
+                    &display,
+                    glium::texture::UncompressedFloatFormat::F32F32F32F32,
+                    glium::texture::MipmapsOption::NoMipmap,
+                    width,
+                    height,
+                )
+                .unwrap(),
+                glium::framebuffer::DepthRenderBuffer::new(
+                    &display,
+                    glium::texture::DepthFormat::F32,
+                    width,
+                    height,
+                )
+                .unwrap(),
+            ))
+        }
+
+        if let Some((ref texture, ref buffer)) = attachments {
+            texture
+                .main_level()
+                .first_layer()
+                .into_image(None)
+                .unwrap()
+                .raw_clear_buffer([0.0f32, 0.0, 0.0, 0.0]);
+
+            let uniforms = uniform! {
             matrix: [
                 [scale * yc, scale * -ys * pc, 0.0, 0.0],
                 [scale * ys, scale * yc * pc, 0.0, 0.0],
@@ -140,21 +263,30 @@ fn main() {
                 // [-ys * pc, yc * pc, ps, 0.0],
                 // [0.0, 0.0, -1.0, 0.0],
                 // [0.0, 0.0, 0.0, 1.0],
-            ]
-        };
+            ]};
+            let mut render_target =
+                glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, texture, buffer)
+                    .unwrap();
+            render_target.clear_depth(1.0);
+            render_target
+                .draw(&vertex_buffer, &indices, &program, &uniforms, &params)
+                .unwrap();
 
-        let mut target = display.draw();
+            let uniforms = uniform! {
+                tex: texture
+            };
 
-        target.clear_color(0.0, 0.0, 1.0, 1.0);
-        target
-            .draw(
-                &vertex_buffer,
-                &indices,
-                &program,
-                &uniforms,
-                &Default::default(),
-            )
-            .unwrap();
+            target
+                .draw(
+                    &screen_quad_buffer,
+                    &indices,
+                    &screen_quad_program,
+                    &uniforms,
+                    &Default::default(),
+                )
+                .unwrap();
+        }
+
         target.finish().unwrap();
     });
 }
