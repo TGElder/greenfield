@@ -4,6 +4,7 @@ use std::f32::consts::PI;
 
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
+use glium::glutin::event::KeyboardInput;
 use glium::{glutin, implement_vertex};
 use glium::{uniform, Surface};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
@@ -189,6 +190,10 @@ fn main() {
     let mut t: f32 = -0.5;
     let mut i: f32 = 0.002;
 
+    let mut cursor_xy: Option<(i32, i32)> = None;
+
+    let mut scale = 1.0 / 128.0;
+
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -196,6 +201,29 @@ fn main() {
                     *control_flow = glutin::event_loop::ControlFlow::Exit;
                     return;
                 }
+                glutin::event::WindowEvent::CursorMoved { position, .. } => {
+                    cursor_xy = Some(position.cast::<i32>().into());
+                }
+                glutin::event::WindowEvent::MouseWheel { delta, .. } => {
+                    println!("Delta = {:?}", delta);
+                    let delta = match delta {
+                        glutin::event::MouseScrollDelta::LineDelta(_, rows) => rows,
+                        glutin::event::MouseScrollDelta::PixelDelta(pixels) => pixels.y as f32,
+                    };
+                    if delta > 0.0 {
+                        scale *= 2.0;
+                    } else if delta < 0.0 {
+                        scale /= 2.0;
+                    }
+                }
+                glutin::event::WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(key),
+                            ..
+                        },
+                    ..
+                } => {}
                 _ => return,
             },
             glutin::event::Event::NewEvents(cause) => match cause {
@@ -213,7 +241,6 @@ fn main() {
         if !(-0.5..=0.5).contains(&t) {
             i *= -1.0;
         }
-        let scale = 1.0 / 128.0;
         let yaw = PI / 4.0;
         let pitch = PI / 4.0;
         let yc = yaw.cos();
@@ -227,12 +254,13 @@ fn main() {
         //     0.0, 0.0, 0.0, 1.0,
         // ])
         // .transpose()
-        println!(
-            "{:?}",
-            pbo.read()
-                .map(|d| terrain.xy(d[0].3.to_bits() as usize))
-                .unwrap_or((0, 0))
-        );
+
+        // println!(
+        //     "{:?}",
+        //     pbo.read()
+        //         .map(|d| terrain.xy(d[0].3.to_bits() as usize))
+        //         .unwrap_or((0, 0))
+        // );
 
         let mut target = display.draw();
 
@@ -308,10 +336,13 @@ fn main() {
         target.finish().unwrap();
 
         // committing into the picking pbo
-        if let (Some(&(ref texture, _))) = (attachments.as_ref()) {
+        if let (Some(cursor_xy), Some(&(ref texture, _))) = (cursor_xy, attachments.as_ref()) {
             let read_target = glium::Rect {
-                left: 512,
-                bottom: 512,
+                left: (cursor_xy.0 - 1) as u32,
+                bottom: texture
+                    .get_height()
+                    .unwrap()
+                    .saturating_sub(std::cmp::max(cursor_xy.1 - 1, 0) as u32),
                 width: 1,
                 height: 1,
             };
