@@ -17,10 +17,11 @@ struct Vertex2 {
 #[derive(Copy, Clone)]
 struct Vertex3 {
     position: [f32; 3],
+    id: u32,
 }
 
 implement_vertex!(Vertex2, position, tex_coords);
-implement_vertex!(Vertex3, position);
+implement_vertex!(Vertex3, position, id);
 
 fn main() {
     // 1. The **winit::EventsLoop** for handling events.
@@ -42,23 +43,30 @@ fn main() {
 
     for x in 0..terrain.width() - 1 {
         for y in 0..terrain.height() - 1 {
+            let id = terrain.index((x, y)) as u32;
             vertices.push(Vertex3 {
                 position: [x as f32, y as f32, terrain[(x, y)]],
+                id,
             });
             vertices.push(Vertex3 {
                 position: [(x + 1) as f32, (y + 1) as f32, terrain[(x + 1, y + 1)]],
+                id,
             });
             vertices.push(Vertex3 {
                 position: [(x + 1) as f32, y as f32, terrain[(x + 1, y)]],
+                id,
             });
             vertices.push(Vertex3 {
                 position: [x as f32, y as f32, terrain[(x, y)]],
+                id,
             });
             vertices.push(Vertex3 {
                 position: [x as f32, (y + 1) as f32, terrain[(x, y + 1)]],
+                id,
             });
             vertices.push(Vertex3 {
                 position: [(x + 1) as f32, (y + 1) as f32, terrain[(x + 1, y + 1)]],
+                id,
             });
         }
     }
@@ -96,36 +104,35 @@ fn main() {
     let indices = glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
     let vertex_shader_src = r#"
-            #version 130
+            #version 330
 
             in vec3 position;
+            in uint id;
             out float height;
-            out float depth;
+            flat out float id_in_float;
 
             uniform mat4 matrix;
 
             void main() {
-                height = position.z;
-                vec4 output = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
-                depth = output.z;
-                gl_Position = output;
+                id_in_float = uintBitsToFloat(id);
+                gl_Position = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
             }
         "#;
 
     let fragment_shader_src = r#"
-            #version 130
+            #version 330
 
             in float height;
-            in float depth;
+            flat in float id_in_float;
             out vec4 color;
 
             void main() {
-                color = vec4(height, height, height, depth);
+                color = vec4(height, height, height, id_in_float);
             }
         "#;
 
     let screen_vertex_shader_src = r#"
-            #version 130
+            #version 330
 
             in vec2 position;
             in vec2 tex_coords;
@@ -138,7 +145,7 @@ fn main() {
         "#;
 
     let fragment_vertex_shader_src = r#"
-            #version 130
+            #version 330
 
             in vec2 v_tex_coords;
             out vec4 color;
