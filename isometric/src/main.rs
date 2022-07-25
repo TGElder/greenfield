@@ -114,6 +114,7 @@ fn main() {
             uniform mat4 matrix;
 
             void main() {
+                height = position.z;
                 id_in_float = uintBitsToFloat(id);
                 gl_Position = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
             }
@@ -228,7 +229,9 @@ fn main() {
         // .transpose()
         println!(
             "{:?}",
-            pbo.read().map(|d| d[0]).unwrap_or((0.0, 0.0, 0.0, 0.0))
+            pbo.read()
+                .map(|d| terrain.xy(d[0].3.to_bits() as usize))
+                .unwrap_or((0, 0))
         );
 
         let mut target = display.draw();
