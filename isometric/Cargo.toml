@@ -8,4 +8,5 @@ edition = "2021"
 [dependencies]
 glium = "0.31.0"
 commons = { path = "../commons" }
+nalgebra = "0.31.0"
 terrain_gen = { path = "../terrain_gen" }

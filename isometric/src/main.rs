@@ -8,6 +8,7 @@ use commons::noise::simplex_noise;
 use glium::glutin::event::KeyboardInput;
 use glium::{glutin, implement_vertex};
 use glium::{uniform, Surface};
+use nalgebra::{Matrix4, Point4, Vector3, Vector4};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 #[derive(Copy, Clone)]
@@ -193,10 +194,38 @@ fn main() {
 
     let mut cursor_xy: Option<(i32, i32)> = None;
 
-    let mut scale = 1.0 / 128.0;
+    let yaw = PI / 4.0;
+    let pitch = PI / 4.0;
+    let yc = yaw.cos();
+    let ys = yaw.sin();
+    let pc = pitch.cos();
+    let ps = pitch.sin();
+    let isometric = Matrix4::new(
+        yc,
+        ys,
+        0.0,
+        0.0,
+        -ys * pc,
+        yc * pc,
+        ps,
+        0.0,
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    );
+    let mut scale = Matrix4::new(
+        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    );
+    let mut affine = Matrix4::new(
+        1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
+    );
 
-    let mut next_frame_time = Instant::now();
-
+    let mut centre = false;
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -215,9 +244,15 @@ fn main() {
                         glutin::event::MouseScrollDelta::PixelDelta(pixels) => pixels.y as f32,
                     };
                     if delta > 0.0 {
-                        scale *= 2.0;
+                        scale[(0, 0)] *= 2.0;
+                        scale[(1, 1)] *= 2.0;
+                        scale[(2, 2)] *= 2.0;
+                        centre = true;
                     } else if delta < 0.0 {
-                        scale /= 2.0;
+                        scale[(0, 0)] /= 2.0;
+                        scale[(1, 1)] /= 2.0;
+                        scale[(2, 2)] /= 2.0;
+                        centre = true;
                     }
                     return;
                 }
@@ -239,12 +274,7 @@ fn main() {
         if !(-0.5..=0.5).contains(&t) {
             i *= -1.0;
         }
-        let yaw = PI / 4.0;
-        let pitch = PI / 4.0;
-        let yc = yaw.cos();
-        let ys = yaw.sin();
-        let pc = pitch.cos();
-        let ps = pitch.sin();
+
         // na::Matrix4::from_vec(vec![
         //     yc, ys, 0.0, 0.0,
         //     -ys * pc, yc * pc, ps, 0.0,
@@ -253,12 +283,10 @@ fn main() {
         // ])
         // .transpose()
 
-        // println!(
-        //     "{:?}",
-        //     pbo.read()
-        //         .map(|d| terrain.xy(d[0].3.to_bits() as usize))
-        //         .unwrap_or((0, 0))
-        // );
+        let mut focus = pbo
+            .read()
+            .map(|d| terrain.xy(d[0].3.to_bits() as usize))
+            .ok();
 
         let mut target = display.draw();
 
@@ -297,16 +325,30 @@ fn main() {
                 .unwrap()
                 .raw_clear_buffer([0.0f32, 0.0, 0.0, 0.0]);
 
+            let transform = scale * isometric;
+            if centre {
+                if let (Some((x, y)), Some((sx, sy))) = (focus, cursor_xy) {
+                    let sx = (sx as f32 / 512.0) - 1.0;
+                    let sy = (sy as f32 / 393.0) - 1.0;
+                    println!("{:?}", (sx, sy));
+                    affine = look_at(
+                        &[x as f32, y as f32, terrain[(x as u32, y as u32)] * 32.0],
+                        &[sx, -sy],
+                        &transform,
+                    ); //TODO z-scaling properly
+                }
+                centre = false;
+            }
+
+            // affine = look_at(&[32.0, 32.0, 0.0], &transform);
+
+            let transform = affine * transform;
             let uniforms = uniform! {
             matrix: [
-                [scale * yc, scale * -ys * pc, 0.0, 0.0],
-                [scale * ys, scale * yc * pc, 0.0, 0.0],
-                [0.0, scale * ps, scale * -1.0, 0.0],
-                [-1.0, -0.0, 0.0, 1.0]
-                // [yc, ys, 0.0, 0.0],
-                // [-ys * pc, yc * pc, ps, 0.0],
-                // [0.0, 0.0, -1.0, 0.0],
-                // [0.0, 0.0, 0.0, 1.0],
+                [transform[(0, 0)], transform[(1, 0)], transform[(2, 0)], transform[(3, 0)]],
+                [transform[(0, 1)], transform[(1, 1)], transform[(2, 1)], transform[(3, 1)]],
+                [transform[(0, 2)], transform[(1, 2)], transform[(2, 2)], transform[(3, 2)]],
+                [transform[(0, 3)], transform[(1, 3)], transform[(2, 3)], transform[(3, 3)]],
             ]};
             let mut render_target =
                 glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, texture, buffer)
@@ -381,4 +423,30 @@ fn get_heightmap() -> Grid<f32> {
             origin_fn: |xy| rises.is_border(xy),
         },
     )
+}
+
+fn look_at([a, b, c]: &[f32; 3], [x, y]: &[f32; 2], transform: &Matrix4<f32>) -> Matrix4<f32> {
+    let point = Vector4::new(*a, *b, *c, 1.0);
+
+    let offsets = transform * point;
+
+    Matrix4::new(
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        -offsets.x + x,
+        -offsets.y + y,
+        0.0,
+        1.0,
+    )
+    .transpose()
 }
