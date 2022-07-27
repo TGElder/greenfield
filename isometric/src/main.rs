@@ -1,6 +1,7 @@
 extern crate glium;
 
 use std::f32::consts::PI;
+use std::time::Instant;
 
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
@@ -194,6 +195,8 @@ fn main() {
 
     let mut scale = 1.0 / 128.0;
 
+    let mut next_frame_time = Instant::now();
+
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -203,6 +206,7 @@ fn main() {
                 }
                 glutin::event::WindowEvent::CursorMoved { position, .. } => {
                     cursor_xy = Some(position.cast::<i32>().into());
+                    return;
                 }
                 glutin::event::WindowEvent::MouseWheel { delta, .. } => {
                     println!("Delta = {:?}", delta);
@@ -215,15 +219,9 @@ fn main() {
                     } else if delta < 0.0 {
                         scale /= 2.0;
                     }
+                    return;
                 }
-                glutin::event::WindowEvent::KeyboardInput {
-                    input:
-                        KeyboardInput {
-                            virtual_keycode: Some(key),
-                            ..
-                        },
-                    ..
-                } => {}
+
                 _ => return,
             },
             glutin::event::Event::NewEvents(cause) => match cause {
