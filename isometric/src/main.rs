@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use glium::glutin::event::KeyboardInput;
+use glium::glutin::event::{KeyboardInput, ElementState, MouseButton};
 use glium::{glutin, implement_vertex};
 use glium::{uniform, Surface};
 use nalgebra::{Matrix4, Point4, Vector3, Vector4};
@@ -194,30 +194,12 @@ fn main() {
 
     let mut cursor_xy: Option<(i32, i32)> = None;
 
-    let yaw = PI / 4.0;
-    let pitch = PI / 4.0;
-    let yc = yaw.cos();
-    let ys = yaw.sin();
-    let pc = pitch.cos();
-    let ps = pitch.sin();
-    let isometric = Matrix4::new(
-        yc,
-        ys,
-        0.0,
-        0.0,
-        -ys * pc,
-        yc * pc,
-        ps,
-        0.0,
-        0.0,
-        0.0,
-        -1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-    );
+    let mut yaw = PI / 4.0;
+    let mut pitch = PI / 4.0;
+    let mut yaw_delta = PI / 32.0;
+
+    let mut rotation = rotate(&yaw, &pitch);
+
     let mut scale = Matrix4::new(
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
     );
@@ -226,6 +208,7 @@ fn main() {
     );
 
     let mut centre = false;
+    let mut drag = false;
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -237,8 +220,15 @@ fn main() {
                     cursor_xy = Some(position.cast::<i32>().into());
                     return;
                 }
+                glutin::event::WindowEvent::MouseInput { button: MouseButton::Left, state: ElementState::Pressed , .. } => {
+                    drag = true;
+                    return;
+                }
+                glutin::event::WindowEvent::MouseInput { button: MouseButton::Left, state: ElementState::Released , .. } => {
+                    drag = false;
+                    return;
+                }
                 glutin::event::WindowEvent::MouseWheel { delta, .. } => {
-                    println!("Delta = {:?}", delta);
                     let delta = match delta {
                         glutin::event::MouseScrollDelta::LineDelta(_, rows) => rows,
                         glutin::event::MouseScrollDelta::PixelDelta(pixels) => pixels.y as f32,
@@ -256,7 +246,30 @@ fn main() {
                     }
                     return;
                 }
-
+                glutin::event::WindowEvent::KeyboardInput {
+                    input:
+                        KeyboardInput {
+                            virtual_keycode: Some(key),
+                            state: ElementState::Pressed,
+                            ..
+                        },
+                    ..
+                } => {
+                    match key {
+                        glutin::event::VirtualKeyCode::E => {
+                            yaw = (yaw + yaw_delta) % (PI * 2.0);
+                            rotation = rotate(&yaw, &pitch);
+                            centre = true;
+                        }
+                        glutin::event::VirtualKeyCode::Q => {
+                            yaw = (yaw - yaw_delta) % (PI * 2.0);
+                            rotation = rotate(&yaw, &pitch);
+                            centre = true;
+                        }
+                        _ => {}
+                    };
+                    return;
+                }
                 _ => return,
             },
             glutin::event::Event::NewEvents(cause) => match cause {
@@ -283,10 +296,12 @@ fn main() {
         // ])
         // .transpose()
 
-        let mut focus = pbo
+        let focus = pbo
             .read()
             .map(|d| terrain.xy(d[0].3.to_bits() as usize))
             .ok();
+
+        println!("{:?}", focus);
 
         let mut target = display.draw();
 
@@ -325,13 +340,13 @@ fn main() {
                 .unwrap()
                 .raw_clear_buffer([0.0f32, 0.0, 0.0, 0.0]);
 
-            let transform = scale * isometric;
-            if centre {
+            let transform = scale * rotation;
+            if drag || centre {
                 if let (Some((x, y)), Some((sx, sy))) = (focus, cursor_xy) {
                     let sx = (sx as f32 / 512.0) - 1.0;
                     let sy = (sy as f32 / 393.0) - 1.0;
-                    println!("{:?}", (sx, sy));
                     affine = look_at(
+                        // &[128.0, 128.0, terrain[(128, 128)]],
                         &[x as f32, y as f32, terrain[(x as u32, y as u32)] * 32.0],
                         &[sx, -sy],
                         &transform,
@@ -340,7 +355,7 @@ fn main() {
                 centre = false;
             }
 
-            // affine = look_at(&[32.0, 32.0, 0.0], &transform);
+            // affine = look_at(&[128.0, 128.0, 0.0], &[0.0, -1.0], &transform);
 
             let transform = affine * transform;
             let uniforms = uniform! {
@@ -445,8 +460,33 @@ fn look_at([a, b, c]: &[f32; 3], [x, y]: &[f32; 2], transform: &Matrix4<f32>) ->
         0.0,
         -offsets.x + x,
         -offsets.y + y,
-        0.0,
+       -offsets.z,
         1.0,
     )
     .transpose()
+}
+
+fn rotate(yaw: &f32, pitch: &f32) -> Matrix4<f32> {
+    let yc = yaw.cos();
+    let ys = yaw.sin();
+    let pc = pitch.cos();
+    let ps = pitch.sin();
+    Matrix4::new(
+        yc,
+        ys,
+        0.0,
+        0.0, //
+        -ys * pc,
+        yc * pc,
+        ps,
+        0.0, //
+        0.0,
+        0.0,
+        -1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+    )
 }
