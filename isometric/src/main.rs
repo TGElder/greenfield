@@ -39,7 +39,7 @@ fn main() {
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
 
-    let terrain = get_heightmap();
+    let terrain = get_heightmap().map(|_, z| z * 32.0);
 
     let mut vertices =
         Vec::with_capacity((terrain.width() - 1) as usize * (terrain.height() - 1) as usize * 6);
@@ -119,14 +119,14 @@ fn main() {
             uniform mat4 matrix;
 
             void main() {
-                height = position.z;
+                height = position.z / 32.0;
                 id_in_float = uintBitsToFloat(id);
                 if (id == selection) {
                     selected = 1;
                 } else {
                     selected = 0;
                 }
-                gl_Position = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
+                gl_Position = matrix * vec4(position.x, position.y, position.z, 1.0);
             }
         "#;
 
@@ -207,7 +207,7 @@ fn main() {
     let mut cursor_xy: Option<(i32, i32)> = None;
 
     let mut yaw = PI / 4.0;
-    let mut pitch = PI / 4.0;
+    let mut pitch = 5.0 * PI / 8.0;
     let mut yaw_delta = PI / 32.0;
 
     let mut rotation = rotate(&yaw, &pitch);
@@ -215,6 +215,7 @@ fn main() {
     let mut scale = Matrix4::new(
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
     );
+    let mut zoom = 1.0;
     let mut affine = Matrix4::new(
         1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0,
     );
@@ -255,14 +256,10 @@ fn main() {
                         glutin::event::MouseScrollDelta::PixelDelta(pixels) => pixels.y as f32,
                     };
                     if delta > 0.0 {
-                        scale[(0, 0)] *= 2.0;
-                        scale[(1, 1)] *= 2.0;
-                        scale[(2, 2)] *= 2.0;
+                        zoom *= 2.0;
                         centre = true;
                     } else if delta < 0.0 {
-                        scale[(0, 0)] /= 2.0;
-                        scale[(1, 1)] /= 2.0;
-                        scale[(2, 2)] /= 2.0;
+                        zoom /= 2.0;
                         centre = true;
                     }
                     return;
@@ -284,6 +281,16 @@ fn main() {
                         }
                         glutin::event::VirtualKeyCode::Q => {
                             yaw = (yaw - yaw_delta) % (PI * 2.0);
+                            rotation = rotate(&yaw, &pitch);
+                            centre = true;
+                        }
+                        glutin::event::VirtualKeyCode::R => {
+                            pitch = (pitch + yaw_delta) % (PI * 2.0);
+                            rotation = rotate(&yaw, &pitch);
+                            centre = true;
+                        }
+                        glutin::event::VirtualKeyCode::F => {
+                            pitch = (pitch - yaw_delta) % (PI * 2.0);
                             rotation = rotate(&yaw, &pitch);
                             centre = true;
                         }
@@ -323,6 +330,11 @@ fn main() {
 
         let mut target = display.draw();
 
+        let (width, height) = target.get_dimensions();
+        scale[(0, 0)] = zoom;
+        scale[(1, 1)] = zoom * (width as f32 / height as f32);
+        scale[(2, 2)] = 1.0 / 32.0;
+
         //update attachments
         if attachments.is_none()
             || (
@@ -361,14 +373,14 @@ fn main() {
             let transform = scale * rotation;
             if drag || centre {
                 if let (Some((x, y)), Some((sx, sy))) = (focus, cursor_xy) {
-                    let sx = (sx as f32 / 512.0) - 1.0;
-                    let sy = 1.0 - (sy as f32 / 384.0);
+                    let sx = (sx as f32 / (width as f32 / 2.0)) - 1.0;
+                    let sy = 1.0 - (sy as f32 / (height as f32 / 2.0));
                     affine = look_at(
                         // &[128.0, 128.0, terrain[(128, 128)]],
                         &[
                             x as f32 + 0.5,
                             y as f32 + 0.5,
-                            terrain[(x as u32, y as u32)] * 32.0,
+                            terrain[(x as u32, y as u32)],
                         ],
                         &[sx, sy],
                         &transform,
@@ -379,7 +391,6 @@ fn main() {
 
             // affine = look_at(&[128.0, 128.0, 0.0], &[0.0, -1.0], &transform);
 
-            println!("{}", selected_index);
             let transform = affine * transform;
             let uniforms = uniform! {
                 matrix: [
@@ -485,12 +496,10 @@ fn look_at([a, b, c]: &[f32; 3], [x, y]: &[f32; 2], transform: &Matrix4<f32>) ->
         0.0,
         -offsets.x + x,
         -offsets.y + y,
-        -offsets.z,
+        1.0,
         1.0,
     )
     .transpose();
-
-    println!("{:?} = {:?}", [x, y], out * transform * point);
 
     out
 }
