@@ -5,7 +5,7 @@ use std::time::Instant;
 
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use glium::glutin::event::{KeyboardInput, ElementState, MouseButton};
+use glium::glutin::event::{ElementState, KeyboardInput, MouseButton};
 use glium::{glutin, implement_vertex};
 use glium::{uniform, Surface};
 use nalgebra::{Matrix4, Point4, Vector3, Vector4};
@@ -113,12 +113,19 @@ fn main() {
             in uint id;
             out float height;
             flat out float id_in_float;
+            flat out int selected;
 
+            uniform uint selection;
             uniform mat4 matrix;
 
             void main() {
                 height = position.z;
                 id_in_float = uintBitsToFloat(id);
+                if (id == selection) {
+                    selected = 1;
+                } else {
+                    selected = 0;
+                }
                 gl_Position = matrix * vec4(position.x, position.y, position.z * 32.0, 1.0);
             }
         "#;
@@ -128,10 +135,15 @@ fn main() {
 
             in float height;
             flat in float id_in_float;
+            flat in int selected;
             out vec4 color;
 
             void main() {
-                color = vec4(height, height, height, id_in_float);
+                if (selected == 1) {
+                    color = vec4(1.0, 0.0, 0.0, id_in_float);
+                } else {
+                    color = vec4(height, height, height, id_in_float);
+                }
             }
         "#;
 
@@ -209,6 +221,7 @@ fn main() {
 
     let mut centre = false;
     let mut drag = false;
+    let mut selected_index = 0;
     event_loop.run(move |event, _, control_flow| {
         match event {
             glutin::event::Event::WindowEvent { event, .. } => match event {
@@ -220,11 +233,19 @@ fn main() {
                     cursor_xy = Some(position.cast::<i32>().into());
                     return;
                 }
-                glutin::event::WindowEvent::MouseInput { button: MouseButton::Left, state: ElementState::Pressed , .. } => {
+                glutin::event::WindowEvent::MouseInput {
+                    button: MouseButton::Left,
+                    state: ElementState::Pressed,
+                    ..
+                } => {
                     drag = true;
                     return;
                 }
-                glutin::event::WindowEvent::MouseInput { button: MouseButton::Left, state: ElementState::Released , .. } => {
+                glutin::event::WindowEvent::MouseInput {
+                    button: MouseButton::Left,
+                    state: ElementState::Released,
+                    ..
+                } => {
                     drag = false;
                     return;
                 }
@@ -296,12 +317,9 @@ fn main() {
         // ])
         // .transpose()
 
-        let focus = pbo
-            .read()
-            .map(|d| terrain.xy(d[0].3.to_bits() as usize))
-            .ok();
-
-        println!("{:?}", focus);
+        let index = pbo.read().map(|d| d[0].3.to_bits() as usize).ok();
+        let focus = index.map(|index| terrain.xy(index));
+        selected_index = index.unwrap_or_default() as u32;
 
         let mut target = display.draw();
 
@@ -344,11 +362,15 @@ fn main() {
             if drag || centre {
                 if let (Some((x, y)), Some((sx, sy))) = (focus, cursor_xy) {
                     let sx = (sx as f32 / 512.0) - 1.0;
-                    let sy = (sy as f32 / 393.0) - 1.0;
+                    let sy = 1.0 - (sy as f32 / 384.0);
                     affine = look_at(
                         // &[128.0, 128.0, terrain[(128, 128)]],
-                        &[x as f32, y as f32, terrain[(x as u32, y as u32)] * 32.0],
-                        &[sx, -sy],
+                        &[
+                            x as f32 + 0.5,
+                            y as f32 + 0.5,
+                            terrain[(x as u32, y as u32)] * 32.0,
+                        ],
+                        &[sx, sy],
                         &transform,
                     ); //TODO z-scaling properly
                 }
@@ -357,14 +379,17 @@ fn main() {
 
             // affine = look_at(&[128.0, 128.0, 0.0], &[0.0, -1.0], &transform);
 
+            println!("{}", selected_index);
             let transform = affine * transform;
             let uniforms = uniform! {
-            matrix: [
-                [transform[(0, 0)], transform[(1, 0)], transform[(2, 0)], transform[(3, 0)]],
-                [transform[(0, 1)], transform[(1, 1)], transform[(2, 1)], transform[(3, 1)]],
-                [transform[(0, 2)], transform[(1, 2)], transform[(2, 2)], transform[(3, 2)]],
-                [transform[(0, 3)], transform[(1, 3)], transform[(2, 3)], transform[(3, 3)]],
-            ]};
+                matrix: [
+                    [transform[(0, 0)], transform[(1, 0)], transform[(2, 0)], transform[(3, 0)]],
+                    [transform[(0, 1)], transform[(1, 1)], transform[(2, 1)], transform[(3, 1)]],
+                    [transform[(0, 2)], transform[(1, 2)], transform[(2, 2)], transform[(3, 2)]],
+                    [transform[(0, 3)], transform[(1, 3)], transform[(2, 3)], transform[(3, 3)]],
+                ],
+                selection: selected_index
+            };
             let mut render_target =
                 glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(&display, texture, buffer)
                     .unwrap();
@@ -393,11 +418,11 @@ fn main() {
         // committing into the picking pbo
         if let (Some(cursor_xy), Some(&(ref texture, _))) = (cursor_xy, attachments.as_ref()) {
             let read_target = glium::Rect {
-                left: (cursor_xy.0 - 1) as u32,
+                left: (cursor_xy.0) as u32,
                 bottom: texture
                     .get_height()
                     .unwrap()
-                    .saturating_sub(std::cmp::max(cursor_xy.1 - 1, 0) as u32),
+                    .saturating_sub(std::cmp::max(cursor_xy.1, 0) as u32),
                 width: 1,
                 height: 1,
             };
@@ -445,7 +470,7 @@ fn look_at([a, b, c]: &[f32; 3], [x, y]: &[f32; 2], transform: &Matrix4<f32>) ->
 
     let offsets = transform * point;
 
-    Matrix4::new(
+    let out = Matrix4::new(
         1.0,
         0.0,
         0.0,
@@ -460,10 +485,14 @@ fn look_at([a, b, c]: &[f32; 3], [x, y]: &[f32; 2], transform: &Matrix4<f32>) ->
         0.0,
         -offsets.x + x,
         -offsets.y + y,
-       -offsets.z,
+        -offsets.z,
         1.0,
     )
-    .transpose()
+    .transpose();
+
+    println!("{:?} = {:?}", [x, y], out * transform * point);
+
+    out
 }
 
 fn rotate(yaw: &f32, pitch: &f32) -> Matrix4<f32> {
