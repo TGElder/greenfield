@@ -2,6 +2,7 @@ use std::cmp::Ordering;
 
 extern crate maplit;
 
+pub mod color;
 pub mod float_grid;
 pub mod grid;
 pub mod noise;
