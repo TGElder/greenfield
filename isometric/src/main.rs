@@ -1,6 +1,6 @@
 extern crate glium;
 
-mod glium_graphics;
+mod glium_backend;
 mod graphics;
 
 use commons::color::Color;
@@ -9,18 +9,19 @@ use commons::noise::simplex_noise;
 use glium::glutin;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
-use crate::glium_graphics::Graphics;
+use crate::glium_backend::graphics::Graphics;
 use crate::graphics::elements::Triangle;
+use crate::graphics::GraphicsBackend;
 
 fn main() {
     // 1. The **winit::EventsLoop** for handling events.
-    let event_loop = glium::glutin::event_loop::EventLoop::new();
+    let event_loop = glutin::event_loop::EventLoop::new();
     // 2. Parameters for building the Window.
-    let wb = glium::glutin::window::WindowBuilder::new()
-        .with_inner_size(glium::glutin::dpi::LogicalSize::new(1024.0, 768.0))
+    let wb = glutin::window::WindowBuilder::new()
+        .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0))
         .with_title("Hello world");
     // 3. Parameters for building the OpenGL context.
-    let cb = glium::glutin::ContextBuilder::new().with_depth_buffer(24);
+    let cb = glutin::ContextBuilder::new().with_depth_buffer(24);
     // 4. Build the Display with the given window and OpenGL context parameters and register the
     //    window with the events_loop.
     let display = glium::Display::new(wb, cb, &event_loop).unwrap();
