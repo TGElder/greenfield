@@ -48,7 +48,7 @@ pub struct Graphics {
     matrices: Matrices,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
-    primitives: Vec<Option<Primitives>>,
+    primitives: Vec<Option<Primitive>>,
     primitive_ids: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
@@ -76,12 +76,12 @@ impl Graphics {
     }
 }
 
-struct Primitives {
+struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
 impl GraphicsBackend for Graphics {
-    fn draw_primitive(&mut self, triangles: &[Triangle]) -> usize {
+    fn add_primitive(&mut self, triangles: &[Triangle]) -> usize {
         let id = match self.primitive_ids.pop() {
             Some(id) => id,
             None => {
@@ -101,7 +101,7 @@ impl GraphicsBackend for Graphics {
                 })
             })
             .collect::<Vec<ColoredVertex>>();
-        self.primitives[id] = Some(Primitives {
+        self.primitives[id] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices).unwrap(),
         });
 
@@ -142,10 +142,10 @@ impl Graphics {
             transform: transform
         };
 
-        for quads in self.primitives.iter().flatten() {
+        for primitive in self.primitives.iter().flatten() {
             surface
                 .draw(
-                    &quads.vertex_buffer,
+                    &primitive.vertex_buffer,
                     &INDICES,
                     &self.programs.primitive,
                     &uniforms,

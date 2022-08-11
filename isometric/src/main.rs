@@ -52,7 +52,7 @@ fn main() {
         }
     }
 
-    graphics.draw_primitive(&triangles);
+    graphics.add_primitive(&triangles);
 
     event_loop.run(move |event, _, control_flow| {
         match event {
