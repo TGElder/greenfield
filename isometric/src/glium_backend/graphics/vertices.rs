@@ -4,11 +4,11 @@ pub struct ColoredVertex {
     pub position: [f32; 3],
     pub color: [f32; 3],
 }
-glium::implement_vertex!(ColoredVertex, position, id);
+glium::implement_vertex!(ColoredVertex, position, id, color);
 
 #[derive(Copy, Clone)]
 pub struct ScreenVertex {
-    pub position: [f32; 2],
-    pub tex_coords: [f32; 2],
+    pub screen_position: [f32; 2],
+    pub canvas_position: [f32; 2],
 }
-glium::implement_vertex!(ScreenVertex, position, tex_coords);
+glium::implement_vertex!(ScreenVertex, screen_position, canvas_position);

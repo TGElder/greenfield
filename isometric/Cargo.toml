@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-glium = "0.31.0"
 commons = { path = "../commons" }
+glium = "0.31.0"
 nalgebra = "0.31.0"
 terrain_gen = { path = "../terrain_gen" }

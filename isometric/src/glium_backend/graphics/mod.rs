@@ -16,13 +16,40 @@ use vertices::*;
 static INDICES: glium::index::NoIndices =
     glium::index::NoIndices(glium::index::PrimitiveType::TrianglesList);
 
+const SCREEN_QUAD: [ScreenVertex; 6] = [
+    ScreenVertex {
+        screen_position: [-1.0, -1.0],
+        canvas_position: [0.0, 0.0],
+    },
+    ScreenVertex {
+        screen_position: [1.0, -1.0],
+        canvas_position: [1.0, 0.0],
+    },
+    ScreenVertex {
+        screen_position: [-1.0, 1.0],
+        canvas_position: [0.0, 1.0],
+    },
+    ScreenVertex {
+        screen_position: [-1.0, 1.0],
+        canvas_position: [0.0, 1.0],
+    },
+    ScreenVertex {
+        screen_position: [1.0, -1.0],
+        canvas_position: [1.0, 0.0],
+    },
+    ScreenVertex {
+        screen_position: [1.0, 1.0],
+        canvas_position: [1.0, 1.0],
+    },
+];
+
 pub struct Graphics {
     display: glium::Display,
     matrices: Matrices,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
-    triangles: Vec<Option<GliumTriangles>>,
-    triangle_ids: Vec<usize>,
+    primitives: Vec<Option<Primitives>>,
+    primitive_ids: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -33,10 +60,9 @@ impl Graphics {
             matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
-            triangles: vec![],
-            triangle_ids: vec![],
+            primitives: vec![],
+            primitive_ids: vec![],
             programs: Programs::new(&display),
-            display,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
                     test: glium::DepthTest::IfLess,
@@ -45,48 +71,22 @@ impl Graphics {
                 },
                 ..Default::default()
             },
+            display,
         }
     }
 }
 
-const SCREEN_QUAD: [ScreenVertex; 6] = [
-    ScreenVertex {
-        position: [-1.0, -1.0],
-        tex_coords: [0.0, 0.0],
-    },
-    ScreenVertex {
-        position: [1.0, -1.0],
-        tex_coords: [1.0, 0.0],
-    },
-    ScreenVertex {
-        position: [-1.0, 1.0],
-        tex_coords: [0.0, 1.0],
-    },
-    ScreenVertex {
-        position: [-1.0, 1.0],
-        tex_coords: [0.0, 1.0],
-    },
-    ScreenVertex {
-        position: [1.0, -1.0],
-        tex_coords: [1.0, 0.0],
-    },
-    ScreenVertex {
-        position: [1.0, 1.0],
-        tex_coords: [1.0, 1.0],
-    },
-];
-
-struct GliumTriangles {
+struct Primitives {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
 impl GraphicsBackend for Graphics {
-    fn draw_triangles(&mut self, triangles: &[Triangle]) -> usize {
-        let id = match self.triangle_ids.pop() {
+    fn draw_primitive(&mut self, triangles: &[Triangle]) -> usize {
+        let id = match self.primitive_ids.pop() {
             Some(id) => id,
             None => {
-                let out = self.triangle_ids.len();
-                self.triangles.push(None);
+                let out = self.primitive_ids.len();
+                self.primitives.push(None);
                 out
             }
         };
@@ -101,10 +101,9 @@ impl GraphicsBackend for Graphics {
                 })
             })
             .collect::<Vec<ColoredVertex>>();
-
-        let vertex_buffer = glium::VertexBuffer::new(&self.display, &vertices).unwrap();
-
-        self.triangles[id] = Some(GliumTriangles { vertex_buffer });
+        self.primitives[id] = Some(Primitives {
+            vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices).unwrap(),
+        });
 
         id
     }
@@ -117,8 +116,8 @@ impl GraphicsBackend for Graphics {
         let canvas = self.canvas.as_ref().unwrap();
         let mut canvas = canvas.frame(&self.display);
 
-        self.render_glium_triangles(&mut canvas);
-        self.render_canvas(&mut frame);
+        self.render_primitives_to_canvas(&mut canvas);
+        self.render_canvas_to_frame(&mut frame);
 
         frame.finish().unwrap();
     }
@@ -134,22 +133,16 @@ impl Graphics {
         Some(Canvas::new(&self.display, dimensions))
     }
 
-    fn render_glium_triangles<S>(&self, surface: &mut S)
+    fn render_primitives_to_canvas<S>(&self, surface: &mut S)
     where
         S: glium::Surface,
     {
-        let transform = self.matrices.composite;
+        let transform: [[f32; 4]; 4] = self.matrices.composite.into();
         let uniforms = glium::uniform! {
-            matrix: [
-                [transform[(0, 0)], transform[(1, 0)], transform[(2, 0)], transform[(3, 0)]],
-                [transform[(0, 1)], transform[(1, 1)], transform[(2, 1)], transform[(3, 1)]],
-                [transform[(0, 2)], transform[(1, 2)], transform[(2, 2)], transform[(3, 2)]],
-                [transform[(0, 3)], transform[(1, 3)], transform[(2, 3)], transform[(3, 3)]],
-            ],
-            selection: 0u32
+            transform: transform
         };
 
-        for quads in self.triangles.iter().flatten() {
+        for quads in self.primitives.iter().flatten() {
             surface
                 .draw(
                     &quads.vertex_buffer,
@@ -162,14 +155,14 @@ impl Graphics {
         }
     }
 
-    fn render_canvas<S>(&self, surface: &mut S)
+    fn render_canvas_to_frame<S>(&self, surface: &mut S)
     where
         S: glium::Surface,
     {
         let canvas = self.canvas.as_ref().unwrap();
 
         let uniforms = glium::uniform! {
-            tex: &canvas.texture
+            canvas: &canvas.texture
         };
 
         surface

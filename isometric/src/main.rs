@@ -9,25 +9,19 @@ use commons::noise::simplex_noise;
 use glium::glutin;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
-use crate::glium_backend::graphics::Graphics;
 use crate::graphics::elements::Triangle;
 use crate::graphics::GraphicsBackend;
 
 fn main() {
-    // 1. The **winit::EventsLoop** for handling events.
     let event_loop = glutin::event_loop::EventLoop::new();
-    // 2. Parameters for building the Window.
-    let wb = glutin::window::WindowBuilder::new()
+    let window_builder = glutin::window::WindowBuilder::new()
         .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0))
-        .with_title("Hello world");
-    // 3. Parameters for building the OpenGL context.
-    let cb = glutin::ContextBuilder::new().with_depth_buffer(24);
-    // 4. Build the Display with the given window and OpenGL context parameters and register the
-    //    window with the events_loop.
-    let display = glium::Display::new(wb, cb, &event_loop).unwrap();
-    let mut graphics = Graphics::new(display);
+        .with_title("Demo");
+    let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
+    let display = glium::Display::new(window_builder, context_builder, &event_loop).unwrap();
+    let mut graphics = glium_backend::graphics::Graphics::new(display);
 
-    let terrain = get_heightmap().map(|_, z| z * 32.0);
+    let terrain = get_heightmap();
 
     let mut triangles =
         Vec::with_capacity((terrain.width() - 1) as usize * (terrain.height() - 1) as usize * 2);
@@ -37,7 +31,13 @@ fn main() {
             let z = terrain[(x, y)];
             let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
                 .iter()
-                .map(|(dx, dy)| [(x + dx) as f32, (y + dy) as f32, terrain[(x + dx, y + dy)]])
+                .map(|(dx, dy)| {
+                    [
+                        (x + dx) as f32,
+                        (y + dy) as f32,
+                        terrain[(x + dx, y + dy)] * 32.0,
+                    ]
+                })
                 .collect::<Vec<_>>();
             triangles.push(Triangle {
                 id,
@@ -52,7 +52,7 @@ fn main() {
         }
     }
 
-    graphics.draw_triangles(&triangles);
+    graphics.draw_primitive(&triangles);
 
     event_loop.run(move |event, _, control_flow| {
         match event {

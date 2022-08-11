@@ -1,8 +1,8 @@
+mod canvas;
 mod primitive;
-mod screen;
 
+pub use canvas::*;
 pub use primitive::*;
-pub use screen::*;
 
 pub struct Programs {
     pub screen: glium::Program,
@@ -16,7 +16,7 @@ impl Programs {
     {
         Programs {
             primitive: primitive::program(display),
-            screen: screen::program(display),
+            screen: canvas::program(display),
         }
     }
 }
