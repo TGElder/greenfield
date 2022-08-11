@@ -5,9 +5,11 @@ mod vertices;
 
 use std::f32::consts::PI;
 
+use crate::glium_backend::engine::Engine;
 use crate::graphics::elements::Triangle;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
+use glium::glutin;
 use glium::Surface;
 use matrices::*;
 use programs::*;
@@ -54,8 +56,29 @@ pub struct Graphics {
     draw_parameters: glium::DrawParameters<'static>,
 }
 
+pub struct Parameters {
+    pub name: String,
+    pub width: f32,
+    pub height: f32,
+}
+
 impl Graphics {
-    pub fn new(display: glium::Display) -> Graphics {
+    pub fn with_engine(parameters: Parameters, engine: &Engine) -> Graphics {
+        Self::with_event_loop(parameters, &engine.event_loop)
+    }
+
+    fn with_event_loop<T>(
+        parameters: Parameters,
+        event_loop: &glutin::event_loop::EventLoop<T>,
+    ) -> Graphics {
+        let window_builder = glutin::window::WindowBuilder::new()
+            .with_inner_size(glutin::dpi::LogicalSize::new(
+                parameters.width,
+                parameters.height,
+            ))
+            .with_title(&parameters.name);
+        let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
+        let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
         Graphics {
             matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0, 1.0 / 256.0),
             canvas: None,
