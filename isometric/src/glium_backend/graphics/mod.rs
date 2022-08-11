@@ -8,6 +8,7 @@ use std::f32::consts::PI;
 use crate::graphics::elements::Triangle;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
+use glium::Surface;
 use matrices::*;
 use programs::*;
 use vertices::*;
@@ -20,8 +21,8 @@ pub struct Graphics {
     matrices: Matrices,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
-    quads: Vec<Option<GliumTriangles>>,
-    quad_ids: Vec<usize>,
+    triangles: Vec<Option<GliumTriangles>>,
+    triangle_ids: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -32,8 +33,8 @@ impl Graphics {
             matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
-            quads: vec![],
-            quad_ids: vec![],
+            triangles: vec![],
+            triangle_ids: vec![],
             programs: Programs::new(&display),
             display,
             draw_parameters: glium::DrawParameters {
@@ -79,15 +80,13 @@ struct GliumTriangles {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
-impl GliumTriangles {}
-
 impl GraphicsBackend for Graphics {
     fn draw_triangles(&mut self, triangles: &[Triangle]) -> usize {
-        let id = match self.quad_ids.pop() {
+        let id = match self.triangle_ids.pop() {
             Some(id) => id,
             None => {
-                let out = self.quad_ids.len();
-                self.quads.push(None);
+                let out = self.triangle_ids.len();
+                self.triangles.push(None);
                 out
             }
         };
@@ -105,7 +104,7 @@ impl GraphicsBackend for Graphics {
 
         let vertex_buffer = glium::VertexBuffer::new(&self.display, &vertices).unwrap();
 
-        self.quads[id] = Some(GliumTriangles { vertex_buffer });
+        self.triangles[id] = Some(GliumTriangles { vertex_buffer });
 
         id
     }
@@ -113,18 +112,32 @@ impl GraphicsBackend for Graphics {
     fn render(&mut self) {
         let mut frame = self.display.draw();
 
-        self.canvas = self.get_canvas(&glium::Surface::get_dimensions(&frame));
+        self.canvas = self.canvas(&frame.get_dimensions());
 
         let canvas = self.canvas.as_ref().unwrap();
+        let mut canvas = canvas.frame(&self.display);
 
-        canvas
-            .texture
-            .main_level()
-            .first_layer()
-            .into_image(None)
-            .unwrap()
-            .raw_clear_buffer([0.0f32, 0.0, 0.0, 0.0]);
+        self.render_glium_triangles(&mut canvas);
+        self.render_canvas(&mut frame);
 
+        frame.finish().unwrap();
+    }
+}
+
+impl Graphics {
+    fn canvas(&mut self, dimensions: &(u32, u32)) -> Option<Canvas> {
+        if let Some(Canvas { width, height, .. }) = self.canvas {
+            if (width, height) == *dimensions {
+                return self.canvas.take();
+            }
+        }
+        Some(Canvas::new(&self.display, dimensions))
+    }
+
+    fn render_glium_triangles<S>(&self, surface: &mut S)
+    where
+        S: glium::Surface,
+    {
         let transform = self.matrices.composite;
         let uniforms = glium::uniform! {
             matrix: [
@@ -135,51 +148,38 @@ impl GraphicsBackend for Graphics {
             ],
             selection: 0u32
         };
-        let mut frame_buffer = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
-            &self.display,
-            &canvas.texture,
-            &canvas.depth_buffer,
-        )
-        .unwrap();
-        glium::Surface::clear_depth(&mut frame_buffer, 1.0);
 
-        for quads in self.quads.iter().flatten() {
-            glium::Surface::draw(
-                &mut frame_buffer,
-                &quads.vertex_buffer,
-                &INDICES,
-                &self.programs.primitive,
-                &uniforms,
-                &self.draw_parameters,
-            )
-            .unwrap();
+        for quads in self.triangles.iter().flatten() {
+            surface
+                .draw(
+                    &quads.vertex_buffer,
+                    &INDICES,
+                    &self.programs.primitive,
+                    &uniforms,
+                    &self.draw_parameters,
+                )
+                .unwrap();
         }
+    }
+
+    fn render_canvas<S>(&self, surface: &mut S)
+    where
+        S: glium::Surface,
+    {
+        let canvas = self.canvas.as_ref().unwrap();
 
         let uniforms = glium::uniform! {
             tex: &canvas.texture
         };
 
-        glium::Surface::draw(
-            &mut frame,
-            &self.screen_vertices,
-            &INDICES,
-            &self.programs.screen,
-            &uniforms,
-            &Default::default(),
-        )
-        .unwrap();
-
-        frame.finish().unwrap();
-    }
-}
-
-impl Graphics {
-    fn get_canvas(&mut self, dimensions: &(u32, u32)) -> Option<Canvas> {
-        if let Some(Canvas { width, height, .. }) = self.canvas {
-            if (width, height) == *dimensions {
-                return self.canvas.take();
-            }
-        }
-        Some(Canvas::new(&self.display, dimensions))
+        surface
+            .draw(
+                &self.screen_vertices,
+                &INDICES,
+                &self.programs.screen,
+                &uniforms,
+                &Default::default(),
+            )
+            .unwrap();
     }
 }
