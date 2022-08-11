@@ -57,7 +57,7 @@ pub struct Graphics {
 impl Graphics {
     pub fn new(display: glium::Display) -> Graphics {
         Graphics {
-            matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0),
+            matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0, 1.0 / 256.0),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
             primitives: vec![],

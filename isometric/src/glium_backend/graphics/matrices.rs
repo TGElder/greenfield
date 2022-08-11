@@ -1,6 +1,6 @@
 use nalgebra::Matrix4;
 
-use crate::graphics::isometric::isometric_projection;
+use crate::graphics::matrices::{isometric, scale};
 
 pub struct Matrices {
     pub pitch: f32,
@@ -12,26 +12,9 @@ pub struct Matrices {
 }
 
 impl Matrices {
-    pub fn new(pitch: f32, yaw: f32) -> Matrices {
-        let projection = isometric_projection(&yaw, &pitch);
-        let scale = Matrix4::new(
-            1.0 / 256.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0 / 256.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0 / 256.0,
-            0.0,
-            0.0,
-            0.0,
-            0.0,
-            1.0,
-        );
+    pub fn new(pitch: f32, yaw: f32, zoom: f32) -> Matrices {
+        let projection = isometric(&yaw, &pitch);
+        let scale = scale(&zoom);
         Matrices {
             pitch,
             yaw,
