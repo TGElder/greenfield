@@ -1,26 +1,32 @@
-extern crate glium;
-
+mod game;
 mod glium_backend;
 mod graphics;
+
+use std::time::Duration;
 
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use glium::glutin;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
+use crate::game::Game;
+use crate::glium_backend::engine::{self, Engine};
+use crate::glium_backend::graphics::Graphics;
 use crate::graphics::elements::Triangle;
 use crate::graphics::GraphicsBackend;
 
 fn main() {
-    let event_loop = glutin::event_loop::EventLoop::new();
-    let window_builder = glutin::window::WindowBuilder::new()
-        .with_inner_size(glutin::dpi::LogicalSize::new(1024.0, 768.0))
-        .with_title("Demo");
-    let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
-    let display = glium::Display::new(window_builder, context_builder, &event_loop).unwrap();
-    let mut graphics = glium_backend::graphics::Graphics::new(display);
-
+    let engine = Engine::new(engine::Parameters {
+        frame_duration: Duration::from_nanos(16_666_667),
+    });
+    let mut graphics = Graphics::with_engine(
+        glium_backend::graphics::Parameters {
+            name: "Demo".to_string(),
+            width: 1024.0,
+            height: 768.0,
+        },
+        &engine,
+    );
     let terrain = get_heightmap();
 
     let mut triangles =
@@ -54,28 +60,13 @@ fn main() {
 
     graphics.add_primitive(&triangles);
 
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            glutin::event::Event::WindowEvent {
-                event: glutin::event::WindowEvent::CloseRequested,
-                ..
-            } => {
-                *control_flow = glutin::event_loop::ControlFlow::Exit;
-                return;
-            }
-            glutin::event::Event::NewEvents(cause) => match cause {
-                glutin::event::StartCause::ResumeTimeReached { .. } => (),
-                glutin::event::StartCause::Init => (),
-                _ => return,
-            },
-            _ => return,
-        }
-        let next_frame_time =
-            std::time::Instant::now() + std::time::Duration::from_nanos(16_666_667);
-        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+    engine.run(DoNothing {}, graphics);
+}
 
-        graphics.render();
-    });
+struct DoNothing {}
+
+impl Game for DoNothing {
+    fn update(&mut self, _: &mut dyn GraphicsBackend) {}
 }
 
 fn get_heightmap() -> Grid<f32> {
