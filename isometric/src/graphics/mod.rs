@@ -1,5 +1,5 @@
 pub mod elements;
-pub mod isometric;
+pub mod matrices;
 
 pub use elements::*;
 
