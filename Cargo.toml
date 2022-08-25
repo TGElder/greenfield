@@ -2,6 +2,7 @@
 
 members = [
     "commons",
+    "demo",
     "isometric",
     "terrain_gen"
 ]
