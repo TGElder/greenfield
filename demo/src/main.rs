@@ -3,13 +3,12 @@ use std::time::Duration;
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
-
 use isometric::game::Game;
 use isometric::glium_backend::engine::{self, Engine};
 use isometric::glium_backend::graphics::Graphics;
 use isometric::graphics::elements::Triangle;
 use isometric::graphics::GraphicsBackend;
+use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
     let engine = Engine::new(engine::Parameters {
