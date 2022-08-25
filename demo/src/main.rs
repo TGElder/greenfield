@@ -1,7 +1,3 @@
-mod game;
-mod glium_backend;
-mod graphics;
-
 use std::time::Duration;
 
 use commons::color::Color;
@@ -9,18 +5,18 @@ use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
-use crate::game::Game;
-use crate::glium_backend::engine::{self, Engine};
-use crate::glium_backend::graphics::Graphics;
-use crate::graphics::elements::Triangle;
-use crate::graphics::GraphicsBackend;
+use isometric::game::Game;
+use isometric::glium_backend::engine::{self, Engine};
+use isometric::glium_backend::graphics::Graphics;
+use isometric::graphics::elements::Triangle;
+use isometric::graphics::GraphicsBackend;
 
 fn main() {
     let engine = Engine::new(engine::Parameters {
         frame_duration: Duration::from_nanos(16_666_667),
     });
     let mut graphics = Graphics::with_engine(
-        glium_backend::graphics::Parameters {
+        isometric::glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
             width: 1024.0,
             height: 768.0,
