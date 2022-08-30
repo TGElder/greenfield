@@ -142,7 +142,40 @@ impl GraphicsBackend for Graphics {
         self.render_primitives_to_canvas(&mut canvas);
         self.render_canvas_to_frame(&mut frame);
 
+        // if self.screenshot {
+        //     let image: glium::texture::RawImage2d<'_, u8> = frame.read_front_buffer().unwrap();
+        //     let image = image::ImageBuffer::from_raw(image.width, image.height, image.data.into_owned()).unwrap();
+        //     let image = image::DynamicImage::ImageRgba8(image).flipv();
+        //     image.save("glium-example-screenshot.png").unwrap();
+        //     self.screenshot = false;
+        // }
+
         frame.finish().unwrap();
+    }
+
+    fn screenshot(&self, path: &str) {
+        if let Some(canvas) = &self.canvas {
+            println!("Taking glium screenshot");
+            let image: glium::texture::RawImage2d<'_, u8> = canvas
+                .texture
+                .main_level()
+                .first_layer()
+                .into_image(None)
+                .unwrap()
+                .raw_read::<_, (u8, u8, u8)>(&glium::Rect {
+                    left: 0,
+                    width: canvas.width,
+                    bottom: 0,
+                    height: canvas.height,
+                });
+            println!("{:?}", image.format);
+            let data = image.data.into_owned();
+            let image =
+                image::ImageBuffer::from_vec(image.width, image.height, data)
+                    .unwrap();
+            let image = image::DynamicImage::ImageRgb8(image).flipv();
+            image.save(path).unwrap();
+        }
     }
 }
 
