@@ -55,21 +55,19 @@ fn main() {
 
     graphics.add_primitive(&triangles);
 
-    engine.run(DoNothing {screenshot: 8}, graphics);
+    engine.run(DoNothing { screenshot: 0 }, graphics);
 }
 
 struct DoNothing {
-    screenshot: i8,
+    screenshot: u64,
 }
 
 impl Game for DoNothing {
     fn update(&mut self, graphics: &mut dyn GraphicsBackend) {
-        if self.screenshot == 0 {
-            println!("Taking screenshot");
-            graphics.screenshot("test.png");
-            println!("Done");
+        if self.screenshot == 8 {
+            graphics.screenshot("screenshot.png");
         }
-        self.screenshot -= 1;
+        self.screenshot += 1;
     }
 }
 
