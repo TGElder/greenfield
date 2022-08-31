@@ -55,13 +55,20 @@ fn main() {
 
     graphics.add_primitive(&triangles);
 
-    engine.run(DoNothing {}, graphics);
+    engine.run(DoNothing { screenshot: 0 }, graphics);
 }
 
-struct DoNothing {}
+struct DoNothing {
+    screenshot: u64,
+}
 
 impl Game for DoNothing {
-    fn update(&mut self, _: &mut dyn GraphicsBackend) {}
+    fn update(&mut self, graphics: &mut dyn GraphicsBackend) {
+        if self.screenshot == 8 {
+            graphics.screenshot("screenshot.png");
+        }
+        self.screenshot += 1;
+    }
 }
 
 fn get_heightmap() -> Grid<f32> {

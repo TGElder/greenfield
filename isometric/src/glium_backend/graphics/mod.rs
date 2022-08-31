@@ -144,6 +144,12 @@ impl GraphicsBackend for Graphics {
 
         frame.finish().unwrap();
     }
+
+    fn screenshot(&self, path: &str) {
+        if let Some(canvas) = &self.canvas {
+            canvas.save_texture(path);
+        }
+    }
 }
 
 impl Graphics {
