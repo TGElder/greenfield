@@ -3,7 +3,7 @@ use std::time::Duration;
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use isometric::game::Game;
+use isometric::game::{self, Game};
 use isometric::glium_backend::engine::{self, Engine};
 use isometric::glium_backend::graphics::Graphics;
 use isometric::graphics::elements::Triangle;
@@ -63,11 +63,12 @@ struct DoNothing {
 }
 
 impl Game for DoNothing {
-    fn update(&mut self, graphics: &mut dyn GraphicsBackend) {
-        if self.screenshot == 8 {
+    fn update(&mut self, graphics: &mut dyn GraphicsBackend) -> game::State {
+        if self.screenshot == 1 {
             graphics.screenshot("screenshot.png");
         }
         self.screenshot += 1;
+        game::State::Running
     }
 }
 
