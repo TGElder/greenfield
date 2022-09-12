@@ -3,7 +3,7 @@ use std::time::Duration;
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use isometric::game::{Game, self};
+use isometric::game::{self, Game};
 use isometric::glium_backend::engine::{self, Engine};
 use isometric::glium_backend::graphics::Graphics;
 use isometric::graphics::elements::Triangle;

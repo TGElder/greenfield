@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use glium::glutin;
 
-use crate::game::{Game, self};
+use crate::game::{self, Game};
 use crate::graphics::GraphicsBackend;
 
 pub struct Engine {

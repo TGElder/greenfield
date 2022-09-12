@@ -1,8 +1,8 @@
 use crate::graphics::GraphicsBackend;
 
-pub enum State{
+pub enum State {
     Running,
-    Terminated
+    Terminated,
 }
 
 pub trait Game {
