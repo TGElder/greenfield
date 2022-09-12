@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use glium::glutin;
 
-use crate::game::Game;
+use crate::game::{Game, self};
 use crate::graphics::GraphicsBackend;
 
 pub struct Engine {
@@ -46,8 +46,12 @@ impl Engine {
             let next_frame_time = std::time::Instant::now() + self.parameters.frame_duration;
             *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
-            game.update(&mut graphics);
+            let game_state = game.update(&mut graphics);
             graphics.render();
+
+            if let game::State::Terminated = game_state {
+                *control_flow = glutin::event_loop::ControlFlow::Exit
+            }
         });
     }
 }
