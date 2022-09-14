@@ -1,9 +1,9 @@
 mod canvas;
 mod matrices;
 mod programs;
+#[cfg(test)]
+mod tests;
 mod vertices;
-
-use std::f32::consts::PI;
 
 use crate::glium_backend::engine::Engine;
 use crate::graphics::elements::Triangle;
@@ -60,6 +60,9 @@ pub struct Parameters {
     pub name: String,
     pub width: f32,
     pub height: f32,
+    pub pitch: f32,
+    pub yaw: f32,
+    pub scale: f32,
 }
 
 impl Graphics {
@@ -80,7 +83,7 @@ impl Graphics {
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
         let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
         Graphics {
-            matrices: Matrices::new(PI / 4.0, 5.0 * PI / 8.0, 1.0 / 256.0),
+            matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
             primitives: vec![],
@@ -104,7 +107,7 @@ struct Primitive {
 }
 
 impl GraphicsBackend for Graphics {
-    fn add_primitive(&mut self, triangles: &[Triangle]) -> usize {
+    fn add_triangles(&mut self, triangles: &[Triangle]) -> usize {
         let id = match self.primitive_ids.pop() {
             Some(id) => id,
             None => {

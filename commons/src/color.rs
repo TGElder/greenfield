@@ -1,3 +1,4 @@
+#[derive(Clone, Copy)]
 pub struct Color<T> {
     pub r: T,
     pub g: T,
