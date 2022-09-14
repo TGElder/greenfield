@@ -10,13 +10,13 @@ use crate::graphics::Quad;
 use super::*;
 
 #[test]
-fn render_triangle() {
+fn render_cube() {
     let engine = Engine::new(engine::Parameters {
         frame_duration: Duration::from_nanos(16_666_667),
     });
     let mut graphics = Graphics::with_engine(
         graphics::Parameters {
-            name: "Demo".to_string(),
+            name: "Test".to_string(),
             width: 256.0,
             height: 256.0,
             pitch: PI / 4.0,
