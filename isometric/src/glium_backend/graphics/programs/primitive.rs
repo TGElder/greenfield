@@ -20,13 +20,13 @@ const VERTEX_SHADER: &str = r#"
 const FRAGMENT_SHADER: &str = r#"
     #version 330
 
-    in vec4 fragment_color;
+    in vec3 fragment_color;
     flat in float id_in_float;
 
     out vec4 color;
 
     void main() {
-        color = fragment_color;
+        color = vec4(fragment_color, 1.0);
     }
 "#;
 

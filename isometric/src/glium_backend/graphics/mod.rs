@@ -114,7 +114,10 @@ impl Graphics {
             .with_title(&parameters.name);
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
         let ctx = glutin::ContextBuilder::new()
-            .build_surfaceless(event_loop)
+            .build_osmesa(glutin::dpi::PhysicalSize::new(
+                parameters.width,
+                parameters.height,
+            ))
             .expect("1");
         // let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
         let display = glium::HeadlessRenderer::new(ctx).unwrap();
