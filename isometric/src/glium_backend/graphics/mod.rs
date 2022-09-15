@@ -98,21 +98,19 @@ pub struct Parameters {
 }
 
 impl Graphics {
-    pub fn with_engine(parameters: Parameters, engine: &Engine) -> Graphics {
-        Self::with_event_loop(parameters, &engine.event_loop)
-    }
+    
 
-    fn with_event_loop<T>(
+    pub fn headless(
         parameters: Parameters,
-        event_loop: &glutin::event_loop::EventLoop<T>,
+        // event_loop: &glutin::event_loop::EventLoop<T>,
     ) -> Graphics {
-        let window_builder = glutin::window::WindowBuilder::new()
-            .with_inner_size(glutin::dpi::LogicalSize::new(
-                parameters.width,
-                parameters.height,
-            ))
-            .with_title(&parameters.name);
-        let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
+        // let window_builder = glutin::window::WindowBuilder::new()
+        //     .with_inner_size(glutin::dpi::LogicalSize::new(
+        //         parameters.width,
+        //         parameters.height,
+        //     ))
+        //     .with_title(&parameters.name);
+        // let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
         let ctx = glutin::ContextBuilder::new()
             .build_osmesa(glutin::dpi::PhysicalSize::new(
                 parameters.width,

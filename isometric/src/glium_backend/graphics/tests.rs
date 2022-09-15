@@ -14,7 +14,7 @@ fn render_cube() {
     let engine = Engine::new(engine::Parameters {
         frame_duration: Duration::from_nanos(16_666_667),
     });
-    let mut graphics = Graphics::with_engine(
+    let mut graphics = Graphics::headless(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -22,8 +22,7 @@ fn render_cube() {
             pitch: PI / 4.0,
             yaw: PI * (5.0 / 8.0),
             scale: 1.0,
-        },
-        &engine,
+        }
     );
 
     let la = [-0.5, -0.5, -0.5];
