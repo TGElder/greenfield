@@ -10,6 +10,7 @@ use crate::graphics::elements::Triangle;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
 use glium::glutin;
+use glium::glutin::platform::unix::HeadlessContextExt;
 use glium::Surface;
 use matrices::*;
 use programs::*;
@@ -45,8 +46,39 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
     },
 ];
 
+enum Display {
+    Headful(glium::Display),
+    Headless {
+        renderer: glium::HeadlessRenderer,
+        dimensions: (u32, u32),
+    },
+}
+
+impl Display {
+    fn facade(&self) -> &dyn glium::backend::Facade {
+        match self {
+            Display::Headful(display) => display,
+            Display::Headless { renderer, .. } => renderer,
+        }
+    }
+
+    fn frame(&self) -> glium::Frame {
+        match self {
+            Display::Headful(display) => display.draw(),
+            Display::Headless { renderer, .. } => renderer.draw(),
+        }
+    }
+
+    fn canvas_dimensions(&self) -> (u32, u32) {
+        match self {
+            Display::Headful(display) => display.get_framebuffer_dimensions(),
+            Display::Headless { dimensions, .. } => *dimensions,
+        }
+    }
+}
+
 pub struct Graphics {
-    display: glium::Display,
+    display: Display,
     matrices: Matrices,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
@@ -58,8 +90,8 @@ pub struct Graphics {
 
 pub struct Parameters {
     pub name: String,
-    pub width: f32,
-    pub height: f32,
+    pub width: u32,
+    pub height: u32,
     pub pitch: f32,
     pub yaw: f32,
     pub scale: f32,
@@ -81,7 +113,11 @@ impl Graphics {
             ))
             .with_title(&parameters.name);
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
-        let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
+        let ctx = glutin::ContextBuilder::new()
+            .build_surfaceless(event_loop)
+            .expect("1");
+        // let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
+        let display = glium::HeadlessRenderer::new(ctx).unwrap();
         Graphics {
             matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
             canvas: None,
@@ -97,7 +133,10 @@ impl Graphics {
                 },
                 ..Default::default()
             },
-            display,
+            display: Display::Headless {
+                renderer: display,
+                dimensions: (parameters.width, parameters.height),
+            },
         }
     }
 }
@@ -128,19 +167,19 @@ impl GraphicsBackend for Graphics {
             })
             .collect::<Vec<ColoredVertex>>();
         self.primitives[id] = Some(Primitive {
-            vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices).unwrap(),
+            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices).unwrap(),
         });
 
         id
     }
 
     fn render(&mut self) {
-        let mut frame = self.display.draw();
+        let mut frame = self.display.frame();
 
-        self.canvas = self.canvas(&frame.get_dimensions());
+        self.canvas = self.canvas(&(512, 512));
 
         let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = canvas.frame(&self.display);
+        let mut canvas = canvas.frame(self.display.facade());
 
         self.render_primitives_to_canvas(&mut canvas);
         self.render_canvas_to_frame(&mut frame);
@@ -162,7 +201,10 @@ impl Graphics {
                 return self.canvas.take();
             }
         }
-        Some(Canvas::new(&self.display, dimensions))
+        Some(Canvas::new(
+            self.display.facade(),
+            &self.display.canvas_dimensions(),
+        ))
     }
 
     fn render_primitives_to_canvas<S>(&self, surface: &mut S)

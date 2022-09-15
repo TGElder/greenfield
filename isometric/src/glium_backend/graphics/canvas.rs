@@ -8,7 +8,7 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(display: &glium::Display, &(width, height): &(u32, u32)) -> Canvas {
+    pub fn new(display: &dyn glium::backend::Facade, &(width, height): &(u32, u32)) -> Canvas {
         Canvas {
             width,
             height,
@@ -30,7 +30,10 @@ impl Canvas {
         }
     }
 
-    pub fn frame(&self, display: &glium::Display) -> glium::framebuffer::SimpleFrameBuffer {
+    pub fn frame(
+        &self,
+        display: &dyn glium::backend::Facade,
+    ) -> glium::framebuffer::SimpleFrameBuffer {
         let mut out = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
             display,
             &self.texture,
