@@ -17,8 +17,8 @@ fn main() {
     let mut graphics = Graphics::with_engine(
         isometric::glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
-            width: 1024.0,
-            height: 768.0,
+            width: 1024,
+            height: 768,
             pitch: PI / 4.0,
             yaw: PI * (5.0 / 8.0),
             scale: 1.0 / 256.0,
