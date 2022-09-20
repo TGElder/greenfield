@@ -11,9 +11,6 @@ use super::*;
 
 #[test]
 fn render_cube() {
-    let engine = Engine::new(engine::Parameters {
-        frame_duration: Duration::from_nanos(16_666_667),
-    });
     let mut graphics = Graphics::headless(
         graphics::Parameters {
             name: "Test".to_string(),
@@ -68,21 +65,6 @@ fn render_cube() {
     ];
 
     graphics.add_quads(&quads);
-
-    engine.run(Test { frame: 0 }, graphics);
-
-    struct Test {
-        frame: u64,
-    }
-
-    impl Game for Test {
-        fn update(&mut self, graphics: &mut dyn GraphicsBackend) -> game::State {
-            if self.frame == 1 {
-                graphics.screenshot("test_resources/graphics/render_triangle.png");
-                return game::State::Terminated;
-            }
-            self.frame += 1;
-            game::State::Running
-        }
-    }
+    graphics.render();
+    graphics.screenshot("test_resources/graphics/render_triangle.png");
 }
