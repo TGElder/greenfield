@@ -11,16 +11,14 @@ use super::*;
 
 #[test]
 fn render_cube() {
-    let mut graphics = Graphics::headless(
-        graphics::Parameters {
-            name: "Test".to_string(),
-            width: 256,
-            height: 256,
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
-        }
-    );
+    let mut graphics = Graphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        pitch: PI / 4.0,
+        yaw: PI * (5.0 / 8.0),
+        scale: 1.0,
+    });
 
     let la = [-0.5, -0.5, -0.5];
     let lb = [-0.5, 0.5, -0.5];

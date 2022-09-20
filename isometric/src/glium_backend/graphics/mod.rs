@@ -98,8 +98,6 @@ pub struct Parameters {
 }
 
 impl Graphics {
-    
-
     pub fn headless(
         parameters: Parameters,
         // event_loop: &glutin::event_loop::EventLoop<T>,

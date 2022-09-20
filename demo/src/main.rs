@@ -14,16 +14,14 @@ fn main() {
     let engine = Engine::new(engine::Parameters {
         frame_duration: Duration::from_nanos(16_666_667),
     });
-    let mut graphics = Graphics::headless(
-        isometric::glium_backend::graphics::Parameters {
-            name: "Demo".to_string(),
-            width: 1024,
-            height: 768,
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0 / 256.0,
-        }
-    );
+    let mut graphics = Graphics::headless(isometric::glium_backend::graphics::Parameters {
+        name: "Demo".to_string(),
+        width: 1024,
+        height: 768,
+        pitch: PI / 4.0,
+        yaw: PI * (5.0 / 8.0),
+        scale: 1.0 / 256.0,
+    });
     let terrain = get_heightmap();
 
     let mut quads =
