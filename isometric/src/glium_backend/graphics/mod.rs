@@ -11,7 +11,6 @@ use crate::graphics::GraphicsBackend;
 use canvas::*;
 use glium::glutin;
 use glium::glutin::platform::unix::HeadlessContextExt;
-use glium::Surface;
 use matrices::*;
 use programs::*;
 use vertices::*;
@@ -98,6 +97,41 @@ pub struct Parameters {
 }
 
 impl Graphics {
+    pub fn with_engine(parameters: Parameters, engine: &Engine) -> Graphics {
+        Self::headful(parameters, &engine.event_loop)
+    }
+
+    fn headful<T>(
+        parameters: Parameters,
+        event_loop: &glutin::event_loop::EventLoop<T>,
+    ) -> Graphics {
+        let window_builder = glutin::window::WindowBuilder::new()
+            .with_inner_size(glutin::dpi::LogicalSize::new(
+                parameters.width,
+                parameters.height,
+            ))
+            .with_title(&parameters.name);
+        let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
+        let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
+        Graphics {
+            matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
+            canvas: None,
+            screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
+            primitives: vec![],
+            primitive_ids: vec![],
+            programs: Programs::new(&display),
+            draw_parameters: glium::DrawParameters {
+                depth: glium::Depth {
+                    test: glium::DepthTest::IfLess,
+                    write: true,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            display: Display::Headful(display),
+        }
+    }
+
     pub fn headless(
         parameters: Parameters,
         // event_loop: &glutin::event_loop::EventLoop<T>,
