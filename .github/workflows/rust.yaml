@@ -8,8 +8,8 @@ jobs:
   test:
     name: test
     runs-on: ubuntu-latest
-    env:
-      MESA_GL_VERSION_OVERRIDE: 3.3
+    env: 
+      MESA_GL_VERSION_OVERRIDE: 3.3    
     steps:
       - run: sudo apt-get install -y libosmesa-dev
       - uses: actions/checkout@v3
@@ -21,7 +21,6 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: test
-          args: -- --test-threads=1
 
   fmt:
     name: fmt
@@ -53,4 +52,4 @@ jobs:
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --tests -- -D warnings

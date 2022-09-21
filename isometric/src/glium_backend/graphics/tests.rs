@@ -1,16 +1,16 @@
+use std::env::temp_dir;
 use std::f32::consts::PI;
-use std::time::Duration;
 
 use commons::color::Color;
 
-use crate::game::{self, Game};
-use crate::glium_backend::{engine, graphics};
+use crate::glium_backend::graphics;
 use crate::graphics::Quad;
 
 use super::*;
 
 #[test]
 fn render_cube() {
+    // given
     let mut graphics = Graphics::headless(graphics::Parameters {
         name: "Test".to_string(),
         width: 256,
@@ -62,7 +62,16 @@ fn render_cube() {
         },
     ];
 
+    // when
     graphics.add_quads(&quads);
     graphics.render();
-    graphics.screenshot("test_resources/graphics/render_triangle.png");
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path);
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube.png").unwrap();
+    assert_eq!(actual, expected);
 }
