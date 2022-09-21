@@ -10,10 +10,7 @@ pub struct Programs {
 }
 
 impl Programs {
-    pub fn new<F>(display: &F) -> Programs
-    where
-        F: glium::backend::Facade,
-    {
+    pub fn new(display: &dyn glium::backend::Facade) -> Programs {
         Programs {
             primitive: primitive::program(display),
             screen: canvas::program(display),

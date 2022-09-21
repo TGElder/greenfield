@@ -113,23 +113,7 @@ impl Graphics {
             .with_title(&parameters.name);
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
         let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
-        Graphics {
-            matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
-            canvas: None,
-            screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
-            primitives: vec![],
-            primitive_ids: vec![],
-            programs: Programs::new(&display),
-            draw_parameters: glium::DrawParameters {
-                depth: glium::Depth {
-                    test: glium::DepthTest::IfLess,
-                    write: true,
-                    ..Default::default()
-                },
-                ..Default::default()
-            },
-            display: Display::Headful(display),
-        }
+        Self::new(parameters, Display::Headful(display))
     }
 
     pub fn headless(parameters: Parameters) -> Graphics {
@@ -138,27 +122,33 @@ impl Graphics {
                 parameters.width,
                 parameters.height,
             ))
-            .expect("1");
-        let display = glium::HeadlessRenderer::new(ctx).unwrap();
+            .unwrap();
+        let renderer = glium::HeadlessRenderer::new(ctx).unwrap();
+        let display = Display::Headless {
+            renderer,
+            dimensions: (parameters.width, parameters.height),
+        };
+        Self::new(parameters, display)
+    }
+
+    fn new(parameters: Parameters, display: Display) -> Graphics {
         Graphics {
             matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
             canvas: None,
-            screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD).unwrap(),
+            screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD).unwrap(),
             primitives: vec![],
             primitive_ids: vec![],
-            programs: Programs::new(&display),
+            programs: Programs::new(display.facade()),
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
                     test: glium::DepthTest::IfLess,
                     write: true,
                     ..Default::default()
                 },
+                backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                 ..Default::default()
             },
-            display: Display::Headless {
-                renderer: display,
-                dimensions: (parameters.width, parameters.height),
-            },
+            display,
         }
     }
 
