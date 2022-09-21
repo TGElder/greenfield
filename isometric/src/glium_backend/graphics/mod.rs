@@ -132,24 +132,13 @@ impl Graphics {
         }
     }
 
-    pub fn headless(
-        parameters: Parameters,
-        // event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Graphics {
-        // let window_builder = glutin::window::WindowBuilder::new()
-        //     .with_inner_size(glutin::dpi::LogicalSize::new(
-        //         parameters.width,
-        //         parameters.height,
-        //     ))
-        //     .with_title(&parameters.name);
-        // let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
+    pub fn headless(parameters: Parameters) -> Graphics {
         let ctx = glutin::ContextBuilder::new()
             .build_osmesa(glutin::dpi::PhysicalSize::new(
                 parameters.width,
                 parameters.height,
             ))
             .expect("1");
-        // let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
         let display = glium::HeadlessRenderer::new(ctx).unwrap();
         Graphics {
             matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
@@ -172,62 +161,7 @@ impl Graphics {
             },
         }
     }
-}
 
-struct Primitive {
-    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-}
-
-impl GraphicsBackend for Graphics {
-    fn add_triangles(&mut self, triangles: &[Triangle]) -> usize {
-        let id = match self.primitive_ids.pop() {
-            Some(id) => id,
-            None => {
-                let out = self.primitive_ids.len();
-                self.primitives.push(None);
-                out
-            }
-        };
-
-        let vertices = triangles
-            .iter()
-            .flat_map(|Triangle { id, corners, color }| {
-                corners.iter().map(|corner| ColoredVertex {
-                    id: *id,
-                    position: *corner,
-                    color: [color.r, color.g, color.b],
-                })
-            })
-            .collect::<Vec<ColoredVertex>>();
-        self.primitives[id] = Some(Primitive {
-            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices).unwrap(),
-        });
-
-        id
-    }
-
-    fn render(&mut self) {
-        let mut frame = self.display.frame();
-
-        self.canvas = self.canvas(&(512, 512));
-
-        let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = canvas.frame(self.display.facade());
-
-        self.render_primitives_to_canvas(&mut canvas);
-        self.render_canvas_to_frame(&mut frame);
-
-        frame.finish().unwrap();
-    }
-
-    fn screenshot(&self, path: &str) {
-        if let Some(canvas) = &self.canvas {
-            canvas.save_texture(path);
-        }
-    }
-}
-
-impl Graphics {
     fn canvas(&mut self, dimensions: &(u32, u32)) -> Option<Canvas> {
         if let Some(Canvas { width, height, .. }) = self.canvas {
             if (width, height) == *dimensions {
@@ -281,5 +215,57 @@ impl Graphics {
                 &Default::default(),
             )
             .unwrap();
+    }
+}
+
+struct Primitive {
+    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+}
+
+impl GraphicsBackend for Graphics {
+    fn add_triangles(&mut self, triangles: &[Triangle]) -> usize {
+        let id = match self.primitive_ids.pop() {
+            Some(id) => id,
+            None => {
+                let out = self.primitive_ids.len();
+                self.primitives.push(None);
+                out
+            }
+        };
+
+        let vertices = triangles
+            .iter()
+            .flat_map(|Triangle { id, corners, color }| {
+                corners.iter().map(|corner| ColoredVertex {
+                    id: *id,
+                    position: *corner,
+                    color: [color.r, color.g, color.b],
+                })
+            })
+            .collect::<Vec<ColoredVertex>>();
+        self.primitives[id] = Some(Primitive {
+            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices).unwrap(),
+        });
+
+        id
+    }
+
+    fn render(&mut self) {
+        let mut frame = self.display.frame();
+
+        self.canvas = self.canvas(&self.display.canvas_dimensions());
+        let canvas = self.canvas.as_ref().unwrap();
+        let mut canvas = canvas.frame(self.display.facade());
+
+        self.render_primitives_to_canvas(&mut canvas);
+        self.render_canvas_to_frame(&mut frame);
+
+        frame.finish().unwrap();
+    }
+
+    fn screenshot(&self, path: &str) {
+        if let Some(canvas) = &self.canvas {
+            canvas.save_texture(path);
+        }
     }
 }

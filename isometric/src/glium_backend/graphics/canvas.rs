@@ -8,12 +8,12 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(display: &dyn glium::backend::Facade, &(width, height): &(u32, u32)) -> Canvas {
+    pub fn new(facade: &dyn glium::backend::Facade, &(width, height): &(u32, u32)) -> Canvas {
         Canvas {
             width,
             height,
             texture: glium::texture::Texture2d::empty_with_format(
-                display,
+                facade,
                 glium::texture::UncompressedFloatFormat::F32F32F32F32,
                 glium::texture::MipmapsOption::NoMipmap,
                 width,
@@ -21,7 +21,7 @@ impl Canvas {
             )
             .unwrap(),
             depth_buffer: glium::framebuffer::DepthRenderBuffer::new(
-                display,
+                facade,
                 glium::texture::DepthFormat::F32,
                 width,
                 height,
@@ -32,10 +32,10 @@ impl Canvas {
 
     pub fn frame(
         &self,
-        display: &dyn glium::backend::Facade,
+        facade: &dyn glium::backend::Facade,
     ) -> glium::framebuffer::SimpleFrameBuffer {
         let mut out = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
-            display,
+            facade,
             &self.texture,
             &self.depth_buffer,
         )
