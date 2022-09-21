@@ -1,3 +1,4 @@
+use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Color;
@@ -6,8 +7,7 @@ use commons::noise::simplex_noise;
 use isometric::game::{self, Game};
 use isometric::glium_backend::engine::{self, Engine};
 use isometric::glium_backend::graphics::Graphics;
-use isometric::graphics::elements::Triangle;
-use isometric::graphics::GraphicsBackend;
+use isometric::graphics::{GraphicsBackend, Quad};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
@@ -17,15 +17,18 @@ fn main() {
     let mut graphics = Graphics::with_engine(
         isometric::glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
-            width: 1024.0,
-            height: 768.0,
+            width: 1024,
+            height: 768,
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0 / 256.0,
         },
         &engine,
     );
     let terrain = get_heightmap();
 
-    let mut triangles =
-        Vec::with_capacity((terrain.width() - 1) as usize * (terrain.height() - 1) as usize * 2);
+    let mut quads =
+        Vec::with_capacity((terrain.width() - 1) as usize * (terrain.height() - 1) as usize);
     for x in 0..terrain.width() - 1 {
         for y in 0..terrain.height() - 1 {
             let id = terrain.index((x, y)) as u32;
@@ -40,20 +43,15 @@ fn main() {
                     ]
                 })
                 .collect::<Vec<_>>();
-            triangles.push(Triangle {
+            quads.push(Quad {
                 id,
-                corners: [corners[0], corners[2], corners[1]],
-                color: Color::rgb(z, z, z),
-            });
-            triangles.push(Triangle {
-                id,
-                corners: [corners[0], corners[3], corners[2]],
+                corners: [corners[0], corners[1], corners[2], corners[3]],
                 color: Color::rgb(z, z, z),
             });
         }
     }
 
-    graphics.add_primitive(&triangles);
+    graphics.add_quads(&quads);
 
     engine.run(DoNothing { screenshot: 0 }, graphics);
 }
