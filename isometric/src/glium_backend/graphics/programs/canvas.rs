@@ -26,9 +26,6 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-pub fn program<F>(display: &F) -> glium::Program
-where
-    F: glium::backend::Facade,
-{
+pub fn program(display: &dyn glium::backend::Facade) -> glium::Program {
     glium::Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap()
 }

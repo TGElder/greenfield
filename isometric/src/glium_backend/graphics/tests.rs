@@ -21,13 +21,13 @@ fn render_cube() {
     });
 
     let la = [-0.5, -0.5, -0.5];
-    let lb = [-0.5, 0.5, -0.5];
+    let lb = [0.5, -0.5, -0.5];
     let lc = [0.5, 0.5, -0.5];
-    let ld = [0.5, -0.5, -0.5];
+    let ld = [-0.5, 0.5, -0.5];
     let ua = [-0.5, -0.5, 0.5];
-    let ub = [-0.5, 0.5, 0.5];
+    let ub = [0.5, -0.5, 0.5];
     let uc = [0.5, 0.5, 0.5];
-    let ud = [0.5, -0.5, 0.5];
+    let ud = [-0.5, 0.5, 0.5];
 
     let quads = vec![
         Quad {
@@ -47,7 +47,7 @@ fn render_cube() {
         },
         Quad {
             id: 0,
-            corners: [ud, ld, lc, uc],
+            corners: [uc, lc, ld, ud],
             color: Color::rgb(0.0, 1.0, 0.0),
         },
         Quad {
