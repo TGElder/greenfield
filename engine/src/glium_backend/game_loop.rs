@@ -5,7 +5,7 @@ use glium::glutin;
 use crate::game::{self, Game};
 use crate::graphics::GraphicsBackend;
 
-pub struct Engine {
+pub struct GameLoop {
     pub(super) event_loop: glutin::event_loop::EventLoop<()>,
     parameters: Parameters,
 }
@@ -14,9 +14,9 @@ pub struct Parameters {
     pub frame_duration: Duration,
 }
 
-impl Engine {
-    pub fn new(parameters: Parameters) -> Engine {
-        Engine {
+impl GameLoop {
+    pub fn new(parameters: Parameters) -> GameLoop {
+        GameLoop {
             event_loop: glutin::event_loop::EventLoop::new(),
             parameters,
         }

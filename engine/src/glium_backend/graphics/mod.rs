@@ -4,7 +4,7 @@ mod programs;
 mod tests;
 mod vertices;
 
-use crate::glium_backend::engine::Engine;
+use crate::glium_backend::game_loop::GameLoop;
 use crate::graphics::elements::Triangle;
 use crate::graphics::projection::Projection;
 use crate::graphics::GraphicsBackend;
@@ -94,8 +94,8 @@ pub struct Parameters {
 }
 
 impl Graphics {
-    pub fn with_engine(parameters: Parameters, engine: &Engine) -> Graphics {
-        Self::headful(parameters, &engine.event_loop)
+    pub fn from_game_loop(parameters: Parameters, game_loop: &GameLoop) -> Graphics {
+        Self::headful(parameters, &game_loop.event_loop)
     }
 
     fn headful<T>(

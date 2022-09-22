@@ -4,32 +4,30 @@ use std::time::Duration;
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use isometric::game::{self, Game};
-use isometric::glium_backend::engine::{self, Engine};
-use isometric::glium_backend::graphics::Graphics;
-use isometric::graphics::elements::Quad;
-use isometric::graphics::projections::isometric_projection;
-use isometric::graphics::GraphicsBackend;
+use engine::game::{self, Game};
+use engine::glium_backend::game_loop::{self, GameLoop};
+use engine::glium_backend::graphics::Graphics;
+use engine::graphics::elements::Quad;
+use engine::graphics::projections::isometric;
+use engine::graphics::GraphicsBackend;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
-    let engine = Engine::new(engine::Parameters {
+    let game_loop = GameLoop::new(game_loop::Parameters {
         frame_duration: Duration::from_nanos(16_666_667),
     });
-    let mut graphics = Graphics::with_engine(
-        isometric::glium_backend::graphics::Parameters {
+    let mut graphics = Graphics::from_game_loop(
+        engine::glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
             width: 1024,
             height: 768,
-            projection: Box::new(isometric_projection::Projection::new(
-                isometric_projection::Parameters {
-                    pitch: PI / 4.0,
-                    yaw: PI * (5.0 / 8.0),
-                    scale: 1.0 / 256.0,
-                },
-            )),
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+                scale: 1.0 / 256.0,
+            })),
         },
-        &engine,
+        &game_loop,
     );
     let terrain = get_heightmap();
 
@@ -59,7 +57,7 @@ fn main() {
 
     graphics.add_quads(&quads);
 
-    engine.run(DoNothing { screenshot: 0 }, graphics);
+    game_loop.run(DoNothing { screenshot: 0 }, graphics);
 }
 
 struct DoNothing {
