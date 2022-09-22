@@ -5,7 +5,7 @@ use commons::color::Color;
 
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
-use crate::graphics::projections::isometric_projection;
+use crate::graphics::projections::isometric;
 
 use super::*;
 
@@ -16,13 +16,11 @@ fn render_cube() {
         name: "Test".to_string(),
         width: 256,
         height: 256,
-        projection: Box::new(isometric_projection::Projection::new(
-            isometric_projection::Parameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-                scale: 1.0,
-            },
-        )),
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
     });
 
     let la = [-0.5, -0.5, -0.5];

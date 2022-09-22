@@ -8,7 +8,7 @@ use engine::game::{self, Game};
 use engine::glium_backend::game_loop::{self, GameLoop};
 use engine::glium_backend::graphics::Graphics;
 use engine::graphics::elements::Quad;
-use engine::graphics::projections::isometric_projection;
+use engine::graphics::projections::isometric;
 use engine::graphics::GraphicsBackend;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
@@ -21,13 +21,11 @@ fn main() {
             name: "Demo".to_string(),
             width: 1024,
             height: 768,
-            projection: Box::new(isometric_projection::Projection::new(
-                isometric_projection::Parameters {
-                    pitch: PI / 4.0,
-                    yaw: PI * (5.0 / 8.0),
-                    scale: 1.0 / 256.0,
-                },
-            )),
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+                scale: 1.0 / 256.0,
+            })),
         },
         &game_loop,
     );
