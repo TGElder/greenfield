@@ -7,7 +7,10 @@ use commons::noise::simplex_noise;
 use isometric::game::{self, Game};
 use isometric::glium_backend::engine::{self, Engine};
 use isometric::glium_backend::graphics::Graphics;
-use isometric::graphics::{GraphicsBackend, Quad};
+use isometric::graphics::elements::Quad;
+use isometric::graphics::projections;
+use isometric::graphics::projections::isometric::Isometric;
+use isometric::graphics::GraphicsBackend;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
@@ -19,9 +22,11 @@ fn main() {
             name: "Demo".to_string(),
             width: 1024,
             height: 768,
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0 / 256.0,
+            projection: Box::new(Isometric::new(projections::isometric::Parameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+                scale: 1.0 / 256.0,
+            })),
         },
         &engine,
     );

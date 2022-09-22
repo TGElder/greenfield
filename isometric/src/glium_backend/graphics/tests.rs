@@ -4,7 +4,8 @@ use std::f32::consts::PI;
 use commons::color::Color;
 
 use crate::glium_backend::graphics;
-use crate::graphics::Quad;
+use crate::graphics::elements::Quad;
+use crate::graphics::projections::isometric::{self, Isometric};
 
 use super::*;
 
@@ -15,9 +16,11 @@ fn render_cube() {
         name: "Test".to_string(),
         width: 256,
         height: 256,
-        pitch: PI / 4.0,
-        yaw: PI * (5.0 / 8.0),
-        scale: 1.0,
+        projection: Box::new(Isometric::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
     });
 
     let la = [-0.5, -0.5, -0.5];
