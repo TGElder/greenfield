@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 commons = { path = "../commons" }
-isometric = { path = "../isometric" }
+engine = { path = "../engine" }
 terrain_gen = { path = "../terrain_gen" }

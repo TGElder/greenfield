@@ -3,6 +3,6 @@
 members = [
     "commons",
     "demo",
-    "isometric",
+    "engine",
     "terrain_gen"
 ]
