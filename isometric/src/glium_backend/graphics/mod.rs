@@ -1,5 +1,4 @@
 mod canvas;
-mod matrices;
 mod programs;
 #[cfg(test)]
 mod tests;
@@ -7,11 +6,11 @@ mod vertices;
 
 use crate::glium_backend::engine::Engine;
 use crate::graphics::elements::Triangle;
+use crate::graphics::projection::Projection;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
 use glium::glutin;
 use glium::glutin::platform::unix::HeadlessContextExt;
-use matrices::*;
 use programs::*;
 use vertices::*;
 
@@ -78,7 +77,7 @@ impl Display {
 
 pub struct Graphics {
     display: Display,
-    matrices: Matrices,
+    projection: Box<dyn Projection>,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     primitives: Vec<Option<Primitive>>,
@@ -91,9 +90,7 @@ pub struct Parameters {
     pub name: String,
     pub width: u32,
     pub height: u32,
-    pub pitch: f32,
-    pub yaw: f32,
-    pub scale: f32,
+    pub projection: Box<dyn Projection>,
 }
 
 impl Graphics {
@@ -133,7 +130,7 @@ impl Graphics {
 
     fn new(parameters: Parameters, display: Display) -> Graphics {
         Graphics {
-            matrices: Matrices::new(parameters.pitch, parameters.yaw, parameters.scale),
+            projection: parameters.projection,
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD).unwrap(),
             primitives: vec![],
@@ -168,9 +165,8 @@ impl Graphics {
     where
         S: glium::Surface,
     {
-        let transform: [[f32; 4]; 4] = self.matrices.composite.into();
         let uniforms = glium::uniform! {
-            transform: transform
+            transform: *self.projection.projection()
         };
 
         for primitive in self.primitives.iter().flatten() {

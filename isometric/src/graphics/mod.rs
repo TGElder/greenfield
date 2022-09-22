@@ -1,7 +1,11 @@
 pub mod elements;
 pub mod matrices;
+pub mod projection;
+pub mod projections;
 
-pub use elements::*;
+pub use projection::Projection;
+
+use elements::*;
 
 pub trait GraphicsBackend {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> usize;
