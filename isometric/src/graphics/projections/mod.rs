@@ -1,1 +1,1 @@
-pub mod isometric;
+pub mod isometric_projection;

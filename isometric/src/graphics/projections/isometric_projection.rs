@@ -1,9 +1,9 @@
 use nalgebra::Matrix4;
 
+use crate::graphics;
 use crate::graphics::matrices::{isometric, scale};
-use crate::graphics::projection::Projection;
 
-pub struct Isometric {
+pub struct Projection {
     _pitch: f32,
     _yaw: f32,
     _projection: Matrix4<f32>,
@@ -18,11 +18,11 @@ pub struct Parameters {
     pub scale: f32,
 }
 
-impl Isometric {
-    pub fn new(parameters: Parameters) -> Isometric {
+impl Projection {
+    pub fn new(parameters: Parameters) -> Projection {
         let projection = isometric(&parameters.yaw, &parameters.pitch);
         let scale = scale(&parameters.scale);
-        Isometric {
+        Projection {
             _pitch: parameters.pitch,
             _yaw: parameters.yaw,
             _projection: projection,
@@ -33,7 +33,7 @@ impl Isometric {
     }
 }
 
-impl Projection for Isometric {
+impl graphics::Projection for Projection {
     fn projection(&self) -> &[[f32; 4]; 4] {
         &self.composite
     }

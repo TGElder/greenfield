@@ -3,6 +3,8 @@ pub mod matrices;
 pub mod projection;
 pub mod projections;
 
+pub use projection::Projection;
+
 use elements::*;
 
 pub trait GraphicsBackend {
