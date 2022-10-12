@@ -8,6 +8,6 @@ edition = "2021"
 [dependencies]
 image = { workspace = true }
 maplit = { workspace = true }
-num = "0.4"
-simdnoise = "3.1.6"
-tempfile = "3"
+num = { workspace = true }
+simdnoise = { workspace = true }
+tempfile = { workspace = true }
