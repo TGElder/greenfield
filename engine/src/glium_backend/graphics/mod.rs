@@ -10,7 +10,6 @@ use crate::graphics::projection::Projection;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
 use glium::glutin;
-use glium::glutin::platform::unix::HeadlessContextExt;
 use programs::*;
 use vertices::*;
 
@@ -114,12 +113,11 @@ impl Graphics {
     }
 
     pub fn headless(parameters: Parameters) -> Graphics {
-        let ctx = glutin::ContextBuilder::new()
-            .build_osmesa(glutin::dpi::PhysicalSize::new(
-                parameters.width,
-                parameters.height,
-            ))
-            .unwrap();
+        let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
+            glutin::ContextBuilder::new(),
+            glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
+        )
+        .unwrap();
         let renderer = glium::HeadlessRenderer::new(ctx).unwrap();
         let display = Display::Headless {
             renderer,

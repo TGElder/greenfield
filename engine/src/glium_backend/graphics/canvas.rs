@@ -1,5 +1,3 @@
-use glium::Surface;
-
 pub struct Canvas {
     pub width: u32,
     pub height: u32,
@@ -40,8 +38,8 @@ impl Canvas {
             &self.depth_buffer,
         )
         .unwrap();
-        out.clear_color(0.0, 0.0, 0.0, 0.0);
-        out.clear_depth(1.0);
+        glium::Surface::clear_color(&mut out, 0.0, 0.0, 0.0, 0.0);
+        glium::Surface::clear_depth(&mut out, 1.0);
         out
     }
 
