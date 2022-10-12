@@ -6,3 +6,7 @@ members = [
     "engine",
     "terrain_gen"
 ]
+
+[workspace.dependencies]
+image = "0.24.1"
+maplit = "1.0"
