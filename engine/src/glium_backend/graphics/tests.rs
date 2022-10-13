@@ -21,7 +21,8 @@ fn render_cube() {
             yaw: PI * (5.0 / 8.0),
             scale: 1.0,
         })),
-    });
+    })
+    .unwrap();
 
     let la = [-0.5, -0.5, -0.5];
     let lb = [0.5, -0.5, -0.5];

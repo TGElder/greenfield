@@ -1,4 +1,5 @@
 pub mod elements;
+pub mod errors;
 pub mod matrices;
 pub mod projection;
 pub mod projections;
@@ -7,14 +8,16 @@ pub use projection::Projection;
 
 use elements::*;
 
+use crate::graphics::errors::{DrawError, RenderError, ScreenshotError};
+
 pub trait GraphicsBackend {
-    fn add_triangles(&mut self, triangles: &[Triangle]) -> usize;
+    fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
 
-    fn render(&mut self);
+    fn render(&mut self) -> Result<(), RenderError>;
 
-    fn screenshot(&self, path: &str);
+    fn screenshot(&self, path: &str) -> Result<(), ScreenshotError>;
 
-    fn add_quads(&mut self, quads: &[Quad]) -> usize {
+    fn add_quads(&mut self, quads: &[Quad]) -> Result<usize, DrawError> {
         let triangles = quads
             .iter()
             .flat_map(

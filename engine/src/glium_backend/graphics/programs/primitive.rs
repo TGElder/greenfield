@@ -1,3 +1,5 @@
+use std::error::Error;
+
 const VERTEX_SHADER: &str = r#"
     #version 330
 
@@ -30,6 +32,11 @@ const FRAGMENT_SHADER: &str = r#"
     }
 "#;
 
-pub fn program(display: &dyn glium::backend::Facade) -> glium::Program {
-    glium::Program::from_source(display, VERTEX_SHADER, FRAGMENT_SHADER, None).unwrap()
+pub fn program(display: &dyn glium::backend::Facade) -> Result<glium::Program, Box<dyn Error>> {
+    Ok(glium::Program::from_source(
+        display,
+        VERTEX_SHADER,
+        FRAGMENT_SHADER,
+        None,
+    )?)
 }
