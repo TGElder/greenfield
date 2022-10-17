@@ -49,7 +49,7 @@ impl GameLoop {
             let game_state = game.update(&mut graphics);
             match graphics.render() {
                 Ok(_) => (),
-                Err(err) => println!("Failed to render {:?}", err),
+                Err(err) => println!("Failed to render frame: {:?}", err),
             };
 
             if let game::State::Terminated = game_state {
