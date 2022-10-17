@@ -47,7 +47,10 @@ impl GameLoop {
             *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
 
             let game_state = game.update(&mut graphics);
-            graphics.render();
+            match graphics.render() {
+                Ok(_) => (),
+                Err(err) => println!("Failed to render {:?}", err),
+            };
 
             if let game::State::Terminated = game_state {
                 *control_flow = glutin::event_loop::ControlFlow::Exit

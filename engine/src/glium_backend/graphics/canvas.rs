@@ -1,3 +1,5 @@
+use std::error::Error;
+
 pub struct Canvas {
     pub width: u32,
     pub height: u32,
@@ -6,8 +8,11 @@ pub struct Canvas {
 }
 
 impl Canvas {
-    pub fn new(facade: &dyn glium::backend::Facade, &(width, height): &(u32, u32)) -> Canvas {
-        Canvas {
+    pub fn new(
+        facade: &dyn glium::backend::Facade,
+        &(width, height): &(u32, u32),
+    ) -> Result<Canvas, Box<dyn Error>> {
+        Ok(Canvas {
             width,
             height,
             texture: glium::texture::Texture2d::empty_with_format(
@@ -16,40 +21,37 @@ impl Canvas {
                 glium::texture::MipmapsOption::NoMipmap,
                 width,
                 height,
-            )
-            .unwrap(),
+            )?,
             depth_buffer: glium::framebuffer::DepthRenderBuffer::new(
                 facade,
                 glium::texture::DepthFormat::F32,
                 width,
                 height,
-            )
-            .unwrap(),
-        }
+            )?,
+        })
     }
 
     pub fn frame(
         &self,
         facade: &dyn glium::backend::Facade,
-    ) -> glium::framebuffer::SimpleFrameBuffer {
+    ) -> Result<glium::framebuffer::SimpleFrameBuffer, Box<dyn Error>> {
         let mut out = glium::framebuffer::SimpleFrameBuffer::with_depth_buffer(
             facade,
             &self.texture,
             &self.depth_buffer,
-        )
-        .unwrap();
+        )?;
         glium::Surface::clear_color(&mut out, 0.0, 0.0, 0.0, 0.0);
         glium::Surface::clear_depth(&mut out, 1.0);
-        out
+        Ok(out)
     }
 
-    pub fn save_texture(&self, path: &str) {
+    pub fn save_texture(&self, path: &str) -> Result<(), Box<dyn Error>> {
         let raw_image: glium::texture::RawImage2d<'_, f32> = self
             .texture
             .main_level()
             .first_layer()
             .into_image(None)
-            .unwrap()
+            .ok_or("Canvas texture is a cubemap - this should not happen")?
             .raw_read::<_, (f32, f32, f32)>(&glium::Rect {
                 left: 0,
                 width: self.texture.width(),
@@ -61,10 +63,17 @@ impl Canvas {
 
         let image =
             image::ImageBuffer::from_vec(raw_image.width, raw_image.height, data_gamma_corrected)
-                .unwrap();
+                .ok_or_else(|| {
+                format!(
+                    "Canvas texture data does not fit into buffer of size {}x{}",
+                    raw_image.width, raw_image.height
+                )
+            })?;
         let image =
             image::DynamicImage::ImageRgb8(image::DynamicImage::ImageRgb32F(image).into_rgb8());
         let image = image.flipv();
-        image.save(path).unwrap();
+        image.save(path)?;
+
+        Ok(())
     }
 }

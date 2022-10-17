@@ -11,3 +11,4 @@ image = { workspace = true }
 glium = { workspace = true }
 nalgebra = { workspace = true }
 terrain_gen = { path = "../terrain_gen" }
+thiserror = { workspace = true }

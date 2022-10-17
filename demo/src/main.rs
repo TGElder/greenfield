@@ -28,7 +28,8 @@ fn main() {
             })),
         },
         &game_loop,
-    );
+    )
+    .unwrap();
     let terrain = get_heightmap();
 
     let mut quads =
@@ -55,7 +56,7 @@ fn main() {
         }
     }
 
-    graphics.add_quads(&quads);
+    graphics.add_quads(&quads).unwrap();
 
     game_loop.run(DoNothing { screenshot: 0 }, graphics);
 }
@@ -67,7 +68,7 @@ struct DoNothing {
 impl Game for DoNothing {
     fn update(&mut self, graphics: &mut dyn GraphicsBackend) -> game::State {
         if self.screenshot == 1 {
-            graphics.screenshot("screenshot.png");
+            graphics.screenshot("screenshot.png").unwrap();
         }
         self.screenshot += 1;
         game::State::Running

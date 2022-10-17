@@ -4,8 +4,11 @@ mod programs;
 mod tests;
 mod vertices;
 
+use std::error::Error;
+
 use crate::glium_backend::game_loop::GameLoop;
 use crate::graphics::elements::Triangle;
+use crate::graphics::errors::{DrawError, InitializationError, RenderError, ScreenshotError};
 use crate::graphics::projection::Projection;
 use crate::graphics::GraphicsBackend;
 use canvas::*;
@@ -93,14 +96,24 @@ pub struct Parameters {
 }
 
 impl Graphics {
-    pub fn from_game_loop(parameters: Parameters, game_loop: &GameLoop) -> Graphics {
+    pub fn from_game_loop(
+        parameters: Parameters,
+        game_loop: &GameLoop,
+    ) -> Result<Graphics, InitializationError> {
         Self::headful(parameters, &game_loop.event_loop)
     }
 
     fn headful<T>(
         parameters: Parameters,
         event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Graphics {
+    ) -> Result<Graphics, InitializationError> {
+        Ok(Self::headful_unsafe(parameters, event_loop)?)
+    }
+
+    fn headful_unsafe<T>(
+        parameters: Parameters,
+        event_loop: &glutin::event_loop::EventLoop<T>,
+    ) -> Result<Graphics, Box<dyn Error>> {
         let window_builder = glutin::window::WindowBuilder::new()
             .with_inner_size(glutin::dpi::LogicalSize::new(
                 parameters.width,
@@ -108,17 +121,20 @@ impl Graphics {
             ))
             .with_title(&parameters.name);
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
-        let display = glium::Display::new(window_builder, context_builder, event_loop).unwrap();
+        let display = glium::Display::new(window_builder, context_builder, event_loop)?;
         Self::new(parameters, Display::Headful(display))
     }
 
-    pub fn headless(parameters: Parameters) -> Graphics {
+    pub fn headless(parameters: Parameters) -> Result<Graphics, InitializationError> {
+        Ok(Self::headless_unsafe(parameters)?)
+    }
+
+    pub fn headless_unsafe(parameters: Parameters) -> Result<Graphics, Box<dyn Error>> {
         let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
             glutin::ContextBuilder::new(),
             glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
-        )
-        .unwrap();
-        let renderer = glium::HeadlessRenderer::new(ctx).unwrap();
+        )?;
+        let renderer = glium::HeadlessRenderer::new(ctx)?;
         let display = Display::Headless {
             renderer,
             dimensions: (parameters.width, parameters.height),
@@ -126,14 +142,14 @@ impl Graphics {
         Self::new(parameters, display)
     }
 
-    fn new(parameters: Parameters, display: Display) -> Graphics {
-        Graphics {
+    fn new(parameters: Parameters, display: Display) -> Result<Graphics, Box<dyn Error>> {
+        Ok(Graphics {
             projection: parameters.projection,
             canvas: None,
-            screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD).unwrap(),
+            screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             primitives: vec![],
             primitive_ids: vec![],
-            programs: Programs::new(display.facade()),
+            programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
                     test: glium::DepthTest::IfLess,
@@ -144,22 +160,19 @@ impl Graphics {
                 ..Default::default()
             },
             display,
-        }
+        })
     }
 
-    fn canvas(&mut self, dimensions: &(u32, u32)) -> Option<Canvas> {
+    fn canvas(&mut self, dimensions: &(u32, u32)) -> Result<Canvas, Box<dyn Error>> {
         if let Some(Canvas { width, height, .. }) = self.canvas {
             if (width, height) == *dimensions {
-                return self.canvas.take();
+                return Ok(self.canvas.take().unwrap());
             }
         }
-        Some(Canvas::new(
-            self.display.facade(),
-            &self.display.canvas_dimensions(),
-        ))
+        Canvas::new(self.display.facade(), &self.display.canvas_dimensions())
     }
 
-    fn render_primitives_to_canvas<S>(&self, surface: &mut S)
+    fn render_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
@@ -168,19 +181,18 @@ impl Graphics {
         };
 
         for primitive in self.primitives.iter().flatten() {
-            surface
-                .draw(
-                    &primitive.vertex_buffer,
-                    &INDICES,
-                    &self.programs.primitive,
-                    &uniforms,
-                    &self.draw_parameters,
-                )
-                .unwrap();
+            surface.draw(
+                &primitive.vertex_buffer,
+                &INDICES,
+                &self.programs.primitive,
+                &uniforms,
+                &self.draw_parameters,
+            )?;
         }
+        Ok(())
     }
 
-    fn render_canvas_to_frame<S>(&self, surface: &mut S)
+    fn render_canvas_to_frame<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
@@ -190,24 +202,18 @@ impl Graphics {
             canvas: &canvas.texture
         };
 
-        surface
-            .draw(
-                &self.screen_vertices,
-                &INDICES,
-                &self.programs.screen,
-                &uniforms,
-                &Default::default(),
-            )
-            .unwrap();
+        surface.draw(
+            &self.screen_vertices,
+            &INDICES,
+            &self.programs.screen,
+            &uniforms,
+            &Default::default(),
+        )?;
+
+        Ok(())
     }
-}
 
-struct Primitive {
-    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-}
-
-impl GraphicsBackend for Graphics {
-    fn add_triangles(&mut self, triangles: &[Triangle]) -> usize {
+    fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
         let id = match self.primitive_ids.pop() {
             Some(id) => id,
             None => {
@@ -228,28 +234,49 @@ impl GraphicsBackend for Graphics {
             })
             .collect::<Vec<ColoredVertex>>();
         self.primitives[id] = Some(Primitive {
-            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices).unwrap(),
+            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
         });
 
-        id
+        Ok(id)
     }
 
-    fn render(&mut self) {
+    fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
         let mut frame = self.display.frame();
 
-        self.canvas = self.canvas(&self.display.canvas_dimensions());
+        self.canvas = Some(self.canvas(&self.display.canvas_dimensions())?);
         let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = canvas.frame(self.display.facade());
+        let mut canvas = canvas.frame(self.display.facade())?;
 
-        self.render_primitives_to_canvas(&mut canvas);
-        self.render_canvas_to_frame(&mut frame);
+        self.render_primitives_to_canvas(&mut canvas)?;
+        self.render_canvas_to_frame(&mut frame)?;
 
-        frame.finish().unwrap();
+        frame.finish()?;
+
+        Ok(())
     }
 
-    fn screenshot(&self, path: &str) {
+    fn screenshot_unsafe(&self, path: &str) -> Result<(), Box<dyn Error>> {
         if let Some(canvas) = &self.canvas {
-            canvas.save_texture(path);
+            canvas.save_texture(path)?;
         }
+        Ok(())
+    }
+}
+
+struct Primitive {
+    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+}
+
+impl GraphicsBackend for Graphics {
+    fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError> {
+        Ok(self.add_triangles_unsafe(triangles)?)
+    }
+
+    fn render(&mut self) -> Result<(), RenderError> {
+        Ok(self.render_unsafe()?)
+    }
+
+    fn screenshot(&self, path: &str) -> Result<(), ScreenshotError> {
+        Ok(self.screenshot_unsafe(path)?)
     }
 }
