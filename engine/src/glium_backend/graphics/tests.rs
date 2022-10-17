@@ -67,12 +67,12 @@ fn render_cube() {
     ];
 
     // when
-    graphics.add_quads(&quads);
-    graphics.render();
+    graphics.add_quads(&quads).unwrap();
+    graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
     let temp_path = temp_path.to_str().unwrap();
-    graphics.screenshot(temp_path);
+    graphics.screenshot(temp_path).unwrap();
 
     // then
     let actual = image::open(temp_path).unwrap();

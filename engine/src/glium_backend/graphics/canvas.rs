@@ -51,7 +51,7 @@ impl Canvas {
             .main_level()
             .first_layer()
             .into_image(None)
-            .ok_or_else(|| "Canvas texture is a cubemap - this should not happen")?
+            .ok_or("Canvas texture is a cubemap - this should not happen")?
             .raw_read::<_, (f32, f32, f32)>(&glium::Rect {
                 left: 0,
                 width: self.texture.width(),
