@@ -12,5 +12,4 @@ pub trait EventHandler {
 
 pub enum Event {
     Tick,
-    Selection(usize),
 }
