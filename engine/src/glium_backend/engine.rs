@@ -54,7 +54,7 @@ where
     ) -> Result<GliumEngine<E, GliumGraphics>, Box<dyn Error>> {
         let event_loop = glutin::event_loop::EventLoop::new();
         Ok(GliumEngine {
-            graphics: GliumGraphics::from_event_loop(graphics_parameters, &event_loop)?,
+            graphics: GliumGraphics::headful(graphics_parameters, &event_loop)?,
             event_loop,
             event_handler,
             state: State { running: true },

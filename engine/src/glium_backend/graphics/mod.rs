@@ -95,31 +95,7 @@ pub struct Parameters {
 }
 
 impl GliumGraphics {
-    pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
-        Ok(Self::headless_unsafe(parameters)?)
-    }
-
-    fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
-        let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
-            glutin::ContextBuilder::new(),
-            glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
-        )?;
-        let renderer = glium::HeadlessRenderer::new(ctx)?;
-        let display = Display::Headless {
-            renderer,
-            dimensions: (parameters.width, parameters.height),
-        };
-        Self::new(parameters, display)
-    }
-
-    fn from_event_loop<T>(
-        parameters: Parameters,
-        event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Result<GliumGraphics, InitializationError> {
-        Self::headful(parameters, event_loop)
-    }
-
-    fn headful<T>(
+    pub fn headful<T>(
         parameters: Parameters,
         event_loop: &glutin::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
@@ -139,6 +115,23 @@ impl GliumGraphics {
         let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
         let display = glium::Display::new(window_builder, context_builder, event_loop)?;
         Self::new(parameters, Display::Headful(display))
+    }
+
+    pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
+        Ok(Self::headless_unsafe(parameters)?)
+    }
+
+    fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
+        let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
+            glutin::ContextBuilder::new(),
+            glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
+        )?;
+        let renderer = glium::HeadlessRenderer::new(ctx)?;
+        let display = Display::Headless {
+            renderer,
+            dimensions: (parameters.width, parameters.height),
+        };
+        Self::new(parameters, display)
     }
 
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
