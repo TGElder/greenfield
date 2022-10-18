@@ -4,20 +4,21 @@ use std::time::Duration;
 use commons::color::Color;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
-use engine::game::{self, Game};
-use engine::glium_backend::game_loop::{self, GameLoop};
-use engine::glium_backend::graphics::Graphics;
+use engine::engine::Engine;
+use engine::events::{Event, EventHandler};
+use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
-use engine::graphics::GraphicsBackend;
+use engine::graphics::Graphics;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
-    let game_loop = GameLoop::new(game_loop::Parameters {
-        frame_duration: Duration::from_nanos(16_666_667),
-    });
-    let mut graphics = Graphics::from_game_loop(
-        engine::glium_backend::graphics::Parameters {
+    let engine = glium_backend::engine::GliumEngine::new(
+        Demo { frame: 0 },
+        glium_backend::engine::Parameters {
+            frame_duration: Duration::from_nanos(16_666_667),
+        },
+        glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
             width: 1024,
             height: 768,
@@ -27,51 +28,52 @@ fn main() {
                 scale: 1.0 / 256.0,
             })),
         },
-        &game_loop,
     )
     .unwrap();
-    let terrain = get_heightmap();
 
-    let mut quads =
-        Vec::with_capacity((terrain.width() - 1) as usize * (terrain.height() - 1) as usize);
-    for x in 0..terrain.width() - 1 {
-        for y in 0..terrain.height() - 1 {
-            let id = terrain.index((x, y)) as u32;
-            let z = terrain[(x, y)];
-            let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
-                .iter()
-                .map(|(dx, dy)| {
-                    [
-                        (x + dx) as f32,
-                        (y + dy) as f32,
-                        terrain[(x + dx, y + dy)] * 32.0,
-                    ]
-                })
-                .collect::<Vec<_>>();
-            quads.push(Quad {
-                id,
-                corners: [corners[0], corners[1], corners[2], corners[3]],
-                color: Color::rgb(z, z, z),
-            });
-        }
-    }
-
-    graphics.add_quads(&quads).unwrap();
-
-    game_loop.run(DoNothing { screenshot: 0 }, graphics);
+    engine.run();
 }
 
-struct DoNothing {
-    screenshot: u64,
+struct Demo {
+    frame: u64,
 }
 
-impl Game for DoNothing {
-    fn update(&mut self, graphics: &mut dyn GraphicsBackend) -> game::State {
-        if self.screenshot == 1 {
+impl EventHandler for Demo {
+    fn handle(&mut self, _: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
+        if self.frame == 0 {
+            let terrain = get_heightmap();
+
+            let mut quads = Vec::with_capacity(
+                (terrain.width() - 1) as usize * (terrain.height() - 1) as usize,
+            );
+            for x in 0..terrain.width() - 1 {
+                for y in 0..terrain.height() - 1 {
+                    let id = terrain.index((x, y)) as u32;
+                    let z = terrain[(x, y)];
+                    let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
+                        .iter()
+                        .map(|(dx, dy)| {
+                            [
+                                (x + dx) as f32,
+                                (y + dy) as f32,
+                                terrain[(x + dx, y + dy)] * 32.0,
+                            ]
+                        })
+                        .collect::<Vec<_>>();
+                    quads.push(Quad {
+                        id,
+                        corners: [corners[0], corners[1], corners[2], corners[3]],
+                        color: Color::rgb(z, z, z),
+                    });
+                }
+            }
+
+            graphics.add_quads(&quads).unwrap();
+        } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
+            game_loop.shutdown();
         }
-        self.screenshot += 1;
-        game::State::Running
+        self.frame += 1;
     }
 }
 

@@ -10,7 +10,7 @@ use elements::*;
 
 use crate::graphics::errors::{DrawError, RenderError, ScreenshotError};
 
-pub trait GraphicsBackend {
+pub trait Graphics {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
 
     fn render(&mut self) -> Result<(), RenderError>;
