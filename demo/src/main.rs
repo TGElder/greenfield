@@ -6,19 +6,19 @@ use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
 use engine::events::{Event, EventHandler};
-use engine::glium_backend::game_loop::{self, GameLoop};
+use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
-use engine::graphics::GraphicsBackend;
+use engine::graphics::Graphics;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
-    let game_loop = GameLoop::new(
+    let engine = glium_backend::engine::GliumEngine::new(
         Demo { frame: 0 },
-        game_loop::Parameters {
+        glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
-        engine::glium_backend::graphics::Parameters {
+        glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
             width: 1024,
             height: 768,
@@ -28,9 +28,10 @@ fn main() {
                 scale: 1.0 / 256.0,
             })),
         },
-    );
+    )
+    .unwrap();
 
-    game_loop.run();
+    engine.run();
 }
 
 struct Demo {
@@ -38,12 +39,7 @@ struct Demo {
 }
 
 impl EventHandler for Demo {
-    fn handle(
-        &mut self,
-        _: &Event,
-        game_loop: &mut dyn Engine,
-        graphics: &mut dyn GraphicsBackend,
-    ) {
+    fn handle(&mut self, _: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 

@@ -1,2 +1,2 @@
-pub mod game_loop;
+pub mod engine;
 pub mod graphics;

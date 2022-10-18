@@ -9,7 +9,7 @@ use std::error::Error;
 use crate::graphics::elements::Triangle;
 use crate::graphics::errors::{DrawError, InitializationError, RenderError, ScreenshotError};
 use crate::graphics::projection::Projection;
-use crate::graphics::GraphicsBackend;
+use crate::graphics::Graphics;
 use canvas::*;
 use glium::glutin;
 use programs::*;
@@ -76,7 +76,7 @@ impl Display {
     }
 }
 
-pub struct Graphics {
+pub struct GliumGraphics {
     display: Display,
     projection: Box<dyn Projection>,
     canvas: Option<Canvas>,
@@ -94,25 +94,25 @@ pub struct Parameters {
     pub projection: Box<dyn Projection>,
 }
 
-impl Graphics {
+impl GliumGraphics {
     pub fn from_event_loop<T>(
         parameters: Parameters,
         event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Result<Graphics, InitializationError> {
+    ) -> Result<GliumGraphics, InitializationError> {
         Self::headful(parameters, event_loop)
     }
 
     fn headful<T>(
         parameters: Parameters,
         event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Result<Graphics, InitializationError> {
+    ) -> Result<GliumGraphics, InitializationError> {
         Ok(Self::headful_unsafe(parameters, event_loop)?)
     }
 
     fn headful_unsafe<T>(
         parameters: Parameters,
         event_loop: &glutin::event_loop::EventLoop<T>,
-    ) -> Result<Graphics, Box<dyn Error>> {
+    ) -> Result<GliumGraphics, Box<dyn Error>> {
         let window_builder = glutin::window::WindowBuilder::new()
             .with_inner_size(glutin::dpi::LogicalSize::new(
                 parameters.width,
@@ -124,11 +124,11 @@ impl Graphics {
         Self::new(parameters, Display::Headful(display))
     }
 
-    pub fn headless(parameters: Parameters) -> Result<Graphics, InitializationError> {
+    pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
         Ok(Self::headless_unsafe(parameters)?)
     }
 
-    pub fn headless_unsafe(parameters: Parameters) -> Result<Graphics, Box<dyn Error>> {
+    pub fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
         let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
             glutin::ContextBuilder::new(),
             glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
@@ -141,8 +141,8 @@ impl Graphics {
         Self::new(parameters, display)
     }
 
-    fn new(parameters: Parameters, display: Display) -> Result<Graphics, Box<dyn Error>> {
-        Ok(Graphics {
+    fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
+        Ok(GliumGraphics {
             projection: parameters.projection,
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
@@ -266,7 +266,7 @@ struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
-impl GraphicsBackend for Graphics {
+impl Graphics for GliumGraphics {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError> {
         Ok(self.add_triangles_unsafe(triangles)?)
     }

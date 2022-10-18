@@ -12,7 +12,7 @@ use super::*;
 #[test]
 fn render_cube() {
     // given
-    let mut graphics = Graphics::headless(graphics::Parameters {
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
         name: "Test".to_string(),
         width: 256,
         height: 256,

@@ -1,25 +1,27 @@
+use std::error::Error;
 use std::time::Duration;
 
 use glium::glutin;
 
+use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
 use crate::events::{Event, EventHandler};
-use crate::glium_backend::graphics::{self, Graphics};
-use crate::graphics::GraphicsBackend;
+use crate::glium_backend::graphics::{self, GliumGraphics};
+use crate::graphics::Graphics;
 
-pub struct GameLoop<E, G> {
+pub struct GliumEngine<E, G> {
     event_loop: glutin::event_loop::EventLoop<()>,
     event_handler: E,
     graphics: G,
-    state: GameState,
+    state: State,
     parameters: Parameters,
 }
 
-struct GameState {
+struct State {
     running: bool,
 }
 
-impl Engine for GameState {
+impl Engine for State {
     fn shutdown(&mut self) {
         self.running = false;
     }
@@ -29,7 +31,7 @@ pub struct Parameters {
     pub frame_duration: Duration,
 }
 
-impl<E> GameLoop<E, Graphics>
+impl<E> GliumEngine<E, GliumGraphics>
 where
     E: EventHandler + 'static,
 {
@@ -37,15 +39,27 @@ where
         event_handler: E,
         parameters: Parameters,
         graphics_parameters: graphics::Parameters,
-    ) -> GameLoop<E, Graphics> {
+    ) -> Result<GliumEngine<E, GliumGraphics>, InitializationError> {
+        Ok(Self::new_unsafe(
+            event_handler,
+            parameters,
+            graphics_parameters,
+        )?)
+    }
+
+    fn new_unsafe(
+        event_handler: E,
+        parameters: Parameters,
+        graphics_parameters: graphics::Parameters,
+    ) -> Result<GliumEngine<E, GliumGraphics>, Box<dyn Error>> {
         let event_loop = glutin::event_loop::EventLoop::new();
-        GameLoop {
-            graphics: Graphics::from_event_loop(graphics_parameters, &event_loop).unwrap(), //TODO
+        Ok(GliumEngine {
+            graphics: GliumGraphics::from_event_loop(graphics_parameters, &event_loop)?,
             event_loop,
             event_handler,
-            state: GameState { running: true },
+            state: State { running: true },
             parameters,
-        }
+        })
     }
 
     pub fn run(mut self) {
