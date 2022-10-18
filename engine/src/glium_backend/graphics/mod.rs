@@ -6,7 +6,6 @@ mod vertices;
 
 use std::error::Error;
 
-use crate::glium_backend::game_loop::GameLoop;
 use crate::graphics::elements::Triangle;
 use crate::graphics::errors::{DrawError, InitializationError, RenderError, ScreenshotError};
 use crate::graphics::projection::Projection;
@@ -96,11 +95,11 @@ pub struct Parameters {
 }
 
 impl Graphics {
-    pub fn from_game_loop(
+    pub fn from_event_loop<T>(
         parameters: Parameters,
-        game_loop: &GameLoop,
+        event_loop: &glutin::event_loop::EventLoop<T>,
     ) -> Result<Graphics, InitializationError> {
-        Self::headful(parameters, &game_loop.event_loop)
+        Self::headful(parameters, event_loop)
     }
 
     fn headful<T>(
