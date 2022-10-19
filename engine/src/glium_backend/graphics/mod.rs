@@ -11,6 +11,7 @@ use crate::graphics::errors::{DrawError, InitializationError, RenderError, Scree
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
+use commons::color::Rgba;
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -82,7 +83,7 @@ pub struct GliumGraphics {
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     primitives: Vec<Option<Primitive>>,
-    primitive_ids: Vec<usize>,
+    primitive_indices: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -140,7 +141,7 @@ impl GliumGraphics {
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             primitives: vec![],
-            primitive_ids: vec![],
+            primitive_indices: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -206,10 +207,10 @@ impl GliumGraphics {
     }
 
     fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
-        let id = match self.primitive_ids.pop() {
-            Some(id) => id,
+        let index = match self.primitive_indices.pop() {
+            Some(index) => index,
             None => {
-                let out = self.primitive_ids.len();
+                let out = self.primitive_indices.len();
                 self.primitives.push(None);
                 out
             }
@@ -225,11 +226,11 @@ impl GliumGraphics {
                 })
             })
             .collect::<Vec<ColoredVertex>>();
-        self.primitives[id] = Some(Primitive {
+        self.primitives[index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
         });
 
-        Ok(id)
+        Ok(index)
     }
 
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
@@ -253,6 +254,14 @@ impl GliumGraphics {
         }
         Ok(())
     }
+
+    fn id_at_unsafe(&self, xy: (u32, u32)) -> Result<u32, Box<dyn Error>> {
+        if let Some(canvas) = &self.canvas {
+            Ok(canvas.read_pixel(xy).map(|Rgba{a, ..}| a.to_bits())?)
+        } else {
+            Ok(0)
+        }
+    } 
 }
 
 struct Primitive {
@@ -270,5 +279,9 @@ impl Graphics for GliumGraphics {
 
     fn screenshot(&self, path: &str) -> Result<(), ScreenshotError> {
         Ok(self.screenshot_unsafe(path)?)
+    }
+
+    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError> {
+        Ok(self.id_at_unsafe(xy)?)
     }
 }

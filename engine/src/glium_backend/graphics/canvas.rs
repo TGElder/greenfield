@@ -1,4 +1,7 @@
 use std::error::Error;
+use std::time::Instant;
+
+use commons::color::Rgba;
 
 pub struct Canvas {
     pub width: u32,
@@ -75,5 +78,26 @@ impl Canvas {
         image.save(path)?;
 
         Ok(())
+    }
+
+    pub fn read_pixel(&self, (x, y): (u32, u32)) -> Result<Rgba<f32>, Box<dyn Error>> {
+        let start = Instant::now();
+        let raw_image: glium::texture::RawImage2d<'_, f32> = self
+            .texture
+            .main_level()
+            .first_layer()
+            .into_image(None)
+            .ok_or("Canvas texture is a cubemap - this should not happen")?
+            .raw_read::<_, (f32, f32, f32, f32)>(&glium::Rect {
+                left: x,
+                width: 1,
+                bottom: y,
+                height: 1,
+            });
+
+        println!("Read in {}us", start.elapsed().as_micros());
+        let data = raw_image.data;
+
+        Ok(Rgba::new(data[0], data[1], data[2], data[3]))
     }
 }

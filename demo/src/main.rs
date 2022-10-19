@@ -25,7 +25,7 @@ fn main() {
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
                 yaw: PI * (5.0 / 8.0),
-                scale: 1.0 / 256.0,
+                scale: 1.0 / 64.0,
             })),
         },
     )
@@ -71,8 +71,8 @@ impl EventHandler for Demo {
             graphics.add_quads(&quads).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
-            game_loop.shutdown();
         }
+        println!("{}", graphics.id_at((1023, 0)).unwrap());
         self.frame += 1;
     }
 }
