@@ -257,11 +257,11 @@ impl GliumGraphics {
 
     fn id_at_unsafe(&self, xy: (u32, u32)) -> Result<u32, Box<dyn Error>> {
         if let Some(canvas) = &self.canvas {
-            Ok(canvas.read_pixel(xy).map(|Rgba{a, ..}| a.to_bits())?)
+            Ok(canvas.read_pixel(xy).map(|Rgba { a, .. }| a.to_bits())?)
         } else {
             Ok(0)
         }
-    } 
+    }
 }
 
 struct Primitive {

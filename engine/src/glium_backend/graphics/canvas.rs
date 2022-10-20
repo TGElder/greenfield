@@ -1,5 +1,4 @@
 use std::error::Error;
-use std::time::Instant;
 
 use commons::color::Rgba;
 
@@ -81,7 +80,13 @@ impl Canvas {
     }
 
     pub fn read_pixel(&self, (x, y): (u32, u32)) -> Result<Rgba<f32>, Box<dyn Error>> {
-        let start = Instant::now();
+        if x > self.texture.width() {
+            panic!("{} > {}", x, self.texture.width())
+        }
+        if y > self.texture.height() {
+            panic!("{} > {}", y, self.texture.height())
+        }
+
         let raw_image: glium::texture::RawImage2d<'_, f32> = self
             .texture
             .main_level()
@@ -91,11 +96,10 @@ impl Canvas {
             .raw_read::<_, (f32, f32, f32, f32)>(&glium::Rect {
                 left: x,
                 width: 1,
-                bottom: y,
+                bottom: (self.texture.height() - 1) - y,
                 height: 1,
             });
 
-        println!("Read in {}us", start.elapsed().as_micros());
         let data = raw_image.data;
 
         Ok(Rgba::new(data[0], data[1], data[2], data[3]))

@@ -45,5 +45,5 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
-    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError>; // TODO error type
+    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError>;
 }

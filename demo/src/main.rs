@@ -25,7 +25,7 @@ fn main() {
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
                 yaw: PI * (5.0 / 8.0),
-                scale: 1.0 / 64.0,
+                scale: 1.0 / 256.0,
             })),
         },
     )
@@ -39,7 +39,7 @@ struct Demo {
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, _: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    fn handle(&mut self, _: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -72,7 +72,6 @@ impl EventHandler for Demo {
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
-        println!("{}", graphics.id_at((1023, 0)).unwrap());
         self.frame += 1;
     }
 }
