@@ -1,4 +1,7 @@
 use std::error::Error;
+use thiserror::Error;
+
+use commons::color::Rgba;
 
 pub struct Canvas {
     pub width: u32,
@@ -76,4 +79,43 @@ impl Canvas {
 
         Ok(())
     }
+
+    pub fn read_pixel(&self, (x, y): (u32, u32)) -> Result<Rgba<f32>, ReadPixelError> {
+        if x > self.texture.width() || y > self.texture.height() {
+            return Err(ReadPixelError::OutOfBounds {
+                xy: (x, y),
+                dimensions: (self.texture.width(), self.texture.height()),
+            });
+        }
+
+        let raw_image: glium::texture::RawImage2d<'_, f32> = self
+            .texture
+            .main_level()
+            .first_layer()
+            .into_image(None)
+            .ok_or(ReadPixelError::Backend(
+                "Canvas texture is a cubemap - this should not happen",
+            ))?
+            .raw_read::<_, (f32, f32, f32, f32)>(&glium::Rect {
+                left: x,
+                width: 1,
+                bottom: (self.texture.height() - 1) - y,
+                height: 1,
+            });
+
+        let data = raw_image.data;
+
+        Ok(Rgba::new(data[0], data[1], data[2], data[3]))
+    }
+}
+
+#[derive(Error, Debug)]
+pub enum ReadPixelError {
+    #[error("Cannot read pixel at {xy:?} from canvas with dimensions{dimensions:?}")]
+    OutOfBounds {
+        xy: (u32, u32),
+        dimensions: (u32, u32),
+    },
+    #[error("Backend read pixel error")]
+    Backend(&'static str),
 }

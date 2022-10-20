@@ -39,7 +39,7 @@ struct Demo {
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, _: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    fn handle(&mut self, _: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -71,7 +71,6 @@ impl EventHandler for Demo {
             graphics.add_quads(&quads).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
-            game_loop.shutdown();
         }
         self.frame += 1;
     }
