@@ -21,32 +21,32 @@ fn cube_quads() -> Vec<Quad> {
 
     vec![
         Quad {
-            id: 1,
+            id: 0,
             corners: [ld, lc, lb, la],
             color: Color::rgb(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 2,
+            id: 1,
             corners: [ua, ub, uc, ud],
             color: Color::rgb(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 3,
+            id: 2,
             corners: [ua, la, lb, ub],
             color: Color::rgb(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 4,
+            id: 3,
             corners: [uc, lc, ld, ud],
             color: Color::rgb(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 5,
+            id: 4,
             corners: [ub, lb, lc, uc],
             color: Color::rgb(0.0, 0.0, 1.0),
         },
         Quad {
-            id: 6,
+            id: 5,
             corners: [ud, ld, la, ua],
             color: Color::rgb(0.0, 0.0, 1.0),
         },
@@ -102,8 +102,10 @@ fn id_at() {
     graphics.render().unwrap();
 
     // then
-    assert_eq!(graphics.id_at((162, 141)).unwrap(), 2);
-    assert_eq!(graphics.id_at((162, 142)).unwrap(), 5);
-    assert_eq!(graphics.id_at((163, 141)).unwrap(), 4);
+    assert_eq!(graphics.id_at((162, 141)).unwrap(), 1);
+    assert_eq!(graphics.id_at((162, 142)).unwrap(), 4);
+    assert_eq!(graphics.id_at((163, 141)).unwrap(), 3);
     assert_eq!(graphics.id_at((250, 250)).unwrap(), 0);
+    assert_eq!(graphics.id_at((300, 0)).unwrap(), 0);
+    assert_eq!(graphics.id_at((0, 300)).unwrap(), 0);
 }
