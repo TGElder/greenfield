@@ -1,7 +1,7 @@
 use std::env::temp_dir;
 use std::f32::consts::PI;
 
-use commons::color::Color;
+use commons::color::Rgb;
 
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
@@ -23,32 +23,32 @@ fn cube_quads() -> Vec<Quad> {
         Quad {
             id: 0,
             corners: [ld, lc, lb, la],
-            color: Color::rgb(1.0, 0.0, 0.0),
+            color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
             id: 1,
             corners: [ua, ub, uc, ud],
-            color: Color::rgb(1.0, 0.0, 0.0),
+            color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
             id: 2,
             corners: [ua, la, lb, ub],
-            color: Color::rgb(0.0, 1.0, 0.0),
+            color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
             id: 3,
             corners: [uc, lc, ld, ud],
-            color: Color::rgb(0.0, 1.0, 0.0),
+            color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
             id: 4,
             corners: [ub, lb, lc, uc],
-            color: Color::rgb(0.0, 0.0, 1.0),
+            color: Rgb::new(0.0, 0.0, 1.0),
         },
         Quad {
             id: 5,
             corners: [ud, ld, la, ua],
-            color: Color::rgb(0.0, 0.0, 1.0),
+            color: Rgb::new(0.0, 0.0, 1.0),
         },
     ]
 }

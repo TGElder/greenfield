@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 use std::time::Duration;
 
-use commons::color::Color;
+use commons::color::Rgb;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
@@ -63,7 +63,7 @@ impl EventHandler for Demo {
                     quads.push(Quad {
                         id,
                         corners: [corners[0], corners[1], corners[2], corners[3]],
-                        color: Color::rgb(z, z, z),
+                        color: Rgb::new(z, z, z),
                     });
                 }
             }
