@@ -1,13 +1,13 @@
 #[derive(Clone, Copy)]
-pub struct Color<T> {
+pub struct Rgb<T> {
     pub r: T,
     pub g: T,
     pub b: T,
 }
 
-impl<T> Color<T> {
-    pub fn rgb(r: T, g: T, b: T) -> Color<T> {
-        Color { r, g, b }
+impl<T> Rgb<T> {
+    pub fn new(r: T, g: T, b: T) -> Rgb<T> {
+        Rgb { r, g, b }
     }
 }
 

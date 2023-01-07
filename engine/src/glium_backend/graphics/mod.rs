@@ -176,7 +176,7 @@ impl GliumGraphics {
         for primitive in self.primitives.iter().flatten() {
             surface.draw(
                 &primitive.vertex_buffer,
-                &INDICES,
+                INDICES,
                 &self.programs.primitive,
                 &uniforms,
                 &self.draw_parameters,
@@ -197,7 +197,7 @@ impl GliumGraphics {
 
         surface.draw(
             &self.screen_vertices,
-            &INDICES,
+            INDICES,
             &self.programs.screen,
             &uniforms,
             &Default::default(),
