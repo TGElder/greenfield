@@ -226,8 +226,10 @@ impl GliumGraphics {
                 })
             })
             .collect::<Vec<ColoredVertex>>();
+
         self.primitives[index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+            centroid: centroid(&vertices),
         });
 
         Ok(index)
@@ -268,8 +270,27 @@ impl GliumGraphics {
     }
 }
 
+fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
+    let mut max = [0.0f32; 3];
+    let mut min = [0.0f32; 3];
+
+    for vertex in vertices.iter() {
+        for i in 0..3 {
+            max[i] = max[i].max(vertex.position[i]);
+            min[i] = min[i].min(vertex.position[i]);
+        }
+    }
+
+    [
+        (min[0] + max[0]) / 2.0,
+        (min[1] + max[1]) / 2.0,
+        (min[2] + max[2]) / 2.0,
+    ]
+}
+
 struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+    centroid: [f32; 3],
 }
 
 impl Graphics for GliumGraphics {
