@@ -7,7 +7,9 @@ mod vertices;
 use std::error::Error;
 
 use crate::graphics::elements::Triangle;
-use crate::graphics::errors::{DrawError, InitializationError, RenderError, ScreenshotError};
+use crate::graphics::errors::{
+    DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
+};
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
@@ -268,6 +270,24 @@ impl GliumGraphics {
             Ok(0)
         }
     }
+
+    fn look_at_unsafe(&mut self, id: u32, screen_xy: &[f32; 2]) -> Result<(), Box<dyn Error>> {
+        let centroid = self
+            .primitives
+            .get(id as usize)
+            .ok_or_else(|| {
+                format!(
+                    "ID {} exceeds length primitive list {}",
+                    id,
+                    self.primitives.len()
+                )
+            })?
+            .as_ref()
+            .ok_or_else(|| format!("ID {} is not in use", id))?
+            .centroid;
+        self.projection.look_at(&centroid, screen_xy);
+        Ok(())
+    }
 }
 
 fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
@@ -308,5 +328,9 @@ impl Graphics for GliumGraphics {
 
     fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError> {
         Ok(self.id_at_unsafe(xy)?)
+    }
+
+    fn look_at(&mut self, id: u32, screen_xy: &[f32; 2]) -> Result<(), IndexError> {
+        Ok(self.look_at_unsafe(id, screen_xy)?)
     }
 }

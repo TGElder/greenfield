@@ -27,3 +27,10 @@ pub struct ScreenshotError {
     #[from]
     source: Box<dyn std::error::Error>,
 }
+
+#[derive(Error, Debug)]
+#[error("Graphics index error")]
+pub struct IndexError {
+    #[from]
+    source: Box<dyn std::error::Error>,
+}
