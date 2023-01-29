@@ -283,7 +283,7 @@ impl GliumGraphics {
                 )
             })?
             .as_ref()
-            .ok_or_else(|| format!("ID {} is not in use", id))?
+            .ok_or_else(|| format!("ID {id} is not in use"))?
             .centroid;
         self.projection.look_at(&centroid, screen_xy);
         Ok(())
