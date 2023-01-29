@@ -87,7 +87,7 @@ where
 
             match self.graphics.render() {
                 Ok(_) => (),
-                Err(err) => println!("Failed to render frame: {:?}", err),
+                Err(err) => println!("Failed to render frame: {err}"),
             };
         });
     }
