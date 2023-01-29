@@ -277,7 +277,7 @@ impl GliumGraphics {
             .get(id as usize)
             .ok_or_else(|| {
                 format!(
-                    "ID {} exceeds length primitive list {}",
+                    "ID {} exceeds length of primitive list {}",
                     id,
                     self.primitives.len()
                 )
@@ -291,13 +291,13 @@ impl GliumGraphics {
 }
 
 fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
-    let mut max = [0.0f32; 3];
     let mut min = [0.0f32; 3];
+    let mut max = [0.0f32; 3];
 
     for vertex in vertices.iter() {
         for i in 0..3 {
-            max[i] = max[i].max(vertex.position[i]);
             min[i] = min[i].min(vertex.position[i]);
+            max[i] = max[i].max(vertex.position[i]);
         }
     }
 
