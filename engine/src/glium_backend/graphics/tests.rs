@@ -109,3 +109,33 @@ fn id_at() {
     assert_eq!(graphics.id_at((300, 0)).unwrap(), 0);
     assert_eq!(graphics.id_at((0, 300)).unwrap(), 0);
 }
+
+#[test]
+fn look_at() {
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
+    })
+    .unwrap();
+
+    // when
+    let id = graphics.add_quads(&cube_quads()).unwrap() as u32;
+    graphics.look_at(id, &[0.5, 0.5]).unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/look_at.png").unwrap();
+    assert_eq!(actual, expected);
+}
