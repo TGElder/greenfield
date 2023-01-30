@@ -127,7 +127,7 @@ fn look_at() {
 
     // when
     let id = graphics.add_quads(&cube_quads()).unwrap() as u32;
-    graphics.look_at(id, &[0.5, 0.5]).unwrap();
+    graphics.look_at(id, &(192, 64)).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");

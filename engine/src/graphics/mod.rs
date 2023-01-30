@@ -47,5 +47,5 @@ pub trait Graphics {
 
     fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError>;
 
-    fn look_at(&mut self, id: u32, screen_xy: &[f32; 2]) -> Result<(), IndexError>;
+    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError>;
 }
