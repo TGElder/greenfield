@@ -208,6 +208,15 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn screen_to_gl(&self, (x, y): &(u32, u32)) -> [f32; 2] {
+        let (width, height) = self.display.canvas_dimensions();
+
+        let x_pc = *x as f32 / width as f32;
+        let y_pc = *y as f32 / height as f32;
+
+        [x_pc * 2.0 - 1.0, -(y_pc * 2.0 - 1.0)]
+    }
+
     fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
         let index = match self.primitive_indices.pop() {
             Some(index) => index,
@@ -271,7 +280,8 @@ impl GliumGraphics {
         }
     }
 
-    fn look_at_unsafe(&mut self, id: u32, screen_xy: &[f32; 2]) -> Result<(), Box<dyn Error>> {
+    fn look_at_unsafe(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), Box<dyn Error>> {
+        let gl_xy = self.screen_to_gl(xy);
         let centroid = self
             .primitives
             .get(id as usize)
@@ -285,7 +295,7 @@ impl GliumGraphics {
             .as_ref()
             .ok_or_else(|| format!("ID {id} is not in use"))?
             .centroid;
-        self.projection.look_at(&centroid, screen_xy);
+        self.projection.look_at(&centroid, &gl_xy);
         Ok(())
     }
 }
@@ -330,7 +340,7 @@ impl Graphics for GliumGraphics {
         Ok(self.id_at_unsafe(xy)?)
     }
 
-    fn look_at(&mut self, id: u32, screen_xy: &[f32; 2]) -> Result<(), IndexError> {
-        Ok(self.look_at_unsafe(id, screen_xy)?)
+    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError> {
+        Ok(self.look_at_unsafe(id, xy)?)
     }
 }

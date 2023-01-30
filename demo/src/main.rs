@@ -69,7 +69,7 @@ impl EventHandler for Demo {
             }
 
             let id = graphics.add_quads(&quads).unwrap();
-            graphics.look_at(id as u32, &[0.0, 0.0]).unwrap();
+            graphics.look_at(id as u32, &(512, 384)).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
