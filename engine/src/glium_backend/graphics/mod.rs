@@ -4,6 +4,8 @@ mod programs;
 mod tests;
 mod vertices;
 
+use std::collections::hash_map::Entry;
+use std::collections::HashMap;
 use std::error::Error;
 
 use crate::graphics::elements::Triangle;
@@ -85,6 +87,7 @@ pub struct GliumGraphics {
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     primitives: Vec<Option<Primitive>>,
+    vertices: HashMap<u32, Vec<[f32; 3]>>,
     primitive_indices: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
@@ -144,6 +147,7 @@ impl GliumGraphics {
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             primitives: vec![],
             primitive_indices: vec![],
+            vertices: HashMap::new(),
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -221,7 +225,7 @@ impl GliumGraphics {
         let index = match self.primitive_indices.pop() {
             Some(index) => index,
             None => {
-                let out = self.primitive_indices.len();
+                let out = self.primitives.len();
                 self.primitives.push(None);
                 out
             }
@@ -238,9 +242,19 @@ impl GliumGraphics {
             })
             .collect::<Vec<ColoredVertex>>();
 
+        for vertex in vertices.iter() {
+            match self.vertices.entry(vertex.id) {
+                Entry::Occupied(mut list) => {
+                    list.get_mut().push(vertex.position);
+                }
+                Entry::Vacant(cell) => {
+                    cell.insert(vec![vertex.position]);
+                }
+            }
+        }
+
         self.primitives[index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-            centroid: centroid(&vertices),
         });
 
         Ok(index)
@@ -282,32 +296,24 @@ impl GliumGraphics {
 
     fn look_at_unsafe(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), Box<dyn Error>> {
         let gl_xy = self.screen_to_gl(xy);
-        let centroid = self
-            .primitives
-            .get(id as usize)
-            .ok_or_else(|| {
-                format!(
-                    "ID {} exceeds length of primitive list {}",
-                    id,
-                    self.primitives.len()
-                )
-            })?
-            .as_ref()
-            .ok_or_else(|| format!("ID {id} is not in use"))?
-            .centroid;
+        let vertices = self
+            .vertices
+            .get(&id)
+            .ok_or_else(|| format!("ID {} not found", id,))?;
+        let centroid = centroid(vertices);
         self.projection.look_at(&centroid, &gl_xy);
         Ok(())
     }
 }
 
-fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
-    let mut min = [0.0f32; 3];
+fn centroid(vertices: &[[f32; 3]]) -> [f32; 3] {
+    let mut min = [f32::MAX; 3];
     let mut max = [0.0f32; 3];
 
     for vertex in vertices.iter() {
         for i in 0..3 {
-            min[i] = min[i].min(vertex.position[i]);
-            max[i] = max[i].max(vertex.position[i]);
+            min[i] = min[i].min(vertex[i]);
+            max[i] = max[i].max(vertex[i]);
         }
     }
 
@@ -320,7 +326,6 @@ fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
 
 struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-    centroid: [f32; 3],
 }
 
 impl Graphics for GliumGraphics {

@@ -29,9 +29,6 @@ impl EventHandler for DragHandler {
         match event {
             Event::MouseMoved(xy) => {
                 self.mouse_xy = Some(*xy);
-                if let Some(selection) = self.selection {
-                    graphics.look_at(selection, xy).unwrap();
-                }
             }
             Event::MouseInput {
                 button: MouseButton::Left,
@@ -39,6 +36,7 @@ impl EventHandler for DragHandler {
             } => {
                 let Some(mouse_xy) = self.mouse_xy else {return};
                 if let Ok(xy) = graphics.id_at(mouse_xy) {
+                    println!("Selected {:?}", xy);
                     self.selection = Some(xy)
                 }
             }
@@ -46,6 +44,11 @@ impl EventHandler for DragHandler {
                 button: MouseButton::Left,
                 state: ButtonState::Released,
             } => self.selection = None,
+            Event::Tick => {
+                let Some(selection) = self.selection else {return};
+                let Some(mouse_xy) = self.mouse_xy else {return};
+                graphics.look_at(selection, &mouse_xy).unwrap();
+            }
             _ => (),
         }
     }

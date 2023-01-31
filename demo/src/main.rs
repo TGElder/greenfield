@@ -53,8 +53,12 @@ impl EventHandler for Demo {
             );
             for x in 0..terrain.width() - 1 {
                 for y in 0..terrain.height() - 1 {
-                    let id = terrain.index((x, y)) as u32;
-                    let z = terrain[(x, y)];
+                    let id = (x * (terrain.height() - 1)) + y;
+                    let z = [(0, 0), (1, 0), (1, 1), (0, 1)]
+                        .iter()
+                        .map(|(dx, dy)| terrain[(x + dx, y + dy)])
+                        .sum::<f32>()
+                        / 4.0;
                     let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
                         .iter()
                         .map(|(dx, dy)| {
@@ -73,8 +77,8 @@ impl EventHandler for Demo {
                 }
             }
 
-            let id = graphics.add_quads(&quads).unwrap();
-            graphics.look_at(id as u32, &(256, 256)).unwrap();
+            graphics.add_quads(&quads).unwrap();
+            graphics.look_at(0, &(256, 256)).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
