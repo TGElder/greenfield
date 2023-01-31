@@ -5,18 +5,19 @@ use commons::color::Rgb;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
-use engine::events::{ButtonState, Event, EventHandler, MouseButton};
+use engine::events::{Event, EventHandler};
 use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
+use engine::handlers::DragHandler;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Demo {
             frame: 0,
-            dragging: false,
+            drag_handler: DragHandler::new(),
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -39,12 +40,11 @@ fn main() {
 
 struct Demo {
     frame: u64,
-    dragging: bool,
+    drag_handler: DragHandler,
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        let id = 0;
+    fn handle(&mut self, event: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -79,22 +79,7 @@ impl EventHandler for Demo {
             graphics.screenshot("screenshot.png").unwrap();
         }
 
-        match event {
-            Event::MouseMoved(xy) => {
-                if self.dragging {
-                    graphics.look_at(id, xy).unwrap();
-                }
-            }
-            Event::MouseInput {
-                button: MouseButton::Left,
-                state: ButtonState::Pressed,
-            } => self.dragging = true,
-            Event::MouseInput {
-                button: MouseButton::Left,
-                state: ButtonState::Released,
-            } => self.dragging = false,
-            _ => (),
-        }
+        self.drag_handler.handle(event, game_loop, graphics);
 
         self.frame += 1;
     }
