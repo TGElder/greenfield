@@ -138,4 +138,13 @@ fn look_at() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/look_at.png").unwrap();
     assert_eq!(actual, expected);
+
+    // when
+    graphics.look_at(id, &(192, 64)).unwrap();
+    graphics.render().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    assert_eq!(actual, expected);
 }
