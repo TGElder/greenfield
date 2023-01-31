@@ -50,8 +50,8 @@ impl graphics::Projection for Projection {
 
         let offsets = composite * world;
 
-        self.translation[(0, 3)] = -offsets.x + screen_xy[0];
-        self.translation[(1, 3)] = -offsets.y + screen_xy[1];
+        self.translation[(0, 3)] += -offsets.x + screen_xy[0];
+        self.translation[(1, 3)] += -offsets.y + screen_xy[1];
 
         self.update_composite();
     }
