@@ -5,7 +5,7 @@ use commons::color::Rgb;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
-use engine::events::{Event, EventHandler};
+use engine::events::{ButtonState, Event, EventHandler, MouseButton};
 use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
@@ -14,14 +14,17 @@ use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParamet
 
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
-        Demo { frame: 0 },
+        Demo {
+            frame: 0,
+            dragging: false,
+        },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
         glium_backend::graphics::Parameters {
             name: "Demo".to_string(),
-            width: 1024,
-            height: 768,
+            width: 512,
+            height: 512,
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
                 yaw: PI * (5.0 / 8.0),
@@ -36,10 +39,12 @@ fn main() {
 
 struct Demo {
     frame: u64,
+    dragging: bool,
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, _: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+        let id = 0;
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -69,10 +74,28 @@ impl EventHandler for Demo {
             }
 
             let id = graphics.add_quads(&quads).unwrap();
-            graphics.look_at(id as u32, &(512, 384)).unwrap();
+            graphics.look_at(id as u32, &(256, 256)).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
+
+        match event {
+            Event::MouseMoved(xy) => {
+                if self.dragging {
+                    graphics.look_at(id, xy).unwrap();
+                }
+            }
+            Event::MouseInput {
+                button: MouseButton::Left,
+                state: ButtonState::Pressed,
+            } => self.dragging = true,
+            Event::MouseInput {
+                button: MouseButton::Left,
+                state: ButtonState::Released,
+            } => self.dragging = false,
+            _ => (),
+        }
+
         self.frame += 1;
     }
 }

@@ -5,7 +5,7 @@ use glium::glutin;
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
-use crate::events::{Event, EventHandler};
+use crate::events::{ButtonState, Event, EventHandler, MouseButton};
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
 
@@ -77,6 +77,28 @@ where
                     glutin::event::StartCause::Init => (),
                     _ => return,
                 },
+                glutin::event::Event::WindowEvent { event, .. } => match event {
+                    glutin::event::WindowEvent::CursorMoved { position, .. } => {
+                        self.event_handler.handle(
+                            &Event::MouseMoved(position.into()),
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+                        return;
+                    }
+                    glutin::event::WindowEvent::MouseInput { button, state, .. } => {
+                        self.event_handler.handle(
+                            &Event::MouseInput {
+                                button: button.into(),
+                                state: state.into(),
+                            },
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+                        return;
+                    }
+                    _ => return,
+                },
                 _ => return,
             }
             let next_frame_time = std::time::Instant::now() + self.parameters.frame_duration;
@@ -90,5 +112,25 @@ where
                 Err(err) => println!("Failed to render frame: {err}"),
             };
         });
+    }
+}
+
+impl From<glutin::event::ElementState> for ButtonState {
+    fn from(state: glutin::event::ElementState) -> Self {
+        match state {
+            glutin::event::ElementState::Pressed => ButtonState::Pressed,
+            glutin::event::ElementState::Released => ButtonState::Released,
+        }
+    }
+}
+
+impl From<glutin::event::MouseButton> for MouseButton {
+    fn from(button: glutin::event::MouseButton) -> Self {
+        match button {
+            glutin::event::MouseButton::Left => MouseButton::Left,
+            glutin::event::MouseButton::Right => MouseButton::Right,
+            glutin::event::MouseButton::Middle => MouseButton::Middle,
+            glutin::event::MouseButton::Other(_) => MouseButton::Unknown,
+        }
     }
 }
