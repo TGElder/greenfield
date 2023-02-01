@@ -83,34 +83,6 @@ fn render_cube() {
 }
 
 #[test]
-fn id_at() {
-    // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
-        })),
-    })
-    .unwrap();
-
-    // when
-    graphics.add_quads(&cube_quads()).unwrap();
-    graphics.render().unwrap();
-
-    // then
-    assert_eq!(graphics.id_at((162, 141)).unwrap(), 1);
-    assert_eq!(graphics.id_at((162, 142)).unwrap(), 4);
-    assert_eq!(graphics.id_at((163, 141)).unwrap(), 3);
-    assert_eq!(graphics.id_at((250, 250)).unwrap(), 0);
-    assert_eq!(graphics.id_at((300, 0)).unwrap(), 0);
-    assert_eq!(graphics.id_at((0, 300)).unwrap(), 0);
-}
-
-#[test]
 fn look_at() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {

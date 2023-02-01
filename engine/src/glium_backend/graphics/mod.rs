@@ -268,18 +268,6 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn id_at_unsafe(&self, xy: (u32, u32)) -> Result<u32, Box<dyn Error>> {
-        if let Some(canvas) = &self.canvas {
-            match canvas.read_pixel(xy) {
-                Ok(Rgba { a, .. }) => Ok(a.to_bits()),
-                Err(ReadPixelError::OutOfBounds { .. }) => Ok(0),
-                Err(e) => Err(Box::new(e)),
-            }
-        } else {
-            Ok(0)
-        }
-    }
-
     fn look_at_unsafe(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), Box<dyn Error>> {
         let gl_xy = self.screen_to_gl(xy);
         let centroid = self
@@ -334,10 +322,6 @@ impl Graphics for GliumGraphics {
 
     fn screenshot(&self, path: &str) -> Result<(), ScreenshotError> {
         Ok(self.screenshot_unsafe(path)?)
-    }
-
-    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError> {
-        Ok(self.id_at_unsafe(xy)?)
     }
 
     fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError> {
