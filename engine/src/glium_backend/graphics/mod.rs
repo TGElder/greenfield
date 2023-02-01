@@ -274,6 +274,14 @@ impl GliumGraphics {
         self.projection.look_at(world_xyz, &gl_xy);
         Ok(())
     }
+
+    fn world_xyz_at_unsafe(&self, screen_xy: &(u32, u32)) -> Result<[f32; 3], Box<dyn Error>> {
+        let Some(canvas) = &self.canvas else{return Err("No canvas".into())};
+        let gl_z = canvas.read_pixel(*screen_xy)?.a;
+        let [gl_x, gl_y] = self.screen_to_gl(screen_xy);
+        let gl_xyz = [gl_x, gl_y, gl_z];
+        Ok(self.projection.unproject(&gl_xyz))
+    }
 }
 
 struct Primitive {
@@ -295,5 +303,9 @@ impl Graphics for GliumGraphics {
 
     fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) -> Result<(), IndexError> {
         Ok(self.look_at_unsafe(world_xyz, screen_xy)?)
+    }
+
+    fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {
+        Ok(self.world_xyz_at_unsafe(screen_xy)?)
     }
 }
