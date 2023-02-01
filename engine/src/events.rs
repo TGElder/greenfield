@@ -2,7 +2,7 @@ use crate::engine::Engine;
 use crate::graphics::Graphics;
 
 pub trait EventHandler {
-    fn handle(&mut self, event: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics);
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics);
 }
 
 pub enum ButtonState {

@@ -10,11 +10,15 @@ use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
+use engine::handlers::DragHandler;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
-        Demo { frame: 0 },
+        Demo {
+            frame: 0,
+            drag_handler: DragHandler::new(),
+        },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
@@ -36,10 +40,11 @@ fn main() {
 
 struct Demo {
     frame: u64,
+    drag_handler: DragHandler,
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, _: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -71,6 +76,8 @@ impl EventHandler for Demo {
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
+
+        self.drag_handler.handle(event, engine, graphics);
 
         self.frame += 1;
     }
