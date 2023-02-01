@@ -21,32 +21,26 @@ fn cube_quads() -> Vec<Quad> {
 
     vec![
         Quad {
-            id: 0,
             corners: [ld, lc, lb, la],
             color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 1,
             corners: [ua, ub, uc, ud],
             color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 2,
             corners: [ua, la, lb, ub],
             color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 3,
             corners: [uc, lc, ld, ud],
             color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 4,
             corners: [ub, lb, lc, uc],
             color: Rgb::new(0.0, 0.0, 1.0),
         },
         Quad {
-            id: 5,
             corners: [ud, ld, la, ua],
             color: Rgb::new(0.0, 0.0, 1.0),
         },

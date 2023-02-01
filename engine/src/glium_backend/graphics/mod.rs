@@ -13,7 +13,6 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
-use commons::color::Rgba;
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -229,9 +228,8 @@ impl GliumGraphics {
 
         let vertices = triangles
             .iter()
-            .flat_map(|Triangle { id, corners, color }| {
+            .flat_map(|Triangle { corners, color }| {
                 corners.iter().map(|corner| ColoredVertex {
-                    id: *id,
                     position: *corner,
                     color: [color.r, color.g, color.b],
                 })
@@ -240,7 +238,6 @@ impl GliumGraphics {
 
         self.primitives[index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-            centroid: centroid(&vertices),
         });
 
         Ok(index)
@@ -279,27 +276,8 @@ impl GliumGraphics {
     }
 }
 
-fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
-    let mut min = [0.0f32; 3];
-    let mut max = [0.0f32; 3];
-
-    for vertex in vertices.iter() {
-        for i in 0..3 {
-            min[i] = min[i].min(vertex.position[i]);
-            max[i] = max[i].max(vertex.position[i]);
-        }
-    }
-
-    [
-        (min[0] + max[0]) / 2.0,
-        (min[1] + max[1]) / 2.0,
-        (min[2] + max[2]) / 2.0,
-    ]
-}
-
 struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-    centroid: [f32; 3],
 }
 
 impl Graphics for GliumGraphics {

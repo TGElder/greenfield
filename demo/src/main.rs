@@ -48,7 +48,6 @@ impl EventHandler for Demo {
             );
             for x in 0..terrain.width() - 1 {
                 for y in 0..terrain.height() - 1 {
-                    let id = terrain.index((x, y)) as u32;
                     let z = terrain[(x, y)];
                     let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
                         .iter()
@@ -61,7 +60,6 @@ impl EventHandler for Demo {
                         })
                         .collect::<Vec<_>>();
                     quads.push(Quad {
-                        id,
                         corners: [corners[0], corners[1], corners[2], corners[3]],
                         color: Rgb::new(z, z, z),
                     });

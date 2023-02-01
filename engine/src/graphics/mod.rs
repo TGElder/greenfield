@@ -22,18 +22,15 @@ pub trait Graphics {
             .iter()
             .flat_map(
                 |Quad {
-                     id,
                      corners: [a, b, c, d],
                      color,
                  }| {
                     [
                         Triangle {
-                            id: *id,
                             corners: [*a, *b, *d],
                             color: *color,
                         },
                         Triangle {
-                            id: *id,
                             corners: [*b, *c, *d],
                             color: *color,
                         },
