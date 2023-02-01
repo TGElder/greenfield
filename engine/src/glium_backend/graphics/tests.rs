@@ -98,8 +98,8 @@ fn look_at() {
     .unwrap();
 
     // when
-    let id = graphics.add_quads(&cube_quads()).unwrap() as u32;
-    graphics.look_at(id, &(192, 64)).unwrap();
+    graphics.add_quads(&cube_quads()).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64)).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -112,7 +112,7 @@ fn look_at() {
     assert_eq!(actual, expected);
 
     // when
-    graphics.look_at(id, &(192, 64)).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64)).unwrap();
     graphics.render().unwrap();
     graphics.screenshot(temp_path).unwrap();
 

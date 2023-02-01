@@ -68,8 +68,8 @@ impl EventHandler for Demo {
                 }
             }
 
-            let id = graphics.add_quads(&quads).unwrap();
-            graphics.look_at(id as u32, &(256, 256)).unwrap();
+            graphics.add_quads(&quads).unwrap();
+            graphics.look_at(&[0.0, 0.0, 0.0], &(256, 256)).unwrap();
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }

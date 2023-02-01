@@ -268,22 +268,13 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn look_at_unsafe(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), Box<dyn Error>> {
+    fn look_at_unsafe(
+        &mut self,
+        world_xyz: &[f32; 3],
+        xy: &(u32, u32),
+    ) -> Result<(), Box<dyn Error>> {
         let gl_xy = self.screen_to_gl(xy);
-        let centroid = self
-            .primitives
-            .get(id as usize)
-            .ok_or_else(|| {
-                format!(
-                    "ID {} exceeds length of primitive list {}",
-                    id,
-                    self.primitives.len()
-                )
-            })?
-            .as_ref()
-            .ok_or_else(|| format!("ID {id} is not in use"))?
-            .centroid;
-        self.projection.look_at(&centroid, &gl_xy);
+        self.projection.look_at(world_xyz, &gl_xy);
         Ok(())
     }
 }
@@ -324,7 +315,7 @@ impl Graphics for GliumGraphics {
         Ok(self.screenshot_unsafe(path)?)
     }
 
-    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError> {
-        Ok(self.look_at_unsafe(id, xy)?)
+    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) -> Result<(), IndexError> {
+        Ok(self.look_at_unsafe(world_xyz, screen_xy)?)
     }
 }

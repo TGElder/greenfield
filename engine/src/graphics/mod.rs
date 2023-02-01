@@ -45,5 +45,5 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
-    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError>;
+    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) -> Result<(), IndexError>;
 }
