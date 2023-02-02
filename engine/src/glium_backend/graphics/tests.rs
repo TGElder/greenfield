@@ -3,9 +3,12 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 
+use crate::engine::Engine;
+use crate::events::{ButtonState, Event, EventHandler, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::projections::isometric;
+use crate::handlers::DragHandler;
 
 use super::*;
 
@@ -112,5 +115,64 @@ fn look_at() {
 
     // then
     let actual = image::open(temp_path).unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn drag_handler() {
+    struct MockEngine {}
+
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
+
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
+    })
+    .unwrap();
+
+    graphics.add_quads(&cube_quads()).unwrap();
+    graphics.render().unwrap();
+
+    let mut drag_handler = DragHandler::new();
+
+    // when
+    drag_handler.handle(
+        &Event::MouseMoved((100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::MouseInput {
+            button: MouseButton::Left,
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::MouseMoved((80, 170)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics
+        .screenshot("test_resources/graphics/drag_handler.png")
+        .unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
     assert_eq!(actual, expected);
 }
