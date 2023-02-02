@@ -29,7 +29,7 @@ fn main() {
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
                 yaw: PI * (5.0 / 8.0),
-                scale: 1.0 / 256.0,
+                scale: 1.0 / 64.0,
             })),
         },
     )
@@ -72,7 +72,7 @@ impl EventHandler for Demo {
             }
 
             graphics.add_quads(&quads).unwrap();
-            graphics.look_at(&[0.0, 0.0, 0.0], &(256, 256));
+            graphics.look_at(&[128.0, 128.0, 0.0], &(256, 256));
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
