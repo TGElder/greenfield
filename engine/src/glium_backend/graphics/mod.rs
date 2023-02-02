@@ -109,7 +109,7 @@ impl GliumGraphics {
         event_loop: &glutin::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, Box<dyn Error>> {
         let window_builder = glutin::window::WindowBuilder::new()
-            .with_inner_size(glutin::dpi::LogicalSize::new(
+            .with_inner_size(glutin::dpi::PhysicalSize::new(
                 parameters.width,
                 parameters.height,
             ))
