@@ -72,7 +72,7 @@ impl EventHandler for Demo {
             }
 
             graphics.add_quads(&quads).unwrap();
-            graphics.look_at(&[0.0, 0.0, 0.0], &(256, 256)).unwrap();
+            graphics.look_at(&[0.0, 0.0, 0.0], &(256, 256));
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }

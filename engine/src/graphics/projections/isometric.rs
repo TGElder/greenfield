@@ -38,7 +38,12 @@ impl Projection {
 
     fn update_composite(&mut self) {
         let composite = self.translation * self.scale * self.projection;
-        self.inverse = composite.try_inverse().unwrap();
+        self.inverse = composite.try_inverse().unwrap_or_else(|| {
+            panic!(
+                "Expected invertible isometric projection matrix but got {} = {} * {} * {}",
+                composite, self.translation, self.scale, self.projection
+            )
+        });
         self.composite = composite.into();
     }
 }

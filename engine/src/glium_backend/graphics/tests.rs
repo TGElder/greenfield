@@ -96,7 +96,7 @@ fn look_at() {
 
     // when
     graphics.add_quads(&cube_quads()).unwrap();
-    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64)).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -109,7 +109,7 @@ fn look_at() {
     assert_eq!(actual, expected);
 
     // when
-    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64)).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
     graphics.render().unwrap();
     graphics.screenshot(temp_path).unwrap();
 
@@ -167,9 +167,7 @@ fn drag_handler() {
 
     let temp_path = temp_dir().join("test.png");
     let temp_path = temp_path.to_str().unwrap();
-    graphics
-        .screenshot("test_resources/graphics/drag_handler.png")
-        .unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
     // then
     let actual = image::open(temp_path).unwrap();

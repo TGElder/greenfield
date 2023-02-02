@@ -30,7 +30,7 @@ impl EventHandler for DragHandler {
             Event::MouseMoved(xy) => {
                 self.mouse_xy = Some(*xy);
                 if let Some(selection) = self.selection {
-                    graphics.look_at(&selection, xy).unwrap();
+                    graphics.look_at(&selection, xy);
                 }
             }
             Event::MouseInput {
@@ -39,7 +39,6 @@ impl EventHandler for DragHandler {
             } => {
                 let Some(mouse_xy) = self.mouse_xy else {return};
                 if let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) {
-                    println!("{:?}", xyz);
                     self.selection = Some(xyz)
                 }
             }

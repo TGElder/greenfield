@@ -265,18 +265,8 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn look_at_unsafe(
-        &mut self,
-        world_xyz: &[f32; 3],
-        xy: &(u32, u32),
-    ) -> Result<(), Box<dyn Error>> {
-        let gl_xy = self.screen_to_gl(xy);
-        self.projection.look_at(world_xyz, &gl_xy);
-        Ok(())
-    }
-
     fn world_xyz_at_unsafe(&self, screen_xy: &(u32, u32)) -> Result<[f32; 3], Box<dyn Error>> {
-        let Some(canvas) = &self.canvas else{return Err("No canvas".into())};
+        let Some(canvas) = &self.canvas else{return Err("Need the depth at the cursor position to get world coordinate, but there is no canvas to read the depth from.".into())};
         let gl_z = canvas.read_pixel(*screen_xy)?.a;
         let [gl_x, gl_y] = self.screen_to_gl(screen_xy);
         let gl_xyz = [gl_x, gl_y, gl_z];
@@ -301,8 +291,9 @@ impl Graphics for GliumGraphics {
         Ok(self.screenshot_unsafe(path)?)
     }
 
-    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) -> Result<(), IndexError> {
-        Ok(self.look_at_unsafe(world_xyz, screen_xy)?)
+    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) {
+        let gl_xy = self.screen_to_gl(screen_xy);
+        self.projection.look_at(world_xyz, &gl_xy)
     }
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {
