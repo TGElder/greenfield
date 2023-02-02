@@ -3,9 +3,12 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 
+use crate::engine::Engine;
+use crate::events::{ButtonState, Event, EventHandler, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::projections::isometric;
+use crate::handlers::DragHandler;
 
 use super::*;
 
@@ -21,32 +24,26 @@ fn cube_quads() -> Vec<Quad> {
 
     vec![
         Quad {
-            id: 0,
             corners: [ld, lc, lb, la],
             color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 1,
             corners: [ua, ub, uc, ud],
             color: Rgb::new(1.0, 0.0, 0.0),
         },
         Quad {
-            id: 2,
             corners: [ua, la, lb, ub],
             color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 3,
             corners: [uc, lc, ld, ud],
             color: Rgb::new(0.0, 1.0, 0.0),
         },
         Quad {
-            id: 4,
             corners: [ub, lb, lc, uc],
             color: Rgb::new(0.0, 0.0, 1.0),
         },
         Quad {
-            id: 5,
             corners: [ud, ld, la, ua],
             color: Rgb::new(0.0, 0.0, 1.0),
         },
@@ -83,34 +80,6 @@ fn render_cube() {
 }
 
 #[test]
-fn id_at() {
-    // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
-        })),
-    })
-    .unwrap();
-
-    // when
-    graphics.add_quads(&cube_quads()).unwrap();
-    graphics.render().unwrap();
-
-    // then
-    assert_eq!(graphics.id_at((162, 141)).unwrap(), 1);
-    assert_eq!(graphics.id_at((162, 142)).unwrap(), 4);
-    assert_eq!(graphics.id_at((163, 141)).unwrap(), 3);
-    assert_eq!(graphics.id_at((250, 250)).unwrap(), 0);
-    assert_eq!(graphics.id_at((300, 0)).unwrap(), 0);
-    assert_eq!(graphics.id_at((0, 300)).unwrap(), 0);
-}
-
-#[test]
 fn look_at() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {
@@ -126,8 +95,8 @@ fn look_at() {
     .unwrap();
 
     // when
-    let id = graphics.add_quads(&cube_quads()).unwrap() as u32;
-    graphics.look_at(id, &(192, 64)).unwrap();
+    graphics.add_quads(&cube_quads()).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -140,11 +109,68 @@ fn look_at() {
     assert_eq!(actual, expected);
 
     // when
-    graphics.look_at(id, &(192, 64)).unwrap();
+    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
     graphics.render().unwrap();
     graphics.screenshot(temp_path).unwrap();
 
     // then
     let actual = image::open(temp_path).unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn drag_handler() {
+    struct MockEngine {}
+
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
+
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
+    })
+    .unwrap();
+
+    graphics.add_quads(&cube_quads()).unwrap();
+    graphics.render().unwrap();
+
+    let mut drag_handler = DragHandler::new();
+
+    // when
+    drag_handler.handle(
+        &Event::MouseMoved((100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::MouseInput {
+            button: MouseButton::Left,
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::MouseMoved((80, 170)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
     assert_eq!(actual, expected);
 }

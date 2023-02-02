@@ -44,7 +44,7 @@ struct Demo {
 }
 
 impl EventHandler for Demo {
-    fn handle(&mut self, event: &Event, game_loop: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
 
@@ -53,7 +53,6 @@ impl EventHandler for Demo {
             );
             for x in 0..terrain.width() - 1 {
                 for y in 0..terrain.height() - 1 {
-                    let id = terrain.index((x, y)) as u32;
                     let z = terrain[(x, y)];
                     let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
                         .iter()
@@ -66,20 +65,19 @@ impl EventHandler for Demo {
                         })
                         .collect::<Vec<_>>();
                     quads.push(Quad {
-                        id,
                         corners: [corners[0], corners[1], corners[2], corners[3]],
                         color: Rgb::new(z, z, z),
                     });
                 }
             }
 
-            let id = graphics.add_quads(&quads).unwrap();
-            graphics.look_at(id as u32, &(256, 256)).unwrap();
+            graphics.add_quads(&quads).unwrap();
+            graphics.look_at(&[0.0, 0.0, 0.0], &(256, 256));
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }
 
-        self.drag_handler.handle(event, game_loop, graphics);
+        self.drag_handler.handle(event, engine, graphics);
 
         self.frame += 1;
     }

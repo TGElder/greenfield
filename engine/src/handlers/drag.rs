@@ -6,7 +6,7 @@ use crate::{
 
 pub struct DragHandler {
     mouse_xy: Option<(u32, u32)>,
-    selection: Option<u32>,
+    selection: Option<[f32; 3]>,
 }
 
 impl DragHandler {
@@ -30,7 +30,7 @@ impl EventHandler for DragHandler {
             Event::MouseMoved(xy) => {
                 self.mouse_xy = Some(*xy);
                 if let Some(selection) = self.selection {
-                    graphics.look_at(selection, xy).unwrap();
+                    graphics.look_at(&selection, xy);
                 }
             }
             Event::MouseInput {
@@ -38,8 +38,8 @@ impl EventHandler for DragHandler {
                 state: ButtonState::Pressed,
             } => {
                 let Some(mouse_xy) = self.mouse_xy else {return};
-                if let Ok(xy) = graphics.id_at(mouse_xy) {
-                    self.selection = Some(xy)
+                if let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) {
+                    self.selection = Some(xyz)
                 }
             }
             Event::MouseInput {

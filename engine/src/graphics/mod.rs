@@ -22,18 +22,15 @@ pub trait Graphics {
             .iter()
             .flat_map(
                 |Quad {
-                     id,
                      corners: [a, b, c, d],
                      color,
                  }| {
                     [
                         Triangle {
-                            id: *id,
                             corners: [*a, *b, *d],
                             color: *color,
                         },
                         Triangle {
-                            id: *id,
                             corners: [*b, *c, *d],
                             color: *color,
                         },
@@ -45,7 +42,7 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
-    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError>;
+    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32));
 
-    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError>;
+    fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError>;
 }

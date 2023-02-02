@@ -10,6 +10,7 @@ pub struct Projection {
     scale: Matrix4<f32>,
     translation: Matrix4<f32>,
     composite: [[f32; 4]; 4],
+    inverse: Matrix4<f32>,
 }
 
 pub struct Parameters {
@@ -29,19 +30,33 @@ impl Projection {
             scale,
             translation: Matrix4::identity(),
             composite: Matrix4::identity().into(),
+            inverse: Matrix4::identity(),
         };
         out.update_composite();
         out
     }
 
     fn update_composite(&mut self) {
-        self.composite = (self.translation * self.scale * self.projection).into();
+        let composite = self.translation * self.scale * self.projection;
+        self.inverse = composite.try_inverse().unwrap_or_else(|| {
+            panic!(
+                "Expected invertible isometric projection matrix but got {} = {} * {} * {}",
+                composite, self.translation, self.scale, self.projection
+            )
+        });
+        self.composite = composite.into();
     }
 }
 
 impl graphics::Projection for Projection {
     fn projection(&self) -> &[[f32; 4]; 4] {
         &self.composite
+    }
+
+    fn unproject(&self, [x, y, z]: &[f32; 3]) -> [f32; 3] {
+        let gl_xyz = Vector4::new(*x, *y, *z, 1.0);
+        let unprojected = self.inverse * gl_xyz;
+        [unprojected.x, unprojected.y, unprojected.z]
     }
 
     fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &[f32; 2]) {

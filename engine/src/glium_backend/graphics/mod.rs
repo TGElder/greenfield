@@ -13,7 +13,6 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
-use commons::color::Rgba;
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -229,9 +228,8 @@ impl GliumGraphics {
 
         let vertices = triangles
             .iter()
-            .flat_map(|Triangle { id, corners, color }| {
+            .flat_map(|Triangle { corners, color }| {
                 corners.iter().map(|corner| ColoredVertex {
-                    id: *id,
                     position: *corner,
                     color: [color.r, color.g, color.b],
                 })
@@ -240,7 +238,6 @@ impl GliumGraphics {
 
         self.primitives[index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-            centroid: centroid(&vertices),
         });
 
         Ok(index)
@@ -268,59 +265,17 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn id_at_unsafe(&self, xy: (u32, u32)) -> Result<u32, Box<dyn Error>> {
-        if let Some(canvas) = &self.canvas {
-            match canvas.read_pixel(xy) {
-                Ok(Rgba { a, .. }) => Ok(a.to_bits()),
-                Err(ReadPixelError::OutOfBounds { .. }) => Ok(0),
-                Err(e) => Err(Box::new(e)),
-            }
-        } else {
-            Ok(0)
-        }
+    fn world_xyz_at_unsafe(&self, screen_xy: &(u32, u32)) -> Result<[f32; 3], Box<dyn Error>> {
+        let Some(canvas) = &self.canvas else{return Err("Need the depth at the cursor position to get world coordinate, but there is no canvas to read the depth from.".into())};
+        let gl_z = canvas.read_pixel(*screen_xy)?.a;
+        let [gl_x, gl_y] = self.screen_to_gl(screen_xy);
+        let gl_xyz = [gl_x, gl_y, gl_z];
+        Ok(self.projection.unproject(&gl_xyz))
     }
-
-    fn look_at_unsafe(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), Box<dyn Error>> {
-        let gl_xy = self.screen_to_gl(xy);
-        let centroid = self
-            .primitives
-            .get(id as usize)
-            .ok_or_else(|| {
-                format!(
-                    "ID {} exceeds length of primitive list {}",
-                    id,
-                    self.primitives.len()
-                )
-            })?
-            .as_ref()
-            .ok_or_else(|| format!("ID {id} is not in use"))?
-            .centroid;
-        self.projection.look_at(&centroid, &gl_xy);
-        Ok(())
-    }
-}
-
-fn centroid(vertices: &[ColoredVertex]) -> [f32; 3] {
-    let mut min = [0.0f32; 3];
-    let mut max = [0.0f32; 3];
-
-    for vertex in vertices.iter() {
-        for i in 0..3 {
-            min[i] = min[i].min(vertex.position[i]);
-            max[i] = max[i].max(vertex.position[i]);
-        }
-    }
-
-    [
-        (min[0] + max[0]) / 2.0,
-        (min[1] + max[1]) / 2.0,
-        (min[2] + max[2]) / 2.0,
-    ]
 }
 
 struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-    centroid: [f32; 3],
 }
 
 impl Graphics for GliumGraphics {
@@ -336,11 +291,12 @@ impl Graphics for GliumGraphics {
         Ok(self.screenshot_unsafe(path)?)
     }
 
-    fn id_at(&self, xy: (u32, u32)) -> Result<u32, RenderError> {
-        Ok(self.id_at_unsafe(xy)?)
+    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) {
+        let gl_xy = self.screen_to_gl(screen_xy);
+        self.projection.look_at(world_xyz, &gl_xy)
     }
 
-    fn look_at(&mut self, id: u32, xy: &(u32, u32)) -> Result<(), IndexError> {
-        Ok(self.look_at_unsafe(id, xy)?)
+    fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {
+        Ok(self.world_xyz_at_unsafe(screen_xy)?)
     }
 }
