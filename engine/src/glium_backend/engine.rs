@@ -5,7 +5,7 @@ use glium::glutin;
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
-use crate::events::{ButtonState, Event, EventHandler, MouseButton};
+use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
 
@@ -65,19 +65,16 @@ where
     pub fn run(mut self) {
         self.event_loop.run(move |event, _, control_flow| {
             match event {
-                glutin::event::Event::WindowEvent {
-                    event: glutin::event::WindowEvent::CloseRequested,
-                    ..
-                } => {
-                    *control_flow = glutin::event_loop::ControlFlow::Exit;
-                    return;
-                }
                 glutin::event::Event::NewEvents(cause) => match cause {
                     glutin::event::StartCause::ResumeTimeReached { .. } => (),
                     glutin::event::StartCause::Init => (),
                     _ => return,
                 },
                 glutin::event::Event::WindowEvent { event, .. } => match event {
+                    glutin::event::WindowEvent::CloseRequested => {
+                        *control_flow = glutin::event_loop::ControlFlow::Exit;
+                        return;
+                    }
                     glutin::event::WindowEvent::CursorMoved { position, .. } => {
                         self.event_handler.handle(
                             &Event::MouseMoved(position.into()),
@@ -90,6 +87,25 @@ where
                         self.event_handler.handle(
                             &Event::MouseInput {
                                 button: button.into(),
+                                state: state.into(),
+                            },
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+                        return;
+                    }
+                    glutin::event::WindowEvent::KeyboardInput {
+                        input:
+                            glutin::event::KeyboardInput {
+                                virtual_keycode: Some(keycode),
+                                state,
+                                ..
+                            },
+                        ..
+                    } => {
+                        self.event_handler.handle(
+                            &Event::KeyboardInput {
+                                key: keycode.into(),
                                 state: state.into(),
                             },
                             &mut self.state,
@@ -131,6 +147,50 @@ impl From<glutin::event::MouseButton> for MouseButton {
             glutin::event::MouseButton::Right => MouseButton::Right,
             glutin::event::MouseButton::Middle => MouseButton::Middle,
             glutin::event::MouseButton::Other(_) => MouseButton::Unknown,
+        }
+    }
+}
+
+impl From<glutin::event::VirtualKeyCode> for KeyboardKey {
+    fn from(keycode: glutin::event::VirtualKeyCode) -> Self {
+        match keycode {
+            glutin::event::VirtualKeyCode::Key1 => KeyboardKey::Key1,
+            glutin::event::VirtualKeyCode::Key2 => KeyboardKey::Key2,
+            glutin::event::VirtualKeyCode::Key3 => KeyboardKey::Key3,
+            glutin::event::VirtualKeyCode::Key4 => KeyboardKey::Key4,
+            glutin::event::VirtualKeyCode::Key5 => KeyboardKey::Key5,
+            glutin::event::VirtualKeyCode::Key6 => KeyboardKey::Key6,
+            glutin::event::VirtualKeyCode::Key7 => KeyboardKey::Key7,
+            glutin::event::VirtualKeyCode::Key8 => KeyboardKey::Key8,
+            glutin::event::VirtualKeyCode::Key9 => KeyboardKey::Key9,
+            glutin::event::VirtualKeyCode::Key0 => KeyboardKey::Key0,
+            glutin::event::VirtualKeyCode::A => KeyboardKey::A,
+            glutin::event::VirtualKeyCode::B => KeyboardKey::B,
+            glutin::event::VirtualKeyCode::C => KeyboardKey::C,
+            glutin::event::VirtualKeyCode::D => KeyboardKey::D,
+            glutin::event::VirtualKeyCode::E => KeyboardKey::E,
+            glutin::event::VirtualKeyCode::F => KeyboardKey::F,
+            glutin::event::VirtualKeyCode::G => KeyboardKey::G,
+            glutin::event::VirtualKeyCode::H => KeyboardKey::H,
+            glutin::event::VirtualKeyCode::I => KeyboardKey::I,
+            glutin::event::VirtualKeyCode::J => KeyboardKey::J,
+            glutin::event::VirtualKeyCode::K => KeyboardKey::K,
+            glutin::event::VirtualKeyCode::L => KeyboardKey::L,
+            glutin::event::VirtualKeyCode::M => KeyboardKey::M,
+            glutin::event::VirtualKeyCode::N => KeyboardKey::N,
+            glutin::event::VirtualKeyCode::O => KeyboardKey::O,
+            glutin::event::VirtualKeyCode::P => KeyboardKey::P,
+            glutin::event::VirtualKeyCode::Q => KeyboardKey::Q,
+            glutin::event::VirtualKeyCode::R => KeyboardKey::R,
+            glutin::event::VirtualKeyCode::S => KeyboardKey::S,
+            glutin::event::VirtualKeyCode::T => KeyboardKey::T,
+            glutin::event::VirtualKeyCode::U => KeyboardKey::U,
+            glutin::event::VirtualKeyCode::V => KeyboardKey::V,
+            glutin::event::VirtualKeyCode::W => KeyboardKey::W,
+            glutin::event::VirtualKeyCode::X => KeyboardKey::X,
+            glutin::event::VirtualKeyCode::Y => KeyboardKey::Y,
+            glutin::event::VirtualKeyCode::Z => KeyboardKey::Z,
+            _ => KeyboardKey::Unknown,
         }
     }
 }

@@ -17,11 +17,57 @@ pub enum MouseButton {
     Unknown,
 }
 
+pub enum KeyboardKey {
+    Key1,
+    Key2,
+    Key3,
+    Key4,
+    Key5,
+    Key6,
+    Key7,
+    Key8,
+    Key9,
+    Key0,
+
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    W,
+    X,
+    Y,
+    Z,
+
+    Unknown,
+}
+
 pub enum Event {
     Tick,
     MouseMoved((u32, u32)),
     MouseInput {
         button: MouseButton,
+        state: ButtonState,
+    },
+    KeyboardInput {
+        key: KeyboardKey,
         state: ButtonState,
     },
 }
