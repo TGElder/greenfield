@@ -4,27 +4,27 @@ use crate::{
     graphics::Graphics,
 };
 
-pub struct DragHandler {
+pub struct Handler {
     mouse_xy: Option<(u32, u32)>,
     selection: Option<[f32; 3]>,
 }
 
-impl DragHandler {
-    pub fn new() -> DragHandler {
-        DragHandler {
+impl Handler {
+    pub fn new() -> Handler {
+        Handler {
             mouse_xy: None,
             selection: None,
         }
     }
 }
 
-impl Default for DragHandler {
+impl Default for Handler {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl EventHandler for DragHandler {
+impl EventHandler for Handler {
     fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         match event {
             Event::MouseMoved(xy) => {

@@ -17,6 +17,7 @@ pub enum MouseButton {
     Unknown,
 }
 
+#[derive(PartialEq)]
 pub enum KeyboardKey {
     Key1,
     Key2,

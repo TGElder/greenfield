@@ -5,19 +5,25 @@ use commons::color::Rgb;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
-use engine::events::{Event, EventHandler};
+use engine::events::{Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
-use engine::handlers::DragHandler;
+use engine::handlers::{drag, yaw};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Demo {
             frame: 0,
-            drag_handler: DragHandler::new(),
+            drag_handler: drag::Handler::new(),
+            yaw_handler: yaw::Handler::new(yaw::Parameters {
+                initial_angle: 10,
+                angles: 16,
+                key_plus: KeyboardKey::E,
+                key_minus: KeyboardKey::Q,
+            }),
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -28,7 +34,7 @@ fn main() {
             height: 512,
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
+                yaw: 2.0 * PI * (10.0 / 16.0),
                 scale: 1.0 / 64.0,
             })),
         },
@@ -40,7 +46,8 @@ fn main() {
 
 struct Demo {
     frame: u64,
-    drag_handler: DragHandler,
+    drag_handler: drag::Handler,
+    yaw_handler: yaw::Handler,
 }
 
 impl EventHandler for Demo {
@@ -78,6 +85,7 @@ impl EventHandler for Demo {
         }
 
         self.drag_handler.handle(event, engine, graphics);
+        self.yaw_handler.handle(event, engine, graphics);
 
         self.frame += 1;
     }

@@ -8,7 +8,7 @@ use crate::events::{ButtonState, Event, EventHandler, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::projections::isometric;
-use crate::handlers::DragHandler;
+use crate::handlers::drag::Handler;
 
 use super::*;
 
@@ -142,7 +142,7 @@ fn drag_handler() {
     graphics.add_quads(&cube_quads()).unwrap();
     graphics.render().unwrap();
 
-    let mut drag_handler = DragHandler::new();
+    let mut drag_handler = Handler::new();
 
     // when
     drag_handler.handle(
