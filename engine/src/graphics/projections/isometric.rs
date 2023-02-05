@@ -5,7 +5,7 @@ use crate::graphics::matrices::{isometric, scale};
 
 pub struct Projection {
     _pitch: f32,
-    _yaw: f32,
+    yaw: f32,
     projection: Matrix4<f32>,
     scale: Matrix4<f32>,
     translation: Matrix4<f32>,
@@ -25,7 +25,7 @@ impl Projection {
         let scale = scale(&parameters.scale);
         let mut out = Projection {
             _pitch: parameters.pitch,
-            _yaw: parameters.yaw,
+            yaw: parameters.yaw,
             projection,
             scale,
             translation: Matrix4::identity(),
@@ -68,6 +68,12 @@ impl graphics::Projection for Projection {
         self.translation[(0, 3)] += -offsets.x + screen_xy[0];
         self.translation[(1, 3)] += -offsets.y + screen_xy[1];
 
+        self.update_composite();
+    }
+
+    fn yaw(&mut self, yaw: f32) {
+        self.yaw = yaw;
+        self.projection = isometric(&yaw, &self._pitch);
         self.update_composite();
     }
 }
