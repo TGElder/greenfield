@@ -58,9 +58,9 @@ impl EventHandler for Handler {
                 key,
                 state: ButtonState::Pressed,
             } => {
-                let plus = if *key != self.key_plus {
+                let plus = if *key == self.key_plus {
                     true
-                } else if *key != self.key_minus {
+                } else if *key == self.key_minus {
                     false
                 } else {
                     return;

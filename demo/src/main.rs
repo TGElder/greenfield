@@ -19,7 +19,7 @@ fn main() {
             frame: 0,
             drag_handler: drag::Handler::new(),
             yaw_handler: yaw::Handler::new(yaw::Parameters {
-                initial_angle: 10,
+                initial_angle: 5,
                 angles: 16,
                 key_plus: KeyboardKey::E,
                 key_minus: KeyboardKey::Q,
@@ -34,7 +34,7 @@ fn main() {
             height: 512,
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 pitch: PI / 4.0,
-                yaw: 2.0 * PI * (10.0 / 16.0),
+                yaw: PI * (5.0 / 8.0),
                 scale: 1.0 / 64.0,
             })),
         },
