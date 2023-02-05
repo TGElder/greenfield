@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::{
     engine::Engine,
-    events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton},
+    events::{ButtonState, Event, EventHandler, KeyboardKey},
     graphics::Graphics,
 };
 
@@ -12,7 +12,6 @@ pub struct Handler {
     key_plus: KeyboardKey,
     key_minus: KeyboardKey,
     mouse_xy: Option<(u32, u32)>,
-    selection: Option<[f32; 3]>,
 }
 
 pub struct Parameters {
@@ -37,11 +36,10 @@ impl Handler {
             key_plus,
             key_minus,
             mouse_xy: None,
-            selection: None,
         }
     }
 
-    fn yaw(&self) -> f32 {
+    fn compute_yaw(&self) -> f32 {
         (self.angle as f32 / self.angles as f32) * PI * 2.0
     }
 }
@@ -50,9 +48,6 @@ impl EventHandler for Handler {
         match event {
             Event::MouseMoved(xy) => {
                 self.mouse_xy = Some(*xy);
-                if let Some(selection) = self.selection {
-                    graphics.look_at(&selection, xy);
-                }
             }
             Event::KeyboardInput {
                 key,
@@ -65,7 +60,6 @@ impl EventHandler for Handler {
                 } else {
                     return;
                 };
-
                 let Some(mouse_xy) = self.mouse_xy else {return};
                 let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {return};
 
@@ -75,13 +69,9 @@ impl EventHandler for Handler {
                     self.angle = (self.angle + self.angles - 1) % self.angles;
                 }
 
-                graphics.yaw(self.yaw());
+                graphics.yaw(self.compute_yaw());
                 graphics.look_at(&xyz, &mouse_xy);
             }
-            Event::MouseInput {
-                button: MouseButton::Left,
-                state: ButtonState::Released,
-            } => self.selection = None,
             _ => (),
         }
     }
