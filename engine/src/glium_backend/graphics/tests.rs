@@ -8,7 +8,7 @@ use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::projections::isometric;
-use crate::handlers::{drag, yaw};
+use crate::handlers::{drag, yaw, zoom};
 
 use super::*;
 
@@ -254,5 +254,88 @@ fn yaw_handler() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn zoom_handler() {
+    struct MockEngine {}
+
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
+
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            pitch: PI / 4.0,
+            yaw: PI * (5.0 / 8.0),
+            scale: 1.0,
+        })),
+    })
+    .unwrap();
+
+    graphics.add_quads(&cube_quads()).unwrap();
+    graphics.render().unwrap();
+
+    let mut yaw_handler = zoom::Handler::new(zoom::Parameters {
+        initial_level: 0,
+        min_level: -1,
+        max_level: 1,
+        key_plus: KeyboardKey::P,
+        key_minus: KeyboardKey::M,
+    });
+
+    // when
+    yaw_handler.handle(
+        &Event::MouseMoved((100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &Event::KeyboardInput {
+            key: KeyboardKey::P,
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/zoom_handler_1.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    yaw_handler.handle(
+        &Event::MouseMoved((100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &Event::KeyboardInput {
+            key: KeyboardKey::M,
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/zoom_handler_2.png").unwrap();
     assert_eq!(actual, expected);
 }
