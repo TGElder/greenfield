@@ -25,7 +25,9 @@ fn main() {
                 key_minus: KeyboardKey::Q,
             }),
             zoom_handler: zoom::Handler::new(zoom::Parameters {
-                initial_level: 2,
+                initial_level: -6,
+                min_level: -8,
+                max_level: 1,
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
