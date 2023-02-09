@@ -2,10 +2,13 @@ use std::error::Error;
 use std::time::Duration;
 
 use glium::glutin;
+use glium::glutin::event::MouseScrollDelta;
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
-use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
+use crate::events::{
+    ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
+};
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
 
@@ -93,6 +96,24 @@ where
                             &mut self.graphics,
                         );
                         return;
+                    }
+                    glutin::event::WindowEvent::MouseWheel {
+                        delta: MouseScrollDelta::LineDelta(_, y),
+                        ..
+                    } => {
+                        if y > 0.0 {
+                            self.event_handler.handle(
+                                &Event::MouseWheel(MouseWheelDirection::Up),
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        } else if y < 0.0 {
+                            self.event_handler.handle(
+                                &Event::MouseWheel(MouseWheelDirection::Down),
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
                     }
                     glutin::event::WindowEvent::KeyboardInput {
                         input:

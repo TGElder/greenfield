@@ -17,6 +17,11 @@ pub enum MouseButton {
     Unknown,
 }
 
+pub enum MouseWheelDirection {
+    Up,
+    Down,
+}
+
 #[derive(PartialEq)]
 pub enum KeyboardKey {
     Key1,
@@ -67,6 +72,7 @@ pub enum Event {
         button: MouseButton,
         state: ButtonState,
     },
+    MouseWheel(MouseWheelDirection),
     KeyboardInput {
         key: KeyboardKey,
         state: ButtonState,
