@@ -211,6 +211,8 @@ impl From<glutin::event::VirtualKeyCode> for KeyboardKey {
             glutin::event::VirtualKeyCode::X => KeyboardKey::X,
             glutin::event::VirtualKeyCode::Y => KeyboardKey::Y,
             glutin::event::VirtualKeyCode::Z => KeyboardKey::Z,
+            glutin::event::VirtualKeyCode::Plus => KeyboardKey::Plus,
+            glutin::event::VirtualKeyCode::Minus => KeyboardKey::Minus,
             _ => KeyboardKey::Unknown,
         }
     }

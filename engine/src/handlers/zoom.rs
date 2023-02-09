@@ -1,22 +1,38 @@
-use std::f32::consts::PI;
-
 use crate::{
     engine::Engine,
     events::{ButtonState, Event, EventHandler, KeyboardKey},
     graphics::Graphics,
 };
 
+const LEVELS: [f32; 17] = [
+    1.0 / 256.0,
+    1.0 / 128.0,
+    1.0 / 64.0,
+    1.0 / 32.0,
+    1.0 / 16.0,
+    1.0 / 8.0,
+    1.0 / 4.0,
+    1.0 / 2.0,
+    1.0,
+    2.0,
+    4.0,
+    8.0,
+    16.0,
+    32.0,
+    64.0,
+    128.0,
+    256.0,
+];
+
 pub struct Handler {
-    angle: usize,
-    angles: usize,
+    level: usize,
     key_plus: KeyboardKey,
     key_minus: KeyboardKey,
     mouse_xy: Option<(u32, u32)>,
 }
 
 pub struct Parameters {
-    pub initial_angle: usize,
-    pub angles: usize,
+    pub initial_level: usize,
     pub key_plus: KeyboardKey,
     pub key_minus: KeyboardKey,
 }
@@ -24,23 +40,21 @@ pub struct Parameters {
 impl Handler {
     pub fn new(
         Parameters {
-            initial_angle: angle,
-            angles,
+            initial_level: level,
             key_plus,
             key_minus,
         }: Parameters,
     ) -> Handler {
         Handler {
-            angle,
-            angles,
+            level,
             key_plus,
             key_minus,
             mouse_xy: None,
         }
     }
 
-    fn compute_yaw(&self) -> f32 {
-        (self.angle as f32 / self.angles as f32) * PI * 2.0
+    fn compute_scale(&self) -> f32 {
+        LEVELS[self.level]
     }
 }
 impl EventHandler for Handler {
@@ -63,13 +77,13 @@ impl EventHandler for Handler {
                 let Some(mouse_xy) = self.mouse_xy else {return};
                 let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {return};
 
-                if plus {
-                    self.angle = (self.angle + 1) % self.angles;
-                } else {
-                    self.angle = (self.angle + self.angles - 1) % self.angles;
+                if plus && self.level < LEVELS.len() - 1 {
+                    self.level += 1;
+                } else if self.level > 0 {
+                    self.level -= 1;
                 }
 
-                graphics.yaw(self.compute_yaw());
+                graphics.scale(self.compute_scale());
                 graphics.look_at(&xyz, &mouse_xy);
             }
             _ => (),

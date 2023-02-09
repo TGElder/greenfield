@@ -3,4 +3,5 @@ pub trait Projection {
     fn unproject(&self, gl_xyz: &[f32; 3]) -> [f32; 3];
     fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &[f32; 2]);
     fn yaw(&mut self, yaw: f32);
+    fn scale(&mut self, scale: f32);
 }
