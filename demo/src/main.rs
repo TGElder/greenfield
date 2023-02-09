@@ -10,7 +10,7 @@ use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
-use engine::handlers::{drag, yaw};
+use engine::handlers::{drag, yaw, zoom};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
@@ -23,6 +23,13 @@ fn main() {
                 angles: 16,
                 key_plus: KeyboardKey::E,
                 key_minus: KeyboardKey::Q,
+            }),
+            zoom_handler: zoom::Handler::new(zoom::Parameters {
+                initial_level: -6,
+                min_level: -8,
+                max_level: 1,
+                key_plus: KeyboardKey::Plus,
+                key_minus: KeyboardKey::Minus,
             }),
         },
         glium_backend::engine::Parameters {
@@ -48,6 +55,7 @@ struct Demo {
     frame: u64,
     drag_handler: drag::Handler,
     yaw_handler: yaw::Handler,
+    zoom_handler: zoom::Handler,
 }
 
 impl EventHandler for Demo {
@@ -86,6 +94,7 @@ impl EventHandler for Demo {
 
         self.drag_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
+        self.zoom_handler.handle(event, engine, graphics);
 
         self.frame += 1;
     }

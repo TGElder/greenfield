@@ -62,6 +62,9 @@ pub enum KeyboardKey {
     Y,
     Z,
 
+    Plus,
+    Minus,
+
     Unknown,
 }
 

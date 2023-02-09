@@ -76,4 +76,9 @@ impl graphics::Projection for Projection {
         self.projection = isometric(&yaw, &self._pitch);
         self.update_composite();
     }
+
+    fn scale(&mut self, value: f32) {
+        self.scale = scale(&value);
+        self.update_composite();
+    }
 }
