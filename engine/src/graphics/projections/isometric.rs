@@ -22,6 +22,7 @@ pub struct ScaleParameters {
     pub z_max: f32,
 }
 
+#[derive(Debug)]
 struct Matrices {
     projection: Matrix4<f32>,
     scale: Matrix4<f32>,
@@ -60,8 +61,8 @@ impl Projection {
         let composite = self.matrices.composite();
         self.inverse = composite.try_inverse().unwrap_or_else(|| {
             panic!(
-                "Expected invertible isometric projection matrix but got {} = {} * {} * {}",
-                composite, self.matrices.translation, self.matrices.scale, self.matrices.projection
+                "Expected invertible isometric projection matrix but got {} from {:?}",
+                composite, self.matrices
             )
         });
         self.composite = composite.into();
