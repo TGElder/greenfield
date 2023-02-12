@@ -58,9 +58,15 @@ fn render_cube() {
         width: 256,
         height: 256,
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 1.0,
+                x_to_y_ratio: 1.0,
+                z_max: 1.0,
+            },
         })),
     })
     .unwrap();
@@ -87,9 +93,15 @@ fn look_at() {
         width: 256,
         height: 256,
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 1.0,
+                x_to_y_ratio: 1.0,
+                z_max: 1.0,
+            },
         })),
     })
     .unwrap();
@@ -132,9 +144,15 @@ fn drag_handler() {
         width: 256,
         height: 256,
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 1.0,
+                x_to_y_ratio: 1.0,
+                z_max: 1.0,
+            },
         })),
     })
     .unwrap();
@@ -189,9 +207,15 @@ fn yaw_handler() {
         width: 256,
         height: 256,
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 1.0,
+                x_to_y_ratio: 1.0,
+                z_max: 1.0,
+            },
         })),
     })
     .unwrap();
@@ -271,9 +295,15 @@ fn zoom_handler() {
         width: 256,
         height: 256,
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            pitch: PI / 4.0,
-            yaw: PI * (5.0 / 8.0),
-            scale: 1.0,
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 1.0,
+                x_to_y_ratio: 1.0,
+                z_max: 1.0,
+            },
         })),
     })
     .unwrap();

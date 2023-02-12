@@ -41,7 +41,7 @@ impl Handler {
         }
     }
 
-    fn compute_scale(&self) -> f32 {
+    fn compute_zoom(&self) -> f32 {
         2.0f32.powi(self.level)
     }
 }
@@ -67,11 +67,11 @@ impl EventHandler for Handler {
 
                 if plus && self.level < self.max_level {
                     self.level += 1;
-                } else if self.level > self.min_level {
+                } else if !plus && self.level > self.min_level {
                     self.level -= 1;
                 }
 
-                graphics.scale(self.compute_scale());
+                graphics.zoom(self.compute_zoom());
                 graphics.look_at(&xyz, &mouse_xy);
             }
             _ => (),
