@@ -80,4 +80,8 @@ pub enum Event {
         key: KeyboardKey,
         state: ButtonState,
     },
+    WindowResize {
+        width: u32,
+        height: u32,
+    },
 }

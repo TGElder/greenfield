@@ -10,7 +10,7 @@ use crate::graphics::elements::Triangle;
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
-use crate::graphics::projection::Projection;
+use crate::graphics::projection::{Projection, Rectangle};
 use crate::graphics::Graphics;
 use canvas::*;
 use glium::glutin;
@@ -302,6 +302,10 @@ impl Graphics for GliumGraphics {
 
     fn zoom(&mut self, zoom: f32) {
         self.projection.zoom(zoom);
+    }
+
+    fn set_viewport_size(&mut self, viewport_size: Rectangle) {
+        self.projection.set_viewport_size(viewport_size);
     }
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {

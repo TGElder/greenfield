@@ -134,6 +134,17 @@ where
                         );
                         return;
                     }
+                    glutin::event::WindowEvent::Resized(glutin::dpi::PhysicalSize {
+                        width,
+                        height,
+                    }) => {
+                        self.event_handler.handle(
+                            &Event::WindowResize { width, height },
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+                        return;
+                    }
                     _ => return,
                 },
                 _ => return,
