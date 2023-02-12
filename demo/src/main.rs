@@ -40,11 +40,15 @@ fn main() {
             width: 512,
             height: 512,
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-                zoom: 1.0 / 64.0,
-                x_to_y_ratio: 1.0,
-                z_max: 1.0 / 32.0,
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 1.0 / 64.0,
+                    x_to_y_ratio: 1.0,
+                    z_max: 1.0 / 32.0,
+                },
             })),
         },
     )
