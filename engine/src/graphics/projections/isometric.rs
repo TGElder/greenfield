@@ -1,11 +1,14 @@
 use nalgebra::{Matrix4, Vector4};
 
 use crate::graphics;
-use crate::graphics::matrices::{isometric, scale};
+use crate::graphics::matrices::isometric;
 
 pub struct Projection {
-    _pitch: f32,
+    pitch: f32,
     yaw: f32,
+    zoom: f32,
+    x_to_y_ratio: f32,
+    z_max: f32,
     projection: Matrix4<f32>,
     scale: Matrix4<f32>,
     translation: Matrix4<f32>,
@@ -16,24 +19,43 @@ pub struct Projection {
 pub struct Parameters {
     pub pitch: f32,
     pub yaw: f32,
-    pub scale: f32,
+    pub zoom: f32,
+    pub x_to_y_ratio: f32,
+    pub z_max: f32,
 }
 
 impl Projection {
     pub fn new(parameters: Parameters) -> Projection {
-        let projection = isometric(&parameters.yaw, &parameters.pitch);
-        let scale = scale(&parameters.scale);
         let mut out = Projection {
-            _pitch: parameters.pitch,
+            pitch: parameters.pitch,
             yaw: parameters.yaw,
-            projection,
-            scale,
+            zoom: parameters.zoom,
+            x_to_y_ratio: parameters.x_to_y_ratio,
+            z_max: parameters.z_max,
+            projection: Matrix4::identity(),
+            scale: Matrix4::identity(),
             translation: Matrix4::identity(),
             composite: Matrix4::identity().into(),
             inverse: Matrix4::identity(),
         };
+        out.update_projection();
+        out.update_scale();
         out.update_composite();
         out
+    }
+
+    fn update_projection(&mut self) {
+        self.projection = isometric(&self.yaw, &self.pitch);
+    }
+
+    fn update_scale(&mut self) {
+        self.scale = [
+            [self.zoom, 0.0, 0.0, 0.0],
+            [0.0, self.zoom * self.x_to_y_ratio, 0.0, 0.0],
+            [0.0, 0.0, self.z_max, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into();
     }
 
     fn update_composite(&mut self) {
@@ -73,12 +95,13 @@ impl graphics::Projection for Projection {
 
     fn yaw(&mut self, yaw: f32) {
         self.yaw = yaw;
-        self.projection = isometric(&yaw, &self._pitch);
+        self.update_projection();
         self.update_composite();
     }
 
-    fn scale(&mut self, value: f32) {
-        self.scale = scale(&value);
+    fn zoom(&mut self, zoom: f32) {
+        self.zoom = zoom;
+        self.update_scale();
         self.update_composite();
     }
 }

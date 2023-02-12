@@ -300,8 +300,8 @@ impl Graphics for GliumGraphics {
         self.projection.yaw(yaw);
     }
 
-    fn scale(&mut self, scale: f32) {
-        self.projection.scale(scale);
+    fn zoom(&mut self, zoom: f32) {
+        self.projection.zoom(zoom);
     }
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {
