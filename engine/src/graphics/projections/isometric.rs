@@ -8,6 +8,7 @@ pub struct Projection {
     scale: ScaleParameters,
     matrices: Matrices,
     composite: [[f32; 4]; 4],
+    inverse: Matrix4<f32>,
 }
 
 pub struct ProjectionParameters {
@@ -25,7 +26,6 @@ struct Matrices {
     projection: Matrix4<f32>,
     scale: Matrix4<f32>,
     translation: Matrix4<f32>,
-    inverse: Matrix4<f32>,
 }
 
 pub struct Parameters {
@@ -40,6 +40,7 @@ impl Projection {
             scale,
             matrices: Matrices::default(),
             composite: Matrix4::identity().into(),
+            inverse: Matrix4::identity(),
         };
         out.update_projection();
         out.update_scale();
@@ -56,8 +57,8 @@ impl Projection {
     }
 
     fn update_composite(&mut self) {
-        let composite = self.matrices.translation * self.matrices.scale * self.matrices.projection;
-        self.matrices.inverse = composite.try_inverse().unwrap_or_else(|| {
+        let composite = self.matrices.composite();
+        self.inverse = composite.try_inverse().unwrap_or_else(|| {
             panic!(
                 "Expected invertible isometric projection matrix but got {} = {} * {} * {}",
                 composite, self.matrices.translation, self.matrices.scale, self.matrices.projection
@@ -74,7 +75,7 @@ impl graphics::Projection for Projection {
 
     fn unproject(&self, [x, y, z]: &[f32; 3]) -> [f32; 3] {
         let gl_xyz = Vector4::new(*x, *y, *z, 1.0);
-        let unprojected = self.matrices.inverse * gl_xyz;
+        let unprojected = self.inverse * gl_xyz;
         [unprojected.x, unprojected.y, unprojected.z]
     }
 
@@ -121,13 +122,18 @@ impl ScaleParameters {
     }
 }
 
+impl Matrices {
+    fn composite(&self) -> Matrix4<f32> {
+        self.translation * self.scale * self.projection
+    }
+}
+
 impl Default for Matrices {
     fn default() -> Self {
         Self {
             projection: Matrix4::identity(),
             scale: Matrix4::identity(),
             translation: Matrix4::identity(),
-            inverse: Matrix4::identity(),
         }
     }
 }
