@@ -2,13 +2,13 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Rgb;
+use commons::geometry::Rectangle;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
 use engine::events::{Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 use engine::graphics::elements::Quad;
-use engine::graphics::projection::Rectangle;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
@@ -29,7 +29,7 @@ fn main() {
             zoom_handler: zoom::Handler::new(zoom::Parameters {
                 initial_level: 1,
                 min_level: 1,
-                max_level: 16,
+                max_level: 8,
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),

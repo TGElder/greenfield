@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::time::Duration;
 
+use commons::geometry::Rectangle;
 use glium::glutin;
 use glium::glutin::event::MouseScrollDelta;
 
@@ -139,7 +140,7 @@ where
                         height,
                     }) => {
                         self.event_handler.handle(
-                            &Event::WindowResize { width, height },
+                            &Event::WindowResize(Rectangle { width, height }),
                             &mut self.state,
                             &mut self.graphics,
                         );

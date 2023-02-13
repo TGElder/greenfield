@@ -421,10 +421,10 @@ fn resize_handler() {
 
     // when
     resize_hander.handle(
-        &Event::WindowResize {
+        &Event::WindowResize(Rectangle {
             width: 512,
             height: 256,
-        },
+        }),
         &mut MockEngine {},
         &mut graphics,
     );

@@ -1,8 +1,8 @@
+use commons::geometry::Rectangle;
 use nalgebra::{Matrix4, Vector4};
 
 use crate::graphics;
 use crate::graphics::matrices::isometric;
-use crate::graphics::projection::Rectangle;
 
 pub struct Projection {
     projection: ProjectionParameters,
@@ -105,7 +105,7 @@ impl graphics::Projection for Projection {
         self.update_composite();
     }
 
-    fn set_viewport_size(&mut self, viewport: Rectangle) {
+    fn set_viewport(&mut self, viewport: Rectangle) {
         self.scale.viewport = viewport;
         self.update_scale();
         self.update_composite();

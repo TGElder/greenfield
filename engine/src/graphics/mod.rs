@@ -4,12 +4,12 @@ pub mod matrices;
 pub mod projection;
 pub mod projections;
 
+use commons::geometry::Rectangle;
 pub use projection::Projection;
 
 use elements::*;
 
 use crate::graphics::errors::{DrawError, IndexError, RenderError, ScreenshotError};
-use crate::graphics::projection::Rectangle;
 
 pub trait Graphics {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
@@ -49,7 +49,7 @@ pub trait Graphics {
 
     fn zoom(&mut self, zoom: f32);
 
-    fn set_viewport_size(&mut self, viewport_size: Rectangle);
+    fn set_viewport(&mut self, viewport_size: Rectangle);
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError>;
 }
