@@ -2,6 +2,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Rgb;
+use commons::geometry::Rectangle;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
@@ -10,7 +11,7 @@ use engine::glium_backend;
 use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
-use engine::handlers::{drag, yaw, zoom};
+use engine::handlers::{drag, resize, yaw, zoom};
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
@@ -18,6 +19,7 @@ fn main() {
         Demo {
             frame: 0,
             drag_handler: drag::Handler::new(),
+            resize_handler: resize::Handler::new(),
             yaw_handler: yaw::Handler::new(yaw::Parameters {
                 initial_angle: 5,
                 angles: 16,
@@ -25,9 +27,9 @@ fn main() {
                 key_minus: KeyboardKey::Q,
             }),
             zoom_handler: zoom::Handler::new(zoom::Parameters {
-                initial_level: -6,
-                min_level: -8,
-                max_level: 1,
+                initial_level: 1,
+                min_level: 1,
+                max_level: 8,
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
@@ -45,9 +47,12 @@ fn main() {
                     yaw: PI * (5.0 / 8.0),
                 },
                 scale: isometric::ScaleParameters {
-                    zoom: 1.0 / 64.0,
-                    x_to_y_ratio: 1.0,
+                    zoom: 2.0,
                     z_max: 1.0 / 32.0,
+                    viewport: Rectangle {
+                        width: 512,
+                        height: 512,
+                    },
                 },
             })),
         },
@@ -60,6 +65,7 @@ fn main() {
 struct Demo {
     frame: u64,
     drag_handler: drag::Handler,
+    resize_handler: resize::Handler,
     yaw_handler: yaw::Handler,
     zoom_handler: zoom::Handler,
 }
@@ -99,6 +105,7 @@ impl EventHandler for Demo {
         }
 
         self.drag_handler.handle(event, engine, graphics);
+        self.resize_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
 

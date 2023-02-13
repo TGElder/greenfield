@@ -4,6 +4,7 @@ extern crate maplit;
 
 pub mod color;
 pub mod float_grid;
+pub mod geometry;
 pub mod grid;
 pub mod noise;
 pub mod scale;

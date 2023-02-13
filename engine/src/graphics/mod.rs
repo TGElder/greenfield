@@ -4,6 +4,7 @@ pub mod matrices;
 pub mod projection;
 pub mod projections;
 
+use commons::geometry::Rectangle;
 pub use projection::Projection;
 
 use elements::*;
@@ -47,6 +48,8 @@ pub trait Graphics {
     fn yaw(&mut self, yaw: f32);
 
     fn zoom(&mut self, zoom: f32);
+
+    fn set_viewport(&mut self, viewport: Rectangle<u32>);
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError>;
 }

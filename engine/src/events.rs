@@ -1,3 +1,5 @@
+use commons::geometry::Rectangle;
+
 use crate::engine::Engine;
 use crate::graphics::Graphics;
 
@@ -80,4 +82,5 @@ pub enum Event {
         key: KeyboardKey,
         state: ButtonState,
     },
+    WindowResize(Rectangle<u32>),
 }

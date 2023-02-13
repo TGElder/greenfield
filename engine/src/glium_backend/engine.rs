@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::time::Duration;
 
+use commons::geometry::Rectangle;
 use glium::glutin;
 use glium::glutin::event::MouseScrollDelta;
 
@@ -129,6 +130,17 @@ where
                                 key: keycode.into(),
                                 state: state.into(),
                             },
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+                        return;
+                    }
+                    glutin::event::WindowEvent::Resized(glutin::dpi::PhysicalSize {
+                        width,
+                        height,
+                    }) => {
+                        self.event_handler.handle(
+                            &Event::WindowResize(Rectangle { width, height }),
                             &mut self.state,
                             &mut self.graphics,
                         );

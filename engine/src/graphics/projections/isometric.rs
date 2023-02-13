@@ -1,3 +1,4 @@
+use commons::geometry::Rectangle;
 use nalgebra::{Matrix4, Vector4};
 
 use crate::graphics;
@@ -18,8 +19,8 @@ pub struct ProjectionParameters {
 
 pub struct ScaleParameters {
     pub zoom: f32,
-    pub x_to_y_ratio: f32,
     pub z_max: f32,
+    pub viewport: Rectangle<u32>,
 }
 
 #[derive(Debug)]
@@ -103,6 +104,12 @@ impl graphics::Projection for Projection {
         self.update_scale();
         self.update_composite();
     }
+
+    fn set_viewport(&mut self, viewport: Rectangle<u32>) {
+        self.scale.viewport = viewport;
+        self.update_scale();
+        self.update_composite();
+    }
 }
 
 impl ProjectionParameters {
@@ -114,8 +121,8 @@ impl ProjectionParameters {
 impl ScaleParameters {
     fn matrix(&self) -> Matrix4<f32> {
         [
-            [self.zoom, 0.0, 0.0, 0.0],
-            [0.0, self.zoom * self.x_to_y_ratio, 0.0, 0.0],
+            [self.zoom / self.viewport.width as f32, 0.0, 0.0, 0.0],
+            [0.0, self.zoom / self.viewport.height as f32, 0.0, 0.0],
             [0.0, 0.0, self.z_max, 0.0],
             [0.0, 0.0, 0.0, 1.0],
         ]
