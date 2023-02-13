@@ -20,7 +20,7 @@ pub struct ProjectionParameters {
 pub struct ScaleParameters {
     pub zoom: f32,
     pub z_max: f32,
-    pub viewport: Rectangle,
+    pub viewport: Rectangle<u32>,
 }
 
 #[derive(Debug)]
@@ -105,7 +105,7 @@ impl graphics::Projection for Projection {
         self.update_composite();
     }
 
-    fn set_viewport(&mut self, viewport: Rectangle) {
+    fn set_viewport(&mut self, viewport: Rectangle<u32>) {
         self.scale.viewport = viewport;
         self.update_scale();
         self.update_composite();

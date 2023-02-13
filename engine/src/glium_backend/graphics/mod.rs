@@ -305,8 +305,8 @@ impl Graphics for GliumGraphics {
         self.projection.zoom(zoom);
     }
 
-    fn set_viewport(&mut self, viewport_size: Rectangle) {
-        self.projection.set_viewport(viewport_size);
+    fn set_viewport(&mut self, viewport: Rectangle<u32>) {
+        self.projection.set_viewport(viewport);
     }
 
     fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {

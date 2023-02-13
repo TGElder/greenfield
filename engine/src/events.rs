@@ -82,5 +82,5 @@ pub enum Event {
         key: KeyboardKey,
         state: ButtonState,
     },
-    WindowResize(Rectangle),
+    WindowResize(Rectangle<u32>),
 }

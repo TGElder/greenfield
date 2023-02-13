@@ -1,5 +1,5 @@
 #[derive(Clone, Copy)]
-pub struct Rectangle {
-    pub width: u32,
-    pub height: u32,
+pub struct Rectangle<T> {
+    pub width: T,
+    pub height: T,
 }
