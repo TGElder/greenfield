@@ -108,7 +108,12 @@ impl graphics::Projection for Projection {
     fn set_viewport(&mut self, viewport: Rectangle<u32>) {
         self.scale.viewport = viewport;
         self.update_scale();
+
+        let center = self.inverse * Vector4::default();
+
         self.update_composite();
+
+        self.look_at(&[center[0], center[1], 0.0], &[0.0, 0.0])
     }
 }
 
