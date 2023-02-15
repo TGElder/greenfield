@@ -13,7 +13,7 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
-use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, XY, XYZ};
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -297,19 +297,11 @@ impl Graphics for GliumGraphics {
         self.projection.look_at(world_xyz, &gl_xy)
     }
 
-    fn yaw(&mut self, yaw: f32) {
-        self.projection.yaw(yaw);
-    }
-
-    fn zoom(&mut self, zoom: f32) {
-        self.projection.zoom(zoom);
-    }
-
-    fn set_viewport(&mut self, viewport: Rectangle<u32>) {
-        self.projection.set_viewport(viewport);
-    }
-
     fn world_xyz_at(&mut self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, IndexError> {
         Ok(self.world_xyz_at_unsafe(screen_xy)?)
+    }
+
+    fn projection(&mut self) -> &mut Box<dyn Projection> {
+        &mut self.projection
     }
 }
