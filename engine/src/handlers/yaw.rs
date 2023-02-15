@@ -1,5 +1,7 @@
 use std::f32::consts::PI;
 
+use commons::geometry::XY;
+
 use crate::{
     engine::Engine,
     events::{ButtonState, Event, EventHandler, KeyboardKey},
@@ -11,7 +13,7 @@ pub struct Handler {
     angles: usize,
     key_plus: KeyboardKey,
     key_minus: KeyboardKey,
-    mouse_xy: Option<(u32, u32)>,
+    mouse_xy: Option<XY<u32>>,
 }
 
 pub struct Parameters {

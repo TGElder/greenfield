@@ -1,6 +1,8 @@
 use std::borrow::Borrow;
 use std::ops::{Add, Index, IndexMut, Sub};
 
+use crate::geometry::{xy, XY};
+
 #[derive(Debug)]
 pub struct Grid<T> {
     width: u32,
@@ -37,12 +39,12 @@ impl<T> Grid<T> {
 
     pub fn from_fn<F>(width: u32, height: u32, mut function: F) -> Grid<T>
     where
-        F: FnMut((u32, u32)) -> T,
+        F: FnMut(XY<u32>) -> T,
     {
         let mut elements = Vec::with_capacity(width as usize * height as usize);
         for y in 0..height {
             for x in 0..width {
-                elements.push(function((x, y)));
+                elements.push(function(xy(x, y)));
             }
         }
         Grid {
@@ -52,47 +54,47 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn index<B>(&self, xy: B) -> usize
+    pub fn index<B>(&self, position: B) -> usize
     where
-        B: Borrow<(u32, u32)>,
+        B: Borrow<XY<u32>>,
     {
-        let (x, y) = xy.borrow();
+        let XY { x, y } = position.borrow();
         (*x as usize) + (*y as usize) * self.width as usize
     }
 
-    pub fn xy<B>(&self, index: B) -> (usize, usize)
+    pub fn xy<B>(&self, index: B) -> XY<usize>
     where
         B: Borrow<usize>,
     {
         let index = index.borrow();
-        (index % self.width as usize, index / self.width as usize)
+        xy(index % self.width as usize, index / self.width as usize)
     }
 
-    pub fn in_bounds<B>(&self, xy: B) -> bool
+    pub fn in_bounds<B>(&self, position: B) -> bool
     where
-        B: Borrow<(u32, u32)>,
+        B: Borrow<XY<u32>>,
     {
-        let (x, y) = xy.borrow();
+        let XY { x, y } = position.borrow();
         *x < self.width && *y < self.height
     }
 
-    pub fn is_border<B>(&self, xy: B) -> bool
+    pub fn is_border<B>(&self, position: B) -> bool
     where
-        B: Borrow<(u32, u32)>,
+        B: Borrow<XY<u32>>,
     {
-        let (x, y) = xy.borrow();
+        let XY { x, y } = position.borrow();
         *x == 0 || *y == 0 || *x == self.width - 1 || *y == self.height - 1
     }
 
     pub fn map<F, U>(&self, mut function: F) -> Grid<U>
     where
-        F: FnMut((u32, u32), &T) -> U,
+        F: FnMut(XY<u32>, &T) -> U,
     {
         let mut elements = Vec::with_capacity(self.elements.len());
         let mut index = 0;
         for y in 0..self.height {
             for x in 0..self.width {
-                elements.push(function((x, y), &self.elements[index]));
+                elements.push(function(XY { x, y }, &self.elements[index]));
                 index += 1;
             }
         }
@@ -103,48 +105,48 @@ impl<T> Grid<T> {
         }
     }
 
-    pub fn offset<B, C>(&self, xy: B, offset: C) -> Option<(u32, u32)>
+    pub fn offset<B, C>(&self, position: B, offset: C) -> Option<XY<u32>>
     where
-        B: Borrow<(u32, u32)>,
-        C: Borrow<(i32, i32)>,
+        B: Borrow<XY<u32>>,
+        C: Borrow<XY<i32>>,
     {
-        let (x, y) = xy.borrow();
-        let (dx, dy) = offset.borrow();
+        let XY { x, y } = position.borrow();
+        let d = offset.borrow();
 
-        let nx = (*x) as i64 + (*dx) as i64;
-        let ny = (*y) as i64 + (*dy) as i64;
+        let nx = (*x) as i64 + d.x as i64;
+        let ny = (*y) as i64 + d.y as i64;
 
         let nx = nx.try_into().ok()?;
         let ny = ny.try_into().ok()?;
 
-        if !self.in_bounds((nx, ny)) {
+        if !self.in_bounds(xy(nx, ny)) {
             return None;
         }
 
-        Some((nx, ny))
+        Some(xy(nx, ny))
     }
 
     pub fn offsets<'a, B>(
         &'a self,
-        xy: B,
-        offsets: &'a [(i32, i32)],
-    ) -> impl Iterator<Item = (u32, u32)> + 'a
+        position: B,
+        offsets: &'a [XY<i32>],
+    ) -> impl Iterator<Item = XY<u32>> + 'a
     where
-        B: Borrow<(u32, u32)> + Copy + 'a,
+        B: Borrow<XY<u32>> + Copy + 'a,
     {
-        offsets.iter().flat_map(move |o| self.offset(xy, o))
+        offsets.iter().flat_map(move |o| self.offset(position, o))
     }
 
-    pub fn neighbours_4<'a, B>(&'a self, xy: B) -> impl Iterator<Item = (u32, u32)> + 'a
+    pub fn neighbours_4<'a, B>(&'a self, position: B) -> impl Iterator<Item = XY<u32>> + 'a
     where
-        B: Borrow<(u32, u32)> + Copy + 'a,
+        B: Borrow<XY<u32>> + Copy + 'a,
     {
-        const OFFSETS_4: [(i32, i32); 4] = [(1, 0), (0, 1), (-1, 0), (0, -1)];
-        self.offsets(xy, &OFFSETS_4)
+        const OFFSETS_4: [XY<i32>; 4] = [xy(1, 0), xy(0, 1), xy(-1, 0), xy(0, -1)];
+        self.offsets(position, &OFFSETS_4)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = (u32, u32)> + '_ {
-        (0..self.height).flat_map(|y| (0..self.width).map(move |x| (x, y)))
+    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
+        (0..self.height).flat_map(|y| (0..self.width).map(move |x| XY { x, y }))
     }
 }
 
@@ -187,7 +189,7 @@ where
 
 impl<B, T> Index<B> for Grid<T>
 where
-    B: Borrow<(u32, u32)>,
+    B: Borrow<XY<u32>>,
 {
     type Output = T;
 
@@ -198,7 +200,7 @@ where
 
 impl<B, T> IndexMut<B> for Grid<T>
 where
-    B: Borrow<(u32, u32)>,
+    B: Borrow<XY<u32>>,
 {
     fn index_mut(&mut self, index: B) -> &mut Self::Output {
         let index = self.index(index);
@@ -349,18 +351,16 @@ mod tests {
     fn test_from_fn() {
         let grid = Grid::from_fn(2, 3, |t| t);
 
+        #[rustfmt::skip]
         assert_eq!(
             grid,
             Grid {
                 width: 2,
                 height: 3,
                 elements: vec![
-                    (0, 0),
-                    (1, 0), //
-                    (0, 1),
-                    (1, 1), //
-                    (0, 2),
-                    (1, 2), //
+                    xy(0, 0), xy(1, 0),
+                    xy(0, 1), xy(1, 1),
+                    xy(0, 2), xy(1, 2),
                 ]
             }
         );
@@ -376,57 +376,57 @@ mod tests {
     fn test_index() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert_eq!(grid.index((0, 0)), 0);
-        assert_eq!(grid.index((1, 0)), 1);
-        assert_eq!(grid.index((0, 1)), 2);
-        assert_eq!(grid.index((1, 1)), 3);
-        assert_eq!(grid.index((0, 2)), 4);
-        assert_eq!(grid.index((1, 2)), 5);
+        assert_eq!(grid.index(xy(0, 0)), 0);
+        assert_eq!(grid.index(xy(1, 0)), 1);
+        assert_eq!(grid.index(xy(0, 1)), 2);
+        assert_eq!(grid.index(xy(1, 1)), 3);
+        assert_eq!(grid.index(xy(0, 2)), 4);
+        assert_eq!(grid.index(xy(1, 2)), 5);
     }
 
     #[test]
     fn test_xy() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert_eq!(grid.xy(0), (0, 0));
-        assert_eq!(grid.xy(1), (1, 0));
-        assert_eq!(grid.xy(2), (0, 1));
-        assert_eq!(grid.xy(3), (1, 1));
-        assert_eq!(grid.xy(4), (0, 2));
-        assert_eq!(grid.xy(5), (1, 2));
+        assert_eq!(grid.xy(0), xy(0, 0));
+        assert_eq!(grid.xy(1), xy(1, 0));
+        assert_eq!(grid.xy(2), xy(0, 1));
+        assert_eq!(grid.xy(3), xy(1, 1));
+        assert_eq!(grid.xy(4), xy(0, 2));
+        assert_eq!(grid.xy(5), xy(1, 2));
     }
 
     #[test]
     fn test_in_bounds() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert!(grid.in_bounds((0, 0)));
-        assert!(grid.in_bounds((1, 0)));
-        assert!(!grid.in_bounds((2, 0)));
-        assert!(grid.in_bounds((0, 1)));
-        assert!(grid.in_bounds((1, 1)));
-        assert!(!grid.in_bounds((2, 1)));
-        assert!(grid.in_bounds((0, 2)));
-        assert!(grid.in_bounds((1, 2)));
-        assert!(!grid.in_bounds((2, 2)));
-        assert!(!grid.in_bounds((0, 3)));
-        assert!(!grid.in_bounds((1, 3)));
-        assert!(!grid.in_bounds((2, 3)));
+        assert!(grid.in_bounds(xy(0, 0)));
+        assert!(grid.in_bounds(xy(1, 0)));
+        assert!(!grid.in_bounds(xy(2, 0)));
+        assert!(grid.in_bounds(xy(0, 1)));
+        assert!(grid.in_bounds(xy(1, 1)));
+        assert!(!grid.in_bounds(xy(2, 1)));
+        assert!(grid.in_bounds(xy(0, 2)));
+        assert!(grid.in_bounds(xy(1, 2)));
+        assert!(!grid.in_bounds(xy(2, 2)));
+        assert!(!grid.in_bounds(xy(0, 3)));
+        assert!(!grid.in_bounds(xy(1, 3)));
+        assert!(!grid.in_bounds(xy(2, 3)));
     }
 
     #[test]
     fn test_is_border() {
         let grid = Grid::from_element(3, 3, false);
 
-        assert!(grid.is_border((0, 0)));
-        assert!(grid.is_border((1, 0)));
-        assert!(grid.is_border((2, 0)));
-        assert!(grid.is_border((0, 1)));
-        assert!(!grid.is_border((1, 1)));
-        assert!(grid.is_border((2, 1)));
-        assert!(grid.is_border((0, 2)));
-        assert!(grid.is_border((1, 2)));
-        assert!(grid.is_border((2, 2)));
+        assert!(grid.is_border(xy(0, 0)));
+        assert!(grid.is_border(xy(1, 0)));
+        assert!(grid.is_border(xy(2, 0)));
+        assert!(grid.is_border(xy(0, 1)));
+        assert!(!grid.is_border(xy(1, 1)));
+        assert!(grid.is_border(xy(2, 1)));
+        assert!(grid.is_border(xy(0, 2)));
+        assert!(grid.is_border(xy(1, 2)));
+        assert!(grid.is_border(xy(2, 2)));
     }
 
     #[test]
@@ -434,7 +434,7 @@ mod tests {
         let grid = Grid::from_element(2, 3, 1);
 
         assert_eq!(
-            grid.map(|(x, y), z| x + y + z),
+            grid.map(|XY { x, y }, z| x + y + z),
             Grid {
                 width: 2,
                 height: 3,
@@ -451,21 +451,21 @@ mod tests {
     fn test_offset() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert_eq!(grid.offset((1, 1), (-1, 1)), Some((0, 2)));
+        assert_eq!(grid.offset(xy(1, 1), xy(-1, 1)), Some(xy(0, 2)));
     }
 
     #[test]
     fn test_offset_out_of_bounds_negative() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert_eq!(grid.offset((0, 1), (-1, 1)), None);
+        assert_eq!(grid.offset(xy(0, 1), xy(-1, 1)), None);
     }
 
     #[test]
     fn test_offset_out_of_bounds_positive() {
         let grid = Grid::from_element(2, 3, false);
 
-        assert_eq!(grid.offset((1, 1), (2, 1)), None);
+        assert_eq!(grid.offset(xy(1, 1), xy(2, 1)), None);
     }
 
     #[test]
@@ -473,8 +473,8 @@ mod tests {
         let grid = Grid::from_element(u32::MAX, 2, false);
 
         assert_eq!(
-            grid.offset((u32::MAX - 2, 0), (1, 1)),
-            Some((u32::MAX - 1, 1))
+            grid.offset(xy(u32::MAX - 2, 0), xy(1, 1)),
+            Some(xy(u32::MAX - 1, 1))
         );
     }
 
@@ -483,8 +483,8 @@ mod tests {
         let grid = Grid::from_element(u32::MAX, 1, false);
 
         assert_eq!(
-            grid.offset((u32::MAX - i32::MAX as u32 - 1, 0), (i32::MAX, 0)),
-            Some((u32::MAX - 1, 0))
+            grid.offset(xy(u32::MAX - i32::MAX as u32 - 1, 0), xy(i32::MAX, 0)),
+            Some(xy(u32::MAX - 1, 0))
         );
     }
 
@@ -493,8 +493,8 @@ mod tests {
         let grid = Grid::from_element(u32::MAX, 1, false);
 
         assert_eq!(
-            grid.offset((i32::MAX as u32 + 1, 0), (i32::MIN, 0)),
-            Some((0, 0))
+            grid.offset(xy(i32::MAX as u32 + 1, 0), xy(i32::MIN, 0)),
+            Some(xy(0, 0))
         );
     }
 
@@ -502,7 +502,7 @@ mod tests {
     fn test_offset_overflow() {
         let grid = Grid::from_element(u32::MAX, 2, false);
 
-        assert_eq!(grid.offset((u32::MAX, 0), (i32::MAX, 1)), None);
+        assert_eq!(grid.offset(xy(u32::MAX, 0), xy(i32::MAX, 1)), None);
     }
 
     #[test]
@@ -510,9 +510,9 @@ mod tests {
         let grid = Grid::from_element(2, 3, false);
 
         assert_eq!(
-            grid.offsets((0, 1), &[(1, 0), (0, 1), (-1, -1)])
+            grid.offsets(xy(0, 1), &[xy(1, 0), xy(0, 1), xy(-1, -1)])
                 .collect::<HashSet<_>>(),
-            hashset! {(1, 1), (0, 2)}
+            hashset! {xy(1, 1), xy(0, 2)}
         );
     }
 
@@ -521,8 +521,8 @@ mod tests {
         let grid = Grid::from_element(3, 3, false);
 
         assert_eq!(
-            grid.neighbours_4((1, 1)).collect::<HashSet<_>>(),
-            hashset! {(2, 1), (1, 2), (0, 1), (1, 0)}
+            grid.neighbours_4(xy(1, 1)).collect::<HashSet<_>>(),
+            hashset! {xy(2, 1), xy(1, 2), xy(0, 1), xy(1, 0)}
         );
     }
 
@@ -531,8 +531,8 @@ mod tests {
         let grid = Grid::from_element(3, 3, false);
 
         assert_eq!(
-            grid.neighbours_4((0, 0)).collect::<HashSet<_>>(),
-            hashset! {(1, 0), (0, 1)}
+            grid.neighbours_4(xy(0, 0)).collect::<HashSet<_>>(),
+            hashset! {xy(1, 0), xy(0, 1)}
         );
     }
 
@@ -575,14 +575,14 @@ mod tests {
     fn test_iter_1x1() {
         let grid = Grid::<bool>::default(1, 1);
 
-        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0),]);
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![xy(0, 0),]);
     }
 
     #[test]
     fn test_iter_1x2() {
         let grid = Grid::<bool>::default(1, 2);
 
-        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (0, 1),]);
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![xy(0, 0), xy(0, 1),]);
     }
 
     #[test]
@@ -591,7 +591,7 @@ mod tests {
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
-            vec![(0, 0), (0, 1), (0, 2),]
+            vec![xy(0, 0), xy(0, 1), xy(0, 2),]
         );
     }
 
@@ -606,7 +606,7 @@ mod tests {
     fn test_iter_2x1() {
         let grid = Grid::<bool>::default(2, 1);
 
-        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![(0, 0), (1, 0),]);
+        assert_eq!(grid.iter().collect::<Vec<_>>(), vec![xy(0, 0), xy(1, 0),]);
     }
 
     #[test]
@@ -615,7 +615,7 @@ mod tests {
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
-            vec![(0, 0), (1, 0), (0, 1), (1, 1),]
+            vec![xy(0, 0), xy(1, 0), xy(0, 1), xy(1, 1),]
         );
     }
 
@@ -625,7 +625,7 @@ mod tests {
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
-            vec![(0, 0), (1, 0), (0, 1), (1, 1), (0, 2), (1, 2),]
+            vec![xy(0, 0), xy(1, 0), xy(0, 1), xy(1, 1), xy(0, 2), xy(1, 2),]
         );
     }
 
@@ -642,7 +642,7 @@ mod tests {
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
-            vec![(0, 0), (1, 0), (2, 0),]
+            vec![xy(0, 0), xy(1, 0), xy(2, 0),]
         );
     }
 
@@ -652,7 +652,7 @@ mod tests {
 
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
-            vec![(0, 0), (1, 0), (2, 0), (0, 1), (1, 1), (2, 1),]
+            vec![xy(0, 0), xy(1, 0), xy(2, 0), xy(0, 1), xy(1, 1), xy(2, 1),]
         );
     }
 
@@ -663,15 +663,15 @@ mod tests {
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
             vec![
-                (0, 0),
-                (1, 0),
-                (2, 0),
-                (0, 1),
-                (1, 1),
-                (2, 1),
-                (0, 2),
-                (1, 2),
-                (2, 2),
+                xy(0, 0),
+                xy(1, 0),
+                xy(2, 0),
+                xy(0, 1),
+                xy(1, 1),
+                xy(2, 1),
+                xy(0, 2),
+                xy(1, 2),
+                xy(2, 2),
             ]
         );
     }

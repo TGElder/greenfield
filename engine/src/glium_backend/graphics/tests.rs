@@ -13,14 +13,14 @@ use crate::handlers::{drag, resize, yaw, zoom};
 use super::*;
 
 fn cube_quads() -> Vec<Quad> {
-    let la = [-0.5, -0.5, -0.5];
-    let lb = [0.5, -0.5, -0.5];
-    let lc = [0.5, 0.5, -0.5];
-    let ld = [-0.5, 0.5, -0.5];
-    let ua = [-0.5, -0.5, 0.5];
-    let ub = [0.5, -0.5, 0.5];
-    let uc = [0.5, 0.5, 0.5];
-    let ud = [-0.5, 0.5, 0.5];
+    let la = xyz(-0.5, -0.5, -0.5);
+    let lb = xyz(0.5, -0.5, -0.5);
+    let lc = xyz(0.5, 0.5, -0.5);
+    let ld = xyz(-0.5, 0.5, -0.5);
+    let ua = xyz(-0.5, -0.5, 0.5);
+    let ub = xyz(0.5, -0.5, 0.5);
+    let uc = xyz(0.5, 0.5, 0.5);
+    let ud = xyz(-0.5, 0.5, 0.5);
 
     vec![
         Quad {
@@ -114,7 +114,7 @@ fn look_at() {
 
     // when
     graphics.add_quads(&cube_quads()).unwrap();
-    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
+    graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -127,7 +127,7 @@ fn look_at() {
     assert_eq!(actual, expected);
 
     // when
-    graphics.look_at(&[-0.5, -0.5, -0.5], &(192, 64));
+    graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
     graphics.render().unwrap();
     graphics.screenshot(temp_path).unwrap();
 
@@ -173,7 +173,7 @@ fn drag_handler() {
 
     // when
     drag_handler.handle(
-        &Event::MouseMoved((100, 150)),
+        &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -186,7 +186,7 @@ fn drag_handler() {
         &mut graphics,
     );
     drag_handler.handle(
-        &Event::MouseMoved((80, 170)),
+        &Event::MouseMoved(xy(80, 170)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -244,7 +244,7 @@ fn yaw_handler() {
 
     // when
     yaw_handler.handle(
-        &Event::MouseMoved((100, 150)),
+        &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -269,7 +269,7 @@ fn yaw_handler() {
 
     // when
     yaw_handler.handle(
-        &Event::MouseMoved((100, 150)),
+        &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -336,7 +336,7 @@ fn zoom_handler() {
 
     // when
     yaw_handler.handle(
-        &Event::MouseMoved((100, 150)),
+        &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -361,7 +361,7 @@ fn zoom_handler() {
 
     // when
     yaw_handler.handle(
-        &Event::MouseMoved((100, 150)),
+        &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );

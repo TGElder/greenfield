@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Rgb;
-use commons::geometry::Rectangle;
+use commons::geometry::{xy, xyz, Rectangle};
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
@@ -80,15 +80,15 @@ impl EventHandler for Demo {
             );
             for x in 0..terrain.width() - 1 {
                 for y in 0..terrain.height() - 1 {
-                    let z = terrain[(x, y)];
-                    let corners = [(0, 0), (1, 0), (1, 1), (0, 1)]
+                    let z = terrain[xy(x, y)];
+                    let corners = [xy(0, 0), xy(1, 0), xy(1, 1), xy(0, 1)]
                         .iter()
-                        .map(|(dx, dy)| {
-                            [
-                                (x + dx) as f32,
-                                (y + dy) as f32,
-                                terrain[(x + dx, y + dy)] * 32.0,
-                            ]
+                        .map(|d| {
+                            xyz(
+                                (x + d.x) as f32,
+                                (y + d.y) as f32,
+                                terrain[xy(x + d.x, y + d.y)] * 32.0,
+                            )
                         })
                         .collect::<Vec<_>>();
                     quads.push(Quad {
@@ -99,7 +99,7 @@ impl EventHandler for Demo {
             }
 
             graphics.add_quads(&quads).unwrap();
-            graphics.look_at(&[128.0, 128.0, 0.0], &(256, 256));
+            graphics.look_at(&xyz(128.0, 128.0, 0.0), &xy(256, 256));
         } else if self.frame == 1 {
             graphics.screenshot("screenshot.png").unwrap();
         }

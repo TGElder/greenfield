@@ -1,6 +1,7 @@
 use image::{ImageBuffer, Luma};
 use num::Float;
 
+use crate::geometry::xy;
 use crate::grid::Grid;
 use crate::scale::Scale;
 use crate::unsafe_float_ordering;
@@ -39,7 +40,7 @@ where
         let scale = Scale::new((min, max), (T::zero(), T::one()));
 
         let image = ImageBuffer::from_fn(self.width(), self.height(), |x, y| {
-            let scaled = scale.scale(self[(x, y)]);
+            let scaled = scale.scale(self[xy(x, y)]);
 
             let luma = scaled * T::from(255u8).unwrap();
             let luma = luma.round();
@@ -55,18 +56,20 @@ where
 mod tests {
     use std::env::temp_dir;
 
+    use crate::geometry::XY;
+
     use super::*;
 
     #[test]
     fn test_min() {
-        let grid = Grid::from_fn(3, 3, |(x, y)| (x + y) as f32 + 1.0);
+        let grid = Grid::from_fn(3, 3, |XY { x, y }| (x + y) as f32 + 1.0);
 
         assert_eq!(grid.min(), 1.0);
     }
 
     #[test]
     fn test_max() {
-        let grid = Grid::from_fn(3, 3, |(x, y)| (x + y) as f32 + 1.0);
+        let grid = Grid::from_fn(3, 3, |XY { x, y }| (x + y) as f32 + 1.0);
 
         assert_eq!(grid.max(), 5.0);
     }
@@ -100,7 +103,7 @@ mod tests {
     #[test]
     fn test_to_image() {
         // given
-        let grid = Grid::from_fn(128, 128, |(x, y)| (x + y) as f32 + 1.0);
+        let grid = Grid::from_fn(128, 128, |XY { x, y }| (x + y) as f32 + 1.0);
 
         // when
         let temp_path = temp_dir().join("test_to_image.png");

@@ -1,7 +1,7 @@
 use std::error::Error;
 use std::time::Duration;
 
-use commons::geometry::Rectangle;
+use commons::geometry::{xy, Rectangle};
 use glium::glutin;
 use glium::glutin::event::MouseScrollDelta;
 
@@ -80,8 +80,9 @@ where
                         return;
                     }
                     glutin::event::WindowEvent::CursorMoved { position, .. } => {
+                        let (x, y) = position.into();
                         self.event_handler.handle(
-                            &Event::MouseMoved(position.into()),
+                            &Event::MouseMoved(xy(x, y)),
                             &mut self.state,
                             &mut self.graphics,
                         );

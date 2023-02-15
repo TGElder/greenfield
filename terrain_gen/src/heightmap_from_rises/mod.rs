@@ -3,6 +3,7 @@ pub mod with_valleys;
 use std::cmp::Ordering;
 use std::collections::BinaryHeap;
 
+use commons::geometry::XY;
 use commons::grid::Grid;
 use commons::unsafe_float_ordering;
 
@@ -10,7 +11,7 @@ use crate::{Heightmap, Rises};
 
 pub fn heightmap_from_rises<F>(rises: &Rises, origin_fn: F) -> Heightmap
 where
-    F: Fn((u32, u32)) -> bool,
+    F: Fn(XY<u32>) -> bool,
 {
     let mut visited = Grid::<bool>::default(rises.width(), rises.height());
     let mut out = Grid::from_fn(rises.width(), rises.height(), |xy| {
@@ -55,7 +56,7 @@ where
 }
 
 struct HeapElement {
-    xy: (u32, u32),
+    xy: XY<u32>,
     z: f32,
 }
 

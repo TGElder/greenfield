@@ -13,7 +13,7 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
-use commons::geometry::Rectangle;
+use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -208,13 +208,13 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn screen_to_gl(&self, (x, y): &(u32, u32)) -> [f32; 2] {
+    fn screen_to_gl(&self, XY { x, y }: &XY<u32>) -> XY<f32> {
         let (width, height) = self.display.canvas_dimensions();
 
         let x_pc = *x as f32 / width as f32;
         let y_pc = *y as f32 / height as f32;
 
-        [x_pc * 2.0 - 1.0, -(y_pc * 2.0 - 1.0)]
+        xy(x_pc * 2.0 - 1.0, -(y_pc * 2.0 - 1.0))
     }
 
     fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
@@ -231,7 +231,7 @@ impl GliumGraphics {
             .iter()
             .flat_map(|Triangle { corners, color }| {
                 corners.iter().map(|corner| ColoredVertex {
-                    position: *corner,
+                    position: (*corner).into(),
                     color: [color.r, color.g, color.b],
                 })
             })
@@ -266,11 +266,11 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn world_xyz_at_unsafe(&self, screen_xy: &(u32, u32)) -> Result<[f32; 3], Box<dyn Error>> {
+    fn world_xyz_at_unsafe(&self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, Box<dyn Error>> {
         let Some(canvas) = &self.canvas else{return Err("Need the depth at the cursor position to get world coordinate, but there is no canvas to read the depth from.".into())};
         let gl_z = canvas.read_pixel(*screen_xy)?.a;
-        let [gl_x, gl_y] = self.screen_to_gl(screen_xy);
-        let gl_xyz = [gl_x, gl_y, gl_z];
+        let XY { x: gl_x, y: gl_y } = self.screen_to_gl(screen_xy);
+        let gl_xyz = xyz(gl_x, gl_y, gl_z);
         Ok(self.projection.unproject(&gl_xyz))
     }
 }
@@ -292,7 +292,7 @@ impl Graphics for GliumGraphics {
         Ok(self.screenshot_unsafe(path)?)
     }
 
-    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32)) {
+    fn look_at(&mut self, world_xyz: &XYZ<f32>, screen_xy: &XY<u32>) {
         let gl_xy = self.screen_to_gl(screen_xy);
         self.projection.look_at(world_xyz, &gl_xy)
     }
@@ -309,7 +309,7 @@ impl Graphics for GliumGraphics {
         self.projection.set_viewport(viewport);
     }
 
-    fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError> {
+    fn world_xyz_at(&mut self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, IndexError> {
         Ok(self.world_xyz_at_unsafe(screen_xy)?)
     }
 }

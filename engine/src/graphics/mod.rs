@@ -4,7 +4,7 @@ pub mod matrices;
 pub mod projection;
 pub mod projections;
 
-use commons::geometry::Rectangle;
+use commons::geometry::{Rectangle, XY, XYZ};
 pub use projection::Projection;
 
 use elements::*;
@@ -43,7 +43,7 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
-    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &(u32, u32));
+    fn look_at(&mut self, world_xyz: &XYZ<f32>, screen_xy: &XY<u32>);
 
     fn yaw(&mut self, yaw: f32);
 
@@ -51,5 +51,5 @@ pub trait Graphics {
 
     fn set_viewport(&mut self, viewport: Rectangle<u32>);
 
-    fn world_xyz_at(&mut self, screen_xy: &(u32, u32)) -> Result<[f32; 3], IndexError>;
+    fn world_xyz_at(&mut self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, IndexError>;
 }

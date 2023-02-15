@@ -1,3 +1,4 @@
+use commons::geometry::XY;
 use std::error::Error;
 use thiserror::Error;
 
@@ -80,7 +81,7 @@ impl Canvas {
         Ok(())
     }
 
-    pub fn read_pixel(&self, (x, y): (u32, u32)) -> Result<Rgba<f32>, ReadPixelError> {
+    pub fn read_pixel(&self, XY { x, y }: XY<u32>) -> Result<Rgba<f32>, ReadPixelError> {
         if x > self.texture.width() || y > self.texture.height() {
             return Err(ReadPixelError::OutOfBounds {
                 xy: (x, y),

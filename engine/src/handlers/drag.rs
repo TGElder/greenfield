@@ -1,3 +1,5 @@
+use commons::geometry::{XY, XYZ};
+
 use crate::{
     engine::Engine,
     events::{ButtonState, Event, EventHandler, MouseButton},
@@ -5,8 +7,8 @@ use crate::{
 };
 
 pub struct Handler {
-    mouse_xy: Option<(u32, u32)>,
-    selection: Option<[f32; 3]>,
+    mouse_xy: Option<XY<u32>>,
+    selection: Option<XYZ<f32>>,
 }
 
 impl Handler {

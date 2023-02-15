@@ -1,12 +1,13 @@
 use std::borrow::Borrow;
 
+use commons::geometry::XY;
 use commons::scale::Scale;
 
 use crate::{heightmap_from_rises, Heightmap, Rain, Rises};
 
 pub struct ValleyParameters<F>
 where
-    F: Fn((u32, u32)) -> bool,
+    F: Fn(XY<u32>) -> bool,
 {
     pub height_threshold: f32,
     pub rain_threshold: usize,
@@ -17,7 +18,7 @@ where
 pub fn heightmap_from_rises_with_valleys<B, F>(rises: &Rises, parameters: B) -> Heightmap
 where
     B: Borrow<ValleyParameters<F>>,
-    F: Fn((u32, u32)) -> bool,
+    F: Fn(XY<u32>) -> bool,
 {
     let parameters = parameters.borrow();
 
