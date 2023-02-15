@@ -73,7 +73,7 @@ impl EventHandler for Handler {
                     self.level -= 1;
                 }
 
-                graphics.zoom(self.compute_zoom());
+                graphics.projection().zoom(self.compute_zoom());
                 graphics.look_at(&xyz, &mouse_xy);
             }
             _ => (),

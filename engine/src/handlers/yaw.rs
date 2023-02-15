@@ -71,7 +71,7 @@ impl EventHandler for Handler {
                     self.angle = (self.angle + self.angles - 1) % self.angles;
                 }
 
-                graphics.yaw(self.compute_yaw());
+                graphics.projection().yaw(self.compute_yaw());
                 graphics.look_at(&xyz, &mouse_xy);
             }
             _ => (),

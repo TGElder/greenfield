@@ -2,6 +2,7 @@ use std::env::temp_dir;
 use std::f32::consts::PI;
 
 use commons::color::Rgb;
+use commons::geometry::Rectangle;
 
 use crate::engine::Engine;
 use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
