@@ -1,4 +1,4 @@
-use commons::geometry::Rectangle;
+use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
 use nalgebra::{Matrix4, Vector4};
 
 use crate::graphics;
@@ -75,20 +75,20 @@ impl graphics::Projection for Projection {
         &self.composite
     }
 
-    fn unproject(&self, [x, y, z]: &[f32; 3]) -> [f32; 3] {
+    fn unproject(&self, XYZ { x, y, z }: &XYZ<f32>) -> XYZ<f32> {
         let gl_xyz = Vector4::new(*x, *y, *z, 1.0);
         let unprojected = self.inverse * gl_xyz;
-        [unprojected.x, unprojected.y, unprojected.z]
+        xyz(unprojected.x, unprojected.y, unprojected.z)
     }
 
-    fn look_at(&mut self, world_xyz: &[f32; 3], screen_xy: &[f32; 2]) {
-        let world = Vector4::new(world_xyz[0], world_xyz[1], world_xyz[2], 1.0);
+    fn look_at(&mut self, world: &XYZ<f32>, screen: &XY<f32>) {
+        let world = Vector4::new(world.x, world.y, world.z, 1.0);
         let composite: Matrix4<f32> = self.composite.into();
 
         let offsets = composite * world;
 
-        self.matrices.translation[(0, 3)] += -offsets.x + screen_xy[0];
-        self.matrices.translation[(1, 3)] += -offsets.y + screen_xy[1];
+        self.matrices.translation[(0, 3)] += -offsets.x + screen.x;
+        self.matrices.translation[(1, 3)] += -offsets.y + screen.y;
 
         self.update_composite();
     }
@@ -113,7 +113,7 @@ impl graphics::Projection for Projection {
 
         self.update_composite();
 
-        self.look_at(&[center[0], center[1], 0.0], &[0.0, 0.0])
+        self.look_at(&xyz(center[0], center[1], 0.0), &xy(0.0, 0.0))
     }
 }
 

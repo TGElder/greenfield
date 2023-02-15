@@ -1,9 +1,10 @@
+use commons::geometry::{xy, XY};
 use commons::grid::Grid;
 use commons::unsafe_float_ordering;
 
 use crate::Heightmap;
 
-pub type Downhills = Grid<Option<(i32, i32)>>;
+pub type Downhills = Grid<Option<XY<i32>>>;
 
 pub trait Downhill {
     fn downhills(&self) -> Downhills;
@@ -15,19 +16,19 @@ impl Downhill for Heightmap {
     }
 }
 
-fn lowest_neighbour(heightmap: &Heightmap, xy: &(u32, u32)) -> Option<(u32, u32)> {
+fn lowest_neighbour(heightmap: &Heightmap, position: &XY<u32>) -> Option<XY<u32>> {
     heightmap
-        .neighbours_4(xy)
-        .filter(|neighbour| heightmap[neighbour] < heightmap[xy])
+        .neighbours_4(position)
+        .filter(|neighbour| heightmap[neighbour] < heightmap[position])
         .min_by(|a, b| unsafe_float_ordering(&heightmap[a], &heightmap[b]))
 }
 
-fn lowest_neighbour_offset(heightmap: &Heightmap, xy: &(u32, u32)) -> Option<(i32, i32)> {
-    let (x, y) = xy;
-    lowest_neighbour(heightmap, xy).map(|(nx, ny)| {
-        (
-            (nx as i64 - *x as i64) as i32,
-            (ny as i64 - *y as i64) as i32,
+fn lowest_neighbour_offset(heightmap: &Heightmap, position: &XY<u32>) -> Option<XY<i32>> {
+    let XY { x, y } = position;
+    lowest_neighbour(heightmap, position).map(|n| {
+        xy(
+            (n.x as i64 - *x as i64) as i32,
+            (n.y as i64 - *y as i64) as i32,
         )
     })
 }
@@ -55,9 +56,9 @@ mod tests {
                 3,
                 3,
                 vec![
-                    None, Some((-1, 0)), Some((-1, 0)), // 
-                    Some((0, -1)), Some((0, 1)), Some((-1, 0)), // 
-                    Some((1, 0)), None, Some((-1, 0)), // 
+                    None, Some(xy(-1, 0)), Some(xy(-1, 0)), // 
+                    Some(xy(0, -1)), Some(xy(0, 1)), Some(xy(-1, 0)), // 
+                    Some(xy(1, 0)), None, Some(xy(-1, 0)), // 
                 ]
             )
         );

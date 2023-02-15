@@ -1,3 +1,5 @@
+use commons::geometry::XY;
+
 use crate::{
     engine::Engine,
     events::{ButtonState, Event, EventHandler, KeyboardKey},
@@ -10,7 +12,7 @@ pub struct Handler {
     max_level: i32,
     key_plus: KeyboardKey,
     key_minus: KeyboardKey,
-    mouse_xy: Option<(u32, u32)>,
+    mouse_xy: Option<XY<u32>>,
 }
 
 pub struct Parameters {

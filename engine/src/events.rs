@@ -1,4 +1,4 @@
-use commons::geometry::Rectangle;
+use commons::geometry::{Rectangle, XY};
 
 use crate::engine::Engine;
 use crate::graphics::Graphics;
@@ -72,7 +72,7 @@ pub enum KeyboardKey {
 
 pub enum Event {
     Tick,
-    MouseMoved((u32, u32)),
+    MouseMoved(XY<u32>),
     MouseInput {
         button: MouseButton,
         state: ButtonState,
