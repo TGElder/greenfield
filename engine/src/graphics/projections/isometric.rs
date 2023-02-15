@@ -106,6 +106,9 @@ impl graphics::Projection for Projection {
     }
 
     fn set_viewport(&mut self, viewport: Rectangle<u32>) {
+        if self.scale.viewport == viewport {
+            return;
+        }
         self.scale.viewport = viewport;
         self.update_scale();
 
