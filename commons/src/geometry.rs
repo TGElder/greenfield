@@ -51,7 +51,7 @@ impl<T> From<XYZ<T>> for [T; 3] {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Rectangle<T> {
     pub width: T,
     pub height: T,
