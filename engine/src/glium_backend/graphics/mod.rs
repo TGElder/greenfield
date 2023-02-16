@@ -85,7 +85,6 @@ pub struct GliumGraphics {
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     primitives: Vec<Option<Primitive>>,
-    primitive_indices: Vec<usize>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -143,7 +142,6 @@ impl GliumGraphics {
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             primitives: vec![],
-            primitive_indices: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -218,15 +216,6 @@ impl GliumGraphics {
     }
 
     fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
-        let index = match self.primitive_indices.pop() {
-            Some(index) => index,
-            None => {
-                let out = self.primitive_indices.len();
-                self.primitives.push(None);
-                out
-            }
-        };
-
         let vertices = triangles
             .iter()
             .flat_map(|Triangle { corners, color }| {
@@ -237,11 +226,11 @@ impl GliumGraphics {
             })
             .collect::<Vec<ColoredVertex>>();
 
-        self.primitives[index] = Some(Primitive {
+        self.primitives.push(Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-        });
+        }));
 
-        Ok(index)
+        Ok(self.primitives.len() - 1)
     }
 
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
