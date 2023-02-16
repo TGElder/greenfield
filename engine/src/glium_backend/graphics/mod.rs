@@ -6,7 +6,7 @@ mod vertices;
 
 use std::error::Error;
 
-use crate::graphics::elements::Triangle;
+use crate::graphics::elements::{Triangle, self};
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
@@ -48,43 +48,14 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
     },
 ];
 
-enum Display {
-    Headful(glium::Display),
-    Headless {
-        renderer: glium::HeadlessRenderer,
-        dimensions: (u32, u32),
-    },
-}
-
-impl Display {
-    fn facade(&self) -> &dyn glium::backend::Facade {
-        match self {
-            Display::Headful(display) => display,
-            Display::Headless { renderer, .. } => renderer,
-        }
-    }
-
-    fn frame(&self) -> glium::Frame {
-        match self {
-            Display::Headful(display) => display.draw(),
-            Display::Headless { renderer, .. } => renderer.draw(),
-        }
-    }
-
-    fn canvas_dimensions(&self) -> (u32, u32) {
-        match self {
-            Display::Headful(display) => display.get_framebuffer_dimensions(),
-            Display::Headless { dimensions, .. } => *dimensions,
-        }
-    }
-}
-
 pub struct GliumGraphics {
     display: Display,
     projection: Box<dyn Projection>,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     primitives: Vec<Option<Primitive>>,
+    billboards: Vec<Option<Billboard>>,
+    textures: Vec<glium::Texture2d>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -142,6 +113,8 @@ impl GliumGraphics {
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             primitives: vec![],
+            textures: vec![],
+            billboards: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -233,6 +206,36 @@ impl GliumGraphics {
         Ok(self.primitives.len() - 1)
     }
 
+    fn add_billboards_unsafe(&mut self, billboards: &[elements::Billboard]) -> Result<usize, Box<dyn Error>> {
+        let vertices = billboards
+        .iter()
+        .flat_map(|elements::Billboard { position, dimensions, texture }| {
+            [xy(-1.0, 1.0), xy(1.0, 1.0), xy(1.0, -1.0), xy(-1.0, -1.0)].iter().map(|o|
+            BillboardVertex {
+                position: (*position).into(),
+                offset: [dimensions.width * o.x * 0.5, dimensions.height * o.y * 0.5],
+                texture_coordinates: [o.x, o.y],
+            })
+        })
+        .collect::<Vec<BillboardVertex>>();
+
+        self.billboards.push(Some(Billboard{
+            texture: todo!(),
+            vertex_buffer: todo!(),
+        });
+
+    }
+
+    fn load_texture_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
+        let image = image::open(path)?.to_rgba8();
+        let dimensions = image.dimensions();
+        let image = glium::texture::RawImage2d::from_raw_rgba(image.into_raw(), dimensions);
+        
+        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
+        self.textures.push(texture);
+        Ok(self.textures.len() - 1)
+    }
+
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
         let mut frame = self.display.frame();
 
@@ -264,13 +267,13 @@ impl GliumGraphics {
     }
 }
 
-struct Primitive {
-    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-}
-
 impl Graphics for GliumGraphics {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError> {
         Ok(self.add_triangles_unsafe(triangles)?)
+    }
+
+    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError> {
+        Ok(self.load_texture_unsafe(path)?)
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
@@ -293,4 +296,47 @@ impl Graphics for GliumGraphics {
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
     }
+
+
 }
+
+enum Display {
+    Headful(glium::Display),
+    Headless {
+        renderer: glium::HeadlessRenderer,
+        dimensions: (u32, u32),
+    },
+}
+
+impl Display {
+    fn facade(&self) -> &dyn glium::backend::Facade {
+        match self {
+            Display::Headful(display) => display,
+            Display::Headless { renderer, .. } => renderer,
+        }
+    }
+
+    fn frame(&self) -> glium::Frame {
+        match self {
+            Display::Headful(display) => display.draw(),
+            Display::Headless { renderer, .. } => renderer.draw(),
+        }
+    }
+
+    fn canvas_dimensions(&self) -> (u32, u32) {
+        match self {
+            Display::Headful(display) => display.get_framebuffer_dimensions(),
+            Display::Headless { dimensions, .. } => *dimensions,
+        }
+    }
+}
+
+struct Primitive {
+    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+}
+
+struct Billboard {
+    texture: usize,
+    vertex_buffer: glium::VertexBuffer<BillboardVertex>,
+}
+
