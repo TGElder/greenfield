@@ -90,6 +90,66 @@ fn render_cube() {
 }
 
 #[test]
+fn render_billboard() {
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 256.0,
+                z_max: 1.0,
+                viewport: Rectangle {
+                    width: 256,
+                    height: 256,
+                },
+            },
+        })),
+    })
+    .unwrap();
+
+    // when
+    let texture = graphics
+        .load_texture("test_resources/graphics/crab.png")
+        .unwrap();
+    let billboard = elements::Billboard {
+        position: xyz(0.0, 0.0, 0.0),
+        dimensions: Rectangle {
+            width: 1.0,
+            height: 1.0,
+        },
+        texture,
+    };
+    graphics.add_billboard(&billboard).unwrap();
+    graphics
+        .add_quads(&[Quad {
+            corners: [
+                xyz(-0.5, -0.5, 0.0),
+                xyz(0.5, -0.5, 0.0),
+                xyz(0.5, 0.5, 0.0),
+                xyz(-0.5, 0.5, 0.0),
+            ],
+            color: Rgb::new(0.0, 0.0, 1.0),
+        }])
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn look_at() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {

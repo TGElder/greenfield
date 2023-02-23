@@ -75,6 +75,10 @@ impl graphics::Projection for Projection {
         &self.composite
     }
 
+    fn scale(&self) -> [[f32; 4]; 4] {
+        self.matrices.scale.into()
+    }
+
     fn unproject(&self, XYZ { x, y, z }: &XYZ<f32>) -> XYZ<f32> {
         let gl_xyz = Vector4::new(*x, *y, *z, 1.0);
         let unprojected = self.inverse * gl_xyz;

@@ -1,5 +1,5 @@
 use commons::color::Rgb;
-use commons::geometry::{XYZ, Rectangle};
+use commons::geometry::{Rectangle, XYZ};
 
 pub struct Triangle {
     pub corners: [XYZ<f32>; 3],

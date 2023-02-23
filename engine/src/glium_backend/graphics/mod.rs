@@ -6,7 +6,7 @@ mod vertices;
 
 use std::error::Error;
 
-use crate::graphics::elements::{Triangle, self};
+use crate::graphics::elements::{self, Triangle};
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
@@ -158,6 +158,35 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn render_billboards_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let mut uniforms = None;
+        let mut current_texture = None;
+
+        for billboard in self.billboards.iter().flatten() {
+            if current_texture != Some(billboard.texture) {
+                current_texture = Some(billboard.texture);
+                uniforms = Some(glium::uniform! {
+                    transform: *self.projection.projection(),
+                    scale: self.projection.scale(),
+                    tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
+                });
+            }
+            if let Some(uniforms) = uniforms {
+                surface.draw(
+                    &billboard.vertex_buffer,
+                    INDICES,
+                    &self.programs.billboard,
+                    &uniforms,
+                    &self.draw_parameters,
+                )?;
+            }
+        }
+        Ok(())
+    }
+
     fn render_canvas_to_frame<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
@@ -206,31 +235,49 @@ impl GliumGraphics {
         Ok(self.primitives.len() - 1)
     }
 
-    fn add_billboards_unsafe(&mut self, billboards: &[elements::Billboard]) -> Result<usize, Box<dyn Error>> {
-        let vertices = billboards
-        .iter()
-        .flat_map(|elements::Billboard { position, dimensions, texture }| {
-            [xy(-1.0, 1.0), xy(1.0, 1.0), xy(1.0, -1.0), xy(-1.0, -1.0)].iter().map(|o|
-            BillboardVertex {
+    fn add_billboard_unsafe(
+        &mut self,
+        elements::Billboard {
+            position,
+            dimensions,
+            texture,
+        }: &elements::Billboard,
+    ) -> Result<usize, Box<dyn Error>> {
+        let vertices = [xy(0.0, 0.0), xy(1.0, 0.0), xy(1.0, 1.0), xy(0.0, 1.0)]
+            .iter()
+            .map(|o| BillboardVertex {
                 position: (*position).into(),
-                offset: [dimensions.width * o.x * 0.5, dimensions.height * o.y * 0.5],
+                offset: [
+                    dimensions.width * (o.x - 0.5),
+                    dimensions.height * (o.y - 0.5),
+                ],
                 texture_coordinates: [o.x, o.y],
             })
-        })
-        .collect::<Vec<BillboardVertex>>();
+            .collect::<Vec<BillboardVertex>>();
 
-        self.billboards.push(Some(Billboard{
-            texture: todo!(),
-            vertex_buffer: todo!(),
-        });
+        let vertices = [
+            vertices[0],
+            vertices[1],
+            vertices[3],
+            vertices[1],
+            vertices[2],
+            vertices[3],
+        ];
 
+        self.billboards.push(Some(Billboard {
+            texture: *texture,
+            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+        }));
+
+        Ok(self.billboards.len() - 1)
     }
 
     fn load_texture_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
         let image = image::open(path)?.to_rgba8();
         let dimensions = image.dimensions();
-        let image = glium::texture::RawImage2d::from_raw_rgba(image.into_raw(), dimensions);
-        
+        let image =
+            glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), dimensions);
+
         let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
         self.textures.push(texture);
         Ok(self.textures.len() - 1)
@@ -244,6 +291,7 @@ impl GliumGraphics {
         let mut canvas = canvas.frame(self.display.facade())?;
 
         self.render_primitives_to_canvas(&mut canvas)?;
+        self.render_billboards_to_canvas(&mut canvas)?;
         self.render_canvas_to_frame(&mut frame)?;
 
         frame.finish()?;
@@ -272,6 +320,10 @@ impl Graphics for GliumGraphics {
         Ok(self.add_triangles_unsafe(triangles)?)
     }
 
+    fn add_billboard(&mut self, billboard: &elements::Billboard) -> Result<usize, DrawError> {
+        Ok(self.add_billboard_unsafe(billboard)?)
+    }
+
     fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError> {
         Ok(self.load_texture_unsafe(path)?)
     }
@@ -296,8 +348,6 @@ impl Graphics for GliumGraphics {
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
     }
-
-
 }
 
 enum Display {
@@ -339,4 +389,3 @@ struct Billboard {
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
 }
-

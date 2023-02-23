@@ -9,7 +9,9 @@ pub use projection::Projection;
 
 use elements::*;
 
-use crate::graphics::errors::{DrawError, IndexError, RenderError, ScreenshotError, InitializationError};
+use crate::graphics::errors::{
+    DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
+};
 
 pub trait Graphics {
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
@@ -39,7 +41,7 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
-    fn add_billboards(&mut self, billboards: &[Billboard]) -> Result<usize, DrawError>;
+    fn add_billboard(&mut self, billboard: &Billboard) -> Result<usize, DrawError>;
 
     fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
 
