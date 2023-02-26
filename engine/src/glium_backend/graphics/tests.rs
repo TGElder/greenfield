@@ -3,6 +3,7 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
+use image::GenericImageView;
 
 use crate::engine::Engine;
 use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
@@ -146,6 +147,21 @@ fn render_billboard() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
+
+    let mut different = 0;
+    for x in 0..actual.width() {
+        for y in 0..actual.height() {
+            if actual.get_pixel(x, y) != expected.get_pixel(x, y) {
+                different += 1;
+            }
+        }
+    }
+    println!(
+        "{} pixels out of {} are different",
+        different,
+        actual.width() * actual.height()
+    );
+
     assert_eq!(actual, expected);
 }
 
