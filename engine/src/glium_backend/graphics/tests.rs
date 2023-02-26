@@ -148,22 +148,19 @@ fn render_billboard() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
 
-    let mut different = 0;
+    let mut difference: u64 = 0;
     for x in 0..actual.width() {
         for y in 0..actual.height() {
             if actual.get_pixel(x, y) != expected.get_pixel(x, y) {
-                different += 1;
-                println!(
-                    "{:?} != {:?}",
-                    actual.get_pixel(x, y),
-                    expected.get_pixel(x, y)
-                );
+                for i in 0..4 {
+                    difference += actual.get_pixel(x, y)[i].abs_diff(expected.get_pixel(x, y)[i]) as u64;
+                }
             }
         }
     }
     println!(
         "{} pixels out of {} are different",
-        different,
+        (difference as f64) / ((255 * 255 * 255 * actual.width() * actual.height()) as f64),
         actual.width() * actual.height()
     );
 
