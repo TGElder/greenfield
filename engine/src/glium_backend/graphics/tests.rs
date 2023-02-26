@@ -153,14 +153,15 @@ fn render_billboard() {
         for y in 0..actual.height() {
             if actual.get_pixel(x, y) != expected.get_pixel(x, y) {
                 for i in 0..4 {
-                    difference += actual.get_pixel(x, y)[i].abs_diff(expected.get_pixel(x, y)[i]) as u64;
+                    difference +=
+                        actual.get_pixel(x, y)[i].abs_diff(expected.get_pixel(x, y)[i]) as u64;
                 }
             }
         }
     }
     println!(
         "{} pixels out of {} are different",
-        (difference as f64) / ((255 * 255 * 255 * actual.width() * actual.height()) as f64),
+        difference as f64 / ((255u32 * 3) * actual.width() * actual.height()) as f64,
         actual.width() * actual.height()
     );
 
