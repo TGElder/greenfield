@@ -53,9 +53,9 @@ pub struct GliumGraphics {
     projection: Box<dyn Projection>,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
+    textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
     billboards: Vec<Option<Billboard>>,
-    textures: Vec<glium::Texture2d>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -112,8 +112,8 @@ impl GliumGraphics {
             projection: parameters.projection,
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
-            primitives: vec![],
             textures: vec![],
+            primitives: vec![],
             billboards: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
@@ -217,6 +217,17 @@ impl GliumGraphics {
         xy(x_pc * 2.0 - 1.0, -(y_pc * 2.0 - 1.0))
     }
 
+    fn load_texture_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
+        let image = image::open(path)?.to_rgba8();
+        let dimensions = image.dimensions();
+        let image =
+            glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), dimensions);
+
+        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
+        self.textures.push(texture);
+        Ok(self.textures.len() - 1)
+    }
+
     fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
         let vertices = triangles
             .iter()
@@ -272,17 +283,6 @@ impl GliumGraphics {
         Ok(self.billboards.len() - 1)
     }
 
-    fn load_texture_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
-        let image = image::open(path)?.to_rgba8();
-        let dimensions = image.dimensions();
-        let image =
-            glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), dimensions);
-
-        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
-        self.textures.push(texture);
-        Ok(self.textures.len() - 1)
-    }
-
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
         let mut frame = self.display.frame();
 
@@ -316,16 +316,16 @@ impl GliumGraphics {
 }
 
 impl Graphics for GliumGraphics {
+    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError> {
+        Ok(self.load_texture_unsafe(path)?)
+    }
+
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError> {
         Ok(self.add_triangles_unsafe(triangles)?)
     }
 
     fn add_billboard(&mut self, billboard: &elements::Billboard) -> Result<usize, DrawError> {
         Ok(self.add_billboard_unsafe(billboard)?)
-    }
-
-    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError> {
-        Ok(self.load_texture_unsafe(path)?)
     }
 
     fn render(&mut self) -> Result<(), RenderError> {

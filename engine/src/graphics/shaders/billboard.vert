@@ -11,12 +11,11 @@ uniform mat4 transform;
 uniform mat4 scale;
 
 void main() {
-    fragment_texture_coordinates = texture_coordinates;
-
     vec4 center = transform * vec4(position.x, position.y, position.z, 1.0);
-    depth = center.z; 
-
     vec4 screen_offset = scale * vec4(offset.x, offset.y, -offset.y, 0.0);
+
+    fragment_texture_coordinates = texture_coordinates;
+    depth = center.z; 
 
     gl_Position = center + screen_offset;
 }

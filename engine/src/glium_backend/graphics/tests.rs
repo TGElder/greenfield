@@ -153,6 +153,7 @@ fn render_billboard() {
         for y in 0..actual.height() {
             if actual.get_pixel(x, y) != expected.get_pixel(x, y) {
                 different += 1;
+                println!("{:?} != {:?}", actual, expected);
             }
         }
     }

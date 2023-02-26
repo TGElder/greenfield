@@ -14,6 +14,8 @@ use crate::graphics::errors::{
 };
 
 pub trait Graphics {
+    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
+
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
 
     fn add_quads(&mut self, quads: &[Quad]) -> Result<usize, DrawError> {
@@ -42,8 +44,6 @@ pub trait Graphics {
     }
 
     fn add_billboard(&mut self, billboard: &Billboard) -> Result<usize, DrawError>;
-
-    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
 
     fn render(&mut self) -> Result<(), RenderError>;
 
