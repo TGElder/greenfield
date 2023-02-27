@@ -9,14 +9,14 @@ pub use projection::Projection;
 
 use elements::*;
 
-use crate::graphics::errors::{DrawError, IndexError, RenderError, ScreenshotError};
+use crate::graphics::errors::{
+    DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
+};
 
 pub trait Graphics {
+    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
+
     fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
-
-    fn render(&mut self) -> Result<(), RenderError>;
-
-    fn screenshot(&self, path: &str) -> Result<(), ScreenshotError>;
 
     fn add_quads(&mut self, quads: &[Quad]) -> Result<usize, DrawError> {
         let triangles = quads
@@ -42,6 +42,12 @@ pub trait Graphics {
             .collect::<Vec<_>>();
         self.add_triangles(&triangles)
     }
+
+    fn add_billboard(&mut self, billboard: &Billboard) -> Result<usize, DrawError>;
+
+    fn render(&mut self) -> Result<(), RenderError>;
+
+    fn screenshot(&self, path: &str) -> Result<(), ScreenshotError>;
 
     fn look_at(&mut self, world_xyz: &XYZ<f32>, screen_xy: &XY<u32>);
 

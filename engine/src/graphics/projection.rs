@@ -1,7 +1,8 @@
 use commons::geometry::{Rectangle, XY, XYZ};
 
 pub trait Projection {
-    fn projection(&self) -> &[[f32; 4]; 4];
+    fn projection(&self) -> [[f32; 4]; 4];
+    fn scale(&self) -> [[f32; 4]; 4];
     fn unproject(&self, gl_xyz: &XYZ<f32>) -> XYZ<f32>;
     fn look_at(&mut self, world_xyz: &XYZ<f32>, screen_xy: &XY<f32>);
     fn yaw(&mut self, yaw: f32);

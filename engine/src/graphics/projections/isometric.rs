@@ -8,7 +8,7 @@ pub struct Projection {
     projection: ProjectionParameters,
     scale: ScaleParameters,
     matrices: Matrices,
-    composite: [[f32; 4]; 4],
+    composite: Matrix4<f32>,
     inverse: Matrix4<f32>,
 }
 
@@ -41,7 +41,7 @@ impl Projection {
             projection,
             scale,
             matrices: Matrices::default(),
-            composite: Matrix4::identity().into(),
+            composite: Matrix4::identity(),
             inverse: Matrix4::identity(),
         };
         out.update_projection();
@@ -59,20 +59,23 @@ impl Projection {
     }
 
     fn update_composite(&mut self) {
-        let composite = self.matrices.composite();
-        self.inverse = composite.try_inverse().unwrap_or_else(|| {
+        self.composite = self.matrices.composite();
+        self.inverse = self.composite.try_inverse().unwrap_or_else(|| {
             panic!(
                 "Expected invertible isometric projection matrix but got {} from {:?}",
-                composite, self.matrices
+                self.composite, self.matrices
             )
         });
-        self.composite = composite.into();
     }
 }
 
 impl graphics::Projection for Projection {
-    fn projection(&self) -> &[[f32; 4]; 4] {
-        &self.composite
+    fn projection(&self) -> [[f32; 4]; 4] {
+        self.composite.into()
+    }
+
+    fn scale(&self) -> [[f32; 4]; 4] {
+        self.matrices.scale.into()
     }
 
     fn unproject(&self, XYZ { x, y, z }: &XYZ<f32>) -> XYZ<f32> {
@@ -83,9 +86,8 @@ impl graphics::Projection for Projection {
 
     fn look_at(&mut self, world: &XYZ<f32>, screen: &XY<f32>) {
         let world = Vector4::new(world.x, world.y, world.z, 1.0);
-        let composite: Matrix4<f32> = self.composite.into();
 
-        let offsets = composite * world;
+        let offsets = self.composite * world;
 
         self.matrices.translation[(0, 3)] += -offsets.x + screen.x;
         self.matrices.translation[(1, 3)] += -offsets.y + screen.y;

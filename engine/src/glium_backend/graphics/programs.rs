@@ -2,6 +2,7 @@ use std::error::Error;
 
 pub struct Programs {
     pub screen: glium::Program,
+    pub billboard: glium::Program,
     pub primitive: glium::Program,
 }
 
@@ -12,6 +13,12 @@ impl Programs {
                 facade,
                 include_str!("../../graphics/shaders/primitive.vert"),
                 include_str!("../../graphics/shaders/primitive.frag"),
+                None,
+            )?,
+            billboard: glium::Program::from_source(
+                facade,
+                include_str!("../../graphics/shaders/billboard.vert"),
+                include_str!("../../graphics/shaders/billboard.frag"),
                 None,
             )?,
             screen: glium::Program::from_source(
