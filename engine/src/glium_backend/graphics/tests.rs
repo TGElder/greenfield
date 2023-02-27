@@ -142,31 +142,13 @@ fn render_billboard() {
         .unwrap();
     graphics.render().unwrap();
 
-    let path_str = ".backstop/test_resources/graphics/render_billboard.png";
-    let path = Path::new(&path_str);
-    create_dir_all(path.parent().unwrap()).unwrap();
-    graphics.screenshot(path_str).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
     // then
-    let actual = image::open(path_str).unwrap();
+    let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
-
-    let mut difference: u64 = 0;
-    for x in 0..actual.width() {
-        for y in 0..actual.height() {
-            if actual.get_pixel(x, y) != expected.get_pixel(x, y) {
-                for i in 0..4 {
-                    difference +=
-                        actual.get_pixel(x, y)[i].abs_diff(expected.get_pixel(x, y)[i]) as u64;
-                }
-            }
-        }
-    }
-    println!(
-        "{} pixels out of {} are different",
-        difference as f64 / ((255u32 * 3) * actual.width() * actual.height()) as f64,
-        actual.width() * actual.height()
-    );
 
     assert_eq!(actual, expected);
 }

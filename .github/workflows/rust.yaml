@@ -38,11 +38,6 @@ jobs:
         with:
           command: test
           args: --package engine -- --test-threads=1
-      - uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: failing-backstop
-          path: engine/.backstop
 
   fmt:
     name: fmt
