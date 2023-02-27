@@ -8,7 +8,7 @@ pub struct Projection {
     projection: ProjectionParameters,
     scale: ScaleParameters,
     matrices: Matrices,
-    composite: [[f32; 4]; 4],
+    composite: Matrix4<f32>,
     inverse: Matrix4<f32>,
 }
 
@@ -59,20 +59,19 @@ impl Projection {
     }
 
     fn update_composite(&mut self) {
-        let composite = self.matrices.composite();
-        self.inverse = composite.try_inverse().unwrap_or_else(|| {
+        self.composite = self.matrices.composite();
+        self.inverse = self.composite.try_inverse().unwrap_or_else(|| {
             panic!(
                 "Expected invertible isometric projection matrix but got {} from {:?}",
-                composite, self.matrices
+                self.composite, self.matrices
             )
         });
-        self.composite = composite.into();
     }
 }
 
 impl graphics::Projection for Projection {
-    fn projection(&self) -> &[[f32; 4]; 4] {
-        &self.composite
+    fn projection(&self) -> [[f32; 4]; 4] {
+        self.composite.into()
     }
 
     fn scale(&self) -> [[f32; 4]; 4] {

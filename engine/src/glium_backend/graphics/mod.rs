@@ -143,7 +143,7 @@ impl GliumGraphics {
         S: glium::Surface,
     {
         let uniforms = glium::uniform! {
-            transform: *self.projection.projection()
+            transform: self.projection.projection()
         };
 
         for primitive in self.primitives.iter().flatten() {
@@ -169,7 +169,7 @@ impl GliumGraphics {
             if current_texture != Some(billboard.texture) {
                 current_texture = Some(billboard.texture);
                 uniforms = Some(glium::uniform! {
-                    transform: *self.projection.projection(),
+                    transform: self.projection.projection(),
                     scale: self.projection.scale(),
                     tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
                 });

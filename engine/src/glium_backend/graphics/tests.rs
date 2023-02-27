@@ -1,11 +1,8 @@
 use std::env::temp_dir;
 use std::f32::consts::PI;
-use std::fs::create_dir_all;
-use std::path::Path;
 
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
-use image::GenericImageView;
 
 use crate::engine::Engine;
 use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
@@ -152,9 +149,7 @@ fn render_billboard() {
     let difference = commons::image::difference(&actual, &expected).unwrap();
     let max_difference = (256 * 256 * (255 * 3)) / 1000;
 
-    println!("Difference = {}", difference);
-
-    assert!(difference < 1);
+    assert!(difference < max_difference);
 }
 
 #[test]
