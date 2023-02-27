@@ -190,6 +190,7 @@ dependencies = [
  "num",
  "simdnoise",
  "tempfile",
+ "thiserror",
 ]
 
 [[package]]

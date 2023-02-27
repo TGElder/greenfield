@@ -6,6 +6,7 @@ pub mod color;
 pub mod float_grid;
 pub mod geometry;
 pub mod grid;
+pub mod image;
 pub mod noise;
 pub mod scale;
 

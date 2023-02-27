@@ -11,3 +11,4 @@ maplit = { workspace = true }
 num = { workspace = true }
 simdnoise = { workspace = true }
 tempfile = { workspace = true }
+thiserror = { workspace = true }
