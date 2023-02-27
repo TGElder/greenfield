@@ -149,8 +149,12 @@ fn render_billboard() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
+    let difference = commons::image::difference(&actual, &expected).unwrap();
+    let max_difference = (256 * 256 * (255 * 3)) / 1000;
 
-    assert_eq!(actual, expected);
+    println!("Difference = {}", difference);
+
+    assert!(difference < 1);
 }
 
 #[test]
