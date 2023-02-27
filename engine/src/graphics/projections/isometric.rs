@@ -41,7 +41,7 @@ impl Projection {
             projection,
             scale,
             matrices: Matrices::default(),
-            composite: Matrix4::identity().into(),
+            composite: Matrix4::identity(),
             inverse: Matrix4::identity(),
         };
         out.update_projection();
@@ -86,9 +86,8 @@ impl graphics::Projection for Projection {
 
     fn look_at(&mut self, world: &XYZ<f32>, screen: &XY<f32>) {
         let world = Vector4::new(world.x, world.y, world.z, 1.0);
-        let composite: Matrix4<f32> = self.composite.into();
 
-        let offsets = composite * world;
+        let offsets = self.composite * world;
 
         self.matrices.translation[(0, 3)] += -offsets.x + screen.x;
         self.matrices.translation[(1, 3)] += -offsets.y + screen.y;
