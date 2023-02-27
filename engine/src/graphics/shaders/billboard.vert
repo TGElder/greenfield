@@ -16,6 +16,5 @@ void main() {
 
     fragment_texture_coordinates = texture_coordinates;
     depth = center.z; 
-
     gl_Position = center + screen_offset;
 }
