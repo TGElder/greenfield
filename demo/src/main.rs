@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Rgb;
-use commons::geometry::{xy, xyz, Rectangle};
+use commons::geometry::{xy, xyz, Rectangle, XYZ};
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use engine::engine::Engine;
@@ -12,6 +12,7 @@ use engine::graphics::elements::Quad;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
+use nalgebra::Vector3;
 use terrain_gen::with_valleys::{heightmap_from_rises_with_valleys, ValleyParameters};
 
 fn main() {
@@ -80,7 +81,6 @@ impl EventHandler for Demo {
             );
             for x in 0..terrain.width() - 1 {
                 for y in 0..terrain.height() - 1 {
-                    let z = terrain[xy(x, y)];
                     let corners = [xy(0, 0), xy(1, 0), xy(1, 1), xy(0, 1)]
                         .iter()
                         .map(|d| {
@@ -91,9 +91,10 @@ impl EventHandler for Demo {
                             )
                         })
                         .collect::<Vec<_>>();
+
                     quads.push(Quad {
+                        color: color(&corners),
                         corners: [corners[0], corners[1], corners[2], corners[3]],
-                        color: Rgb::new(z, z, z),
                     });
                 }
             }
@@ -130,5 +131,26 @@ fn get_heightmap() -> Grid<f32> {
             rise: 0.01,
             origin_fn: |xy| rises.is_border(xy),
         },
+    )
+}
+
+fn color(corners: &[XYZ<f32>]) -> Rgb<f32> {
+    let light_direction: Vector3<f32> = Vector3::new(1.0, 0.0, 0.0);
+    let base_color: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
+
+    let corners = corners
+        .iter()
+        .map(|XYZ { x, y, z }| Vector3::new(*x, *y, *z))
+        .collect::<Vec<_>>();
+
+    let u = corners[0] - corners[2];
+    let v = corners[1] - corners[3];
+    let normal = u.cross(&v);
+    let angle = normal.angle(&light_direction);
+    let shade = angle / PI;
+    Rgb::new(
+        base_color.r * shade,
+        base_color.g * shade,
+        base_color.b * shade,
     )
 }
