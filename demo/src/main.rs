@@ -29,8 +29,8 @@ fn main() {
                 key_minus: KeyboardKey::Q,
             }),
             zoom_handler: zoom::Handler::new(zoom::Parameters {
-                initial_level: 0,
-                min_level: 1,
+                initial_level: -1,
+                min_level: -2,
                 max_level: 8,
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
@@ -39,6 +39,7 @@ fn main() {
             candidate: None,
             candidates: first_generation(16),
             evaluated: Vec::with_capacity(16),
+            seed: 1986,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -53,7 +54,7 @@ fn main() {
                     yaw: PI * (5.0 / 8.0),
                 },
                 scale: isometric::ScaleParameters {
-                    zoom: 1.0,
+                    zoom: 0.5,
                     z_max: 1.0 / 512.0,
                     viewport: Rectangle {
                         width: 512,
@@ -77,6 +78,7 @@ struct Demo {
     candidates: Vec<Candidate>,
     candidate: Option<Candidate>,
     evaluated: Vec<Candidate>,
+    seed: i32,
 }
 
 impl EventHandler for Demo {
@@ -91,7 +93,7 @@ impl EventHandler for Demo {
             let candidate = self.candidates.pop().unwrap();
             println!("Evaluating {:?}", candidate.weights);
 
-            let terrain = get_heightmap(&candidate.weights);
+            let terrain = get_heightmap(&candidate.weights, self.seed);
             self.candidate = Some(candidate);
 
             let mut quads = Vec::with_capacity(
@@ -124,7 +126,7 @@ impl EventHandler for Demo {
                     terrain.height() as f32 / 2.0,
                     0.0,
                 ),
-                &xy(256, 256),
+                &xy(640, 720),
             );
         }
 
@@ -160,6 +162,7 @@ impl EventHandler for Demo {
         let mut candidate = self.candidate.take().unwrap();
         candidate.strength = score;
         self.evaluated.push(candidate);
+        self.seed = thread_rng().gen();
         graphics.clear();
     }
 }
@@ -170,19 +173,20 @@ struct Candidate {
 }
 
 fn first_generation(count: usize) -> Vec<Candidate> {
-    let power = 11;
-    let mut rng = thread_rng();
+    // let power = 11;
+    // let mut rng = thread_rng();
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
-        let weights = (0..power + 1)
-            .map(|i| 1.0f32 / (1.0f32 + rng.gen::<f32>()).powf((power - i) as f32))
-            .collect::<Vec<_>>();
+        let weights = vec![
+            0.4014246, 0.78097993, 0.41403908, 1.2097175, 1.5679939, 1.0129398, 3.3901482,
+            0.08857876, 5.661517, 1.7988696, 6.4280505, 5.25,
+        ];
         result.push(Candidate {
             weights,
-            strength: 0.0,
+            strength: 1.0,
         });
     }
-    result
+    next_generation(&result, count)
 }
 
 fn next_generation(candidates: &[Candidate], count: usize) -> Vec<Candidate> {
@@ -220,9 +224,9 @@ fn next_generation(candidates: &[Candidate], count: usize) -> Vec<Candidate> {
     result
 }
 
-fn get_heightmap(weights: &[f32]) -> Grid<f32> {
+fn get_heightmap(weights: &[f32], seed: i32) -> Grid<f32> {
     let power = 11;
-    let rises = simplex_noise(power, 1987, weights)
+    let rises = simplex_noise(power, seed, weights)
         .normalize()
         .map(|_, z| (0.5 - z).abs() / 0.5);
 
