@@ -43,6 +43,8 @@ pub trait Graphics {
         self.add_triangles(&triangles)
     }
 
+    fn clear(&mut self);
+
     fn add_billboard(&mut self, billboard: &Billboard) -> Result<usize, DrawError>;
 
     fn render(&mut self) -> Result<(), RenderError>;

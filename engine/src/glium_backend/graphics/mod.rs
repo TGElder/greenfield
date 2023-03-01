@@ -348,6 +348,10 @@ impl Graphics for GliumGraphics {
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
     }
+
+    fn clear(&mut self) {
+        self.primitives.clear();
+    }
 }
 
 enum Display {
