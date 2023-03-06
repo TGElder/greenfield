@@ -75,12 +75,50 @@ impl EventHandler for Demo {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if self.frame == 0 {
             let terrain = get_heightmap();
+            draw_terrain(&terrain, graphics);
+            graphics.look_at(
+                &xyz(
+                    terrain.width() as f32 / 2.0,
+                    terrain.height() as f32 / 2.0,
+                    0.0,
+                ),
+                &xy(256, 256),
+            );
+        } else if self.frame == 1 {
+            graphics.screenshot("screenshot.png").unwrap();
+        }
 
+        self.drag_handler.handle(event, engine, graphics);
+        self.resize_handler.handle(event, engine, graphics);
+        self.yaw_handler.handle(event, engine, graphics);
+        self.zoom_handler.handle(event, engine, graphics);
+
+        self.frame += 1;
+    }
+}
+
+fn draw_terrain(terrain: &Grid<f32>, graphics: &mut dyn Graphics) {
+    let slab_size = 256;
+    let slabs = xy(
+        (terrain.width() / slab_size) + 1,
+        (terrain.height() / slab_size) + 1,
+    );
+    for x in 0..slabs.x {
+        for y in 0..slabs.y {
+            let slab = xy(x, y);
             let mut quads = Vec::with_capacity(
                 (terrain.width() - 1) as usize * (terrain.height() - 1) as usize,
             );
-            for x in 0..terrain.width() - 1 {
-                for y in 0..terrain.height() - 1 {
+            for x in 0..slab_size {
+                let x = slab.x * slab_size + x;
+                if x >= terrain.width() - 1 {
+                    break;
+                }
+                for y in 0..slab_size {
+                    let y = slab.y * slab_size + y;
+                    if y >= terrain.height() - 1 {
+                        break;
+                    }
                     let corners = [xy(0, 0), xy(1, 0), xy(1, 1), xy(0, 1)]
                         .iter()
                         .map(|d| {
@@ -100,17 +138,7 @@ impl EventHandler for Demo {
             }
 
             graphics.add_quads(&quads).unwrap();
-            graphics.look_at(&xyz(128.0, 128.0, 0.0), &xy(256, 256));
-        } else if self.frame == 1 {
-            graphics.screenshot("screenshot.png").unwrap();
         }
-
-        self.drag_handler.handle(event, engine, graphics);
-        self.resize_handler.handle(event, engine, graphics);
-        self.yaw_handler.handle(event, engine, graphics);
-        self.zoom_handler.handle(event, engine, graphics);
-
-        self.frame += 1;
     }
 }
 
