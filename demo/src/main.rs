@@ -178,8 +178,11 @@ fn first_generation(count: usize) -> Vec<Candidate> {
     let mut result = Vec::with_capacity(count);
     for _ in 0..count {
         let weights = vec![
-            0.4014246, 0.78097993, 0.41403908, 1.2097175, 1.5679939, 1.0129398, 3.3901482,
-            0.08857876, 5.661517, 1.7988696, 6.4280505, 5.25,
+            1.2775298, 0.93646675, 0.9696377, 3.3825984, 0.87866014, 2.658967, 0.19361556,
+            1.6190751, 19.10762, 0.8405789, 28.926228, 7.0407343, 2.7096157, 2.250314, 3.144109,
+            4.9900846, 1.4404649, 6.3472896, 2.3451715, 0.9009995, 0.47077882, 0.51397675,
+            37.96567, 1.3547976, 1.0336778, 0.06400609, 0.82807815, 7.003611, 1.5112164, 4.558229,
+            7.6278334, 2.744215, 15.169673, 0.38544023, 1.8173134, 5.25,
         ];
         result.push(Candidate {
             weights,
@@ -226,9 +229,17 @@ fn next_generation(candidates: &[Candidate], count: usize) -> Vec<Candidate> {
 
 fn get_heightmap(weights: &[f32], seed: i32) -> Grid<f32> {
     let power = 11;
-    let rises = simplex_noise(power, seed, weights)
+    let a = simplex_noise(power, seed, &weights[0..12])
         .normalize()
         .map(|_, z| (0.5 - z).abs() / 0.5);
+
+    let b = simplex_noise(power, seed + 12, &weights[12..24])
+        .normalize()
+        .map(|_, z| (0.5 - z).abs() / 0.5);
+
+    let selector = simplex_noise(power, seed + 24, &weights[24..36]).normalize();
+
+    let rises = selector.map(|xy, value| if *value < 0.5 { a[xy] } else { b[xy] });
 
     heightmap_from_rises(&rises, |xy| xy.x == 0)
 }
