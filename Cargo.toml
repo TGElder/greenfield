@@ -4,6 +4,7 @@ members = [
     "commons",
     "demo",
     "engine",
+    "network",
     "terrain_gen"
 ]
 
