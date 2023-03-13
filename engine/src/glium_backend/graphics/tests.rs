@@ -76,7 +76,8 @@ fn render_cube() {
     .unwrap();
 
     // when
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -125,17 +126,22 @@ fn render_billboard() {
         },
         texture,
     };
-    graphics.add_billboard(&billboard).unwrap();
+    let index = graphics.create_billboards().unwrap();
+    graphics.draw_billboard(&index, &billboard).unwrap();
+    let index = graphics.create_quads().unwrap();
     graphics
-        .add_quads(&[Quad {
-            corners: [
-                xyz(-0.5, -0.5, 0.0),
-                xyz(0.5, -0.5, 0.0),
-                xyz(0.5, 0.5, 0.0),
-                xyz(-0.5, 0.5, 0.0),
-            ],
-            color: Rgb::new(0.0, 0.0, 1.0),
-        }])
+        .draw_quads(
+            &index,
+            &[Quad {
+                corners: [
+                    xyz(-0.5, -0.5, 0.0),
+                    xyz(0.5, -0.5, 0.0),
+                    xyz(0.5, 0.5, 0.0),
+                    xyz(-0.5, 0.5, 0.0),
+                ],
+                color: Rgb::new(0.0, 0.0, 1.0),
+            }],
+        )
         .unwrap();
     graphics.render().unwrap();
 
@@ -177,7 +183,8 @@ fn look_at() {
     .unwrap();
 
     // when
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
     graphics.render().unwrap();
 
@@ -230,7 +237,8 @@ fn drag_handler() {
     })
     .unwrap();
 
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
     let mut drag_handler = drag::Handler::new();
@@ -296,7 +304,8 @@ fn yaw_handler() {
     })
     .unwrap();
 
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
@@ -387,7 +396,8 @@ fn zoom_handler() {
     })
     .unwrap();
 
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
     let mut yaw_handler = zoom::Handler::new(zoom::Parameters {
@@ -479,7 +489,8 @@ fn resize_handler() {
     })
     .unwrap();
 
-    graphics.add_quads(&cube_quads()).unwrap();
+    let index = graphics.create_quads().unwrap();
+    graphics.draw_quads(&index, &cube_quads()).unwrap();
 
     let mut resize_hander = resize::Handler::new();
 

@@ -16,9 +16,15 @@ use crate::graphics::errors::{
 pub trait Graphics {
     fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
 
-    fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError>;
+    fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
-    fn add_quads(&mut self, quads: &[Quad]) -> Result<usize, DrawError> {
+    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
+
+    fn create_quads(&mut self) -> Result<usize, IndexError> {
+        self.create_triangles()
+    }
+
+    fn draw_quads(&mut self, index: &usize, quads: &[Quad]) -> Result<(), DrawError> {
         let triangles = quads
             .iter()
             .flat_map(
@@ -40,10 +46,12 @@ pub trait Graphics {
                 },
             )
             .collect::<Vec<_>>();
-        self.add_triangles(&triangles)
+        self.draw_triangles(index, &triangles)
     }
 
-    fn add_billboard(&mut self, billboard: &Billboard) -> Result<usize, DrawError>;
+    fn create_billboards(&mut self) -> Result<usize, IndexError>;
+
+    fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
 
     fn render(&mut self) -> Result<(), RenderError>;
 

@@ -137,7 +137,8 @@ fn draw_terrain(terrain: &Grid<f32>, graphics: &mut dyn Graphics) {
                 }
             }
 
-            graphics.add_quads(&quads).unwrap();
+            let index = graphics.create_quads().unwrap();
+            graphics.draw_quads(&index, &quads).unwrap();
         }
     }
 }
