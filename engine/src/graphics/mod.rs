@@ -18,11 +18,13 @@ pub trait Graphics {
 
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
-    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
-
     fn create_quads(&mut self) -> Result<usize, IndexError> {
         self.create_triangles()
     }
+
+    fn create_billboards(&mut self) -> Result<usize, IndexError>;
+
+    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
 
     fn draw_quads(&mut self, index: &usize, quads: &[Quad]) -> Result<(), DrawError> {
         let triangles = quads
@@ -48,8 +50,6 @@ pub trait Graphics {
             .collect::<Vec<_>>();
         self.draw_triangles(index, &triangles)
     }
-
-    fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
     fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
 
