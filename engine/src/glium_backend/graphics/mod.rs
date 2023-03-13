@@ -228,7 +228,28 @@ impl GliumGraphics {
         Ok(self.textures.len() - 1)
     }
 
-    fn add_triangles_unsafe(&mut self, triangles: &[Triangle]) -> Result<usize, Box<dyn Error>> {
+    fn create_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.primitives.len() == isize::MAX as usize {
+            return Err("No space for more primitives".into());
+        }
+        self.primitives.push(None);
+        Ok(self.primitives.len() - 1)
+    }
+
+    fn add_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.primitives.len() {
+            return Err(format!(
+                "Trying to draw primitive #{} but there are only {} primitives",
+                index,
+                self.primitives.len()
+            )
+            .into());
+        }
+
         let vertices = triangles
             .iter()
             .flat_map(|Triangle { corners, color }| {
@@ -239,21 +260,39 @@ impl GliumGraphics {
             })
             .collect::<Vec<ColoredVertex>>();
 
-        self.primitives.push(Some(Primitive {
+        self.primitives[*index] = Some(Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-        }));
+        });
 
-        Ok(self.primitives.len() - 1)
+        Ok(())
+    }
+
+    fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.billboards.len() == isize::MAX as usize {
+            return Err("No space for more billboards".into());
+        }
+        self.billboards.push(None);
+        Ok(self.billboards.len() - 1)
     }
 
     fn add_billboard_unsafe(
         &mut self,
+        index: &usize,
         elements::Billboard {
             position,
             dimensions,
             texture,
         }: &elements::Billboard,
-    ) -> Result<usize, Box<dyn Error>> {
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.billboards.len() {
+            return Err(format!(
+                "Trying to draw billboard #{} but there are only {} billboards",
+                index,
+                self.billboards.len()
+            )
+            .into());
+        }
+
         let vertices = [xy(0.0, 0.0), xy(1.0, 0.0), xy(1.0, 1.0), xy(0.0, 1.0)]
             .iter()
             .map(|o| BillboardVertex {
@@ -275,12 +314,12 @@ impl GliumGraphics {
             vertices[3],
         ];
 
-        self.billboards.push(Some(Billboard {
+        self.billboards[*index] = Some(Billboard {
             texture: *texture,
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-        }));
+        });
 
-        Ok(self.billboards.len() - 1)
+        Ok(())
     }
 
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
@@ -320,12 +359,24 @@ impl Graphics for GliumGraphics {
         Ok(self.load_texture_unsafe(path)?)
     }
 
-    fn add_triangles(&mut self, triangles: &[Triangle]) -> Result<usize, DrawError> {
-        Ok(self.add_triangles_unsafe(triangles)?)
+    fn create_triangles(&mut self) -> Result<usize, IndexError> {
+        Ok(self.create_triangles_unsafe()?)
     }
 
-    fn add_billboard(&mut self, billboard: &elements::Billboard) -> Result<usize, DrawError> {
-        Ok(self.add_billboard_unsafe(billboard)?)
+    fn create_billboards(&mut self) -> Result<usize, IndexError> {
+        Ok(self.create_billboards_unsafe()?)
+    }
+
+    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError> {
+        Ok(self.add_triangles_unsafe(index, triangles)?)
+    }
+
+    fn draw_billboard(
+        &mut self,
+        index: &usize,
+        billboard: &elements::Billboard,
+    ) -> Result<(), DrawError> {
+        Ok(self.add_billboard_unsafe(index, billboard)?)
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
