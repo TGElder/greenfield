@@ -50,8 +50,8 @@ where
         to: usize,
         heuristic: &dyn Fn(usize) -> u64,
     ) -> Option<Vec<Edge>> {
-        let mut closed: HashSet<usize> = HashSet::new();
-        let mut entrances: HashMap<usize, Edge> = HashMap::new();
+        let mut closed = HashSet::new();
+        let mut entrances = HashMap::new();
         let mut heap = BinaryHeap::new();
 
         heap.push(Node {
@@ -71,6 +71,8 @@ where
             if closed.contains(&index) {
                 continue;
             }
+            closed.insert(index);
+
             if let Some(entrance) = entrance {
                 entrances.insert(index, entrance);
             }
@@ -78,8 +80,6 @@ where
             if index == to {
                 return Some(get_path(&from, &to, &mut entrances));
             }
-
-            closed.insert(index);
 
             for edge in self.edges(&index) {
                 let to = edge.to;
@@ -118,7 +118,7 @@ fn get_path(from: &usize, to: &usize, entrances: &mut HashMap<usize, Edge>) -> V
 
 #[cfg(test)]
 mod tests {
-    use std::iter::{self, empty};
+    use std::iter;
 
     use crate::model::Network;
 
@@ -127,7 +127,7 @@ mod tests {
     #[test]
     fn path_is_possible() {
         // given
-
+        //
         // [4]-1-[0]-0-[1]-3-[2]-1-[3]
         //        \___________/
         //              2
@@ -162,7 +162,7 @@ mod tests {
                             Edge {
                                 from: 1,
                                 to: 0,
-                                cost: 3,
+                                cost: 0,
                             },
                             Edge {
                                 from: 1,
