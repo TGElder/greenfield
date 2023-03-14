@@ -67,6 +67,9 @@ where
     }
 
     pub fn run(mut self) {
+        self.event_handler
+            .handle(&Event::Init, &mut self.state, &mut self.graphics);
+
         self.event_loop.run(move |event, _, control_flow| {
             match event {
                 glutin::event::Event::NewEvents(cause) => match cause {
