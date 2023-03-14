@@ -17,9 +17,38 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
 
+struct Game {
+    drag_handler: drag::Handler,
+    resize_handler: resize::Handler,
+    yaw_handler: yaw::Handler,
+    zoom_handler: zoom::Handler,
+}
+
+impl EventHandler for Game {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
+        if let Event::Init = *event {
+            let terrain = generate_heightmap();
+            draw_terrain(&terrain, graphics);
+            graphics.look_at(
+                &xyz(
+                    terrain.width() as f32 / 2.0,
+                    terrain.height() as f32 / 2.0,
+                    0.0,
+                ),
+                &xy(256, 256),
+            );
+        }
+
+        self.drag_handler.handle(event, engine, graphics);
+        self.resize_handler.handle(event, engine, graphics);
+        self.yaw_handler.handle(event, engine, graphics);
+        self.zoom_handler.handle(event, engine, graphics);
+    }
+}
+
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
-        Demo {
+        Game {
             drag_handler: drag::Handler::new(),
             resize_handler: resize::Handler::new(),
             yaw_handler: yaw::Handler::new(yaw::Parameters {
@@ -62,33 +91,4 @@ fn main() {
     .unwrap();
 
     engine.run();
-}
-
-struct Demo {
-    drag_handler: drag::Handler,
-    resize_handler: resize::Handler,
-    yaw_handler: yaw::Handler,
-    zoom_handler: zoom::Handler,
-}
-
-impl EventHandler for Demo {
-    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Event::Init = *event {
-            let terrain = generate_heightmap();
-            draw_terrain(&terrain, graphics);
-            graphics.look_at(
-                &xyz(
-                    terrain.width() as f32 / 2.0,
-                    terrain.height() as f32 / 2.0,
-                    0.0,
-                ),
-                &xy(256, 256),
-            );
-        }
-
-        self.drag_handler.handle(event, engine, graphics);
-        self.resize_handler.handle(event, engine, graphics);
-        self.yaw_handler.handle(event, engine, graphics);
-        self.zoom_handler.handle(event, engine, graphics);
-    }
 }
