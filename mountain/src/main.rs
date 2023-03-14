@@ -1,5 +1,6 @@
 mod draw;
 mod init;
+mod model;
 
 use std::f32::consts::PI;
 use std::time::Duration;
@@ -14,8 +15,9 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::draw::draw_terrain;
+use crate::draw::{draw_avatar, draw_terrain};
 use crate::init::generate_heightmap;
+use crate::model::{Avatar, State};
 
 struct Game {
     drag_handler: drag::Handler,
@@ -29,6 +31,12 @@ impl EventHandler for Game {
         if let Event::Init = *event {
             let terrain = generate_heightmap();
             draw_terrain(&terrain, graphics);
+            let avatar = Avatar::Static(State {
+                position: xy(256, 256),
+                angle: PI * (1.0 / 16.0),
+            });
+            let index = graphics.create_quads().unwrap();
+            draw_avatar(&avatar, &terrain, &index, graphics);
             graphics.look_at(
                 &xyz(
                     terrain.width() as f32 / 2.0,
