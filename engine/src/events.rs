@@ -71,6 +71,7 @@ pub enum KeyboardKey {
 }
 
 pub enum Event {
+    Init,
     Tick,
     MouseMoved(XY<u32>),
     MouseInput {
