@@ -2,10 +2,10 @@ use commons::color::Rgb;
 use commons::geometry::xyz;
 use commons::grid::Grid;
 use engine::graphics::elements::Quad;
+use engine::graphics::transform::Transform;
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
-use crate::draw::transform_quad;
 use crate::model::Avatar;
 
 pub fn draw_avatar(
@@ -14,16 +14,20 @@ pub fn draw_avatar(
     index: &usize,
     graphics: &mut dyn Graphics,
 ) {
-    let Avatar::Static(state) = avatar else {return};
+    let Avatar::Static(state) = avatar;
 
     let translation: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, state.position.x as f32],
-        [0.0, 1.0, 0.0, state.position.y as f32],
-        [0.0, 0.0, 1.0, terrain[state.position] * 32.0],
-        [0.0, 0.0, 0.0, 1.0],
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [
+            state.position.x as f32,
+            state.position.y as f32,
+            terrain[state.position] * 32.0,
+            1.0,
+        ],
     ]
     .into();
-    let translation = translation.transpose();
 
     let cos = state.angle.cos();
     let sin = state.angle.sin();
@@ -41,18 +45,12 @@ pub fn draw_avatar(
         .draw_quads(
             index,
             &[
-                transform_quad(&SKIS, &transformation),
-                transform_quad(&BODY_FRONT, &transformation),
-                transform_quad(&BODY_BACK, &transformation),
+                SKIS.transform(&transformation),
+                BODY_FRONT.transform(&transformation),
+                BODY_BACK.transform(&transformation),
             ],
         )
         .unwrap();
-
-    //     graphics.draw_quads(index, &[
-    //     SKIS,
-    //     BODY_FRONT,
-    //     BODY_BACK,
-    // ]).unwrap();
 }
 
 static SKIS: Quad = Quad {
