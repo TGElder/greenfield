@@ -8,6 +8,36 @@ use nalgebra::Matrix4;
 
 use crate::model::Avatar;
 
+static SKIS: Quad = Quad {
+    color: Rgb::new(1.0, 0.0, 0.0),
+    corners: [
+        xyz(-0.25, -0.5, 0.0),
+        xyz(0.25, -0.5, 0.0),
+        xyz(0.25, 0.5, 0.0),
+        xyz(-0.25, 0.5, 0.0),
+    ],
+};
+
+static BODY_FRONT: Quad = Quad {
+    color: Rgb::new(1.0, 0.0, 0.0),
+    corners: [
+        xyz(-0.25, 0.0, 0.0),
+        xyz(0.25, 0.0, 0.0),
+        xyz(0.25, 0.0, 1.0),
+        xyz(-0.25, 0.0, 1.0),
+    ],
+};
+
+static BODY_BACK: Quad = Quad {
+    color: Rgb::new(1.0, 0.0, 0.0),
+    corners: [
+        xyz(-0.25, 0.0, 1.0),
+        xyz(0.25, 0.0, 1.0),
+        xyz(0.25, 0.0, 0.0),
+        xyz(-0.25, 0.0, 0.0),
+    ],
+};
+
 pub fn draw_avatar(
     avatar: &Avatar,
     terrain: &Grid<f32>,
@@ -52,33 +82,3 @@ pub fn draw_avatar(
         )
         .unwrap();
 }
-
-static SKIS: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
-    corners: [
-        xyz(-0.25, -0.5, 0.0),
-        xyz(0.25, -0.5, 0.0),
-        xyz(0.25, 0.5, 0.0),
-        xyz(-0.25, 0.5, 0.0),
-    ],
-};
-
-static BODY_FRONT: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
-    corners: [
-        xyz(-0.25, 0.0, 0.0),
-        xyz(0.25, 0.0, 0.0),
-        xyz(0.25, 0.0, 1.0),
-        xyz(-0.25, 0.0, 1.0),
-    ],
-};
-
-static BODY_BACK: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
-    corners: [
-        xyz(-0.25, 0.0, 1.0),
-        xyz(0.25, 0.0, 1.0),
-        xyz(0.25, 0.0, 0.0),
-        xyz(-0.25, 0.0, 0.0),
-    ],
-};
