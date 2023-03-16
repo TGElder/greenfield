@@ -3,6 +3,7 @@ pub mod errors;
 pub mod matrices;
 pub mod projection;
 pub mod projections;
+pub mod transform;
 
 use commons::geometry::{XY, XYZ};
 pub use projection::Projection;
