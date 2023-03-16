@@ -1,6 +1,6 @@
 use commons::color::Rgb;
 use commons::geometry::xyz;
-use commons::grid::Grid;
+
 use engine::graphics::elements::Quad;
 use engine::graphics::transform::Transform;
 use engine::graphics::Graphics;

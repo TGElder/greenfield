@@ -1,4 +1,4 @@
-use commons::geometry::{XY, XYZ};
+use commons::geometry::{XYZ};
 use commons::scale::Scale;
 
 pub enum Avatar {
