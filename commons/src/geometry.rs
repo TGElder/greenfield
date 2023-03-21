@@ -26,6 +26,50 @@ impl<T> From<XY<T>> for [T; 2] {
     }
 }
 
+impl<T> Add for XY<T>
+where
+    T: Add<Output = T> + Copy,
+{
+    type Output = XY<T>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        xy(self.x + rhs.x, self.y + rhs.y)
+    }
+}
+
+impl<T> Sub for XY<T>
+where
+    T: Sub<Output = T> + Copy,
+{
+    type Output = XY<T>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        xy(self.x - rhs.x, self.y - rhs.y)
+    }
+}
+
+impl<T> Mul<T> for XY<T>
+where
+    T: Mul<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn mul(self, rhs: T) -> Self::Output {
+        xy(self.x * rhs, self.y * rhs)
+    }
+}
+
+impl<T> Div<T> for XY<T>
+where
+    T: Div<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn div(self, rhs: T) -> Self::Output {
+        xy(self.x / rhs, self.y / rhs)
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct XYZ<T> {
     pub x: T,
@@ -100,4 +144,109 @@ where
 pub struct Rectangle<T> {
     pub width: T,
     pub height: T,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_xy_add() {
+        // given
+        let a = xy(1, 2);
+        let b = xy(3, 4);
+
+        // when
+        let result = a + b;
+
+        // then
+        assert_eq!(result, xy(4, 6));
+    }
+
+    #[test]
+    fn test_xy_sub() {
+        // given
+        let a = xy(1, 2);
+        let b = xy(3, 4);
+
+        // when
+        let result = b - a;
+
+        // then
+        assert_eq!(result, xy(2, 2));
+    }
+
+    #[test]
+    fn test_xy_mul() {
+        // given
+        let a = xy(1, 2);
+
+        // when
+        let result = a * 2;
+
+        // then
+        assert_eq!(result, xy(2, 4));
+    }
+
+    #[test]
+    fn test_xy_div() {
+        // given
+        let a = xy(2, 4);
+
+        // when
+        let result = a / 2;
+
+        // then
+        assert_eq!(result, xy(1, 2));
+    }
+
+    #[test]
+    fn test_xyz_add() {
+        // given
+        let a = xyz(1, 2, 3);
+        let b = xyz(4, 5, 6);
+
+        // when
+        let result = a + b;
+
+        // then
+        assert_eq!(result, xyz(5, 7, 9));
+    }
+
+    #[test]
+    fn test_xyz_sub() {
+        // given
+        let a = xyz(1, 2, 3);
+        let b = xyz(4, 5, 6);
+
+        // when
+        let result = b - a;
+
+        // then
+        assert_eq!(result, xyz(3, 3, 3));
+    }
+
+    #[test]
+    fn test_xyz_mul() {
+        // given
+        let a = xyz(1, 2, 3);
+
+        // when
+        let result = a * 2;
+
+        // then
+        assert_eq!(result, xyz(2, 4, 6));
+    }
+
+    #[test]
+    fn test_xyz_div() {
+        // given
+        let a = xyz(2, 4, 6);
+
+        // when
+        let result = a / 2;
+
+        // then
+        assert_eq!(result, xyz(1, 2, 3));
+    }
 }
