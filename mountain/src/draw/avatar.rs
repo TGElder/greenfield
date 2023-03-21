@@ -38,7 +38,7 @@ static BODY_BACK: Quad = Quad {
     ],
 };
 
-pub fn draw_avatar(avatar: &Avatar, index: &usize, micros: &u64, graphics: &mut dyn Graphics) {
+pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, index: &usize) {
     let Some(state) = avatar.state(micros) else {return};
 
     let translation: Matrix4<f32> = [
@@ -46,8 +46,8 @@ pub fn draw_avatar(avatar: &Avatar, index: &usize, micros: &u64, graphics: &mut 
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [
-            state.position.x as f32,
-            state.position.y as f32,
+            state.position.x,
+            state.position.y,
             state.position.z * 32.0,
             1.0,
         ],

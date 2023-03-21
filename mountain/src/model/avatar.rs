@@ -1,8 +1,8 @@
-use commons::geometry::{XYZ};
+use commons::geometry::XYZ;
 use commons::scale::Scale;
 
 pub enum Avatar {
-    Static(State),
+    _Static(State),
     Moving(Vec<Frame>),
 }
 
@@ -21,7 +21,7 @@ pub struct Frame {
 impl Avatar {
     pub fn state(&self, micros: &u64) -> Option<State> {
         match self {
-            Avatar::Static(state) => Some(*state),
+            Avatar::_Static(state) => Some(*state),
             Avatar::Moving(frames) => state(frames, micros),
         }
     }
@@ -32,11 +32,10 @@ fn state(frames: &[Frame], micros: &u64) -> Option<State> {
         [from, to] => from.arrival_micros <= *micros && to.arrival_micros > *micros,
         _ => false,
     });
-    let out = match maybe_pair {
+    match maybe_pair {
         Some([from, to]) => Some(blend(from, to, micros)),
         _ => None,
-    };
-    out
+    }
 }
 
 fn blend(from: &Frame, to: &Frame, micros: &u64) -> State {

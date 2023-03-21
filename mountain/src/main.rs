@@ -7,7 +7,6 @@ use std::time::{Duration, Instant};
 
 use commons::geometry::{xy, xyz, Rectangle};
 
-use commons::grid::Grid;
 use engine::engine::Engine;
 use engine::events::{Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
@@ -30,7 +29,6 @@ struct Game {
 }
 
 struct GameState {
-    terrain: Grid<f32>,
     avatar: Avatar,
     avatar_index: usize,
 }
@@ -69,7 +67,6 @@ impl EventHandler for Game {
             );
 
             self.state = Some(GameState {
-                terrain,
                 avatar,
                 avatar_index,
             });
@@ -83,9 +80,9 @@ impl EventHandler for Game {
         {
             draw_avatar(
                 avatar,
-                avatar_index,
                 &(self.start.elapsed().as_micros() as u64),
                 graphics,
+                avatar_index,
             );
         };
 
