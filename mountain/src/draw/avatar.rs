@@ -1,6 +1,6 @@
 use commons::color::Rgb;
 use commons::geometry::xyz;
-use commons::grid::Grid;
+
 use engine::graphics::elements::Quad;
 use engine::graphics::transform::Transform;
 use engine::graphics::Graphics;
@@ -38,22 +38,17 @@ static BODY_BACK: Quad = Quad {
     ],
 };
 
-pub fn draw_avatar(
-    avatar: &Avatar,
-    terrain: &Grid<f32>,
-    index: &usize,
-    graphics: &mut dyn Graphics,
-) {
-    let Avatar::Static(state) = avatar;
+pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, index: &usize) {
+    let Some(state) = avatar.state(micros) else {return};
 
     let translation: Matrix4<f32> = [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [
-            state.position.x as f32,
-            state.position.y as f32,
-            terrain[state.position] * 32.0,
+            state.position.x,
+            state.position.y,
+            state.position.z * 32.0,
             1.0,
         ],
     ]
