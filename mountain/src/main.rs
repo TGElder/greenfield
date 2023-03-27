@@ -1,6 +1,7 @@
 mod draw;
 mod init;
 mod model;
+mod network;
 
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};

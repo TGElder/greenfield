@@ -1,6 +1,8 @@
 use commons::geometry::XYZ;
 use commons::scale::Scale;
 
+use crate::model::Direction;
+
 pub enum Avatar {
     _Static(State),
     Moving(Vec<Frame>),
@@ -46,6 +48,6 @@ fn blend(from: &Frame, to: &Frame, micros: &u64) -> State {
     let p = scale.scale(*micros as f32);
     State {
         position: from.state.position * (1.0 - p) + to.state.position * p,
-        angle: from.state.angle,
+        angle: from.state.angle * (1.0 - p) + to.state.angle * p,
     }
 }
