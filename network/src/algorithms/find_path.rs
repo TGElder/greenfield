@@ -1,55 +1,56 @@
+use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 
 use crate::model::{Edge, Network};
 
 #[derive(Eq)]
-struct Node {
-    index: usize,
-    entrance: Option<Edge>,
+struct Node<T> {
+    index: T,
+    entrance: Option<Edge<T>>,
     distance_from_start: u64,
     estimated_distance_via_this_node: u64,
 }
 
-impl Ord for Node {
-    fn cmp(&self, other: &Node) -> Ordering {
+impl<T> Ord for Node<T>
+where
+    T: Eq,
+{
+    fn cmp(&self, other: &Node<T>) -> Ordering {
         self.estimated_distance_via_this_node
             .cmp(&other.estimated_distance_via_this_node)
             .reverse()
     }
 }
 
-impl PartialOrd for Node {
-    fn partial_cmp(&self, other: &Node) -> Option<Ordering> {
+impl<T> PartialOrd for Node<T>
+where
+    T: Eq,
+{
+    fn partial_cmp(&self, other: &Node<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl PartialEq for Node {
-    fn eq(&self, other: &Node) -> bool {
+impl<T> PartialEq for Node<T>
+where
+    T: Eq,
+{
+    fn eq(&self, other: &Node<T>) -> bool {
         self.estimated_distance_via_this_node == other.estimated_distance_via_this_node
     }
 }
 
-pub trait FindPath {
-    fn find_path(
-        &self,
-        from: usize,
-        to: usize,
-        heuristic: &dyn Fn(usize) -> u64,
-    ) -> Option<Vec<Edge>>;
+pub trait FindPath<T> {
+    fn find_path(&self, from: T, to: T, heuristic: &dyn Fn(T) -> u64) -> Option<Vec<Edge<T>>>;
 }
 
-impl<T> FindPath for T
+impl<T, N> FindPath<T> for N
 where
-    T: Network,
+    T: Copy + Eq + Hash,
+    N: Network<T>,
 {
-    fn find_path(
-        &self,
-        from: usize,
-        to: usize,
-        heuristic: &dyn Fn(usize) -> u64,
-    ) -> Option<Vec<Edge>> {
+    fn find_path(&self, from: T, to: T, heuristic: &dyn Fn(T) -> u64) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
         let mut heap = BinaryHeap::new();
@@ -99,7 +100,10 @@ where
     }
 }
 
-fn get_path(from: &usize, to: &usize, entrances: &mut HashMap<usize, Edge>) -> Vec<Edge> {
+fn get_path<T>(from: &T, to: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
+where
+    T: Copy + Eq + Hash,
+{
     let mut out = vec![];
     let mut focus = *to;
     while focus != *from {
@@ -134,8 +138,8 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge> + 'a> {
+        impl Network<usize> for TestNetwork {
+            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -235,8 +239,8 @@ mod tests {
     fn path_is_not_possible() {
         struct TestNetwork {}
 
-        impl Network for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge> + 'a> {
+        impl Network<usize> for TestNetwork {
+            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [Edge {
@@ -288,8 +292,8 @@ mod tests {
     fn from_equals_to() {
         struct TestNetwork {}
 
-        impl Network for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge> + 'a> {
+        impl Network<usize> for TestNetwork {
+            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [Edge {
