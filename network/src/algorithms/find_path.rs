@@ -1,13 +1,12 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::fmt::Debug;
 
 use crate::model::{Edge, Network};
 
-#[derive(Debug, Eq)]
+#[derive(Eq)]
 struct Node<T> {
-    node: T,
+    location: T,
     entrance: Option<Edge<T>>,
     distance_from_start: u64,
     estimated_distance_via_this_node: u64,
@@ -53,7 +52,7 @@ pub trait FindPath<T> {
 
 impl<T, N> FindPath<T> for N
 where
-    T: Copy + Debug + Eq + Hash,
+    T: Copy + Eq + Hash,
     N: Network<T>,
 {
     fn find_path(
@@ -68,7 +67,7 @@ where
 
         for from in from.iter() {
             heap.push(Node {
-                node: *from,
+                location: *from,
                 entrance: None,
                 distance_from_start: 0,
                 estimated_distance_via_this_node: heuristic(from),
@@ -76,36 +75,36 @@ where
         }
 
         while let Some(Node {
-            node,
+            location,
             entrance,
             distance_from_start,
             ..
         }) = heap.pop()
         {
-            if closed.contains(&node) {
+            if closed.contains(&location) {
                 continue;
             }
-            closed.insert(node);
+            closed.insert(location);
 
             if let Some(entrance) = entrance {
-                entrances.insert(node, entrance);
+                entrances.insert(location, entrance);
             }
 
-            if to.contains(&node) {
-                return Some(get_path(&from, &node, &mut entrances));
+            if to.contains(&location) {
+                return Some(get_path(&from, &location, &mut entrances));
             }
 
-            for edge in self.edges(&node) {
+            for edge in self.edges(&location) {
                 let to = edge.to;
                 if closed.contains(&to) {
                     continue;
                 }
                 let distance_from_start = distance_from_start + edge.cost as u64;
                 heap.push(Node {
-                    node: to,
+                    location: to,
                     entrance: Some(edge),
                     distance_from_start,
-                    estimated_distance_via_this_node: distance_from_start + heuristic(&node),
+                    estimated_distance_via_this_node: distance_from_start + heuristic(&location),
                 });
             }
         }
@@ -114,12 +113,12 @@ where
     }
 }
 
-fn get_path<T>(from: &HashSet<T>, node: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
+fn get_path<T>(from: &HashSet<T>, focus: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
 where
     T: Copy + Eq + Hash,
 {
     let mut out = vec![];
-    let mut focus = *node;
+    let mut focus = *focus;
     while !from.contains(&focus) {
         let entrance = entrances.remove(&focus);
         match entrance {
@@ -197,7 +196,7 @@ mod tests {
                             Edge {
                                 from: 2,
                                 to: 0,
-                                cost: 3,
+                                cost: 2,
                             },
                             Edge {
                                 from: 2,
@@ -540,6 +539,10 @@ mod tests {
 
     #[test]
     fn multiple_from_and_to() {
+        // given
+        //
+        // [0] & [1] both have edges to [2] & [3]
+
         struct TestNetwork {}
 
         impl Network<usize> for TestNetwork {
@@ -616,14 +619,6 @@ mod tests {
                         }]
                         .into_iter(),
                     ),
-                    1 => Box::new(
-                        [Edge {
-                            from: 1,
-                            to: 0,
-                            cost: 1,
-                        }]
-                        .into_iter(),
-                    ),
                     _ => Box::new(iter::empty()),
                 }
             }
@@ -677,14 +672,6 @@ mod tests {
                         }]
                         .into_iter(),
                     ),
-                    1 => Box::new(
-                        [Edge {
-                            from: 1,
-                            to: 0,
-                            cost: 1,
-                        }]
-                        .into_iter(),
-                    ),
                     _ => Box::new(iter::empty()),
                 }
             }
@@ -715,14 +702,6 @@ mod tests {
                         [Edge {
                             from: 0,
                             to: 1,
-                            cost: 1,
-                        }]
-                        .into_iter(),
-                    ),
-                    1 => Box::new(
-                        [Edge {
-                            from: 1,
-                            to: 0,
                             cost: 1,
                         }]
                         .into_iter(),
