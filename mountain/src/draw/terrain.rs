@@ -38,7 +38,7 @@ pub fn draw_terrain(terrain: &Grid<f32>, graphics: &mut dyn Graphics) {
                             xyz(
                                 (x + d.x) as f32,
                                 (y + d.y) as f32,
-                                terrain[xy(x + d.x, y + d.y)] * 32.0,
+                                terrain[xy(x + d.x, y + d.y)],
                             )
                         })
                         .collect::<Vec<_>>();

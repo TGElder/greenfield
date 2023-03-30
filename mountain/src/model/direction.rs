@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use commons::geometry::{xy, XY};
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub enum Direction {
     North,
     NorthEast,
@@ -14,28 +14,28 @@ pub enum Direction {
     NorthWest,
 }
 
-const DIRECTIONS: [Direction; 8] = [
+pub const DIRECTIONS: [Direction; 8] = [
+    Direction::North,
+    Direction::NorthEast,
     Direction::East,
     Direction::SouthEast,
     Direction::South,
     Direction::SouthWest,
     Direction::West,
     Direction::NorthWest,
-    Direction::North,
-    Direction::NorthEast,
 ];
 
 impl Direction {
     fn index(&self) -> usize {
         match self {
-            Direction::East => 0,
-            Direction::SouthEast => 1,
-            Direction::South => 2,
-            Direction::SouthWest => 3,
-            Direction::West => 4,
-            Direction::NorthWest => 5,
-            Direction::North => 6,
-            Direction::NorthEast => 7,
+            Direction::North => 0,
+            Direction::NorthEast => 1,
+            Direction::East => 2,
+            Direction::SouthEast => 3,
+            Direction::South => 4,
+            Direction::SouthWest => 5,
+            Direction::West => 6,
+            Direction::NorthWest => 7,
         }
     }
 

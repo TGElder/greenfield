@@ -3,6 +3,7 @@ use commons::scale::Scale;
 
 use crate::model::Direction;
 
+#[derive(Debug)]
 pub enum Avatar {
     _Static(State),
     Moving(Vec<Frame>),

@@ -45,12 +45,7 @@ pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, i
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
-        [
-            state.position.x,
-            state.position.y,
-            state.position.z * 32.0,
-            1.0,
-        ],
+        [state.position.x, state.position.y, state.position.z, 1.0],
     ]
     .into();
 

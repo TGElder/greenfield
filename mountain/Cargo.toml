@@ -9,4 +9,5 @@ edition = "2021"
 commons = { path = "../commons" }
 engine = { path = "../engine" }
 nalgebra = { workspace = true }
+network = { path = "../network" }
 terrain_gen = { path = "../terrain_gen" }
