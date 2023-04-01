@@ -11,7 +11,7 @@ const MAX_VELOCITY: f32 = 8.0;
 const VELOCITY_LEVELS: f32 = 8.0;
 
 pub struct TerrainNetwork<'a> {
-    terrain: &'a Grid<f32>,
+    pub terrain: &'a Grid<f32>,
 }
 
 impl<'a> TerrainNetwork<'a> {
@@ -57,26 +57,8 @@ fn get_next(
     travel_direction: &Direction,
 ) -> Option<Edge<State>> {
     let n = terrain.offset(state.position, travel_direction.offset())?;
-    let z = terrain[state.position];
-    let nz = terrain[n];
 
-    let v = decode_velocity(state.velocity);
-
-    let fall = z - nz;
-    let run = travel_direction.run();
-    let d = (run.powf(2.0) + fall.powf(2.0)).sqrt();
-    let fall = (fall / d).atan() / (PI / 2.0);
-    let a = fall * GRAVITY;
-
-    let root = v.powf(2.0) + 2.0 * a * run;
-    if root < 0.0 {
-        return None;
-    }
-    let squared = root.sqrt();
-    let t = [(-v + squared) / a, (-v - squared) / a]
-        .into_iter()
-        .filter(|t| *t >= 0.0)
-        .min_by(unsafe_float_ordering)?;
+    let (t, v, a) = get_t_v_a(state.position, n, state.velocity, terrain)?;
 
     let v_next = v + a * t;
     if !(0.0..=MAX_VELOCITY).contains(&v_next) {
@@ -97,10 +79,46 @@ fn get_next(
     Some(edge)
 }
 
+pub fn get_t_v_a(
+    from: XY<u32>,
+    to: XY<u32>,
+    velocity: u8,
+    terrain: &Grid<f32>,
+) -> Option<(f32, f32, f32)> {
+    let z = terrain[from];
+    let nz = terrain[to];
+
+    let v = decode_velocity(velocity);
+
+    let fall = z - nz;
+    let run_squared = (from.x - to.x).pow(2) as f32 + (from.y - to.y).pow(2) as f32;
+    let run = run_squared.sqrt();
+    // let d = (run_squared + fall.powf(2.0)).sqrt();
+    let fall = (fall / run).atan() / (PI / 2.0);
+    let a = fall * GRAVITY;
+    let drag = (v * v) / 128.0;
+    let a = a - drag;
+
+    let root = v.powf(2.0) + 2.0 * a * (run_squared + fall.powf(2.0)).sqrt();
+    if root < 0.0 {
+        return None;
+    }
+    let squared = root.sqrt();
+    [(-v + squared) / a, (-v - squared) / a]
+        .into_iter()
+        .filter(|t| *t >= 0.0)
+        .min_by(unsafe_float_ordering)
+        .map(|t| (t, v, a))
+}
+
 fn encode_velocity(decoded: f32) -> u8 {
     (decoded * (VELOCITY_LEVELS / MAX_VELOCITY)).round() as u8
 }
 
 fn decode_velocity(encoded: u8) -> f32 {
     (encoded as f32) * (MAX_VELOCITY / VELOCITY_LEVELS)
+}
+
+pub fn min_time(encoded: u8) -> u64 {
+    ((1.0f32 / decode_velocity(encoded)) * 1_000_000.0).round() as u64
 }

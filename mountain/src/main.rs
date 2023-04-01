@@ -22,7 +22,7 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::draw::{draw_avatar, draw_terrain};
 use crate::init::generate_heightmap;
 use crate::model::{Avatar, Frame, State, DIRECTIONS};
-use crate::network::TerrainNetwork;
+use crate::network::{get_t_v_a, min_time, TerrainNetwork};
 
 struct Game {
     state: Option<GameState>,
@@ -143,7 +143,7 @@ impl Game {
         let to = DIRECTIONS
             .iter()
             .flat_map(|direction| {
-                (0..8).map(|velocity| network::State {
+                (0..16).map(|velocity| network::State {
                     position: to_position,
                     direction: *direction,
                     velocity: velocity as u8,
@@ -152,10 +152,14 @@ impl Game {
             .collect::<HashSet<_>>();
 
         let network = TerrainNetwork::new(&state.terrain);
-        let path = network.find_path(from.clone(), to, &|state| {
-            (to_position.x.abs_diff(state.position.x) as u64
-                + to_position.y.abs_diff(state.position.y) as u64)
-                * 45454
+        let path = network.find_path(from.clone(), to, &|state, network| match get_t_v_a(
+            state.position,
+            to_position,
+            state.velocity,
+            network.terrain,
+        ) {
+            Some((t, _, _)) => (t * 1_000_000.0) as u64,
+            None => u64::MAX,
         });
         let Some(path) = path else {return};
         let mut start = self.start.elapsed().as_micros();

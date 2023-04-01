@@ -68,7 +68,7 @@ impl Direction {
 
     pub fn next_clockwise(&self) -> Direction {
         let index = (self.index() + 1) % DIRECTIONS.len();
-        DIRECTIONS[index as usize]
+        DIRECTIONS[index]
     }
 
     pub fn next_anticlockwise(&self) -> Direction {
