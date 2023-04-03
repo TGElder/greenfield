@@ -82,7 +82,6 @@ where
             ..
         }) = heap.pop()
         {
-            println!("Evaluating {:?}", location);
             if closed.contains(&location) {
                 continue;
             }
