@@ -127,7 +127,8 @@ impl Game {
                 .iter()
                 .map(|direction| network::State {
                     position: xy(world.x.round() as u32, world.y.round() as u32),
-                    direction: *direction,
+                    travel_direction: *direction,
+                    body_direction: *direction,
                     velocity: 0,
                 })
                 .collect(),
@@ -145,7 +146,8 @@ impl Game {
             .flat_map(|direction| {
                 (0..16).map(|velocity| network::State {
                     position: to_position,
-                    direction: *direction,
+                    travel_direction: *direction,
+                    body_direction: *direction,
                     velocity: velocity as u8,
                 })
             })
@@ -173,7 +175,7 @@ impl Game {
                 arrival_micros: start as u64,
                 state: State {
                     position: xyz(x, y, z),
-                    angle: edge.to.direction.angle(),
+                    angle: edge.to.travel_direction.angle(),
                 },
             });
             start += edge.cost as u128
@@ -187,7 +189,7 @@ impl Game {
                 arrival_micros: start as u64,
                 state: State {
                     position: xyz(x, y, z),
-                    angle: last.to.direction.angle(),
+                    angle: last.to.body_direction.angle(),
                 },
             });
         }

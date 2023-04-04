@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use commons::geometry::XYZ;
 use commons::scale::Scale;
 
@@ -47,8 +49,24 @@ fn blend(from: &Frame, to: &Frame, micros: &u64) -> State {
         (0.0, 1.0),
     );
     let p = scale.scale(*micros as f32);
-    State {
-        position: from.state.position * (1.0 - p) + to.state.position * p,
-        angle: from.state.angle * (1.0 - p) + to.state.angle * p,
+    
+    if (from.state.angle - to.state.angle).abs() > PI { // rotating opposite direction is quicker
+        if from.state.angle < to.state.angle {
+            State {
+                position: from.state.position * (1.0 - p) + to.state.position * p,
+                angle: (from.state.angle + 2.0 * PI)  * (1.0 - p) + to.state.angle * p,
+            }
+        } else {
+            State {
+                position: from.state.position * (1.0 - p) + to.state.position * p,
+                angle: from.state.angle * (1.0 - p) + (to.state.angle + 2.0 * PI) * p,
+            }
+        }
+    } else {
+
+        State {
+            position: from.state.position * (1.0 - p) + to.state.position * p,
+            angle: from.state.angle * (1.0 - p) + to.state.angle * p,
+        }
     }
 }

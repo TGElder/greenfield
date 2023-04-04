@@ -23,7 +23,8 @@ impl<'a> TerrainNetwork<'a> {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct State {
     pub position: XY<u32>,
-    pub direction: Direction,
+    pub travel_direction: Direction,
+    pub body_direction: Direction,
     pub velocity: u8,
 }
 
@@ -34,19 +35,35 @@ impl<'a> Network<State> for TerrainNetwork<'a> {
     ) -> Box<dyn Iterator<Item = network::model::Edge<State>> + 'b> {
         Box::new(
             [
-                from.direction.next_anticlockwise(),
-                from.direction,
-                from.direction.next_clockwise(),
+                from.travel_direction.next_anticlockwise(),
+                from.travel_direction,
+                from.travel_direction.next_clockwise(),
             ]
             .into_iter()
-            .flat_map(|direction| get_next(self.terrain, from, &direction)), // .chain(once(Edge {
-                                                                             //     from: *from,
-                                                                             //     to: State {
-                                                                             //         velocity: 0,
-                                                                             //         ..*from
-                                                                             //     },
-                                                                             //     cost: 0,
-                                                                             // })),
+            .flat_map(|travel_direction| {
+                [
+                    from.body_direction.next_anticlockwise(),
+                    from.body_direction,
+                    from.body_direction.next_clockwise(),
+                ]
+                .into_iter()
+                .map(move |body_direction| (travel_direction, body_direction))
+            })
+            .filter(|(travel_direction, body_direction)| {
+                *travel_direction == body_direction.next_anticlockwise()
+                    || *travel_direction == *body_direction
+                    || *travel_direction == body_direction.next_clockwise()
+            })
+            .flat_map(|(travel_direction, body_direction)| {
+                get_next(self.terrain, from, &travel_direction, &body_direction)
+            }), // .chain(once(Edge {
+                //     from: *from,
+                //     to: State {
+                //         velocity: 0,
+                //         ..*from
+                //     },
+                //     cost: 0,
+                // })),
         )
     }
 }
@@ -55,10 +72,15 @@ fn get_next(
     terrain: &Grid<f32>,
     state: &State,
     travel_direction: &Direction,
+    body_direction: &Direction,
 ) -> Option<Edge<State>> {
     let n = terrain.offset(state.position, travel_direction.offset())?;
 
-    let (t, v, a) = get_t_v_a(state.position, n, state.velocity, terrain)?;
+    let (t, v, mut a) = get_t_v_a(state.position, n, state.velocity, terrain)?;
+
+    if body_direction != travel_direction {
+        a -= (v * v) / 128.0;
+    }
 
     let v_next = v + a * t;
     if !(0.0..=MAX_VELOCITY).contains(&v_next) {
@@ -70,7 +92,8 @@ fn get_next(
         from: *state,
         to: State {
             position: n,
-            direction: *travel_direction,
+            travel_direction: *travel_direction,
+            body_direction: *body_direction,
             velocity: v_encoded,
         },
         cost: (t * 1_000_000.0).round() as u32,
@@ -96,8 +119,8 @@ pub fn get_t_v_a(
     // let d = (run_squared + fall.powf(2.0)).sqrt();
     let fall = (fall / run).atan() / (PI / 2.0);
     let a = fall * GRAVITY;
-    let drag = (v * v) / 128.0;
-    let a = a - drag;
+    // let drag = (v * v) / 128.0;
+    // let a = a - drag;
 
     let root = v.powf(2.0) + 2.0 * a * (run_squared + fall.powf(2.0)).sqrt();
     if root < 0.0 {
