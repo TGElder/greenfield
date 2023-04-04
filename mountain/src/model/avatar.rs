@@ -49,12 +49,13 @@ fn blend(from: &Frame, to: &Frame, micros: &u64) -> State {
         (0.0, 1.0),
     );
     let p = scale.scale(*micros as f32);
-    
-    if (from.state.angle - to.state.angle).abs() > PI { // rotating opposite direction is quicker
+
+    if (from.state.angle - to.state.angle).abs() > PI {
+        // rotating opposite direction is quicker
         if from.state.angle < to.state.angle {
             State {
                 position: from.state.position * (1.0 - p) + to.state.position * p,
-                angle: (from.state.angle + 2.0 * PI)  * (1.0 - p) + to.state.angle * p,
+                angle: (from.state.angle + 2.0 * PI) * (1.0 - p) + to.state.angle * p,
             }
         } else {
             State {
@@ -63,7 +64,6 @@ fn blend(from: &Frame, to: &Frame, micros: &u64) -> State {
             }
         }
     } else {
-
         State {
             position: from.state.position * (1.0 - p) + to.state.position * p,
             angle: from.state.angle * (1.0 - p) + to.state.angle * p,

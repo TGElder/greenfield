@@ -14,7 +14,7 @@ use engine::engine::Engine;
 use engine::events::{ButtonState, Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 
-use ::network::algorithms::find_path::FindPath;
+use ::network::algorithms::find_min::MinPath;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
@@ -38,7 +38,7 @@ struct GameState {
     avatar: Avatar,
     avatar_index: usize,
     terrain: Grid<f32>,
-    from: Option<HashSet<network::State>>,
+    from: Option<network::State>,
 }
 
 impl EventHandler for Game {
@@ -53,8 +53,17 @@ impl EventHandler for Game {
             Event::KeyboardInput {
                 key: KeyboardKey::T,
                 state: ButtonState::Pressed,
-            } => self.set_to(graphics),
+            } => self.set_to(),
             _ => (),
+        }
+
+        if let Some(GameState{avatar: Avatar::Moving(frames), ..}) = &self.state {
+            if let Some(frame) = frames.last() {
+                let start = self.start.elapsed().as_micros();
+                if frame.arrival_micros as u128 <= start {
+                    self.set_to();
+                } 
+            }
         }
 
         if let Some(GameState {
@@ -63,6 +72,7 @@ impl EventHandler for Game {
             ..
         }) = &self.state
         {
+            
             draw_avatar(
                 avatar,
                 &(self.start.elapsed().as_micros() as u64),
@@ -122,47 +132,21 @@ impl Game {
         let Some(state) = &mut self.state else {return};
         let Some(mouse) = self.mouse_xy else {return};
         let Ok(world) = graphics.world_xyz_at(&mouse) else {return};
-        state.from = Some(
-            DIRECTIONS
-                .iter()
-                .map(|direction| network::State {
+        state.from = Some(network::State {
                     position: xy(world.x.round() as u32, world.y.round() as u32),
-                    travel_direction: *direction,
-                    body_direction: *direction,
+                    travel_direction: model::Direction::North,
+                    body_direction: model::Direction::North,
                     velocity: 0,
-                })
-                .collect(),
-        );
+        });
     }
 
-    fn set_to(&mut self, graphics: &mut dyn Graphics) {
+    fn set_to(&mut self) {
         let Some(state) = &mut self.state else {return};
         let Some(from) = &state.from else {return};
-        let Some(mouse) = self.mouse_xy else {return};
-        let Ok(world) = graphics.world_xyz_at(&mouse) else {return};
-        let to_position = xy(world.x.round() as u32, world.y.round() as u32);
-        let to = DIRECTIONS
-            .iter()
-            .flat_map(|direction| {
-                (0..16).map(|velocity| network::State {
-                    position: to_position,
-                    travel_direction: *direction,
-                    body_direction: *direction,
-                    velocity: velocity as u8,
-                })
-            })
-            .collect::<HashSet<_>>();
+       
 
         let network = TerrainNetwork::new(&state.terrain);
-        let path = network.find_path(from.clone(), to, &|state, network| match get_t_v_a(
-            state.position,
-            to_position,
-            state.velocity,
-            network.terrain,
-        ) {
-            Some((t, _, _)) => (t * 1_000_000.0) as u64,
-            None => u64::MAX,
-        });
+        let path = network.min_path(*from, 16, &|state, network| network.terrain[state.position]);
         let Some(path) = path else {return};
         let mut start = self.start.elapsed().as_micros();
         let mut frames = Vec::with_capacity(path.len());
@@ -180,6 +164,8 @@ impl Game {
             });
             start += edge.cost as u128
         }
+
+        state.from = path.last().map(|edge| edge.to);
 
         if let Some(last) = path.last() {
             let x = last.to.position.x as f32;
