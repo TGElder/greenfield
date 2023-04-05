@@ -1,10 +1,11 @@
+use std::collections::HashSet;
 use std::f32::consts::PI;
 use std::iter::once;
 
 use commons::{geometry::XY, grid::Grid, unsafe_float_ordering};
 use network::model::{Edge, Network};
 
-use crate::model::Direction;
+use crate::model::{Direction, DIRECTIONS};
 
 const GRAVITY: f32 = 9.81;
 const MAX_VELOCITY: f32 = 8.0;
@@ -12,11 +13,12 @@ const VELOCITY_LEVELS: f32 = 8.0;
 
 pub struct TerrainNetwork<'a> {
     pub terrain: &'a Grid<f32>,
+    pub reserved: &'a HashSet<XY<u32>>,
 }
 
 impl<'a> TerrainNetwork<'a> {
-    pub fn new(terrain: &'a Grid<f32>) -> TerrainNetwork<'a> {
-        TerrainNetwork { terrain }
+    pub fn new(terrain: &'a Grid<f32>, reserved: &'a HashSet<XY<u32>>) -> TerrainNetwork<'a> {
+        TerrainNetwork { terrain, reserved }
     }
 }
 
@@ -33,48 +35,63 @@ impl<'a> Network<State> for TerrainNetwork<'a> {
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = network::model::Edge<State>> + 'b> {
-        Box::new(
+        let mut iter = [
+            from.travel_direction.next_anticlockwise(),
+            from.travel_direction,
+            from.travel_direction.next_clockwise(),
+        ]
+        .into_iter()
+        .flat_map(|travel_direction| {
             [
-                from.travel_direction.next_anticlockwise(),
-                from.travel_direction,
-                from.travel_direction.next_clockwise(),
+                from.body_direction.next_anticlockwise(),
+                from.body_direction,
+                from.body_direction.next_clockwise(),
             ]
             .into_iter()
-            .flat_map(|travel_direction| {
-                [
-                    from.body_direction.next_anticlockwise(),
-                    from.body_direction,
-                    from.body_direction.next_clockwise(),
-                ]
-                .into_iter()
-                .map(move |body_direction| (travel_direction, body_direction))
-            })
-            .filter(|(travel_direction, body_direction)| {
-                *travel_direction == body_direction.next_anticlockwise()
-                    || *travel_direction == *body_direction
-                    || *travel_direction == body_direction.next_clockwise()
-            })
-            .flat_map(|(travel_direction, body_direction)| {
-                get_next(self.terrain, from, &travel_direction, &body_direction)
-            }), // .chain(once(Edge {
-                //     from: *from,
-                //     to: State {
-                //         velocity: 0,
-                //         ..*from
-                //     },
-                //     cost: 0,
-                // })),
-        )
+            .map(move |body_direction| (travel_direction, body_direction))
+        })
+        .filter(|(travel_direction, body_direction)| {
+            *travel_direction == body_direction.next_anticlockwise()
+                || *travel_direction == *body_direction
+                || *travel_direction == body_direction.next_clockwise()
+        })
+        .flat_map(|(travel_direction, body_direction)| {
+            get_next(
+                self.terrain,
+                self.reserved,
+                from,
+                &travel_direction,
+                &body_direction,
+            )
+        });
+        if from.velocity == 0 {
+            Box::new(iter.chain(DIRECTIONS.iter().map(|direction| Edge {
+                from: *from,
+                to: State {
+                    travel_direction: *direction,
+                    body_direction: *direction,
+                    ..*from
+                },
+                cost: 1_000_000,
+            })))
+        } else {
+            Box::new(iter)
+        }
     }
 }
 
 fn get_next(
     terrain: &Grid<f32>,
+    reserved: &HashSet<XY<u32>>,
     state: &State,
     travel_direction: &Direction,
     body_direction: &Direction,
 ) -> Option<Edge<State>> {
     let n = terrain.offset(state.position, travel_direction.offset())?;
+
+    if reserved.contains(&n) {
+        return None;
+    }
 
     let (t, v, mut a) = get_t_v_a(state.position, n, state.velocity, terrain)?;
 

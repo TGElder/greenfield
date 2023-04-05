@@ -35,10 +35,12 @@ struct Game {
 }
 
 struct GameState {
-    avatar: Avatar,
-    avatar_index: usize,
+    avatars: Vec<Avatar>,
+    avatar_indices: Vec<usize>,
+    reservation: Vec<HashSet<XY<u32>>>,
     terrain: Grid<f32>,
-    from: Option<network::State>,
+    from: Vec<network::State>,
+    reserved: HashSet<XY<u32>>,
 }
 
 impl EventHandler for Game {
@@ -49,36 +51,52 @@ impl EventHandler for Game {
             Event::KeyboardInput {
                 key: KeyboardKey::F,
                 state: ButtonState::Pressed,
-            } => self.set_from(graphics),
-            Event::KeyboardInput {
-                key: KeyboardKey::T,
-                state: ButtonState::Pressed,
-            } => self.set_to(),
+            } => self.add_avatar(graphics),
             _ => (),
         }
 
-        if let Some(GameState{avatar: Avatar::Moving(frames), ..}) = &self.state {
-            if let Some(frame) = frames.last() {
-                let start = self.start.elapsed().as_micros();
-                if frame.arrival_micros as u128 <= start {
-                    self.set_to();
-                } 
+        if let Some(state) = &mut self.state {
+            for i in 0..state.avatars.len() {
+                let avatar = &state.avatars[i];
+                if let Avatar::Moving(frames) = avatar {
+                    if let Some(frame) = frames.last() {
+                        let start = self.start.elapsed().as_micros();
+                        if frame.arrival_micros as u128 <= start {
+                            for reserved in &state.reservation[i] {
+                                state.reserved.remove(reserved);
+                            }
+                            state.reservation[i].clear();
+                            Self::set_to(state, &self.start, i);
+                        }
+                    }
+                }
             }
         }
 
-        if let Some(GameState {
-            avatar,
-            avatar_index,
-            ..
-        }) = &self.state
-        {
-            
-            draw_avatar(
-                avatar,
-                &(self.start.elapsed().as_micros() as u64),
-                graphics,
-                avatar_index,
-            );
+        if let Some(state) = &mut self.state {
+            for i in 0..state.avatars.len() {
+                let avatar = &state.avatars[i];
+                if let Avatar::Moving(frames) = avatar {
+                    if frames.is_empty() {
+                        for reserved in &state.reservation[i] {
+                            state.reserved.remove(reserved);
+                        }
+                        state.reservation[i].clear();
+                        Self::set_to(state, &self.start, i);
+                    }
+                }
+            }
+        }
+
+        if let Some(state) = &self.state {
+            for (avatar, avatar_index) in state.avatars.iter().zip(&state.avatar_indices) {
+                draw_avatar(
+                    avatar,
+                    &(self.start.elapsed().as_micros() as u64),
+                    graphics,
+                    avatar_index,
+                );
+            }
         };
 
         self.drag_handler.handle(event, engine, graphics);
@@ -91,25 +109,8 @@ impl EventHandler for Game {
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = generate_heightmap();
-        let avatar = Avatar::Moving(vec![
-            Frame {
-                arrival_micros: 0,
-                state: State {
-                    position: xyz(256.0, 256.0, terrain[xy(256, 256)]),
-                    angle: PI * (1.0 / 16.0),
-                },
-            },
-            Frame {
-                arrival_micros: 60_000_000,
-                state: State {
-                    position: xyz(257.0, 256.0, terrain[xy(257, 256)]),
-                    angle: PI * (1.0 / 16.0),
-                },
-            },
-        ]);
 
         draw_terrain(&terrain, graphics);
-        let avatar_index = graphics.create_quads().unwrap();
 
         graphics.look_at(
             &xyz(
@@ -121,34 +122,57 @@ impl Game {
         );
 
         self.state = Some(GameState {
-            avatar,
-            avatar_index,
+            avatars: vec![],
+            avatar_indices: vec![],
+            reservation: vec![],
             terrain,
-            from: None,
+            from: vec![],
+            reserved: HashSet::new(),
         });
     }
 
-    fn set_from(&mut self, graphics: &mut dyn Graphics) {
+    fn add_avatar(&mut self, graphics: &mut dyn Graphics) {
         let Some(state) = &mut self.state else {return};
         let Some(mouse) = self.mouse_xy else {return};
         let Ok(world) = graphics.world_xyz_at(&mouse) else {return};
-        state.from = Some(network::State {
-                    position: xy(world.x.round() as u32, world.y.round() as u32),
-                    travel_direction: model::Direction::North,
-                    body_direction: model::Direction::North,
-                    velocity: 0,
+        let avatar = Avatar::_Static(State {
+            position: xyz(0.0, 0.0, 0.0),
+            angle: 0.0,
         });
+        state.avatars.push(avatar);
+        state.from.push(network::State {
+            position: xy(world.x.round() as u32, world.y.round() as u32),
+            travel_direction: model::Direction::North,
+            body_direction: model::Direction::North,
+            velocity: 0,
+        });
+        let avatar_index = graphics.create_quads().unwrap();
+        state.avatar_indices.push(avatar_index);
+        state.reservation.push(HashSet::new());
+        println!("Added avatar {}", state.avatar_indices.len() - 1);
+        Self::set_to(state, &self.start, state.avatar_indices.len() - 1);
     }
 
-    fn set_to(&mut self) {
-        let Some(state) = &mut self.state else {return};
-        let Some(from) = &state.from else {return};
-       
+    fn set_to(state: &mut GameState, start: &Instant, index: usize) {
+        println!("Finding path for avatar {}", index);
+        let from = &mut state.from[index];
 
-        let network = TerrainNetwork::new(&state.terrain);
+        let network = TerrainNetwork::new(&state.terrain, &state.reserved);
         let path = network.min_path(*from, 16, &|state, network| network.terrain[state.position]);
-        let Some(path) = path else {return};
-        let mut start = self.start.elapsed().as_micros();
+        let Some(path) = path else {
+            println!("No path for avatar {} @ {:?}", index, from);
+            state.avatars[index] = Avatar::Moving(vec![]);
+            from.velocity = 0;
+            return
+        };
+        if path.is_empty() {
+            println!("No path for avatar {} @ {:?}", index,  from);
+            state.avatars[index] = Avatar::Moving(vec![]);
+            from.velocity = 0;
+            return;
+        }
+
+        let mut start = start.elapsed().as_micros();
         let mut frames = Vec::with_capacity(path.len());
 
         for edge in path.iter() {
@@ -162,10 +186,10 @@ impl Game {
                     angle: edge.to.travel_direction.angle(),
                 },
             });
+            state.reserved.insert(edge.from.position);
+            state.reservation[index].insert(edge.from.position);
             start += edge.cost as u128
         }
-
-        state.from = path.last().map(|edge| edge.to);
 
         if let Some(last) = path.last() {
             let x = last.to.position.x as f32;
@@ -178,11 +202,14 @@ impl Game {
                     angle: last.to.body_direction.angle(),
                 },
             });
+            state.reserved.insert(last.to.position);
+            state.reservation[index].insert(last.to.position);
         }
 
-        state.avatar = Avatar::Moving(frames);
+        println!("Found path for avatar {}", index);
 
-        dbg!(&state.avatar);
+        state.from[index] = path.last().map(|edge| edge.to).unwrap();
+        state.avatars[index] = Avatar::Moving(frames);
     }
 }
 
