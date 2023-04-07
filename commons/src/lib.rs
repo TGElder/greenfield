@@ -8,6 +8,7 @@ pub mod geometry;
 pub mod grid;
 pub mod image;
 pub mod noise;
+pub mod quadratic;
 pub mod scale;
 
 pub fn unsafe_float_ordering<T: PartialOrd>(a: &T, b: &T) -> Ordering {
