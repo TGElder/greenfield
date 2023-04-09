@@ -40,11 +40,15 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::fmt::Display;
+
+    use crate::almost::assert_almost_eq;
+
     use super::*;
 
     fn test_real_roots<T>(a: T, b: T, c: T)
     where
-        T: Debug + From<f32> + Float,
+        T: Debug + Display + From<f32> + Float,
     {
         // when
         let result = solve(a, b, c);
@@ -59,7 +63,7 @@ mod tests {
 
     fn test_equal_roots<T>(a: T, b: T, c: T)
     where
-        T: Debug + From<f32> + Float,
+        T: Debug + Display + From<f32> + Float,
     {
         // when
         let result = solve(a, b, c);
@@ -72,7 +76,7 @@ mod tests {
 
     fn test_imaginary_roots<T>(a: T, b: T, c: T)
     where
-        T: Debug + From<f32> + Float,
+        T: Debug + Display + From<f32> + Float,
     {
         // when
         let result = solve(a, b, c);
@@ -83,7 +87,7 @@ mod tests {
 
     fn test_not_quadratic<T>(a: T, b: T, c: T)
     where
-        T: Debug + From<f32> + Float,
+        T: Debug + Display + From<f32> + Float,
     {
         // when
         let result = solve(a, b, c);
@@ -94,9 +98,9 @@ mod tests {
 
     fn test_solution<T>(x: T, a: T, b: T, c: T)
     where
-        T: Debug + Float,
+        T: Debug + Display + Float,
     {
-        assert!(x.powi(2).mul(a).add(x.mul(b)).add(c).abs() <= T::epsilon().sqrt())
+        assert_almost_eq(x.powi(2).mul(a).add(x.mul(b)).add(c).abs(), T::zero());
     }
 
     #[test]
