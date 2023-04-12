@@ -1,6 +1,7 @@
 mod draw;
 mod init;
 mod model;
+mod network;
 mod physics;
 
 use std::f32::consts::PI;

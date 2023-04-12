@@ -1,6 +1,6 @@
 use commons::quadratic;
 
-mod skiing;
+pub mod skiing;
 
 fn get_duration(acceleration: f32, velocity: f32, distance: f32) -> Option<f32> {
     if distance == 0.0 {

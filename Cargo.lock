@@ -375,6 +375,7 @@ dependencies = [
  "commons",
  "engine",
  "nalgebra",
+ "network",
  "terrain_gen",
 ]
 
