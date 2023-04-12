@@ -1,6 +1,7 @@
 mod draw;
 mod init;
 mod model;
+mod physics;
 
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
