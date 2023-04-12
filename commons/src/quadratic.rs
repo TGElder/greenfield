@@ -42,7 +42,7 @@ where
 mod tests {
     use std::fmt::Display;
 
-    use crate::almost::assert_almost_eq;
+    use crate::almost_eq::assert_almost_eq;
 
     use super::*;
 

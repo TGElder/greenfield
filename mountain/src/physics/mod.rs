@@ -30,7 +30,7 @@ fn get_duration(acceleration: f32, velocity: f32, distance: f32) -> Option<f32> 
 
 #[cfg(test)]
 mod tests {
-    use commons::almost::assert_almost_eq;
+    use commons::almost_eq::assert_almost_eq;
 
     use super::*;
 
