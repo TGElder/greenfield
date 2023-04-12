@@ -5,11 +5,11 @@ use crate::physics::get_duration;
 const GRAVITY: f32 = 9.81;
 
 pub struct Solution {
-    duration: f32,
-    velocity: f32,
+    pub duration: f32,
+    pub velocity: f32,
 }
 
-pub fn solve(run: f32, rise: f32, initial_velocity: f32) -> Option<Solution> {
+pub fn solve(initial_velocity: f32, run: f32, rise: f32) -> Option<Solution> {
     let acceleration = get_acceleration(run, rise)?;
     let distance = (run.powi(2) + rise.powi(2)).sqrt();
 
