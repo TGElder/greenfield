@@ -11,30 +11,30 @@ use crate::model::Avatar;
 static SKIS: Quad = Quad {
     color: Rgb::new(1.0, 0.0, 0.0),
     corners: [
-        xyz(-0.25, -0.5, 0.0),
-        xyz(0.25, -0.5, 0.0),
-        xyz(0.25, 0.5, 0.0),
-        xyz(-0.25, 0.5, 0.0),
+        xyz(-0.5, -0.25, 0.0),
+        xyz(0.5, -0.25, 0.0),
+        xyz(0.5, 0.25, 0.0),
+        xyz(-0.5, 0.25, 0.0),
     ],
 };
 
 static BODY_FRONT: Quad = Quad {
     color: Rgb::new(1.0, 0.0, 0.0),
     corners: [
-        xyz(-0.25, 0.0, 0.0),
-        xyz(0.25, 0.0, 0.0),
-        xyz(0.25, 0.0, 1.0),
-        xyz(-0.25, 0.0, 1.0),
+        xyz(0.0, -0.25, 0.0),
+        xyz(0.0, 0.25, 0.0),
+        xyz(0.0, 0.25, 1.0),
+        xyz(0.0, -0.25, 1.0),
     ],
 };
 
 static BODY_BACK: Quad = Quad {
     color: Rgb::new(1.0, 0.0, 0.0),
     corners: [
-        xyz(-0.25, 0.0, 1.0),
-        xyz(0.25, 0.0, 1.0),
-        xyz(0.25, 0.0, 0.0),
-        xyz(-0.25, 0.0, 0.0),
+        xyz(0.0, -0.25, 1.0),
+        xyz(0.0, 0.25, 1.0),
+        xyz(0.0, 0.25, 0.0),
+        xyz(0.0, -0.25, 0.0),
     ],
 };
 
@@ -52,8 +52,8 @@ pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, i
     let cos = state.angle.cos();
     let sin = state.angle.sin();
     let rotation: Matrix4<f32> = [
-        [cos, -sin, 0.0, 0.0],
-        [sin, cos, 0.0, 0.0],
+        [cos, sin, 0.0, 0.0],
+        [-sin, cos, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ]

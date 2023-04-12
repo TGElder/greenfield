@@ -249,7 +249,7 @@ fn main() {
                 },
                 scale: isometric::ScaleParameters {
                     zoom: 2.0,
-                    z_max: 1.0 / 512.0,
+                    z_max: 1.0 / 128.0,
                     viewport: Rectangle {
                         width: 512,
                         height: 512,

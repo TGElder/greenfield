@@ -15,27 +15,27 @@ pub enum Direction {
 }
 
 pub const DIRECTIONS: [Direction; 8] = [
-    Direction::North,
-    Direction::NorthEast,
     Direction::East,
-    Direction::SouthEast,
-    Direction::South,
-    Direction::SouthWest,
-    Direction::West,
+    Direction::NorthEast,
+    Direction::North,
     Direction::NorthWest,
+    Direction::West,
+    Direction::SouthWest,
+    Direction::South,
+    Direction::SouthEast,
 ];
 
 impl Direction {
     fn index(&self) -> usize {
         match self {
-            Direction::North => 0,
+            Direction::East => 0,
             Direction::NorthEast => 1,
-            Direction::East => 2,
-            Direction::SouthEast => 3,
-            Direction::South => 4,
+            Direction::North => 2,
+            Direction::NorthWest => 3,
+            Direction::West => 4,
             Direction::SouthWest => 5,
-            Direction::West => 6,
-            Direction::NorthWest => 7,
+            Direction::South => 6,
+            Direction::SouthEast => 7,
         }
     }
 
@@ -55,23 +55,23 @@ impl Direction {
 
     pub fn offset(&self) -> XY<i32> {
         match self {
+            Direction::North => xy(0, 1),
+            Direction::NorthEast => xy(1, 1),
             Direction::East => xy(1, 0),
             Direction::SouthEast => xy(1, -1),
             Direction::South => xy(0, -1),
             Direction::SouthWest => xy(-1, -1),
             Direction::West => xy(-1, 0),
             Direction::NorthWest => xy(-1, 1),
-            Direction::North => xy(0, 1),
-            Direction::NorthEast => xy(1, 1),
         }
     }
 
-    pub fn next_clockwise(&self) -> Direction {
+    pub fn next_anticlockwise(&self) -> Direction {
         let index = (self.index() + 1) % DIRECTIONS.len();
         DIRECTIONS[index]
     }
 
-    pub fn next_anticlockwise(&self) -> Direction {
+    pub fn next_clockwise(&self) -> Direction {
         if self.index() == 0 {
             return *DIRECTIONS.last().unwrap();
         }
