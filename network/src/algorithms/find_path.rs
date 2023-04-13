@@ -37,7 +37,7 @@ where
     T: Eq,
 {
     fn eq(&self, other: &Node<T>) -> bool {
-        self.estimated_distance_via_this_node == other.estimated_distance_via_this_node
+        self.location == other.location && self.entrance == other.entrance
     }
 }
 
