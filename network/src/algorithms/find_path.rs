@@ -1,6 +1,7 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::Debug;
 
 use crate::algorithms::get_path;
 use crate::model::{Edge, Network};
@@ -53,7 +54,7 @@ pub trait FindPath<T> {
 
 impl<T, N> FindPath<T> for N
 where
-    T: Copy + Eq + Hash,
+    T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
     fn find_path(

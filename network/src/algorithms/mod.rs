@@ -1,4 +1,5 @@
 use std::collections::{HashMap, HashSet};
+use std::fmt::Debug;
 use std::hash::Hash;
 
 use crate::model::Edge;
@@ -8,7 +9,7 @@ pub mod find_path;
 
 fn get_path<T>(from: &HashSet<T>, focus: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
 where
-    T: Copy + Eq + Hash,
+    T: Copy + Debug + Eq + Hash,
 {
     let mut out = vec![];
     let mut focus = *focus;
@@ -19,7 +20,10 @@ where
                 focus = entrance.from;
                 out.push(entrance);
             }
-            None => panic!("!"),
+            None => panic!(
+                "Cannot construct path because node {:?} has no entrance in {:?}",
+                from, entrances
+            ),
         }
     }
     out.reverse();

@@ -1,6 +1,7 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::Debug;
 
 use crate::algorithms::get_path;
 use crate::model::{Edge, Network};
@@ -55,7 +56,7 @@ pub trait FindBestWithinBudget<S, T> {
 impl<S, T, N> FindBestWithinBudget<S, T> for N
 where
     S: Copy + Eq + Hash + Ord,
-    T: Copy + Eq + Hash,
+    T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
     fn find_best_within_budget(
