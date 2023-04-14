@@ -1,15 +1,17 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::Debug;
 
+use crate::algorithms::get_path;
 use crate::model::{Edge, Network};
 
 #[derive(Eq)]
 struct Node<T> {
     location: T,
     entrance: Option<Edge<T>>,
-    distance_from_start: u64,
-    estimated_distance_via_this_node: u64,
+    cost_from_start: u64,
+    estimated_cost_via_this_node: u64,
 }
 
 impl<T> Ord for Node<T>
@@ -17,8 +19,8 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<T>) -> Ordering {
-        self.estimated_distance_via_this_node
-            .cmp(&other.estimated_distance_via_this_node)
+        self.estimated_cost_via_this_node
+            .cmp(&other.estimated_cost_via_this_node)
             .reverse()
     }
 }
@@ -52,7 +54,7 @@ pub trait FindPath<T> {
 
 impl<T, N> FindPath<T> for N
 where
-    T: Copy + Eq + Hash,
+    T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
     fn find_path(
@@ -69,15 +71,15 @@ where
             heap.push(Node {
                 location: *from,
                 entrance: None,
-                distance_from_start: 0,
-                estimated_distance_via_this_node: heuristic(from),
+                cost_from_start: 0,
+                estimated_cost_via_this_node: heuristic(from),
             });
         }
 
         while let Some(Node {
             location,
             entrance,
-            distance_from_start,
+            cost_from_start,
             ..
         }) = heap.pop()
         {
@@ -99,38 +101,18 @@ where
                 if closed.contains(&to) {
                     continue;
                 }
-                let distance_from_start = distance_from_start + edge.cost as u64;
+                let cost_from_start = cost_from_start + edge.cost as u64;
                 heap.push(Node {
                     location: to,
                     entrance: Some(edge),
-                    distance_from_start,
-                    estimated_distance_via_this_node: distance_from_start + heuristic(&location),
+                    cost_from_start,
+                    estimated_cost_via_this_node: cost_from_start + heuristic(&location),
                 });
             }
         }
 
         None
     }
-}
-
-fn get_path<T>(from: &HashSet<T>, focus: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
-where
-    T: Copy + Eq + Hash,
-{
-    let mut out = vec![];
-    let mut focus = *focus;
-    while !from.contains(&focus) {
-        let entrance = entrances.remove(&focus);
-        match entrance {
-            Some(entrance) => {
-                focus = entrance.from;
-                out.push(entrance);
-            }
-            None => panic!("!"),
-        }
-    }
-    out.reverse();
-    out
 }
 
 #[cfg(test)]
