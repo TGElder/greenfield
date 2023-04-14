@@ -1,7 +1,6 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
-use std::fmt::Debug;
 
 use crate::algorithms::get_path;
 use crate::model::{Edge, Network};
@@ -55,8 +54,8 @@ pub trait FindBestWithinBudget<S, T> {
 
 impl<S, T, N> FindBestWithinBudget<S, T> for N
 where
-    S: Copy + Eq + Hash + Ord + Debug,
-    T: Copy + Eq + Hash + Debug,
+    S: Copy + Eq + Hash + Ord,
+    T: Copy + Eq + Hash,
     N: Network<T>,
 {
     fn find_best_within_budget(
@@ -78,13 +77,12 @@ where
             });
         }
 
-        #[derive(Debug)]
-        struct Winner<S, T> {
+        struct Best<S, T> {
             location: T,
             score: S,
         }
 
-        let mut winner: Option<Winner<S, T>> = None;
+        let mut best: Option<Best<S, T>> = None;
 
         while let Some(Node {
             location,
@@ -102,10 +100,10 @@ where
                 entrances.insert(location, entrance);
             }
 
-            winner = match winner {
-                Some(current) if score > current.score => Some(Winner { location, score }),
-                None => Some(Winner { location, score }),
-                _ => winner,
+            best = match best {
+                Some(current) if score > current.score => Some(Best { location, score }),
+                None => Some(Best { location, score }),
+                _ => best,
             };
 
             for edge in self.edges(&location) {
@@ -125,7 +123,7 @@ where
             }
         }
 
-        winner.map(|Winner { location, .. }| get_path(&from, &location, &mut entrances))
+        best.map(|Best { location, .. }| get_path(&from, &location, &mut entrances))
     }
 }
 
@@ -276,6 +274,45 @@ mod tests {
     }
 
     #[test]
+    fn best_is_starting_location() {
+        // given
+        // [1] <-1- [2] -1-> [0]
+
+        struct TestNetwork {}
+
+        impl Network<usize> for TestNetwork {
+            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+                match from {
+                    2 => Box::new(
+                        [
+                            Edge {
+                                from: 2,
+                                to: 0,
+                                cost: 1,
+                            },
+                            Edge {
+                                from: 2,
+                                to: 1,
+                                cost: 1,
+                            },
+                        ]
+                        .into_iter(),
+                    ),
+                    _ => Box::new(iter::empty()),
+                }
+            }
+        }
+
+        let network = TestNetwork {};
+
+        // when
+        let result = network.find_best_within_budget(hashset! {2}, &|i| *i, 4);
+
+        // then
+        assert_eq!(result, Some(vec![]));
+    }
+
+    #[test]
     fn tied_best() {
         // given
         // [1] <-1- [0] -1-> [2]
@@ -392,7 +429,7 @@ mod tests {
     fn empty_from() {
         // given
         //
-        // [0] --1-> [1]
+        // [0] -1-> [1]
         //
 
         struct TestNetwork {}
@@ -437,17 +474,17 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {}, &|_| 0, 4);
+        let path = network.find_best_within_budget(hashset! {0}, &|_| 0, 4);
 
         // then
-        assert_eq!(path, None);
+        assert_eq!(path, Some(vec![])); // path to current location
     }
 
     #[test]
-    fn no_edges_within_cost() {
+    fn best_node_not_within_budget() {
         // given
         //
-        // [0] --2-> [1]
+        // [0] -2-> [1]
         //
 
         struct TestNetwork {}
@@ -481,7 +518,7 @@ mod tests {
     fn max_cost_zero() {
         // given
         //
-        // [0] --1-> [1]
+        // [0] -1-> [1]
         //
 
         struct TestNetwork {}
