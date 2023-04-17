@@ -11,11 +11,11 @@ pub struct SkiingNetwork<'a> {
     terrain: &'a Grid<f32>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct State {
-    position: XY<u32>,
-    velocity: u8,
-    travel_direction: Direction,
+    pub position: XY<u32>,
+    pub velocity: u8,
+    pub travel_direction: Direction,
 }
 
 impl<'a> Network<State> for SkiingNetwork<'a> {

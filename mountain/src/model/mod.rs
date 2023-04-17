@@ -1,5 +1,7 @@
-mod animation;
+mod behavior;
 mod direction;
+mod frame;
 
-pub use animation::*;
+pub use behavior::*;
 pub use direction::*;
+pub use frame::*;
