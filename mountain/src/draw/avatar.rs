@@ -6,7 +6,7 @@ use engine::graphics::transform::Transform;
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
-use crate::model::Avatar;
+use crate::model::Animation;
 
 static SKIS: Quad = Quad {
     color: Rgb::new(1.0, 0.0, 0.0),
@@ -38,8 +38,8 @@ static BODY_BACK: Quad = Quad {
     ],
 };
 
-pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, index: &usize) {
-    let Some(state) = avatar.state(micros) else {return};
+pub fn draw_avatar(animation: &Animation, micros: &u64, graphics: &mut dyn Graphics) {
+    let Some(state) = animation.state(micros) else {return};
 
     let translation: Matrix4<f32> = [
         [1.0, 0.0, 0.0, 0.0],
@@ -68,7 +68,7 @@ pub fn draw_avatar(avatar: &Avatar, micros: &u64, graphics: &mut dyn Graphics, i
 
     graphics
         .draw_quads(
-            index,
+            &animation.index,
             &[
                 SKIS.transform(&transformation),
                 BODY_FRONT.transform(&transformation),

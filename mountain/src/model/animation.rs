@@ -1,9 +1,9 @@
 use commons::geometry::XYZ;
 use commons::scale::Scale;
 
-pub enum Avatar {
-    _Static(State),
-    Moving(Vec<Frame>),
+pub struct Animation {
+    pub index: usize,
+    pub frames: Vec<Frame>,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -18,23 +18,17 @@ pub struct Frame {
     pub state: State,
 }
 
-impl Avatar {
+impl Animation {
     pub fn state(&self, micros: &u64) -> Option<State> {
-        match self {
-            Avatar::_Static(state) => Some(*state),
-            Avatar::Moving(frames) => state(frames, micros),
+        let frames = &self.frames;
+        let maybe_pair = frames.windows(2).find(|maybe_pair| match maybe_pair {
+            [from, to] => from.arrival_micros <= *micros && to.arrival_micros > *micros,
+            _ => false,
+        });
+        match maybe_pair {
+            Some([from, to]) => Some(blend(from, to, micros)),
+            _ => None,
         }
-    }
-}
-
-fn state(frames: &[Frame], micros: &u64) -> Option<State> {
-    let maybe_pair = frames.windows(2).find(|maybe_pair| match maybe_pair {
-        [from, to] => from.arrival_micros <= *micros && to.arrival_micros > *micros,
-        _ => false,
-    });
-    match maybe_pair {
-        Some([from, to]) => Some(blend(from, to, micros)),
-        _ => None,
     }
 }
 
