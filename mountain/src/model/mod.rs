@@ -1,5 +1,5 @@
-mod avatar;
+mod animation;
 mod direction;
 
-pub use avatar::*;
+pub use animation::*;
 pub use direction::*;

@@ -19,7 +19,7 @@ use engine::handlers::{drag, resize, yaw, zoom};
 
 use crate::draw::{draw_avatar, draw_terrain};
 use crate::init::generate_heightmap;
-use crate::model::{Avatar, Frame, State};
+use crate::model::{Animation, Frame, State};
 
 struct Game {
     state: Option<GameState>,
@@ -31,33 +31,34 @@ struct Game {
 }
 
 struct GameState {
-    avatar: Avatar,
-    avatar_index: usize,
+    animation: Animation,
 }
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::Init = *event {
             let terrain = generate_heightmap();
-            let avatar = Avatar::Moving(vec![
-                Frame {
-                    arrival_micros: 0,
-                    state: State {
-                        position: xyz(256.0, 256.0, terrain[xy(256, 256)]),
-                        angle: PI * (1.0 / 16.0),
+            let animation = Animation {
+                index: graphics.create_quads().unwrap(),
+                frames: vec![
+                    Frame {
+                        arrival_micros: 0,
+                        state: State {
+                            position: xyz(256.0, 256.0, terrain[xy(256, 256)]),
+                            angle: PI * (1.0 / 16.0),
+                        },
                     },
-                },
-                Frame {
-                    arrival_micros: 60_000_000,
-                    state: State {
-                        position: xyz(257.0, 256.0, terrain[xy(257, 256)]),
-                        angle: PI * (1.0 / 16.0),
+                    Frame {
+                        arrival_micros: 60_000_000,
+                        state: State {
+                            position: xyz(257.0, 256.0, terrain[xy(257, 256)]),
+                            angle: PI * (1.0 / 16.0),
+                        },
                     },
-                },
-            ]);
+                ],
+            };
 
             draw_terrain(&terrain, graphics);
-            let avatar_index = graphics.create_quads().unwrap();
 
             graphics.look_at(
                 &xyz(
@@ -68,23 +69,14 @@ impl EventHandler for Game {
                 &xy(256, 256),
             );
 
-            self.state = Some(GameState {
-                avatar,
-                avatar_index,
-            });
+            self.state = Some(GameState { animation });
         }
 
-        if let Some(GameState {
-            avatar,
-            avatar_index,
-            ..
-        }) = &self.state
-        {
+        if let Some(GameState { animation, .. }) = &self.state {
             draw_avatar(
-                avatar,
+                animation,
                 &(self.start.elapsed().as_micros() as u64),
                 graphics,
-                avatar_index,
             );
         };
 
