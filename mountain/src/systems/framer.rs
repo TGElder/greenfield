@@ -13,11 +13,11 @@ pub fn run(
     plans: &HashMap<usize, Plan>,
     frames: &mut HashMap<usize, Frame>,
 ) {
-    for (i, plan) in plans {
+    for (id, plan) in plans {
         let frame = frame_from_plan(terrain, micros, plan);
         match frame {
-            Some(frame) => frames.insert(*i, frame),
-            None => frames.remove(i),
+            Some(frame) => frames.insert(*id, frame),
+            None => frames.remove(id),
         };
     }
 }

@@ -19,7 +19,6 @@ use engine::glium_backend;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
-use maplit::hashmap;
 
 use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
@@ -27,7 +26,7 @@ use crate::model::{skiing, Frame};
 use crate::systems::{avatar_artist, framer};
 
 struct Game {
-    components: Option<Components>, // Avoid None
+    components: Components, // Avoid None
     start: Instant,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -45,9 +44,8 @@ struct Components {
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::Init = *event {
-            let terrain = generate_heightmap();
-
-            draw_terrain(&terrain, graphics);
+            let terrain = &self.components.terrain;
+            draw_terrain(graphics, terrain);
 
             graphics.look_at(
                 &xyz(
@@ -57,29 +55,19 @@ impl EventHandler for Game {
                 ),
                 &xy(256, 256),
             );
-
-            self.components = Some(Components {
-                terrain,
-                plans: hashmap! {
-                    0 => skiing::Plan::Moving(vec![
-                        skiing::Event{ micros: 0, state: skiing::State { position: xy(256, 256), velocity: 0, travel_direction: model::Direction::NorthEast } },
-                        skiing::Event{ micros: 60_000_000, state: skiing::State { position: xy(257, 257), velocity: 0, travel_direction: model::Direction::NorthEast } },
-                    ]),
-                },
-                frames: HashMap::default(),
-                drawings: HashMap::default(),
-            });
         }
 
-        if let Some(components) = &mut self.components {
-            framer::run(
-                &components.terrain,
-                &self.start.elapsed().as_micros(),
-                &components.plans,
-                &mut components.frames,
-            );
-            avatar_artist::run(graphics, &components.frames, &mut components.drawings);
-        }
+        framer::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &self.components.plans,
+            &mut self.components.frames,
+        );
+        avatar_artist::run(
+            graphics,
+            &self.components.frames,
+            &mut self.components.drawings,
+        );
 
         self.drag_handler.handle(event, engine, graphics);
         self.resize_handler.handle(event, engine, graphics);
@@ -106,7 +94,33 @@ fn main() {
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
-            components: None,
+            components: Components {
+                terrain: generate_heightmap(),
+                plans: HashMap::from([(
+                    0,
+                    skiing::Plan::Moving(vec![
+                        skiing::Event {
+                            micros: 0,
+                            state: skiing::State {
+                                position: xy(256, 256),
+                                velocity: 0,
+                                travel_direction: model::Direction::NorthEast,
+                            },
+                        },
+                        skiing::Event {
+                            micros: 60_000_000,
+                            state: skiing::State {
+                                position: xy(257, 257),
+                                velocity: 0,
+                                travel_direction: model::Direction::NorthEast,
+                            },
+                        },
+                    ]),
+                )]),
+
+                frames: HashMap::default(),
+                drawings: HashMap::default(),
+            },
             start: Instant::now(),
         },
         glium_backend::engine::Parameters {

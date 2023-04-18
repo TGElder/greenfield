@@ -13,10 +13,10 @@ pub fn run(
 ) {
     for (id, frame) in frames {
         match drawings.entry(*id) {
-            Entry::Occupied(value) => draw_avatar(value.get(), frame, graphics),
+            Entry::Occupied(value) => draw_avatar(graphics, value.get(), frame),
             Entry::Vacant(cell) => {
                 if let Ok(index) = graphics.create_quads() {
-                    draw_avatar(&index, frame, graphics);
+                    draw_avatar(graphics, &index, frame);
                     cell.insert(index);
                 }
             }

@@ -38,7 +38,7 @@ static BODY_BACK: Quad = Quad {
     ],
 };
 
-pub fn draw_avatar(index: &usize, frame: &Frame, graphics: &mut dyn Graphics) {
+pub fn draw_avatar(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
     let translation: Matrix4<f32> = [
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
