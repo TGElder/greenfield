@@ -43,16 +43,16 @@ where
     }
 }
 
-pub trait FindPath<T> {
+pub trait FindPath<T, N> {
     fn find_path(
         &self,
         from: HashSet<T>,
         to: HashSet<T>,
-        heuristic: &dyn Fn(&T) -> u64,
+        heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>>;
 }
 
-impl<T, N> FindPath<T> for N
+impl<T, N> FindPath<T, N> for N
 where
     T: Copy + Debug + Eq + Hash,
     N: Network<T>,
@@ -61,7 +61,7 @@ where
         &self,
         from: HashSet<T>,
         to: HashSet<T>,
-        heuristic: &dyn Fn(&T) -> u64,
+        heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
@@ -72,7 +72,7 @@ where
                 location: *from,
                 entrance: None,
                 cost_from_start: 0,
-                estimated_cost_via_this_node: heuristic(from),
+                estimated_cost_via_this_node: heuristic(self, from),
             });
         }
 
@@ -106,7 +106,7 @@ where
                     location: to,
                     entrance: Some(edge),
                     cost_from_start,
-                    estimated_cost_via_this_node: cost_from_start + heuristic(&location),
+                    estimated_cost_via_this_node: cost_from_start + heuristic(self, &location),
                 });
             }
         }
@@ -217,7 +217,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {3}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {3}, &|_, _| 0);
 
         // then
         assert_eq!(
@@ -289,7 +289,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {3}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {3}, &|_, _| 0);
 
         // then
         assert_eq!(path, None);
@@ -387,7 +387,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0, 1}, hashset! {3}, &|_| 0);
+        let path = network.find_path(hashset! {0, 1}, hashset! {3}, &|_, _| 0);
 
         // then
         assert_eq!(
@@ -499,7 +499,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {1, 3}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {1, 3}, &|_, _| 0);
 
         // then
         assert_eq!(
@@ -568,7 +568,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0, 1}, hashset! {2, 3}, &|_| 0);
+        let path = network.find_path(hashset! {0, 1}, hashset! {2, 3}, &|_, _| 0);
 
         // then
         assert_eq!(
@@ -609,7 +609,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {0}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {0}, &|_, _| 0);
 
         // then
         assert_eq!(path, Some(vec![]));
@@ -628,7 +628,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {1}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {1}, &|_, _| 0);
 
         // then
         assert_eq!(path, None);
@@ -662,7 +662,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {}, hashset! {1}, &|_| 0);
+        let path = network.find_path(hashset! {}, hashset! {1}, &|_, _| 0);
 
         // then
         assert_eq!(path, None);
@@ -696,7 +696,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_path(hashset! {0}, hashset! {}, &|_| 0);
+        let path = network.find_path(hashset! {0}, hashset! {}, &|_, _| 0);
 
         // then
         assert_eq!(path, None);
