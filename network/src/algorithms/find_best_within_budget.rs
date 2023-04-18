@@ -44,16 +44,16 @@ where
     }
 }
 
-pub trait FindBestWithinBudget<S, T> {
+pub trait FindBestWithinBudget<S, T, N> {
     fn find_best_within_budget(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&T) -> S,
+        scorer: &dyn Fn(&N, &T) -> S,
         max_cost: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
 
-impl<S, T, N> FindBestWithinBudget<S, T> for N
+impl<S, T, N> FindBestWithinBudget<S, T, N> for N
 where
     S: Copy + Eq + Hash + Ord,
     T: Copy + Debug + Eq + Hash,
@@ -62,7 +62,7 @@ where
     fn find_best_within_budget(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&T) -> S,
+        scorer: &dyn Fn(&N, &T) -> S,
         max_cost: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -74,7 +74,7 @@ where
                 location: *from,
                 entrance: None,
                 cost_from_start: 0,
-                score: scorer(from),
+                score: scorer(self, from),
             });
         }
 
@@ -118,7 +118,7 @@ where
                         location: to,
                         entrance: Some(edge),
                         cost_from_start,
-                        score: scorer(&to),
+                        score: scorer(self, &to),
                     });
                 }
             }
@@ -185,7 +185,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|i| *i, 4);
+        let result = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 4);
 
         // then
         assert_eq!(
@@ -254,7 +254,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|i| *i, 4);
+        let result = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 4);
 
         // then
         assert_eq!(
@@ -307,7 +307,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {2}, &|i| *i, 4);
+        let result = network.find_best_within_budget(hashset! {2}, &|_, i| *i, 4);
 
         // then
         assert_eq!(result, Some(vec![]));
@@ -346,7 +346,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|i| i32::from(*i != 0), 4);
+        let result = network.find_best_within_budget(hashset! {0}, &|_, i| i32::from(*i != 0), 4);
 
         // then
         assert!(
@@ -413,7 +413,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0, 2}, &|i| *i, 4);
+        let result = network.find_best_within_budget(hashset! {0, 2}, &|_, i| *i, 4);
 
         // then
         assert_eq!(
@@ -454,7 +454,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {}, &|_| 0, 4);
+        let path = network.find_best_within_budget(hashset! {}, &|_, _| 0, 4);
 
         // then
         assert_eq!(path, None);
@@ -475,7 +475,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|_| 0, 4);
+        let path = network.find_best_within_budget(hashset! {0}, &|_, _| 0, 4);
 
         // then
         assert_eq!(path, Some(vec![])); // path to current location
@@ -509,7 +509,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|i| *i, 1);
+        let path = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 1);
 
         // then
         assert_eq!(path, Some(vec![])); // path to current location
@@ -543,7 +543,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|i| *i, 0);
+        let path = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 0);
 
         // then
         assert_eq!(path, Some(vec![])); // path to current location
