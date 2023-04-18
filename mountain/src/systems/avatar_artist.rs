@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use engine::graphics::Graphics;
@@ -10,11 +11,15 @@ pub fn run(
     frames: &HashMap<usize, Frame>,
     drawings: &mut HashMap<usize, usize>,
 ) {
-    for (i, frame) in frames {
-        // TODO avoid dereference
-        let index = drawings
-            .entry(*i)
-            .or_insert_with(|| graphics.create_quads().unwrap()); // TODO handle error
-        draw_avatar(index, frame, graphics);
+    for (id, frame) in frames {
+        match drawings.entry(*id) {
+            Entry::Occupied(value) => draw_avatar(value.get(), frame, graphics),
+            Entry::Vacant(cell) => {
+                if let Ok(index) = graphics.create_quads() {
+                    draw_avatar(&index, frame, graphics);
+                    cell.insert(index);
+                }
+            }
+        };
     }
 }

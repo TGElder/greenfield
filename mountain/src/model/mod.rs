@@ -1,7 +1,6 @@
-mod behavior;
 mod direction;
 mod frame;
+pub mod skiing;
 
-pub use behavior::*;
 pub use direction::*;
 pub use frame::*;

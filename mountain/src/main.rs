@@ -23,8 +23,7 @@ use maplit::hashmap;
 
 use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
-use crate::model::{Behavior, Frame};
-use crate::network::skiing;
+use crate::model::{skiing, Frame};
 use crate::systems::{avatar_artist, framer};
 
 struct Game {
@@ -38,7 +37,7 @@ struct Game {
 
 struct Components {
     terrain: Grid<f32>,
-    behaviors: HashMap<usize, Behavior>,
+    plans: HashMap<usize, skiing::Plan>,
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
 }
@@ -61,10 +60,10 @@ impl EventHandler for Game {
 
             self.components = Some(Components {
                 terrain,
-                behaviors: hashmap! {
-                    0 => Behavior::Moving(vec![
-                        model::Event{ micros: 0, state: skiing::State { position: xy(256, 256), velocity: 0, travel_direction: model::Direction::NorthEast } },
-                        model::Event{ micros: 60_000_000, state: skiing::State { position: xy(257, 257), velocity: 0, travel_direction: model::Direction::NorthEast } },
+                plans: hashmap! {
+                    0 => skiing::Plan::Moving(vec![
+                        skiing::Event{ micros: 0, state: skiing::State { position: xy(256, 256), velocity: 0, travel_direction: model::Direction::NorthEast } },
+                        skiing::Event{ micros: 60_000_000, state: skiing::State { position: xy(257, 257), velocity: 0, travel_direction: model::Direction::NorthEast } },
                     ]),
                 },
                 frames: HashMap::default(),
@@ -76,7 +75,7 @@ impl EventHandler for Game {
             framer::run(
                 &components.terrain,
                 &self.start.elapsed().as_micros(),
-                &components.behaviors,
+                &components.plans,
                 &mut components.frames,
             );
             avatar_artist::run(graphics, &components.frames, &mut components.drawings);
