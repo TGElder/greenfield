@@ -10,7 +10,7 @@ use engine::graphics::Graphics;
 
 use nalgebra::Vector3;
 
-pub fn draw_terrain(terrain: &Grid<f32>, graphics: &mut dyn Graphics) {
+pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
     let slab_size = 256;
     let slabs = xy(
         (terrain.width() / slab_size) + 1,

@@ -1,5 +1,6 @@
-mod animation;
 mod direction;
+mod frame;
+pub mod skiing;
 
-pub use animation::*;
 pub use direction::*;
+pub use frame::*;

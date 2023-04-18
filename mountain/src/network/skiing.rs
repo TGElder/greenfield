@@ -1,6 +1,7 @@
 use ::network::model::{Edge, Network};
 use commons::{geometry::XY, grid::Grid};
 
+use crate::model::skiing::State;
 use crate::{
     model::Direction,
     network::velocity_encoding::{decode_velocity, encode_velocity},
@@ -9,13 +10,6 @@ use crate::{
 
 pub struct SkiingNetwork<'a> {
     terrain: &'a Grid<f32>,
-}
-
-#[derive(Clone, Copy)]
-pub struct State {
-    position: XY<u32>,
-    velocity: u8,
-    travel_direction: Direction,
 }
 
 impl<'a> Network<State> for SkiingNetwork<'a> {

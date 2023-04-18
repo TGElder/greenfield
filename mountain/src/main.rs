@@ -3,12 +3,15 @@ mod init;
 mod model;
 mod network;
 mod physics;
+mod systems;
 
+use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
 use commons::geometry::{xy, xyz, Rectangle};
 
+use commons::grid::Grid;
 use engine::engine::Engine;
 use engine::events::{Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
@@ -17,12 +20,13 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::draw::{draw_avatar, draw_terrain};
+use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
-use crate::model::{Animation, Frame, State};
+use crate::model::{skiing, Frame};
+use crate::systems::{avatar_artist, framer};
 
 struct Game {
-    state: Option<GameState>,
+    components: Components, // Avoid None
     start: Instant,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -30,35 +34,18 @@ struct Game {
     zoom_handler: zoom::Handler,
 }
 
-struct GameState {
-    animation: Animation,
+struct Components {
+    terrain: Grid<f32>,
+    plans: HashMap<usize, skiing::Plan>,
+    frames: HashMap<usize, Frame>,
+    drawings: HashMap<usize, usize>,
 }
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::Init = *event {
-            let terrain = generate_heightmap();
-            let animation = Animation {
-                index: graphics.create_quads().unwrap(),
-                frames: vec![
-                    Frame {
-                        arrival_micros: 0,
-                        state: State {
-                            position: xyz(256.0, 256.0, terrain[xy(256, 256)]),
-                            angle: PI * (1.0 / 16.0),
-                        },
-                    },
-                    Frame {
-                        arrival_micros: 60_000_000,
-                        state: State {
-                            position: xyz(257.0, 256.0, terrain[xy(257, 256)]),
-                            angle: PI * (1.0 / 16.0),
-                        },
-                    },
-                ],
-            };
-
-            draw_terrain(&terrain, graphics);
+            let terrain = &self.components.terrain;
+            draw_terrain(graphics, terrain);
 
             graphics.look_at(
                 &xyz(
@@ -68,17 +55,19 @@ impl EventHandler for Game {
                 ),
                 &xy(256, 256),
             );
-
-            self.state = Some(GameState { animation });
         }
 
-        if let Some(GameState { animation, .. }) = &self.state {
-            draw_avatar(
-                animation,
-                &(self.start.elapsed().as_micros() as u64),
-                graphics,
-            );
-        };
+        framer::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &self.components.plans,
+            &mut self.components.frames,
+        );
+        avatar_artist::run(
+            graphics,
+            &self.components.frames,
+            &mut self.components.drawings,
+        );
 
         self.drag_handler.handle(event, engine, graphics);
         self.resize_handler.handle(event, engine, graphics);
@@ -105,7 +94,33 @@ fn main() {
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
-            state: None,
+            components: Components {
+                terrain: generate_heightmap(),
+                plans: HashMap::from([(
+                    0,
+                    skiing::Plan::Moving(vec![
+                        skiing::Event {
+                            micros: 0,
+                            state: skiing::State {
+                                position: xy(256, 256),
+                                velocity: 0,
+                                travel_direction: model::Direction::NorthEast,
+                            },
+                        },
+                        skiing::Event {
+                            micros: 60_000_000,
+                            state: skiing::State {
+                                position: xy(257, 257),
+                                velocity: 0,
+                                travel_direction: model::Direction::NorthEast,
+                            },
+                        },
+                    ]),
+                )]),
+
+                frames: HashMap::default(),
+                drawings: HashMap::default(),
+            },
             start: Instant::now(),
         },
         glium_backend::engine::Parameters {
