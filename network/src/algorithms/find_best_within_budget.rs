@@ -6,7 +6,6 @@ use std::fmt::Debug;
 use crate::algorithms::get_path;
 use crate::model::{Edge, Network};
 
-#[derive(Eq)]
 struct Node<S, T> {
     location: T,
     entrance: Option<Edge<T>>,
@@ -16,7 +15,6 @@ struct Node<S, T> {
 
 impl<S, T> Ord for Node<S, T>
 where
-    S: Ord + Eq,
     T: Eq,
 {
     fn cmp(&self, other: &Node<S, T>) -> Ordering {
@@ -26,7 +24,6 @@ where
 
 impl<S, T> PartialOrd for Node<S, T>
 where
-    S: Ord + Eq,
     T: Eq,
 {
     fn partial_cmp(&self, other: &Node<S, T>) -> Option<Ordering> {
@@ -36,13 +33,14 @@ where
 
 impl<S, T> PartialEq for Node<S, T>
 where
-    S: Eq,
     T: Eq,
 {
     fn eq(&self, other: &Node<S, T>) -> bool {
         self.location == other.location && self.entrance == other.entrance
     }
 }
+
+impl<S, T> Eq for Node<S, T> where T: Eq {}
 
 pub trait FindBestWithinBudget<S, T, N> {
     fn find_best_within_budget(
@@ -55,7 +53,7 @@ pub trait FindBestWithinBudget<S, T, N> {
 
 impl<S, T, N> FindBestWithinBudget<S, T, N> for N
 where
-    S: Copy + Eq + Hash + Ord,
+    S: Ord,
     T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
