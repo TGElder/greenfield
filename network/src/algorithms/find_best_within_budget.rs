@@ -20,7 +20,7 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<S, T>) -> Ordering {
-        self.score.cmp(&other.score)
+        self.cost_from_start.cmp(&other.cost_from_start).reverse()
     }
 }
 
@@ -423,6 +423,83 @@ mod tests {
                 to: 3,
                 cost: 1,
             }])
+        );
+    }
+
+    #[test]
+    fn ties_are_broken_by_cost() {
+        // given
+        // [2] <-2- [1] <-1- [0] -1-> [3] -1-> [4]
+
+        struct TestNetwork {}
+
+        impl Network<usize> for TestNetwork {
+            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+                match from {
+                    0 => Box::new(
+                        [
+                            Edge {
+                                from: 0,
+                                to: 1,
+                                cost: 1,
+                            },
+                            Edge {
+                                from: 0,
+                                to: 3,
+                                cost: 1,
+                            },
+                        ]
+                        .into_iter(),
+                    ),
+                    1 => Box::new(
+                        [Edge {
+                            from: 1,
+                            to: 2,
+                            cost: 2,
+                        }]
+                        .into_iter(),
+                    ),
+                    3 => Box::new(
+                        [Edge {
+                            from: 3,
+                            to: 4,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    _ => Box::new(iter::empty()),
+                }
+            }
+        }
+
+        let network = TestNetwork {};
+
+        // when
+        let result = network.find_best_within_budget(
+            hashset! {0},
+            &|_, i| match i {
+                2 => 1,
+                4 => 1,
+                _ => 0,
+            },
+            4,
+        );
+
+        // then
+        assert_eq!(
+            result,
+            Some(vec![
+                Edge {
+                    from: 0,
+                    to: 3,
+                    cost: 1,
+                },
+                Edge {
+                    from: 3,
+                    to: 4,
+                    cost: 1,
+                }
+            ])
         );
     }
 
