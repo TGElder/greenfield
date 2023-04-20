@@ -43,12 +43,7 @@ pub fn draw_avatar(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
         [1.0, 0.0, 0.0, 0.0],
         [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
-        [
-            frame.position.x,
-            frame.position.y,
-            frame.position.z * 32.0,
-            1.0,
-        ],
+        [frame.position.x, frame.position.y, frame.position.z, 1.0],
     ]
     .into();
 

@@ -9,11 +9,11 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
-use commons::geometry::{xy, xyz, Rectangle};
+use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::engine::Engine;
-use engine::events::{Event, EventHandler, KeyboardKey};
+use engine::events::{ButtonState, Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 
 use engine::graphics::projections::isometric;
@@ -23,11 +23,12 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
-use crate::systems::{avatar_artist, framer};
+use crate::systems::{avatar_artist, framer, planner};
 
 struct Game {
     components: Components, // Avoid None
     start: Instant,
+    mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
     yaw_handler: yaw::Handler,
@@ -43,20 +44,46 @@ struct Components {
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Event::Init = *event {
-            let terrain = &self.components.terrain;
-            draw_terrain(graphics, terrain);
+        match event {
+            Event::Init => {
+                let terrain = &self.components.terrain;
+                draw_terrain(graphics, terrain);
 
-            graphics.look_at(
-                &xyz(
-                    terrain.width() as f32 / 2.0,
-                    terrain.height() as f32 / 2.0,
-                    0.0,
-                ),
-                &xy(256, 256),
-            );
+                graphics.look_at(
+                    &xyz(
+                        terrain.width() as f32 / 2.0,
+                        terrain.height() as f32 / 2.0,
+                        0.0,
+                    ),
+                    &xy(256, 256),
+                );
+            }
+            Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
+            Event::KeyboardInput {
+                key: KeyboardKey::F,
+                state: ButtonState::Pressed,
+            } => {
+                if let Some(mouse_xy) = self.mouse_xy {
+                    if let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) {
+                        self.components.plans.insert(
+                            self.components.plans.len(),
+                            skiing::Plan::Stationary(skiing::State {
+                                position: xy(x.round() as u32, y.round() as u32),
+                                velocity: 0,
+                                travel_direction: model::Direction::NorthEast,
+                            }),
+                        );
+                    }
+                }
+            }
+            _ => (),
         }
 
+        planner::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &mut self.components.plans,
+        );
         framer::run(
             &self.components.terrain,
             &self.start.elapsed().as_micros(),
@@ -96,32 +123,12 @@ fn main() {
             }),
             components: Components {
                 terrain: generate_heightmap(),
-                plans: HashMap::from([(
-                    0,
-                    skiing::Plan::Moving(vec![
-                        skiing::Event {
-                            micros: 0,
-                            state: skiing::State {
-                                position: xy(256, 256),
-                                velocity: 0,
-                                travel_direction: model::Direction::NorthEast,
-                            },
-                        },
-                        skiing::Event {
-                            micros: 60_000_000,
-                            state: skiing::State {
-                                position: xy(257, 257),
-                                velocity: 0,
-                                travel_direction: model::Direction::NorthEast,
-                            },
-                        },
-                    ]),
-                )]),
-
+                plans: HashMap::default(),
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
             },
             start: Instant::now(),
+            mouse_xy: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -137,7 +144,7 @@ fn main() {
                 },
                 scale: isometric::ScaleParameters {
                     zoom: 2.0,
-                    z_max: 1.0 / 32.0,
+                    z_max: 1.0 / 128.0,
                     viewport: Rectangle {
                         width: 512,
                         height: 512,
