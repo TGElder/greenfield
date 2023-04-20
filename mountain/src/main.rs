@@ -9,11 +9,11 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
-use commons::geometry::{xy, xyz, Rectangle};
+use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::engine::Engine;
-use engine::events::{Event, EventHandler, KeyboardKey};
+use engine::events::{ButtonState, Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 
 use engine::graphics::projections::isometric;
@@ -23,11 +23,67 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
-use crate::systems::{avatar_artist, framer};
+use crate::systems::{avatar_artist, framer, planner};
+
+fn main() {
+    let engine = glium_backend::engine::GliumEngine::new(
+        Game {
+            components: Components {
+                terrain: generate_heightmap(),
+                plans: HashMap::default(),
+                frames: HashMap::default(),
+                drawings: HashMap::default(),
+            },
+            start: Instant::now(),
+            mouse_xy: None,
+            drag_handler: drag::Handler::new(),
+            resize_handler: resize::Handler::new(),
+            yaw_handler: yaw::Handler::new(yaw::Parameters {
+                initial_angle: 5,
+                angles: 16,
+                key_plus: KeyboardKey::E,
+                key_minus: KeyboardKey::Q,
+            }),
+            zoom_handler: zoom::Handler::new(zoom::Parameters {
+                initial_level: 1,
+                min_level: 1,
+                max_level: 8,
+                key_plus: KeyboardKey::Plus,
+                key_minus: KeyboardKey::Minus,
+            }),
+        },
+        glium_backend::engine::Parameters {
+            frame_duration: Duration::from_nanos(16_666_667),
+        },
+        glium_backend::graphics::Parameters {
+            name: "The Mountain".to_string(),
+            width: 512,
+            height: 512,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 2.0,
+                    z_max: 1.0 / 128.0,
+                    viewport: Rectangle {
+                        width: 512,
+                        height: 512,
+                    },
+                },
+            })),
+        },
+    )
+    .unwrap();
+
+    engine.run();
+}
 
 struct Game {
-    components: Components, // Avoid None
+    components: Components,
     start: Instant,
+    mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
     yaw_handler: yaw::Handler,
@@ -41,22 +97,53 @@ struct Components {
     drawings: HashMap<usize, usize>,
 }
 
+impl Game {
+    fn init(&self, graphics: &mut dyn Graphics) {
+        let terrain = &self.components.terrain;
+        draw_terrain(graphics, terrain);
+
+        graphics.look_at(
+            &xyz(
+                terrain.width() as f32 / 2.0,
+                terrain.height() as f32 / 2.0,
+                0.0,
+            ),
+            &xy(256, 256),
+        );
+    }
+
+    fn add_skier(&mut self, graphics: &mut dyn Graphics) {
+        let Some(mouse_xy) = self.mouse_xy else {return};
+        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) else {return};
+
+        self.components.plans.insert(
+            self.components.plans.len(),
+            skiing::Plan::Stationary(skiing::State {
+                position: xy(x.round() as u32, y.round() as u32),
+                velocity: 0,
+                travel_direction: model::Direction::NorthEast,
+            }),
+        );
+    }
+}
+
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Event::Init = *event {
-            let terrain = &self.components.terrain;
-            draw_terrain(graphics, terrain);
-
-            graphics.look_at(
-                &xyz(
-                    terrain.width() as f32 / 2.0,
-                    terrain.height() as f32 / 2.0,
-                    0.0,
-                ),
-                &xy(256, 256),
-            );
+        match event {
+            Event::Init => self.init(graphics),
+            Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
+            Event::KeyboardInput {
+                key: KeyboardKey::F,
+                state: ButtonState::Pressed,
+            } => self.add_skier(graphics),
+            _ => (),
         }
 
+        planner::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &mut self.components.plans,
+        );
         framer::run(
             &self.components.terrain,
             &self.start.elapsed().as_micros(),
@@ -74,79 +161,4 @@ impl EventHandler for Game {
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
     }
-}
-
-fn main() {
-    let engine = glium_backend::engine::GliumEngine::new(
-        Game {
-            drag_handler: drag::Handler::new(),
-            resize_handler: resize::Handler::new(),
-            yaw_handler: yaw::Handler::new(yaw::Parameters {
-                initial_angle: 5,
-                angles: 16,
-                key_plus: KeyboardKey::E,
-                key_minus: KeyboardKey::Q,
-            }),
-            zoom_handler: zoom::Handler::new(zoom::Parameters {
-                initial_level: 1,
-                min_level: 1,
-                max_level: 8,
-                key_plus: KeyboardKey::Plus,
-                key_minus: KeyboardKey::Minus,
-            }),
-            components: Components {
-                terrain: generate_heightmap(),
-                plans: HashMap::from([(
-                    0,
-                    skiing::Plan::Moving(vec![
-                        skiing::Event {
-                            micros: 0,
-                            state: skiing::State {
-                                position: xy(256, 256),
-                                velocity: 0,
-                                travel_direction: model::Direction::NorthEast,
-                            },
-                        },
-                        skiing::Event {
-                            micros: 60_000_000,
-                            state: skiing::State {
-                                position: xy(257, 257),
-                                velocity: 0,
-                                travel_direction: model::Direction::NorthEast,
-                            },
-                        },
-                    ]),
-                )]),
-
-                frames: HashMap::default(),
-                drawings: HashMap::default(),
-            },
-            start: Instant::now(),
-        },
-        glium_backend::engine::Parameters {
-            frame_duration: Duration::from_nanos(16_666_667),
-        },
-        glium_backend::graphics::Parameters {
-            name: "The Mountain".to_string(),
-            width: 512,
-            height: 512,
-            projection: Box::new(isometric::Projection::new(isometric::Parameters {
-                projection: isometric::ProjectionParameters {
-                    pitch: PI / 4.0,
-                    yaw: PI * (5.0 / 8.0),
-                },
-                scale: isometric::ScaleParameters {
-                    zoom: 2.0,
-                    z_max: 1.0 / 32.0,
-                    viewport: Rectangle {
-                        width: 512,
-                        height: 512,
-                    },
-                },
-            })),
-        },
-    )
-    .unwrap();
-
-    engine.run();
 }

@@ -24,7 +24,7 @@ pub fn run(
 
 fn frame_from_plan(terrain: &Grid<f32>, micros: &u128, plan: &Plan) -> Option<Frame> {
     match plan {
-        Plan::_Stationary(state) => Some(frame_from_skiing_state(terrain, state)),
+        Plan::Stationary(state) => Some(frame_from_skiing_state(terrain, state)),
         Plan::Moving(events) => moving_frame(terrain, events, micros),
     }
 }
@@ -45,7 +45,7 @@ fn frame_from_skiing_state(
 
 fn moving_frame(terrain: &Grid<f32>, events: &[Event], micros: &u128) -> Option<Frame> {
     let maybe_pair = events.windows(2).find(|maybe_pair| match maybe_pair {
-        [from, to] => from.micros as u128 <= *micros && to.micros as u128 > *micros,
+        [from, to] => from.micros <= *micros && to.micros > *micros,
         _ => false,
     });
     match maybe_pair {

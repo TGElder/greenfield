@@ -24,7 +24,7 @@ fn get_acceleration(run: f32, rise: f32) -> Option<f32> {
     if rise == 0.0 {
         return None;
     }
-    let angle = (rise / run).atan();
+    let angle = (-rise / run).atan();
     let angle_ratio = angle / (PI / 2.0);
     Some(angle_ratio * GRAVITY)
 }

@@ -9,7 +9,7 @@ use crate::{
 };
 
 pub struct SkiingNetwork<'a> {
-    terrain: &'a Grid<f32>,
+    pub terrain: &'a Grid<f32>,
 }
 
 impl<'a> Network<State> for SkiingNetwork<'a> {
@@ -34,6 +34,7 @@ impl<'a> SkiingNetwork<'a> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
         let initial_velocity: f32 = decode_velocity(&from.velocity)?;
+
         let run = travel_direction.run();
         let rise = self.terrain[to_position] - self.terrain[from.position];
         let physics::skiing::Solution { velocity, duration } =
