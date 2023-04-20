@@ -33,21 +33,14 @@ impl<'a> SkiingNetwork<'a> {
     fn get_edge(&self, from: &State, travel_direction: Direction) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
-        // dbg!(to_position);
-
         let initial_velocity: f32 = decode_velocity(&from.velocity)?;
 
-        // dbg!(initial_velocity);
-
         let run = travel_direction.run();
-        // dbg!(run);
-
         let rise = self.terrain[to_position] - self.terrain[from.position];
-        // dbg!(rise);
         let physics::skiing::Solution { velocity, duration } =
             physics::skiing::solve(initial_velocity, run, rise)?;
 
-        let out = Edge {
+        Some(Edge {
             from: *from,
             to: State {
                 position: to_position,
@@ -55,11 +48,7 @@ impl<'a> SkiingNetwork<'a> {
                 travel_direction,
             },
             cost: (duration * 1_000_000.0).round() as u32,
-        };
-
-        // dbg!(out);
-
-        Some(out)
+        })
     }
 
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {

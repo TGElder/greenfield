@@ -25,87 +25,17 @@ use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
 use crate::systems::{avatar_artist, framer, planner};
 
-struct Game {
-    components: Components, // Avoid None
-    start: Instant,
-    mouse_xy: Option<XY<u32>>,
-    drag_handler: drag::Handler,
-    resize_handler: resize::Handler,
-    yaw_handler: yaw::Handler,
-    zoom_handler: zoom::Handler,
-}
-
-struct Components {
-    terrain: Grid<f32>,
-    plans: HashMap<usize, skiing::Plan>,
-    frames: HashMap<usize, Frame>,
-    drawings: HashMap<usize, usize>,
-}
-
-impl EventHandler for Game {
-    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        match event {
-            Event::Init => {
-                let terrain = &self.components.terrain;
-                draw_terrain(graphics, terrain);
-
-                graphics.look_at(
-                    &xyz(
-                        terrain.width() as f32 / 2.0,
-                        terrain.height() as f32 / 2.0,
-                        0.0,
-                    ),
-                    &xy(256, 256),
-                );
-            }
-            Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
-            Event::KeyboardInput {
-                key: KeyboardKey::F,
-                state: ButtonState::Pressed,
-            } => {
-                if let Some(mouse_xy) = self.mouse_xy {
-                    if let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) {
-                        self.components.plans.insert(
-                            self.components.plans.len(),
-                            skiing::Plan::Stationary(skiing::State {
-                                position: xy(x.round() as u32, y.round() as u32),
-                                velocity: 0,
-                                travel_direction: model::Direction::NorthEast,
-                            }),
-                        );
-                    }
-                }
-            }
-            _ => (),
-        }
-
-        planner::run(
-            &self.components.terrain,
-            &self.start.elapsed().as_micros(),
-            &mut self.components.plans,
-        );
-        framer::run(
-            &self.components.terrain,
-            &self.start.elapsed().as_micros(),
-            &self.components.plans,
-            &mut self.components.frames,
-        );
-        avatar_artist::run(
-            graphics,
-            &self.components.frames,
-            &mut self.components.drawings,
-        );
-
-        self.drag_handler.handle(event, engine, graphics);
-        self.resize_handler.handle(event, engine, graphics);
-        self.yaw_handler.handle(event, engine, graphics);
-        self.zoom_handler.handle(event, engine, graphics);
-    }
-}
-
 fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
+            components: Components {
+                terrain: generate_heightmap(),
+                plans: HashMap::default(),
+                frames: HashMap::default(),
+                drawings: HashMap::default(),
+            },
+            start: Instant::now(),
+            mouse_xy: None,
             drag_handler: drag::Handler::new(),
             resize_handler: resize::Handler::new(),
             yaw_handler: yaw::Handler::new(yaw::Parameters {
@@ -121,14 +51,6 @@ fn main() {
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
-            components: Components {
-                terrain: generate_heightmap(),
-                plans: HashMap::default(),
-                frames: HashMap::default(),
-                drawings: HashMap::default(),
-            },
-            start: Instant::now(),
-            mouse_xy: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -156,4 +78,87 @@ fn main() {
     .unwrap();
 
     engine.run();
+}
+
+struct Game {
+    components: Components,
+    start: Instant,
+    mouse_xy: Option<XY<u32>>,
+    drag_handler: drag::Handler,
+    resize_handler: resize::Handler,
+    yaw_handler: yaw::Handler,
+    zoom_handler: zoom::Handler,
+}
+
+struct Components {
+    terrain: Grid<f32>,
+    plans: HashMap<usize, skiing::Plan>,
+    frames: HashMap<usize, Frame>,
+    drawings: HashMap<usize, usize>,
+}
+
+impl Game {
+    fn init(&self, graphics: &mut dyn Graphics) {
+        let terrain = &self.components.terrain;
+        draw_terrain(graphics, terrain);
+
+        graphics.look_at(
+            &xyz(
+                terrain.width() as f32 / 2.0,
+                terrain.height() as f32 / 2.0,
+                0.0,
+            ),
+            &xy(256, 256),
+        );
+    }
+
+    fn add_skier(&mut self, graphics: &mut dyn Graphics) {
+        let Some(mouse_xy) = self.mouse_xy else {return};
+        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) else {return};
+
+        self.components.plans.insert(
+            self.components.plans.len(),
+            skiing::Plan::Stationary(skiing::State {
+                position: xy(x.round() as u32, y.round() as u32),
+                velocity: 0,
+                travel_direction: model::Direction::NorthEast,
+            }),
+        );
+    }
+}
+
+impl EventHandler for Game {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
+        match event {
+            Event::Init => self.init(graphics),
+            Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
+            Event::KeyboardInput {
+                key: KeyboardKey::F,
+                state: ButtonState::Pressed,
+            } => self.add_skier(graphics),
+            _ => (),
+        }
+
+        planner::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &mut self.components.plans,
+        );
+        framer::run(
+            &self.components.terrain,
+            &self.start.elapsed().as_micros(),
+            &self.components.plans,
+            &mut self.components.frames,
+        );
+        avatar_artist::run(
+            graphics,
+            &self.components.frames,
+            &mut self.components.drawings,
+        );
+
+        self.drag_handler.handle(event, engine, graphics);
+        self.resize_handler.handle(event, engine, graphics);
+        self.yaw_handler.handle(event, engine, graphics);
+        self.zoom_handler.handle(event, engine, graphics);
+    }
 }

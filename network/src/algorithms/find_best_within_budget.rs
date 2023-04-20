@@ -53,7 +53,7 @@ pub trait FindBestWithinBudget<S, T, N> {
 
 impl<S, T, N> FindBestWithinBudget<S, T, N> for N
 where
-    S: Debug + Ord,
+    S: Ord,
     T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
@@ -76,7 +76,6 @@ where
             });
         }
 
-        #[derive(Debug)]
         struct Best<S, T> {
             location: T,
             score: S,
