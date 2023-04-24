@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
-use commons::unsafe_float_ordering;
+use commons::unsafe_ordering::UnsafeOrderable;
 use network::model::Edge;
 
 use crate::model::skiing::{Event, Plan, State};
@@ -42,41 +42,16 @@ fn new_plan(terrain: &Grid<f32>, micros: &u128, state: &State) -> Plan {
 }
 
 fn find_path(terrain: &Grid<f32>, state: &State) -> Option<Vec<Edge<State>>> {
-    #[derive(Debug)]
-    struct OrdFloat {
-        value: f32,
-    }
-
-    impl Ord for OrdFloat {
-        fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-            unsafe_float_ordering(&self.value, &other.value)
-        }
-    }
-
-    impl PartialOrd for OrdFloat {
-        fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-            self.value.partial_cmp(&other.value)
-        }
-    }
-
-    impl PartialEq for OrdFloat {
-        fn eq(&self, other: &Self) -> bool {
-            self.value == other.value
-        }
-    }
-
-    impl Eq for OrdFloat {}
-
     let network = SkiingNetwork { terrain };
 
     network.find_best_within_steps(
         HashSet::from([*state]),
-        &|network, state| OrdFloat {
-            value: if state.velocity <= MAX_VELOCITY_TARGET {
+        &|network, state| {
+            UnsafeOrderable::new(if state.velocity <= MAX_VELOCITY_TARGET {
                 -network.terrain[state.position]
             } else {
                 f32::NEG_INFINITY
-            },
+            })
         },
         MAX_STEPS,
     )
