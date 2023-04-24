@@ -9,7 +9,7 @@ use crate::model::{Edge, Network};
 struct Node<S, T> {
     location: T,
     entrance: Option<Edge<T>>,
-    cost_from_start: u64,
+    steps_from_start: u64,
     score: S,
 }
 
@@ -18,7 +18,7 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<S, T>) -> Ordering {
-        self.cost_from_start.cmp(&other.cost_from_start).reverse()
+        self.steps_from_start.cmp(&other.steps_from_start).reverse()
     }
 }
 
@@ -42,26 +42,26 @@ where
 
 impl<S, T> Eq for Node<S, T> where T: Eq {}
 
-pub trait FindBestWithinBudget<S, T, N> {
-    fn find_best_within_budget(
+pub trait FindBestWithinSteps<S, T, N> {
+    fn find_best_within_steps(
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> S,
-        max_cost: u64,
+        max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
 
-impl<S, T, N> FindBestWithinBudget<S, T, N> for N
+impl<S, T, N> FindBestWithinSteps<S, T, N> for N
 where
     S: Ord,
     T: Copy + Debug + Eq + Hash,
     N: Network<T>,
 {
-    fn find_best_within_budget(
+    fn find_best_within_steps(
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> S,
-        max_cost: u64,
+        max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
@@ -71,7 +71,7 @@ where
             heap.push(Node {
                 location: *from,
                 entrance: None,
-                cost_from_start: 0,
+                steps_from_start: 0,
                 score: scorer(self, from),
             });
         }
@@ -86,7 +86,7 @@ where
         while let Some(Node {
             location,
             entrance,
-            cost_from_start,
+            steps_from_start,
             score,
         }) = heap.pop()
         {
@@ -110,12 +110,12 @@ where
                 if closed.contains(&to) {
                     continue;
                 }
-                let cost_from_start = cost_from_start + edge.cost as u64;
-                if cost_from_start <= max_cost {
+                let steps_from_start = steps_from_start + 1;
+                if steps_from_start <= max_steps {
                     heap.push(Node {
                         location: to,
                         entrance: Some(edge),
-                        cost_from_start,
+                        steps_from_start,
                         score: scorer(self, &to),
                     });
                 }
@@ -135,9 +135,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn best_is_furthest_within_budget() {
+    fn best_is_at_max_steps() {
         // given
-        // [2] <-1- [1] <-1- [0] -2-> [3] -2-> [4]
+        // [2] <- [1] <- [0] -> [3] -> [4]
 
         struct TestNetwork {}
 
@@ -154,7 +154,7 @@ mod tests {
                             Edge {
                                 from: 0,
                                 to: 3,
-                                cost: 2,
+                                cost: 1,
                             },
                         ]
                         .into_iter(),
@@ -171,7 +171,7 @@ mod tests {
                         [Edge {
                             from: 3,
                             to: 4,
-                            cost: 2,
+                            cost: 1,
                         }]
                         .into_iter(),
                     ),
@@ -183,7 +183,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 2);
 
         // then
         assert_eq!(
@@ -192,21 +192,21 @@ mod tests {
                 Edge {
                     from: 0,
                     to: 3,
-                    cost: 2,
+                    cost: 1,
                 },
                 Edge {
                     from: 3,
                     to: 4,
-                    cost: 2,
+                    cost: 1,
                 }
             ])
         );
     }
 
     #[test]
-    fn best_is_not_furthest_within_budget() {
+    fn best_is_not_at_max_steps() {
         // given
-        // [2] <-2- [1] <-2- [0] -1-> [3] -1-> [4]
+        // [1] <- [2] <- [0] -> [4] -> [3]
 
         struct TestNetwork {}
 
@@ -217,12 +217,12 @@ mod tests {
                         [
                             Edge {
                                 from: 0,
-                                to: 1,
-                                cost: 2,
+                                to: 2,
+                                cost: 1,
                             },
                             Edge {
                                 from: 0,
-                                to: 3,
+                                to: 4,
                                 cost: 1,
                             },
                         ]
@@ -230,16 +230,16 @@ mod tests {
                     ),
                     1 => Box::new(
                         [Edge {
-                            from: 1,
-                            to: 2,
-                            cost: 2,
+                            from: 2,
+                            to: 1,
+                            cost: 1,
                         }]
                         .into_iter(),
                     ),
                     3 => Box::new(
                         [Edge {
-                            from: 3,
-                            to: 4,
+                            from: 4,
+                            to: 3,
                             cost: 1,
                         }]
                         .into_iter(),
@@ -252,30 +252,23 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 2);
 
         // then
         assert_eq!(
             result,
-            Some(vec![
-                Edge {
-                    from: 0,
-                    to: 3,
-                    cost: 1,
-                },
-                Edge {
-                    from: 3,
-                    to: 4,
-                    cost: 1,
-                }
-            ])
+            Some(vec![Edge {
+                from: 0,
+                to: 4,
+                cost: 1,
+            }])
         );
     }
 
     #[test]
     fn best_is_starting_location() {
         // given
-        // [1] <-1- [2] -1-> [0]
+        // [1] <- [2] -> [0]
 
         struct TestNetwork {}
 
@@ -305,7 +298,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {2}, &|_, i| *i, 4);
+        let result = network.find_best_within_steps(hashset! {2}, &|_, i| *i, 2);
 
         // then
         assert_eq!(result, Some(vec![]));
@@ -314,7 +307,7 @@ mod tests {
     #[test]
     fn tied_best() {
         // given
-        // [1] <-1- [0] -1-> [2]
+        // [1] <- [0] -> [2]
 
         struct TestNetwork {}
 
@@ -344,7 +337,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0}, &|_, i| i32::from(*i != 0), 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| i32::from(*i != 0), 2);
 
         // then
         assert!(
@@ -366,7 +359,7 @@ mod tests {
     #[test]
     fn multiple_from() {
         // given
-        // [1] <-1- [0] <-2-> [2] -1-> [3]
+        // [1] <- [0] <-> [2] -> [3]
 
         struct TestNetwork {}
 
@@ -411,7 +404,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(hashset! {0, 2}, &|_, i| *i, 4);
+        let result = network.find_best_within_steps(hashset! {0, 2}, &|_, i| *i, 4);
 
         // then
         assert_eq!(
@@ -425,9 +418,9 @@ mod tests {
     }
 
     #[test]
-    fn ties_are_broken_by_cost() {
+    fn ties_are_broken_by_steps() {
         // given
-        // [2] <-2- [1] <-1- [0] -1-> [3] -1-> [4]
+        // [3] <- [2] <- [1] <- [0] -> [4] -> [5]
 
         struct TestNetwork {}
 
@@ -443,7 +436,7 @@ mod tests {
                             },
                             Edge {
                                 from: 0,
-                                to: 3,
+                                to: 4,
                                 cost: 1,
                             },
                         ]
@@ -453,14 +446,22 @@ mod tests {
                         [Edge {
                             from: 1,
                             to: 2,
-                            cost: 2,
+                            cost: 1,
                         }]
                         .into_iter(),
                     ),
-                    3 => Box::new(
+                    2 => Box::new(
                         [Edge {
-                            from: 3,
-                            to: 4,
+                            from: 2,
+                            to: 3,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    4 => Box::new(
+                        [Edge {
+                            from: 4,
+                            to: 5,
                             cost: 1,
                         }]
                         .into_iter(),
@@ -473,14 +474,14 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_budget(
+        let result = network.find_best_within_steps(
             hashset! {0},
             &|_, i| match i {
-                2 => 1,
-                4 => 1,
+                3 => 1,
+                5 => 1,
                 _ => 0,
             },
-            4,
+            3,
         );
 
         // then
@@ -489,12 +490,12 @@ mod tests {
             Some(vec![
                 Edge {
                     from: 0,
-                    to: 3,
+                    to: 4,
                     cost: 1,
                 },
                 Edge {
-                    from: 3,
-                    to: 4,
+                    from: 4,
+                    to: 5,
                     cost: 1,
                 }
             ])
@@ -505,7 +506,7 @@ mod tests {
     fn empty_from() {
         // given
         //
-        // [0] -1-> [1]
+        // [0] -> [1]
         //
 
         struct TestNetwork {}
@@ -529,10 +530,10 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {}, &|_, _| 0, 4);
+        let result = network.find_best_within_steps(hashset! {}, &|_, _| 0, 4);
 
         // then
-        assert_eq!(path, None);
+        assert_eq!(result, None);
     }
 
     #[test]
@@ -550,17 +551,17 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|_, _| 0, 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, _| 0, 4);
 
         // then
-        assert_eq!(path, Some(vec![])); // path to current location
+        assert_eq!(result, Some(vec![])); // path to current location
     }
 
     #[test]
-    fn best_node_not_within_budget() {
+    fn best_node_not_within_steps() {
         // given
         //
-        // [0] -2-> [1]
+        // [0] -> [1] -> [2]
         //
 
         struct TestNetwork {}
@@ -572,7 +573,15 @@ mod tests {
                         [Edge {
                             from: 0,
                             to: 1,
-                            cost: 2,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    1 => Box::new(
+                        [Edge {
+                            from: 1,
+                            to: 2,
+                            cost: 1,
                         }]
                         .into_iter(),
                     ),
@@ -584,17 +593,24 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 1);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 1);
 
         // then
-        assert_eq!(path, Some(vec![])); // path to current location
+        assert_eq!(
+            result,
+            Some(vec![Edge {
+                from: 0,
+                to: 1,
+                cost: 1,
+            }])
+        );
     }
 
     #[test]
-    fn max_cost_zero() {
+    fn max_steps_zero() {
         // given
         //
-        // [0] -1-> [1]
+        // [0] -> [1]
         //
 
         struct TestNetwork {}
@@ -618,9 +634,9 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let path = network.find_best_within_budget(hashset! {0}, &|_, i| *i, 0);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 0);
 
         // then
-        assert_eq!(path, Some(vec![])); // path to current location
+        assert_eq!(result, Some(vec![])); // path to current location
     }
 }

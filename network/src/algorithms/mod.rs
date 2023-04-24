@@ -4,7 +4,7 @@ use std::hash::Hash;
 
 use crate::model::Edge;
 
-pub mod find_best_within_budget;
+pub mod find_best_within_steps;
 pub mod find_path;
 
 fn get_path<T>(from: &HashSet<T>, focus: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>

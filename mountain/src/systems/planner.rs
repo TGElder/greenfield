@@ -7,9 +7,9 @@ use network::model::Edge;
 use crate::model::skiing::{Event, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
-use network::algorithms::find_best_within_budget::FindBestWithinBudget;
+use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const BUDGET: u64 = 4_000_000;
+const MAX_STEPS: u64 = 8;
 const MAX_VELOCITY_TARGET: u8 = 6;
 
 pub fn run(terrain: &Grid<f32>, micros: &u128, plans: &mut HashMap<usize, Plan>) {
@@ -69,7 +69,7 @@ fn find_path(terrain: &Grid<f32>, state: &State) -> Option<Vec<Edge<State>>> {
 
     let network = SkiingNetwork { terrain };
 
-    network.find_best_within_budget(
+    network.find_best_within_steps(
         HashSet::from([*state]),
         &|network, state| OrdFloat {
             value: if state.velocity <= MAX_VELOCITY_TARGET {
@@ -78,7 +78,7 @@ fn find_path(terrain: &Grid<f32>, state: &State) -> Option<Vec<Edge<State>>> {
                 f32::NEG_INFINITY
             },
         },
-        BUDGET,
+        MAX_STEPS,
     )
 }
 
