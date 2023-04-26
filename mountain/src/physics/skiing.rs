@@ -1,5 +1,3 @@
-use std::f32::consts::PI;
-
 use crate::physics::get_duration;
 
 const GRAVITY: f32 = 9.81;
