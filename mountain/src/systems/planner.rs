@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
+use std::iter::once;
 
+use commons::geometry::XY;
 use commons::grid::Grid;
 use commons::unsafe_float_ordering;
 use network::model::Edge;
@@ -12,36 +14,72 @@ use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 const MAX_STEPS: u64 = 8;
 const MAX_VELOCITY_TARGET: u8 = 6;
 
-pub fn run(terrain: &Grid<f32>, micros: &u128, plans: &mut HashMap<usize, Plan>) {
+pub fn run(
+    terrain: &Grid<f32>,
+    micros: &u128,
+    plans: &mut HashMap<usize, Plan>,
+    reserved: &mut Grid<bool>,
+) {
     for (_, current_plan) in plans.iter_mut() {
-        match current_plan {
-            Plan::Stationary(state) => {
-                *current_plan = new_plan(terrain, micros, state);
-            }
-            Plan::Moving(events) => {
-                let Some(last) = events.last() else {continue};
-                if *micros >= last.micros {
-                    *current_plan = new_plan(terrain, micros, &last.state);
+        if let Plan::Moving(ref events) = current_plan {
+            if let Some(last) = events.last() {
+                if *micros < last.micros {
+                    continue;
                 }
             }
         }
+        free(current_plan, reserved);
+        *current_plan = new_plan(terrain, micros, current_plan, reserved);
+        reserve(current_plan, reserved);
     }
 }
 
-fn new_plan(terrain: &Grid<f32>, micros: &u128, state: &State) -> Plan {
-    match find_path(terrain, state) {
+fn free(plan: &Plan, reserved: &mut Grid<bool>) {
+    for position in iter_positions(plan) {
+        reserved[position] = false
+    }
+}
+
+fn reserve(plan: &Plan, reserved: &mut Grid<bool>) {
+    for position in iter_positions(plan) {
+        reserved[position] = true
+    }
+}
+
+fn iter_positions<'a>(plan: &'a Plan) -> Box<dyn Iterator<Item = XY<u32>> + 'a> {
+    match plan {
+        Plan::Stationary(state) => Box::new(once(state.position)),
+        Plan::Moving(events) => Box::new(
+            events
+                .iter()
+                .map(|event| event.state)
+                .map(|state| state.position),
+        ),
+    }
+}
+
+fn new_plan(terrain: &Grid<f32>, micros: &u128, plan: &Plan, reserved: &Grid<bool>) -> Plan {
+    let from = last_state(plan);
+    match find_path(terrain, from, reserved) {
         Some(edges) => {
             if edges.is_empty() {
-                stop(*state)
+                stop(*from)
             } else {
                 Plan::Moving(events(micros, edges))
             }
         }
-        None => stop(*state),
+        None => stop(*from),
     }
 }
 
-fn find_path(terrain: &Grid<f32>, state: &State) -> Option<Vec<Edge<State>>> {
+fn last_state(plan: &Plan) -> &State {
+    match plan {
+        Plan::Stationary(state) => state,
+        Plan::Moving(events) => &events.last().unwrap().state,
+    }
+}
+
+fn find_path(terrain: &Grid<f32>, from: &State, reserved: &Grid<bool>) -> Option<Vec<Edge<State>>> {
     #[derive(Debug)]
     struct OrdFloat {
         value: f32,
@@ -67,10 +105,10 @@ fn find_path(terrain: &Grid<f32>, state: &State) -> Option<Vec<Edge<State>>> {
 
     impl Eq for OrdFloat {}
 
-    let network = SkiingNetwork { terrain };
+    let network = SkiingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
-        HashSet::from([*state]),
+        HashSet::from([*from]),
         &|network, state| OrdFloat {
             value: if state.velocity <= MAX_VELOCITY_TARGET {
                 -network.terrain[state.position]

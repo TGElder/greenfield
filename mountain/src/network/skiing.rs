@@ -10,6 +10,7 @@ use crate::{
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
+    pub reserved: &'a Grid<bool>,
 }
 
 impl<'a> Network<State> for SkiingNetwork<'a> {
@@ -32,6 +33,10 @@ impl<'a> Network<State> for SkiingNetwork<'a> {
 impl<'a> SkiingNetwork<'a> {
     fn get_edge(&self, from: &State, travel_direction: Direction) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
+
+        if self.reserved[to_position] {
+            return None;
+        }
 
         let initial_velocity: f32 = decode_velocity(&from.velocity)?;
 
