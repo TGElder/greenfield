@@ -1,5 +1,5 @@
 const VELOCITY_LEVELS: u8 = 8;
-const MAX_VELOCITY: f32 = 10.0;
+const MAX_VELOCITY: f32 = 12.0;
 
 pub fn encode_velocity(v: &f32) -> Option<u8> {
     if *v < 0.0 {

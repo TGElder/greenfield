@@ -33,13 +33,13 @@ fn frame_from_skiing_state(
     terrain: &Grid<f32>,
     State {
         position,
-        travel_direction,
+        body_direction,
         ..
     }: &State,
 ) -> Frame {
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
-        angle: travel_direction.angle(),
+        angle: body_direction.angle(),
     }
 }
 

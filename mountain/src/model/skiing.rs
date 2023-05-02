@@ -7,6 +7,7 @@ pub struct State {
     pub position: XY<u32>,
     pub velocity: u8,
     pub travel_direction: Direction,
+    pub body_direction: Direction,
 }
 
 #[derive(Debug)]

@@ -122,6 +122,7 @@ impl Game {
                 position: xy(x.round() as u32, y.round() as u32),
                 velocity: 0,
                 travel_direction: model::Direction::NorthEast,
+                body_direction: model::Direction::NorthEast,
             }),
         );
     }

@@ -24,13 +24,28 @@ impl<'a> Network<State> for SkiingNetwork<'a> {
                 from.travel_direction.next_clockwise(),
             ]
             .into_iter()
-            .flat_map(|travel_direction| self.get_edge(from, travel_direction)),
+            .flat_map(|travel_direction| {
+                [
+                    from.body_direction.next_anticlockwise(),
+                    from.body_direction,
+                    from.body_direction.next_clockwise(),
+                ]
+                .into_iter()
+                .map(move |body_direction| (travel_direction, body_direction))
+            })
+            .filter(|(travel_direction, body_direction)| {
+                *body_direction == travel_direction.next_anticlockwise()
+                    || *body_direction == *travel_direction
+                    || *body_direction == travel_direction.next_clockwise()
+            })
+            .filter(|(travel_direction, body_direction)| from.travel_direction == *travel_direction || *body_direction == *travel_direction) // if travel direction has changed then body direction MUST change
+            .flat_map(|(travel_direction, body_direction)| self.get_edge(from, travel_direction, body_direction)),
         )
     }
 }
 
 impl<'a> SkiingNetwork<'a> {
-    fn get_edge(&self, from: &State, travel_direction: Direction) -> Option<Edge<State>> {
+    fn get_edge(&self, from: &State, travel_direction: Direction, body_direction: Direction) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
         let initial_velocity: f32 = decode_velocity(&from.velocity)?;
@@ -38,7 +53,7 @@ impl<'a> SkiingNetwork<'a> {
         let run = travel_direction.run();
         let rise = self.terrain[to_position] - self.terrain[from.position];
         let physics::skiing::Solution { velocity, duration } =
-            physics::skiing::solve(initial_velocity, run, rise)?;
+            physics::skiing::solve(initial_velocity, run, rise, friction(&travel_direction, &body_direction))?;
 
         Some(Edge {
             from: *from,
@@ -46,6 +61,7 @@ impl<'a> SkiingNetwork<'a> {
                 position: to_position,
                 velocity: encode_velocity(&velocity)?,
                 travel_direction,
+                body_direction
             },
             cost: (duration * 1_000_000.0).round() as u32,
         })
@@ -54,5 +70,13 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+}
+
+fn friction(travel_direction: &Direction, body_direction: &Direction) -> f32 {
+    if travel_direction == body_direction {
+        0.01
+    } else {
+        0.05
     }
 }
