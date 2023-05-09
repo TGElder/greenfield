@@ -1,5 +1,5 @@
 use commons::color::Rgb;
-use commons::geometry::{Rectangle, XYZ};
+use commons::geometry::{Rectangle, XY, XYZ};
 
 #[derive(Clone, Copy)]
 pub struct Triangle {
@@ -18,4 +18,17 @@ pub struct Billboard {
     pub position: XYZ<f32>,
     pub dimensions: Rectangle<f32>,
     pub texture: usize,
+}
+
+#[derive(Clone)]
+pub struct OverlayTriangle {
+    pub triangles: Vec<[TexturedPosition; 3]>,
+    pub base_texture: usize,
+    pub overlay_texture: usize,
+}
+
+#[derive(Clone, Copy)]
+pub struct TexturedPosition {
+    pub position: XYZ<f32>,
+    pub texture_coordinates: XY<f32>,
 }
