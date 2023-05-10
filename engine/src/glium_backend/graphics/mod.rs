@@ -6,7 +6,7 @@ mod vertices;
 
 use std::error::Error;
 
-use crate::graphics::elements::{self, Triangle};
+use crate::graphics::elements::{self, OverlayTriangles, TexturedPosition, Triangle};
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
@@ -15,6 +15,7 @@ use crate::graphics::Graphics;
 use canvas::*;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use glium::glutin;
+use glium::uniforms::MagnifySamplerFilter;
 use programs::*;
 use vertices::*;
 
@@ -55,6 +56,7 @@ pub struct GliumGraphics {
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
+    overlay_primitives: Vec<Option<OverlayPrimitive>>,
     billboards: Vec<Option<Billboard>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
@@ -114,6 +116,7 @@ impl GliumGraphics {
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
             primitives: vec![],
+            overlay_primitives: vec![],
             billboards: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
@@ -154,6 +157,54 @@ impl GliumGraphics {
                 &uniforms,
                 &self.draw_parameters,
             )?;
+        }
+        Ok(())
+    }
+
+    fn render_overlay_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let mut uniforms = None;
+        let mut current_base_texture = None;
+        let mut current_overlay_texture = None;
+
+        let sampler_behavior = glium::uniforms::SamplerBehavior {
+            magnify_filter: MagnifySamplerFilter::Nearest,
+            ..Default::default()
+        };
+
+        for primitive in self.overlay_primitives.iter().flatten() {
+            if current_base_texture != Some(primitive.base_texture)
+                || current_overlay_texture != Some(primitive.overlay_texture)
+            {
+                current_base_texture = Some(primitive.base_texture);
+                current_overlay_texture = Some(primitive.overlay_texture);
+                let base = self.textures.get(primitive.base_texture).ok_or(format!(
+                    "Overlay primitive refers to missing base texture {}",
+                    primitive.base_texture
+                ))?;
+                let base = glium::uniforms::Sampler(base, sampler_behavior);
+                let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
+                    "Overlay primitive refers to missing overlay texture {}",
+                    primitive.overlay_texture
+                ))?;
+                let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
+                uniforms = Some(glium::uniform! {
+                    transform: self.projection.projection(),
+                    base: base,
+                    overlay: overlay,
+                });
+            }
+            if let Some(uniforms) = uniforms {
+                surface.draw(
+                    &primitive.vertex_buffer,
+                    INDICES,
+                    &self.programs.overlay_primitive,
+                    &uniforms,
+                    &self.draw_parameters,
+                )?;
+            }
         }
         Ok(())
     }
@@ -267,6 +318,53 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn create_overlay_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.overlay_primitives.len() == isize::MAX as usize {
+            return Err("No space for more overlay_primitives".into());
+        }
+        self.overlay_primitives.push(None);
+        Ok(self.overlay_primitives.len() - 1)
+    }
+
+    fn add_overlay_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        overlay: &OverlayTriangles,
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.overlay_primitives.len() {
+            return Err(format!(
+                "Trying to draw overlay primitive #{} but there are only {} overlay primitives",
+                index,
+                self.overlay_primitives.len()
+            )
+            .into());
+        }
+
+        let vertices = overlay
+            .triangles
+            .iter()
+            .flat_map(|corners| {
+                corners.iter().map(
+                    |TexturedPosition {
+                         position,
+                         texture_coordinates,
+                     }| TexturedVertex {
+                        position: (*position).into(),
+                        texture_coordinates: (*texture_coordinates).into(),
+                    },
+                )
+            })
+            .collect::<Vec<TexturedVertex>>();
+
+        self.overlay_primitives[*index] = Some(OverlayPrimitive {
+            base_texture: overlay.base_texture,
+            overlay_texture: overlay.overlay_texture,
+            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+        });
+
+        Ok(())
+    }
+
     fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
         if self.billboards.len() == isize::MAX as usize {
             return Err("No space for more billboards".into());
@@ -330,6 +428,7 @@ impl GliumGraphics {
         let mut canvas = canvas.frame(self.display.facade())?;
 
         self.render_primitives_to_canvas(&mut canvas)?;
+        self.render_overlay_primitives_to_canvas(&mut canvas)?;
         self.render_billboards_to_canvas(&mut canvas)?;
         self.render_canvas_to_frame(&mut frame)?;
 
@@ -363,6 +462,10 @@ impl Graphics for GliumGraphics {
         Ok(self.create_triangles_unsafe()?)
     }
 
+    fn create_overlay_triangles(&mut self) -> Result<usize, IndexError> {
+        Ok(self.create_overlay_triangles_unsafe()?)
+    }
+
     fn create_billboards(&mut self) -> Result<usize, IndexError> {
         Ok(self.create_billboards_unsafe()?)
     }
@@ -371,6 +474,13 @@ impl Graphics for GliumGraphics {
         Ok(self.add_triangles_unsafe(index, triangles)?)
     }
 
+    fn draw_overlay_triangles(
+        &mut self,
+        index: &usize,
+        overlay_triangles: &OverlayTriangles,
+    ) -> Result<(), DrawError> {
+        Ok(self.add_overlay_triangles_unsafe(index, overlay_triangles)?)
+    }
     fn draw_billboard(
         &mut self,
         index: &usize,
@@ -434,6 +544,12 @@ impl Display {
 
 struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+}
+
+struct OverlayPrimitive {
+    base_texture: usize,
+    overlay_texture: usize,
+    vertex_buffer: glium::VertexBuffer<TexturedVertex>,
 }
 
 struct Billboard {
