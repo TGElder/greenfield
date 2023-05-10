@@ -161,35 +161,6 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn render_billboards_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
-    where
-        S: glium::Surface,
-    {
-        let mut uniforms = None;
-        let mut current_texture = None;
-
-        for billboard in self.billboards.iter().flatten() {
-            if current_texture != Some(billboard.texture) {
-                current_texture = Some(billboard.texture);
-                uniforms = Some(glium::uniform! {
-                    transform: self.projection.projection(),
-                    scale: self.projection.scale(),
-                    tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
-                });
-            }
-            if let Some(uniforms) = uniforms {
-                surface.draw(
-                    &billboard.vertex_buffer,
-                    INDICES,
-                    &self.programs.billboard,
-                    &uniforms,
-                    &self.draw_parameters,
-                )?;
-            }
-        }
-        Ok(())
-    }
-
     fn render_overlay_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
@@ -230,6 +201,35 @@ impl GliumGraphics {
                     &primitive.vertex_buffer,
                     INDICES,
                     &self.programs.overlay_primitive,
+                    &uniforms,
+                    &self.draw_parameters,
+                )?;
+            }
+        }
+        Ok(())
+    }
+
+    fn render_billboards_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let mut uniforms = None;
+        let mut current_texture = None;
+
+        for billboard in self.billboards.iter().flatten() {
+            if current_texture != Some(billboard.texture) {
+                current_texture = Some(billboard.texture);
+                uniforms = Some(glium::uniform! {
+                    transform: self.projection.projection(),
+                    scale: self.projection.scale(),
+                    tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
+                });
+            }
+            if let Some(uniforms) = uniforms {
+                surface.draw(
+                    &billboard.vertex_buffer,
+                    INDICES,
+                    &self.programs.billboard,
                     &uniforms,
                     &self.draw_parameters,
                 )?;
