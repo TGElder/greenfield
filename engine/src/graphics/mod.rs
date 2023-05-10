@@ -23,13 +23,13 @@ pub trait Graphics {
         self.create_triangles()
     }
 
-    fn create_billboards(&mut self) -> Result<usize, IndexError>;
-
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
 
     fn create_overlay_quads(&mut self) -> Result<usize, IndexError> {
         self.create_overlay_triangles()
     }
+
+    fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
     fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
 
@@ -58,8 +58,6 @@ pub trait Graphics {
         self.draw_triangles(index, &triangles)
     }
 
-    fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
-
     fn draw_overlay_triangles(
         &mut self,
         index: &usize,
@@ -85,6 +83,8 @@ pub trait Graphics {
 
         self.draw_overlay_triangles(index, &overlay_triangles)
     }
+
+    fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
 
     fn render(&mut self) -> Result<(), RenderError>;
 

@@ -13,13 +13,6 @@ pub struct Quad {
     pub color: Rgb<f32>,
 }
 
-#[derive(Clone, Copy)]
-pub struct Billboard {
-    pub position: XYZ<f32>,
-    pub dimensions: Rectangle<f32>,
-    pub texture: usize,
-}
-
 #[derive(Clone)]
 pub struct OverlayTriangles {
     pub base_texture: usize,
@@ -38,4 +31,11 @@ pub struct OverlayQuads {
 pub struct TexturedPosition {
     pub position: XYZ<f32>,
     pub texture_coordinates: XY<f32>,
+}
+
+#[derive(Clone, Copy)]
+pub struct Billboard {
+    pub position: XYZ<f32>,
+    pub dimensions: Rectangle<f32>,
+    pub texture: usize,
 }
