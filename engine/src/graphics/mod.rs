@@ -25,10 +25,10 @@ pub trait Graphics {
 
     fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
-    fn create_triangle_overlay(&mut self) -> Result<usize, IndexError>;
+    fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
 
-    fn create_quad_overlay(&mut self) -> Result<usize, IndexError> {
-        self.create_triangle_overlay()
+    fn create_overlay_quads(&mut self) -> Result<usize, IndexError> {
+        self.create_overlay_triangles()
     }
 
     fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
@@ -60,30 +60,30 @@ pub trait Graphics {
 
     fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
 
-    fn draw_triangle_overlay(
+    fn draw_overlay_triangles(
         &mut self,
         index: &usize,
-        triangle_overlay: &TriangleOverlay,
+        overlay_triangles: &OverlayTriangles,
     ) -> Result<(), DrawError>;
 
-    fn draw_quad_overlay(
+    fn draw_overlay_quads(
         &mut self,
         index: &usize,
-        quad_overlay: &QuadOverlay,
+        overlay_quads: &OverlayQuads,
     ) -> Result<(), DrawError> {
-        let triangles = quad_overlay
+        let triangles = overlay_quads
             .quads
             .iter()
             .flat_map(|[a, b, c, d]| [[*a, *b, *d], [*b, *c, *d]].into_iter())
             .collect();
 
-        let triangle_overlay = TriangleOverlay {
+        let overlay_triangles = OverlayTriangles {
+            base_texture: overlay_quads.base_texture,
+            overlay_texture: overlay_quads.overlay_texture,
             triangles,
-            base_texture: quad_overlay.base_texture,
-            overlay_texture: quad_overlay.overlay_texture,
         };
 
-        self.draw_triangle_overlay(index, &triangle_overlay)
+        self.draw_overlay_triangles(index, &overlay_triangles)
     }
 
     fn render(&mut self) -> Result<(), RenderError>;

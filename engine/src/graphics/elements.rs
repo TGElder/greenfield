@@ -21,17 +21,17 @@ pub struct Billboard {
 }
 
 #[derive(Clone)]
-pub struct TriangleOverlay {
-    pub triangles: Vec<[TexturedPosition; 3]>,
+pub struct OverlayTriangles {
     pub base_texture: usize,
     pub overlay_texture: usize,
+    pub triangles: Vec<[TexturedPosition; 3]>,
 }
 
 #[derive(Clone)]
-pub struct QuadOverlay {
-    pub quads: Vec<[TexturedPosition; 4]>,
+pub struct OverlayQuads {
     pub base_texture: usize,
     pub overlay_texture: usize,
+    pub quads: Vec<[TexturedPosition; 4]>,
 }
 
 #[derive(Clone, Copy)]

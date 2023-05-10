@@ -7,7 +7,7 @@ use commons::geometry::Rectangle;
 use crate::engine::Engine;
 use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
-use crate::graphics::elements::{Quad, QuadOverlay};
+use crate::graphics::elements::{OverlayQuads, Quad};
 use crate::graphics::projections::isometric;
 use crate::handlers::{drag, resize, yaw, zoom};
 
@@ -159,7 +159,7 @@ fn render_billboard() {
 }
 
 #[test]
-fn render_quad_overlay() {
+fn render_overlay_quads() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {
         name: "Test".to_string(),
@@ -190,6 +190,13 @@ fn render_quad_overlay() {
     }
 
     // when
+    let base_texture = graphics
+        .load_texture("test_resources/graphics/overlay_quads_base.png")
+        .unwrap();
+    let overlay_texture = graphics
+        .load_texture("test_resources/graphics/overlay_quads_overlay.png")
+        .unwrap();
+
     let aa = textured_position(xyz(-0.5, -0.5, 0.0));
     let ba = textured_position(xyz(0.0, -0.5, 0.0));
     let ca = textured_position(xyz(0.5, -0.5, 0.0));
@@ -199,26 +206,20 @@ fn render_quad_overlay() {
     let ac = textured_position(xyz(-0.5, 0.5, 0.0));
     let bc = textured_position(xyz(0.0, 0.5, 0.0));
     let cc = textured_position(xyz(0.5, 0.5, 0.0));
-
     let quads = vec![
         [aa, ba, bb, ab],
         [ba, ca, cb, bb],
         [ab, bb, bc, ac],
         [bb, cb, cc, bc],
     ];
-    let base_texture = graphics
-        .load_texture("test_resources/graphics/quad_overlay_base.png")
-        .unwrap();
-    let overlay_texture = graphics
-        .load_texture("test_resources/graphics/quad_overlay_overlay.png")
-        .unwrap();
-    let overlay = QuadOverlay {
-        quads,
+
+    let overlay_quads = OverlayQuads {
         base_texture,
         overlay_texture,
+        quads,
     };
-    let index = graphics.create_quad_overlay().unwrap();
-    graphics.draw_quad_overlay(&index, &overlay).unwrap();
+    let index = graphics.create_overlay_quads().unwrap();
+    graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -227,7 +228,7 @@ fn render_quad_overlay() {
 
     // then
     let actual = image::open(temp_path).unwrap();
-    let expected = image::open("test_resources/graphics/render_quad_overlay.png").unwrap();
+    let expected = image::open("test_resources/graphics/render_overlay_quads.png").unwrap();
     assert_eq!(actual, expected);
 }
 
