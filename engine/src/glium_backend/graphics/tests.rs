@@ -116,7 +116,7 @@ fn render_billboard() {
 
     // when
     let texture = graphics
-        .load_texture("test_resources/graphics/crab.png")
+        .load_texture_from_file("test_resources/graphics/crab.png")
         .unwrap();
     let billboard = elements::Billboard {
         position: xyz(0.0, 0.0, 0.0),
@@ -191,10 +191,19 @@ fn render_overlay_quads() {
 
     // when
     let base_texture = graphics
-        .load_texture("test_resources/graphics/overlay_quads_base.png")
+        .load_texture_from_file("test_resources/graphics/overlay_quads_base.png")
         .unwrap();
     let overlay_texture = graphics
-        .load_texture("test_resources/graphics/overlay_quads_overlay.png")
+        .load_texture(&Grid::from_vec(
+            2,
+            2,
+            vec![
+                Rgba::new(255, 255, 0, 255),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(255, 255, 0, 255),
+            ],
+        ))
         .unwrap();
 
     let aa = textured_position(xyz(-0.5, -0.5, 0.0));
