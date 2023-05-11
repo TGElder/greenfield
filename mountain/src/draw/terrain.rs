@@ -1,10 +1,10 @@
 use std::f32::consts::PI;
 
-use commons::color::Rgb;
+use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XYZ};
 use commons::grid::Grid;
 
-use engine::graphics::elements::Quad;
+use engine::graphics::elements::{OverlayQuads, TexturedPosition};
 
 use engine::graphics::Graphics;
 
@@ -16,12 +16,18 @@ pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
         (terrain.width() / slab_size) + 1,
         (terrain.height() / slab_size) + 1,
     );
+    let mut colors = Grid::from_element(
+        terrain.width() - 1,
+        terrain.height() - 1,
+        Rgba::new(0, 0, 0, 0),
+    );
+
+    let mut to_draw = Vec::with_capacity((slabs.x * slabs.y) as usize);
+
     for x in 0..slabs.x {
         for y in 0..slabs.y {
             let slab = xy(x, y);
-            let mut quads = Vec::with_capacity(
-                (terrain.width() - 1) as usize * (terrain.height() - 1) as usize,
-            );
+            let mut quads = Vec::with_capacity((slab_size * slab_size) as usize);
             for x in 0..slab_size {
                 let x = slab.x * slab_size + x;
                 if x >= terrain.width() - 1 {
@@ -43,20 +49,47 @@ pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
                         })
                         .collect::<Vec<_>>();
 
-                    quads.push(Quad {
-                        color: color(&corners),
-                        corners: [corners[0], corners[1], corners[2], corners[3]],
-                    });
+                    colors[xy(x, y)] = color(&corners);
+
+                    let textured_positions = corners
+                        .into_iter()
+                        .map(|position| TexturedPosition {
+                            position,
+                            texture_coordinates: xy(
+                                position.x / colors.width() as f32,
+                                1.0 - (position.y / colors.height() as f32),
+                            ),
+                        })
+                        .collect::<Vec<_>>();
+                    quads.push(textured_positions.try_into().unwrap());
                 }
             }
 
-            let index = graphics.create_quads().unwrap();
-            graphics.draw_quads(&index, &quads).unwrap();
+            to_draw.push(quads);
         }
+    }
+
+    let base_texture = graphics.load_texture(&colors).unwrap();
+    let overlay = Grid::from_element(
+        terrain.width() - 1,
+        terrain.height() - 1,
+        Rgba::new(0, 0, 0, 0),
+    );
+    let overlay_texture = graphics.load_texture(&overlay).unwrap();
+
+    for quads in to_draw {
+        let index = graphics.create_overlay_quads().unwrap();
+
+        let overlay_quads = OverlayQuads {
+            base_texture,
+            overlay_texture,
+            quads,
+        };
+        graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     }
 }
 
-fn color(corners: &[XYZ<f32>]) -> Rgb<f32> {
+fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {
     let light_direction: Vector3<f32> = Vector3::new(1.0, 0.0, 0.0);
     let base_color: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 
@@ -70,9 +103,10 @@ fn color(corners: &[XYZ<f32>]) -> Rgb<f32> {
     let normal = u.cross(&v);
     let angle = normal.angle(&light_direction);
     let shade = angle / PI;
-    Rgb::new(
-        base_color.r * shade,
-        base_color.g * shade,
-        base_color.b * shade,
+    Rgba::new(
+        ((base_color.r * shade) * 255.0).round() as u8,
+        ((base_color.g * shade) * 255.0).round() as u8,
+        ((base_color.b * shade) * 255.0).round() as u8,
+        255,
     )
 }

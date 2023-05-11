@@ -27,7 +27,7 @@ pub struct OverlayQuads {
     pub quads: Vec<[TexturedPosition; 4]>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct TexturedPosition {
     pub position: XYZ<f32>,
     pub texture_coordinates: XY<f32>,
