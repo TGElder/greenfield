@@ -1,6 +1,6 @@
 use commons::geometry::{xy, XY};
 use commons::grid::Grid;
-use commons::unsafe_float_ordering;
+use commons::unsafe_ordering::unsafe_ordering;
 
 use crate::Heightmap;
 
@@ -20,7 +20,7 @@ fn lowest_neighbour(heightmap: &Heightmap, position: &XY<u32>) -> Option<XY<u32>
     heightmap
         .neighbours_4(position)
         .filter(|neighbour| heightmap[neighbour] < heightmap[position])
-        .min_by(|a, b| unsafe_float_ordering(&heightmap[a], &heightmap[b]))
+        .min_by(|a, b| unsafe_ordering(&heightmap[a], &heightmap[b]))
 }
 
 fn lowest_neighbour_offset(heightmap: &Heightmap, position: &XY<u32>) -> Option<XY<i32>> {

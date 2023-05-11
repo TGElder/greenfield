@@ -5,7 +5,7 @@ use std::collections::BinaryHeap;
 
 use commons::geometry::XY;
 use commons::grid::Grid;
-use commons::unsafe_float_ordering;
+use commons::unsafe_ordering::unsafe_ordering;
 
 use crate::{Heightmap, Rises};
 
@@ -70,7 +70,7 @@ impl PartialEq for HeapElement {
 
 impl Ord for HeapElement {
     fn cmp(&self, other: &Self) -> Ordering {
-        unsafe_float_ordering(&other.z, &self.z)
+        unsafe_ordering(&other.z, &self.z)
     }
 }
 

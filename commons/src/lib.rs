@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 extern crate maplit;
 
 pub mod almost_eq;
@@ -11,7 +9,4 @@ pub mod image;
 pub mod noise;
 pub mod quadratic;
 pub mod scale;
-
-pub fn unsafe_float_ordering<T: PartialOrd>(a: &T, b: &T) -> Ordering {
-    a.partial_cmp(b).unwrap()
-}
+pub mod unsafe_ordering;
