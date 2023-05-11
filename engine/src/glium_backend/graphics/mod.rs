@@ -171,8 +171,8 @@ impl GliumGraphics {
         let mut current_overlay_texture = None;
 
         let sampler_behavior = glium::uniforms::SamplerBehavior {
-            magnify_filter: glium::uniforms::MagnifySamplerFilter::Nearest,
             minify_filter: glium::uniforms::MinifySamplerFilter::Nearest,
+            magnify_filter: glium::uniforms::MagnifySamplerFilter::Nearest,
             ..Default::default()
         };
 

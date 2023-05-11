@@ -103,10 +103,15 @@ fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {
     let normal = u.cross(&v);
     let angle = normal.angle(&light_direction);
     let shade = angle / PI;
+
+    fn to_u8(value: f32) -> u8 {
+        (value * 255.0).round() as u8
+    }
+
     Rgba::new(
-        ((base_color.r * shade) * 255.0).round() as u8,
-        ((base_color.g * shade) * 255.0).round() as u8,
-        ((base_color.b * shade) * 255.0).round() as u8,
+        to_u8(base_color.r * shade),
+        to_u8(base_color.g * shade),
+        to_u8(base_color.b * shade),
         255,
     )
 }
