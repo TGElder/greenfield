@@ -17,7 +17,6 @@ use commons::color::Rgba;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use glium::glutin;
-use glium::uniforms::MagnifySamplerFilter;
 use programs::*;
 use vertices::*;
 
@@ -172,7 +171,8 @@ impl GliumGraphics {
         let mut current_overlay_texture = None;
 
         let sampler_behavior = glium::uniforms::SamplerBehavior {
-            magnify_filter: MagnifySamplerFilter::Nearest,
+            minify_filter: glium::uniforms::MinifySamplerFilter::Nearest,
+            magnify_filter: glium::uniforms::MagnifySamplerFilter::Nearest,
             ..Default::default()
         };
 

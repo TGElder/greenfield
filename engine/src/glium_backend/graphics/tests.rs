@@ -182,13 +182,6 @@ fn render_overlay_quads() {
     })
     .unwrap();
 
-    fn textured_position(position: XYZ<f32>) -> TexturedPosition {
-        TexturedPosition {
-            position,
-            texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
-        }
-    }
-
     // when
     let base_texture = graphics
         .load_texture_from_file("test_resources/graphics/overlay_quads_base.png")
@@ -205,6 +198,13 @@ fn render_overlay_quads() {
             ],
         ))
         .unwrap();
+
+    fn textured_position(position: XYZ<f32>) -> TexturedPosition {
+        TexturedPosition {
+            position,
+            texture_coordinates: xy(position.x + 0.5, 1.0 - (position.y + 0.5)),
+        }
+    }
 
     let aa = textured_position(xyz(-0.5, -0.5, 0.0));
     let ba = textured_position(xyz(0.0, -0.5, 0.0));
