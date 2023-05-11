@@ -6,6 +6,13 @@ pub struct ColoredVertex {
 glium::implement_vertex!(ColoredVertex, position, color);
 
 #[derive(Copy, Clone)]
+pub struct TexturedVertex {
+    pub position: [f32; 3],
+    pub texture_coordinates: [f32; 2],
+}
+glium::implement_vertex!(TexturedVertex, position, texture_coordinates);
+
+#[derive(Copy, Clone)]
 pub struct ScreenVertex {
     pub screen_position: [f32; 2],
     pub canvas_position: [f32; 2],

@@ -26,13 +26,15 @@ use crate::model::{skiing, Frame};
 use crate::systems::{avatar_artist, framer, planner};
 
 fn main() {
+    let terrain = generate_heightmap();
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
-                terrain: generate_heightmap(),
                 plans: HashMap::default(),
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
+                reserved: Grid::default(terrain.width(), terrain.height()),
+                terrain,
             },
             start: Instant::now(),
             mouse_xy: None,
@@ -91,10 +93,11 @@ struct Game {
 }
 
 struct Components {
-    terrain: Grid<f32>,
     plans: HashMap<usize, skiing::Plan>,
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
+    terrain: Grid<f32>,
+    reserved: Grid<bool>,
 }
 
 impl Game {
@@ -143,6 +146,7 @@ impl EventHandler for Game {
             &self.components.terrain,
             &self.start.elapsed().as_micros(),
             &mut self.components.plans,
+            &mut self.components.reserved,
         );
         framer::run(
             &self.components.terrain,
