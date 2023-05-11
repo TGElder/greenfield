@@ -5,7 +5,9 @@ pub mod projection;
 pub mod projections;
 pub mod transform;
 
+use commons::color::Rgba;
 use commons::geometry::{XY, XYZ};
+use commons::grid::Grid;
 pub use projection::Projection;
 
 use elements::*;
@@ -15,7 +17,9 @@ use crate::graphics::errors::{
 };
 
 pub trait Graphics {
-    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError>;
+    fn load_texture(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, InitializationError>;
+
+    fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError>;
 
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 

@@ -13,7 +13,9 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
+use commons::color::Rgba;
 use commons::geometry::{xy, xyz, XY, XYZ};
+use commons::grid::Grid;
 use glium::glutin;
 use glium::uniforms::MagnifySamplerFilter;
 use programs::*;
@@ -268,7 +270,21 @@ impl GliumGraphics {
         xy(x_pc * 2.0 - 1.0, -(y_pc * 2.0 - 1.0))
     }
 
-    fn load_texture_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
+    fn load_texture_unsafe(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, Box<dyn Error>> {
+        let raw = image
+            .iter()
+            .map(|xy| image[xy])
+            .flat_map(|Rgba { r, g, b, a }| [r, g, b, a])
+            .collect::<Vec<_>>();
+        let dimensions = (image.width(), image.height());
+        let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&raw, dimensions);
+
+        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
+        self.textures.push(texture);
+        Ok(self.textures.len() - 1)
+    }
+
+    fn load_texture_from_file_unsafe(&mut self, path: &str) -> Result<usize, Box<dyn Error>> {
         let image = image::open(path)?.to_rgba8();
         let dimensions = image.dimensions();
         let image =
@@ -454,8 +470,12 @@ impl GliumGraphics {
 }
 
 impl Graphics for GliumGraphics {
-    fn load_texture(&mut self, path: &str) -> Result<usize, InitializationError> {
-        Ok(self.load_texture_unsafe(path)?)
+    fn load_texture(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, InitializationError> {
+        Ok(self.load_texture_unsafe(image)?)
+    }
+
+    fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError> {
+        Ok(self.load_texture_from_file_unsafe(path)?)
     }
 
     fn create_triangles(&mut self) -> Result<usize, IndexError> {
