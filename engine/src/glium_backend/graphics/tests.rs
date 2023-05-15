@@ -239,6 +239,26 @@ fn render_overlay_quads() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_overlay_quads.png").unwrap();
     assert_eq!(actual, expected);
+
+    // when
+    graphics
+        .modify_texture(
+            &overlay_texture,
+            &xy(1, 1),
+            &Grid::from_vec(1, 1, vec![Rgba::new(255, 255, 0, 255)]),
+        )
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
+    assert_eq!(actual, expected);
 }
 
 #[test]

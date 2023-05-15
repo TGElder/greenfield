@@ -295,6 +295,37 @@ impl GliumGraphics {
         Ok(self.textures.len() - 1)
     }
 
+    fn modify_texture_unsafe(
+        &mut self,
+        index: &usize,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.textures.len() {
+            return Err(format!(
+                "Trying to modify texture #{} but there are only {} textures",
+                index,
+                self.textures.len()
+            )
+            .into());
+        }
+        let texture = &mut self.textures[*index];
+        let rect = glium::Rect {
+            left: from.x,
+            bottom: from.y,
+            width: image.width(),
+            height: image.height(),
+        };
+        let data = image
+            .iter()
+            .map(|xy| image[xy])
+            .map(|Rgba { r, g, b, a }| (r, g, b, a))
+            .collect::<Vec<_>>();
+        println!("{:?}", data);
+        texture.write(rect, vec![data]);
+        Ok(())
+    }
+
     fn create_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
         if self.primitives.len() == isize::MAX as usize {
             return Err("No space for more primitives".into());
@@ -476,6 +507,15 @@ impl Graphics for GliumGraphics {
 
     fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError> {
         Ok(self.load_texture_from_file_unsafe(path)?)
+    }
+
+    fn modify_texture(
+        &mut self,
+        id: &usize,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), DrawError> {
+        Ok(self.modify_texture_unsafe(id, from, image)?)
     }
 
     fn create_triangles(&mut self) -> Result<usize, IndexError> {
