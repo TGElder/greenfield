@@ -316,12 +316,15 @@ impl GliumGraphics {
             width: image.width(),
             height: image.height(),
         };
-        let data = image
-            .iter()
-            .map(|xy| image[xy])
-            .map(|Rgba { r, g, b, a }| (r, g, b, a))
-            .collect::<Vec<_>>();
-        texture.write(rect, vec![data]);
+        let mut data = Vec::with_capacity(image.height() as usize);
+        for y in 0..image.height() {
+            data.push(Vec::with_capacity(image.width() as usize));
+            for x in 0..image.width() {
+                let Rgba { r, g, b, a } = image[xy(x, y)];
+                data[y as usize].push((r, g, b, a));
+            }
+        }
+        texture.write(rect, data);
         Ok(())
     }
 
