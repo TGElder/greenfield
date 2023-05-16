@@ -168,7 +168,7 @@ fn render_overlay_quads() {
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
             projection: isometric::ProjectionParameters {
                 pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
+                yaw: PI * (1.0 / 8.0),
             },
             scale: isometric::ScaleParameters {
                 zoom: 256.0,
@@ -202,7 +202,7 @@ fn render_overlay_quads() {
     fn textured_position(position: XYZ<f32>) -> TexturedPosition {
         TexturedPosition {
             position,
-            texture_coordinates: xy(position.x + 0.5, 1.0 - (position.y + 0.5)),
+            texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
         }
     }
 
@@ -231,13 +231,34 @@ fn render_overlay_quads() {
     graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     graphics.render().unwrap();
 
-    let temp_path = temp_dir().join("test.png");
+    let temp_dir = temp_dir();
+    let temp_path = temp_dir.join("render_overlay_quads.png");
     let temp_path = temp_path.to_str().unwrap();
     graphics.screenshot(temp_path).unwrap();
 
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_overlay_quads.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    graphics
+        .modify_texture(
+            &overlay_texture,
+            &xy(0, 1),
+            &Grid::from_vec(1, 1, vec![Rgba::new(255, 255, 0, 255)]),
+        )
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir.join("render_overlay_quads_modified.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
     assert_eq!(actual, expected);
 }
 

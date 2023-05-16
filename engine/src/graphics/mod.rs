@@ -21,6 +21,13 @@ pub trait Graphics {
 
     fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError>;
 
+    fn modify_texture(
+        &mut self,
+        id: &usize,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), DrawError>;
+
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
     fn create_quads(&mut self) -> Result<usize, IndexError> {

@@ -277,7 +277,7 @@ impl GliumGraphics {
             .flat_map(|Rgba { r, g, b, a }| [r, g, b, a])
             .collect::<Vec<_>>();
         let dimensions = (image.width(), image.height());
-        let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&raw, dimensions);
+        let image = glium::texture::RawImage2d::from_raw_rgba(raw, dimensions);
 
         let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
         self.textures.push(texture);
@@ -293,6 +293,36 @@ impl GliumGraphics {
         let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
         self.textures.push(texture);
         Ok(self.textures.len() - 1)
+    }
+
+    fn modify_texture_unsafe(
+        &mut self,
+        index: &usize,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.textures.len() {
+            return Err(format!(
+                "Trying to modify texture #{} but there are only {} textures",
+                index,
+                self.textures.len()
+            )
+            .into());
+        }
+        let texture = &mut self.textures[*index];
+        let rect = glium::Rect {
+            left: from.x,
+            bottom: from.y,
+            width: image.width(),
+            height: image.height(),
+        };
+        let data = image
+            .iter()
+            .map(|xy| image[xy])
+            .map(|Rgba { r, g, b, a }| (r, g, b, a))
+            .collect::<Vec<_>>();
+        texture.write(rect, vec![data]);
+        Ok(())
     }
 
     fn create_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
@@ -476,6 +506,15 @@ impl Graphics for GliumGraphics {
 
     fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError> {
         Ok(self.load_texture_from_file_unsafe(path)?)
+    }
+
+    fn modify_texture(
+        &mut self,
+        id: &usize,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), DrawError> {
+        Ok(self.modify_texture_unsafe(id, from, image)?)
     }
 
     fn create_triangles(&mut self) -> Result<usize, IndexError> {
