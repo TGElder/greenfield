@@ -168,7 +168,7 @@ fn render_overlay_quads() {
         projection: Box::new(isometric::Projection::new(isometric::Parameters {
             projection: isometric::ProjectionParameters {
                 pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
+                yaw: PI * (1.0 / 8.0),
             },
             scale: isometric::ScaleParameters {
                 zoom: 256.0,
@@ -202,7 +202,7 @@ fn render_overlay_quads() {
     fn textured_position(position: XYZ<f32>) -> TexturedPosition {
         TexturedPosition {
             position,
-            texture_coordinates: xy(position.x + 0.5, 1.0 - (position.y + 0.5)),
+            texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
         }
     }
 
@@ -244,7 +244,7 @@ fn render_overlay_quads() {
     graphics
         .modify_texture(
             &overlay_texture,
-            &xy(1, 1),
+            &xy(0, 1),
             &Grid::from_vec(1, 1, vec![Rgba::new(255, 255, 0, 255)]),
         )
         .unwrap();

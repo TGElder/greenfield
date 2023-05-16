@@ -277,7 +277,7 @@ impl GliumGraphics {
             .flat_map(|Rgba { r, g, b, a }| [r, g, b, a])
             .collect::<Vec<_>>();
         let dimensions = (image.width(), image.height());
-        let image = glium::texture::RawImage2d::from_raw_rgba_reversed(&raw, dimensions);
+        let image = glium::texture::RawImage2d::from_raw_rgba(raw, dimensions);
 
         let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
         self.textures.push(texture);

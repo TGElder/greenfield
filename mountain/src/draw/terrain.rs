@@ -57,7 +57,7 @@ pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
                             position,
                             texture_coordinates: xy(
                                 position.x / colors.width() as f32,
-                                1.0 - (position.y / colors.height() as f32),
+                                position.y / colors.height() as f32,
                             ),
                         })
                         .collect::<Vec<_>>();
