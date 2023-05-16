@@ -231,7 +231,8 @@ fn render_overlay_quads() {
     graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     graphics.render().unwrap();
 
-    let temp_path = temp_dir().join("test.png");
+    let temp_dir = temp_dir();
+    let temp_path = temp_dir.join("render_overlay_quads.png");
     let temp_path = temp_path.to_str().unwrap();
     graphics.screenshot(temp_path).unwrap();
 
@@ -250,7 +251,7 @@ fn render_overlay_quads() {
         .unwrap();
     graphics.render().unwrap();
 
-    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_dir.join("render_overlay_quads_modified.png");
     let temp_path = temp_path.to_str().unwrap();
     graphics.screenshot(temp_path).unwrap();
 

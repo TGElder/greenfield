@@ -321,7 +321,6 @@ impl GliumGraphics {
             .map(|xy| image[xy])
             .map(|Rgba { r, g, b, a }| (r, g, b, a))
             .collect::<Vec<_>>();
-        println!("{:?}", data);
         texture.write(rect, vec![data]);
         Ok(())
     }
