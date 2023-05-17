@@ -146,6 +146,25 @@ pub struct Rectangle<T> {
     pub height: T,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PositionedRectangle<T> {
+    pub from: XY<T>,
+    pub to: XY<T>,
+}
+
+impl<T> PositionedRectangle<T>
+where
+    T: Copy + Sub<Output = T>,
+{
+    pub fn width(&self) -> T {
+        self.to.x.sub(self.from.x)
+    }
+
+    pub fn height(&self) -> T {
+        self.to.y.sub(self.from.y)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -10,7 +10,8 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
-use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
+use commons::color::Rgba;
+use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::engine::Engine;
@@ -21,8 +22,10 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
+use crate::handlers::selection::SelectionHandler;
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
+use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
 
 fn main() {
@@ -37,6 +40,15 @@ fn main() {
                 terrain,
             },
             drawings: None,
+            handlers: Handlers {
+                selection_handler: SelectionHandler { origin: None },
+            },
+            systems: Systems {
+                selection_artist: SelectionArtist {
+                    previous_selection: None,
+                    selection_color: Rgba::new(255, 255, 0, 128),
+                },
+            },
             start: Instant::now(),
             mouse_xy: None,
             drag_handler: drag::Handler::new(),
@@ -54,6 +66,7 @@ fn main() {
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
+            selection: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -86,7 +99,10 @@ fn main() {
 struct Game {
     components: Components,
     drawings: Option<Drawings>,
+    handlers: Handlers,
+    systems: Systems,
     start: Instant,
+    selection: Option<PositionedRectangle<u32>>,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -104,6 +120,14 @@ struct Components {
 
 struct Drawings {
     terrain: draw::terrain::Drawing,
+}
+
+struct Handlers {
+    selection_handler: SelectionHandler,
+}
+
+struct Systems {
+    selection_artist: SelectionArtist,
 }
 
 impl Game {
@@ -167,10 +191,21 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
+        self.systems.selection_artist.run(
+            graphics,
+            self.drawings.as_ref().map(|drawings| &drawings.terrain),
+            &self.selection,
+        );
 
         self.drag_handler.handle(event, engine, graphics);
         self.resize_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
+        self.handlers.selection_handler.handle(
+            &mut self.selection,
+            &self.mouse_xy,
+            event,
+            graphics,
+        );
     }
 }

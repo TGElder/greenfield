@@ -15,7 +15,7 @@ pub struct Drawing {
 }
 
 impl Drawing {
-    fn modify_overlay(
+    pub fn modify_overlay(
         &self,
         graphics: &mut dyn Graphics,
         from: &XY<u32>,
