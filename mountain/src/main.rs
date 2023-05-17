@@ -1,4 +1,5 @@
 mod draw;
+mod handlers;
 mod init;
 mod model;
 mod network;
@@ -20,7 +21,6 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::draw::draw_terrain;
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
 use crate::systems::{avatar_artist, framer, planner};
@@ -36,6 +36,7 @@ fn main() {
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 terrain,
             },
+            drawings: None,
             start: Instant::now(),
             mouse_xy: None,
             drag_handler: drag::Handler::new(),
@@ -84,6 +85,7 @@ fn main() {
 
 struct Game {
     components: Components,
+    drawings: Option<Drawings>,
     start: Instant,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
@@ -100,10 +102,16 @@ struct Components {
     reserved: Grid<bool>,
 }
 
+struct Drawings {
+    terrain: draw::terrain::Drawing,
+}
+
 impl Game {
-    fn init(&self, graphics: &mut dyn Graphics) {
+    fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
-        draw_terrain(graphics, terrain);
+        self.drawings = Some(Drawings {
+            terrain: draw::terrain::draw(graphics, terrain),
+        });
 
         graphics.look_at(
             &xyz(

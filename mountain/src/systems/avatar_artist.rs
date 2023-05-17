@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use engine::graphics::Graphics;
 
-use crate::draw::draw_avatar;
+use crate::draw::avatar::draw;
 use crate::model::Frame;
 
 pub fn run(
@@ -13,10 +13,10 @@ pub fn run(
 ) {
     for (id, frame) in frames {
         match drawings.entry(*id) {
-            Entry::Occupied(value) => draw_avatar(graphics, value.get(), frame),
+            Entry::Occupied(value) => draw(graphics, value.get(), frame),
             Entry::Vacant(cell) => {
                 if let Ok(index) = graphics.create_quads() {
-                    draw_avatar(graphics, &index, frame);
+                    draw(graphics, &index, frame);
                     cell.insert(index);
                 }
             }
