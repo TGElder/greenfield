@@ -4,7 +4,7 @@ use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt::Debug;
 
 use crate::algorithms::get_path;
-use crate::model::{Edge, Network};
+use crate::model::{Edge, OutNetwork};
 
 struct Node<S, T> {
     location: T,
@@ -55,7 +55,7 @@ impl<S, T, N> FindBestWithinSteps<S, T, N> for N
 where
     S: Ord,
     T: Copy + Debug + Eq + Hash,
-    N: Network<T>,
+    N: OutNetwork<T>,
 {
     fn find_best_within_steps(
         &self,
@@ -105,7 +105,7 @@ where
                 _ => best,
             };
 
-            for edge in self.edges(&location) {
+            for edge in self.edges_out(&location) {
                 let to = edge.to;
                 if closed.contains(&to) {
                     continue;
@@ -141,8 +141,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -210,8 +213,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -272,8 +278,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     2 => Box::new(
                         [
@@ -311,8 +320,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -363,8 +375,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -424,8 +439,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [
@@ -511,8 +529,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [Edge {
@@ -542,8 +563,8 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, _: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(&'a self, _: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 Box::new(iter::empty())
             }
         }
@@ -566,8 +587,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [Edge {
@@ -615,8 +639,11 @@ mod tests {
 
         struct TestNetwork {}
 
-        impl Network<usize> for TestNetwork {
-            fn edges<'a>(&'a self, from: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
                 match from {
                     0 => Box::new(
                         [Edge {

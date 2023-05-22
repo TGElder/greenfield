@@ -1,4 +1,4 @@
-use ::network::model::{Edge, Network};
+use ::network::model::{Edge, OutNetwork};
 use commons::{geometry::XY, grid::Grid};
 
 use crate::model::skiing::State;
@@ -13,8 +13,8 @@ pub struct SkiingNetwork<'a> {
     pub reserved: &'a Grid<bool>,
 }
 
-impl<'a> Network<State> for SkiingNetwork<'a> {
-    fn edges<'b>(
+impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
+    fn edges_out<'b>(
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
