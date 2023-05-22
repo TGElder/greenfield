@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use commons::color::{Rgb, Rgba};
-use commons::geometry::{xy, xyz, XYZ};
+use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 
 use engine::graphics::elements::{OverlayQuads, TexturedPosition};
@@ -10,7 +10,22 @@ use engine::graphics::Graphics;
 
 use nalgebra::Vector3;
 
-pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
+pub struct Drawing {
+    overlay_texture: usize,
+}
+
+impl Drawing {
+    pub fn modify_overlay(
+        &self,
+        graphics: &mut dyn Graphics,
+        from: &XY<u32>,
+        image: &Grid<Rgba<u8>>,
+    ) -> Result<(), engine::graphics::errors::DrawError> {
+        graphics.modify_texture(&self.overlay_texture, from, image)
+    }
+}
+
+pub fn draw(graphics: &mut dyn Graphics, terrain: &Grid<f32>) -> Drawing {
     let slab_size = 256;
     let slabs = xy(
         (terrain.width() / slab_size) + 1,
@@ -87,6 +102,8 @@ pub fn draw_terrain(graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
         };
         graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     }
+
+    Drawing { overlay_texture }
 }
 
 fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {

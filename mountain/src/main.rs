@@ -1,4 +1,5 @@
 mod draw;
+mod handlers;
 mod init;
 mod model;
 mod network;
@@ -9,7 +10,8 @@ use std::collections::HashMap;
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
-use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
+use commons::color::Rgba;
+use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::engine::Engine;
@@ -20,9 +22,10 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::draw::draw_terrain;
+use crate::handlers::selection::{self, Handler};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
+use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
 
 fn main() {
@@ -35,6 +38,19 @@ fn main() {
                 drawings: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 terrain,
+            },
+            drawings: None,
+            handlers: Handlers {
+                selection: selection::Handler {
+                    origin: None,
+                    key: KeyboardKey::X,
+                },
+            },
+            systems: Systems {
+                selection_artist: SelectionArtist {
+                    drawn_selection: None,
+                    selection_color: Rgba::new(255, 255, 0, 128),
+                },
             },
             start: Instant::now(),
             mouse_xy: None,
@@ -53,6 +69,7 @@ fn main() {
                 key_plus: KeyboardKey::Plus,
                 key_minus: KeyboardKey::Minus,
             }),
+            selection: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -84,7 +101,11 @@ fn main() {
 
 struct Game {
     components: Components,
+    drawings: Option<Drawings>,
+    handlers: Handlers,
+    systems: Systems,
     start: Instant,
+    selection: Option<PositionedRectangle<u32>>,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -100,10 +121,24 @@ struct Components {
     reserved: Grid<bool>,
 }
 
+struct Drawings {
+    terrain: draw::terrain::Drawing,
+}
+
+struct Handlers {
+    selection: Handler,
+}
+
+struct Systems {
+    selection_artist: SelectionArtist,
+}
+
 impl Game {
-    fn init(&self, graphics: &mut dyn Graphics) {
+    fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
-        draw_terrain(graphics, terrain);
+        self.drawings = Some(Drawings {
+            terrain: draw::terrain::draw(graphics, terrain),
+        });
 
         graphics.look_at(
             &xyz(
@@ -159,10 +194,18 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
+        self.systems.selection_artist.run(
+            graphics,
+            self.drawings.as_ref().map(|drawings| &drawings.terrain),
+            &self.selection,
+        );
 
         self.drag_handler.handle(event, engine, graphics);
         self.resize_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
+        self.handlers
+            .selection
+            .handle(event, &self.mouse_xy, &mut self.selection, graphics);
     }
 }

@@ -11,7 +11,7 @@ impl<T> Rgb<T> {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Rgba<T> {
     pub r: T,
     pub g: T,

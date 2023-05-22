@@ -146,6 +146,25 @@ pub struct Rectangle<T> {
     pub height: T,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct PositionedRectangle<T> {
+    pub from: XY<T>,
+    pub to: XY<T>,
+}
+
+impl<T> PositionedRectangle<T>
+where
+    T: Copy + Sub<Output = T>,
+{
+    pub fn width(&self) -> T {
+        self.to.x.sub(self.from.x)
+    }
+
+    pub fn height(&self) -> T {
+        self.to.y.sub(self.from.y)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -248,5 +267,35 @@ mod tests {
 
         // then
         assert_eq!(result, xyz(1, 2, 3));
+    }
+
+    #[test]
+    fn test_positioned_rectangle_width() {
+        // given
+        let rectangle = PositionedRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.width();
+
+        // then
+        assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn test_positioned_rectangle_height() {
+        // given
+        let rectangle = PositionedRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.height();
+
+        // then
+        assert_eq!(result, 3);
     }
 }
