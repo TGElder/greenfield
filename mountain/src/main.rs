@@ -22,7 +22,7 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::selection::SelectionHandler;
+use crate::handlers::selection::{self, Handler};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
 use crate::systems::selection_artist::SelectionArtist;
@@ -41,11 +41,14 @@ fn main() {
             },
             drawings: None,
             handlers: Handlers {
-                selection_handler: SelectionHandler { origin: None },
+                selection: selection::Handler {
+                    origin: None,
+                    key: KeyboardKey::X,
+                },
             },
             systems: Systems {
                 selection_artist: SelectionArtist {
-                    previous_selection: None,
+                    drawn_selection: None,
                     selection_color: Rgba::new(255, 255, 0, 128),
                 },
             },
@@ -123,7 +126,7 @@ struct Drawings {
 }
 
 struct Handlers {
-    selection_handler: SelectionHandler,
+    selection: Handler,
 }
 
 struct Systems {
@@ -201,11 +204,8 @@ impl EventHandler for Game {
         self.resize_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
-        self.handlers.selection_handler.handle(
-            &mut self.selection,
-            &self.mouse_xy,
-            event,
-            graphics,
-        );
+        self.handlers
+            .selection
+            .handle(event, &self.mouse_xy, &mut self.selection, graphics);
     }
 }

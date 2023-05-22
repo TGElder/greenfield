@@ -268,4 +268,34 @@ mod tests {
         // then
         assert_eq!(result, xyz(1, 2, 3));
     }
+
+    #[test]
+    fn test_positioned_rectangle_width() {
+        // given
+        let rectangle = PositionedRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.width();
+
+        // then
+        assert_eq!(result, 2);
+    }
+
+    #[test]
+    fn test_positioned_rectangle_height() {
+        // given
+        let rectangle = PositionedRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.height();
+
+        // then
+        assert_eq!(result, 3);
+    }
 }

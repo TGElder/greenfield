@@ -3,26 +3,30 @@ use engine::events::{ButtonState, KeyboardKey};
 
 use super::*;
 
-pub struct SelectionHandler {
+pub struct Handler {
+    pub key: KeyboardKey,
     pub origin: Option<XY<u32>>,
 }
 
-impl SelectionHandler {
+impl Handler {
     pub fn handle(
         &mut self,
-        selection: &mut Option<PositionedRectangle<u32>>,
-        mouse_xy: &Option<XY<u32>>,
         event: &engine::events::Event,
+        mouse_xy: &Option<XY<u32>>,
+        selection: &mut Option<PositionedRectangle<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         match event {
             Event::MouseMoved(mouse_xy) => self.modify_selection(selection, mouse_xy, graphics),
             Event::KeyboardInput {
-                key: KeyboardKey::X,
+                key,
                 state: ButtonState::Pressed,
             } => {
+                if *key != self.key {
+                    return;
+                }
                 if self.origin.is_none() {
-                    self.set_origin(selection, mouse_xy, graphics);
+                    self.set_origin(mouse_xy, selection, graphics);
                 } else {
                     self.clear_selection(selection);
                 }
@@ -33,13 +37,13 @@ impl SelectionHandler {
 
     fn set_origin(
         &mut self,
-        selection: &mut Option<PositionedRectangle<u32>>,
         mouse_xy: &Option<XY<u32>>,
+        selection: &mut Option<PositionedRectangle<u32>>,
         graphics: &mut dyn Graphics,
     ) {
         let Some(mouse_xy) = mouse_xy else {return};
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {return};
-        let origin = xy(x.round() as u32, y.round() as u32);
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
+        let origin = selected_cell(xyz);
         self.origin = Some(origin);
         *selection = Some(PositionedRectangle {
             from: origin,
@@ -54,8 +58,8 @@ impl SelectionHandler {
         graphics: &mut dyn Graphics,
     ) {
         let Some(origin) = self.origin else {return};
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {return};
-        let focus = xy(x.floor() as u32, y.floor() as u32);
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
+        let focus = selected_cell(xyz);
 
         *selection = Some(PositionedRectangle {
             from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
@@ -67,4 +71,8 @@ impl SelectionHandler {
         self.origin = None;
         *selection = None;
     }
+}
+
+fn selected_cell(XYZ { x, y, .. }: XYZ<f32>) -> XY<u32> {
+    xy(x.floor() as u32, y.floor() as u32)
 }
