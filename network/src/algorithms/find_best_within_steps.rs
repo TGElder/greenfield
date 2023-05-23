@@ -209,6 +209,7 @@ mod tests {
     #[test]
     fn best_is_not_at_max_steps() {
         // given
+        //
         // [1] <- [2] <- [0] -> [4] -> [3]
 
         struct TestNetwork {}
@@ -274,6 +275,7 @@ mod tests {
     #[test]
     fn best_is_starting_location() {
         // given
+        //
         // [1] <- [2] -> [0]
 
         struct TestNetwork {}
@@ -316,6 +318,7 @@ mod tests {
     #[test]
     fn tied_best() {
         // given
+        //
         // [1] <- [0] -> [2]
 
         struct TestNetwork {}
@@ -371,6 +374,7 @@ mod tests {
     #[test]
     fn multiple_from() {
         // given
+        //
         // [1] <- [0] <-> [2] -> [3]
 
         struct TestNetwork {}
@@ -435,6 +439,7 @@ mod tests {
     #[test]
     fn ties_are_broken_by_steps() {
         // given
+        //
         // [3] <- [2] <- [1] <- [0] -> [4] -> [5]
 
         struct TestNetwork {}
@@ -525,7 +530,6 @@ mod tests {
         // given
         //
         // [0] -> [1]
-        //
 
         struct TestNetwork {}
 
@@ -583,7 +587,6 @@ mod tests {
         // given
         //
         // [0] -> [1] -> [2]
-        //
 
         struct TestNetwork {}
 
@@ -635,7 +638,6 @@ mod tests {
         // given
         //
         // [0] -> [1]
-        //
 
         struct TestNetwork {}
 

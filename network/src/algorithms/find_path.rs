@@ -131,7 +131,6 @@ mod tests {
         //
         // [4] <-1-> [0] <-0-> [1] <-3-> [2] <-1-> [3]
         //            ^___________________^
-        //                      2
 
         struct TestNetwork {}
 
@@ -245,7 +244,6 @@ mod tests {
         // given
         //
         // [0] <-1-> [1] [2] <-1-> [3]
-        //
 
         struct TestNetwork {}
 
@@ -601,7 +599,6 @@ mod tests {
         // given
         //
         // [0] --1-> [1]
-        //
 
         struct TestNetwork {}
 
@@ -657,7 +654,6 @@ mod tests {
         // given
         //
         // [0] --1-> [1]
-        //
 
         struct TestNetwork {}
 
@@ -694,7 +690,6 @@ mod tests {
         // given
         //
         // [0] --1-> [1]
-        //
 
         struct TestNetwork {}
 
