@@ -4,6 +4,7 @@ use std::hash::Hash;
 
 use crate::model::Edge;
 
+pub mod costs_to_target;
 pub mod find_best_within_steps;
 pub mod find_path;
 
