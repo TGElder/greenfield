@@ -38,8 +38,8 @@ where
     N: InNetwork<T>,
 {
     fn costs_to_target(&self, target: &HashSet<T>) -> HashMap<T, u64> {
-        let mut closed = HashSet::new();
         let mut heap = BinaryHeap::new();
+        let mut closed = HashSet::new();
         let mut out = HashMap::new();
 
         for location in target.iter() {
@@ -62,13 +62,14 @@ where
 
             for edge in self.edges_in(&location) {
                 let from = edge.from;
+
                 if closed.contains(&from) {
                     continue;
                 }
-                let cost_from_target = cost_from_target + edge.cost as u64;
+
                 heap.push(Node {
                     location: from,
-                    cost_from_target,
+                    cost_from_target: cost_from_target + edge.cost as u64,
                 });
             }
         }
@@ -103,14 +104,14 @@ mod tests {
                     0 => Box::new(
                         [
                             Edge {
-                                from: 2,
-                                to: 0,
-                                cost: 2,
-                            },
-                            Edge {
                                 from: 1,
                                 to: 0,
                                 cost: 1,
+                            },
+                            Edge {
+                                from: 2,
+                                to: 0,
+                                cost: 2,
                             },
                             Edge {
                                 from: 3,
