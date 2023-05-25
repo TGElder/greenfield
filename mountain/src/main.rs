@@ -6,7 +6,7 @@ mod network;
 mod physics;
 mod systems;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
@@ -14,6 +14,7 @@ use commons::color::Rgba;
 use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
+use commons::unsafe_ordering::unsafe_ordering;
 use engine::engine::Engine;
 use engine::events::{ButtonState, Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
@@ -24,9 +25,13 @@ use engine::handlers::{drag, resize, yaw, zoom};
 
 use crate::handlers::selection::{self, Handler};
 use crate::init::generate_heightmap;
-use crate::model::{skiing, Frame};
+use crate::model::skiing::State;
+use crate::model::{skiing, Direction, Frame, DIRECTIONS};
+use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
+
+use ::network::algorithms::costs_to_target::CostsToTarget;
 
 fn main() {
     let terrain = generate_heightmap();
@@ -174,6 +179,54 @@ impl EventHandler for Game {
                 key: KeyboardKey::F,
                 state: ButtonState::Pressed,
             } => self.add_skier(graphics),
+            Event::KeyboardInput {
+                key: KeyboardKey::C,
+                state: ButtonState::Pressed,
+            } => {
+                if let Some(selection) = self.selection {
+                    let skiing_network = SkiingNetwork {
+                        terrain: &self.components.terrain,
+                        reserved: &Grid::default(
+                            self.components.terrain.width(),
+                            self.components.terrain.height(),
+                        ),
+                    };
+                    println!("Getting positions");
+                    let mut positions = Vec::with_capacity(
+                        (selection.width() * selection.height()).try_into().unwrap(),
+                    );
+                    for x in 0..selection.width() {
+                        for y in 0..selection.height() {
+                            positions.push(xy(selection.from.x + x, selection.from.y + y));
+                        }
+                    }
+                    println!("Getting lowest position");
+                    let lowest_position = positions
+                        .iter()
+                        .min_by(|a, b| {
+                            unsafe_ordering(
+                                &self.components.terrain[*a],
+                                &self.components.terrain[*b],
+                            )
+                        })
+                        .unwrap();
+                    println!("Lowest position is {:?}", lowest_position);
+                    let lowest_states = DIRECTIONS
+                        .iter()
+                        .map(|travel_direction| State {
+                            position: *lowest_position,
+                            velocity: 2,
+                            travel_direction: *travel_direction,
+                        })
+                        .collect::<HashSet<_>>();
+
+                    println!("Computing in network");
+                    let in_network = SkiingInNetwork::for_positions(&skiing_network, &positions);
+                    println!("Computing costs to target");
+                    let result = in_network.costs_to_target(&lowest_states);
+                    println!("Done = {:?}", result);
+                }
+            }
             _ => (),
         }
 

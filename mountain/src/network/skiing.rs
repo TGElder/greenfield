@@ -1,7 +1,13 @@
+use std::collections::{HashMap, HashSet};
+use std::iter::empty;
+
 use ::network::model::{Edge, OutNetwork};
 use commons::{geometry::XY, grid::Grid};
+use network::model::InNetwork;
 
 use crate::model::skiing::State;
+use crate::model::DIRECTIONS;
+use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     model::Direction,
     network::velocity_encoding::{decode_velocity, encode_velocity},
@@ -27,6 +33,50 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             .into_iter()
             .flat_map(|travel_direction| self.get_edge(from, travel_direction)),
         )
+    }
+}
+
+#[derive(Debug)]
+pub struct SkiingInNetwork {
+    pub edges: HashMap<State, Vec<Edge<State>>>,
+}
+
+impl SkiingInNetwork {
+    pub fn for_positions(
+        network: &dyn OutNetwork<State>,
+        positions: &[XY<u32>],
+    ) -> SkiingInNetwork {
+        let mut edges = HashMap::with_capacity(positions.len());
+
+        for position in positions {
+            for travel_direction in DIRECTIONS {
+                for velocity in 0..VELOCITY_LEVELS {
+                    let state = State {
+                        position: *position,
+                        velocity,
+                        travel_direction,
+                    };
+
+                    for edge in network.edges_out(&state) {
+                        edges
+                            .entry(edge.to)
+                            .or_insert_with(|| Vec::with_capacity(3))
+                            .push(edge);
+                    }
+                }
+            }
+        }
+
+        SkiingInNetwork { edges }
+    }
+}
+
+impl InNetwork<State> for SkiingInNetwork {
+    fn edges_in<'a>(&'a self, to: &'a State) -> Box<dyn Iterator<Item = Edge<State>> + 'a> {
+        match self.edges.get(to) {
+            Some(edges) => Box::new(edges.iter().copied()),
+            None => Box::new(empty()),
+        }
     }
 }
 
@@ -59,5 +109,14 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+
+    fn get_from_position(
+        &self,
+        position: &XY<u32>,
+        travel_direction: &Direction,
+    ) -> Option<XY<u32>> {
+        let offset = travel_direction.offset();
+        self.terrain.offset(position, offset * -1)
     }
 }

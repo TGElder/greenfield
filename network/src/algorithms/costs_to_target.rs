@@ -1,6 +1,7 @@
 use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
+use std::fmt::Debug;
 
 use crate::model::InNetwork;
 
@@ -34,7 +35,7 @@ pub trait CostsToTarget<T> {
 
 impl<T, N> CostsToTarget<T> for N
 where
-    T: Copy + Eq + Hash,
+    T: Debug + Copy + Eq + Hash,
     N: InNetwork<T>,
 {
     fn costs_to_target(&self, target: &HashSet<T>) -> HashMap<T, u64> {
@@ -57,6 +58,7 @@ where
             if closed.contains(&location) {
                 continue;
             }
+            dbg!(location);
             closed.insert(location);
             out.insert(location, cost_from_target);
 
