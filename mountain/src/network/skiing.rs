@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::iter::empty;
+use std::iter::{empty, self};
 
 use ::network::model::{Edge, OutNetwork};
 use commons::{geometry::XY, grid::Grid};
@@ -24,15 +24,34 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
-        Box::new(
+        let base = 
             [
                 from.travel_direction.next_anticlockwise(),
                 from.travel_direction,
                 from.travel_direction.next_clockwise(),
             ]
             .into_iter()
-            .flat_map(|travel_direction| self.get_edge(from, travel_direction)),
-        )
+            .flat_map(|travel_direction| self.get_edge(from, travel_direction));
+
+
+        if from.velocity <= 2 {
+            Box::new(base.chain([
+                Edge {
+                    from: *from,
+                    to: State{
+                        velocity: 0,
+                        ..*from
+                    },
+                    cost: 0,
+                },
+                
+            ].into_iter()))
+        }   
+        else {
+            Box::new(base)
+        }
+
+        
     }
 }
 
@@ -110,7 +129,7 @@ impl<'a> SkiingNetwork<'a> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
     }
-
+    
     fn get_from_position(
         &self,
         position: &XY<u32>,

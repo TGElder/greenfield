@@ -58,7 +58,6 @@ where
             if closed.contains(&location) {
                 continue;
             }
-            dbg!(location);
             closed.insert(location);
             out.insert(location, cost_from_target);
 

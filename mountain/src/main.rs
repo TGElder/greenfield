@@ -30,6 +30,8 @@ use crate::model::{skiing, Direction, Frame, DIRECTIONS};
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
+use crate::network::velocity_encoding::VELOCITY_LEVELS;
+
 
 use ::network::algorithms::costs_to_target::CostsToTarget;
 
@@ -195,8 +197,8 @@ impl EventHandler for Game {
                     let mut positions = Vec::with_capacity(
                         (selection.width() * selection.height()).try_into().unwrap(),
                     );
-                    for x in 0..selection.width() {
-                        for y in 0..selection.height() {
+                    for x in 0..selection.width() + 1 {
+                        for y in 0..selection.height() + 1 {
                             positions.push(xy(selection.from.x + x, selection.from.y + y));
                         }
                     }
@@ -215,7 +217,7 @@ impl EventHandler for Game {
                         .iter()
                         .map(|travel_direction| State {
                             position: *lowest_position,
-                            velocity: 2,
+                            velocity: 0,
                             travel_direction: *travel_direction,
                         })
                         .collect::<HashSet<_>>();
@@ -224,7 +226,8 @@ impl EventHandler for Game {
                     let in_network = SkiingInNetwork::for_positions(&skiing_network, &positions);
                     println!("Computing costs to target");
                     let result = in_network.costs_to_target(&lowest_states);
-                    println!("Done = {:?}", result);
+                    // println!("Done = {:?}", result);
+                    println!("Coverage = {:?}", result.len() as f32 / ((selection.width() + 1) * (selection.height() + 1) * 8 * VELOCITY_LEVELS as u32) as f32);
                 }
             }
             _ => (),
