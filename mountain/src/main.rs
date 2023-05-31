@@ -28,10 +28,9 @@ use crate::init::generate_heightmap;
 use crate::model::skiing::State;
 use crate::model::{skiing, Direction, Frame, DIRECTIONS};
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
+use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
-use crate::network::velocity_encoding::VELOCITY_LEVELS;
-
 
 use ::network::algorithms::costs_to_target::CostsToTarget;
 
@@ -227,7 +226,14 @@ impl EventHandler for Game {
                     println!("Computing costs to target");
                     let result = in_network.costs_to_target(&lowest_states);
                     // println!("Done = {:?}", result);
-                    println!("Coverage = {:?}", result.len() as f32 / ((selection.width() + 1) * (selection.height() + 1) * 8 * VELOCITY_LEVELS as u32) as f32);
+                    println!(
+                        "Coverage = {:?}",
+                        result.len() as f32
+                            / ((selection.width() + 1)
+                                * (selection.height() + 1)
+                                * 8
+                                * VELOCITY_LEVELS as u32) as f32
+                    );
                 }
             }
             _ => (),
