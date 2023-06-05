@@ -15,7 +15,7 @@ use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::engine::Engine;
-use engine::events::{ButtonState, Event, EventHandler, KeyboardKey};
+use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey};
 use engine::glium_backend;
 
 use engine::graphics::projections::isometric;
@@ -43,7 +43,7 @@ fn main() {
             handlers: Handlers {
                 selection: selection::Handler {
                     origin: None,
-                    key: KeyboardKey::X,
+                    button: Button::Keyboard(KeyboardKey::X),
                 },
             },
             systems: Systems {
@@ -59,15 +59,15 @@ fn main() {
             yaw_handler: yaw::Handler::new(yaw::Parameters {
                 initial_angle: 5,
                 angles: 16,
-                key_plus: KeyboardKey::E,
-                key_minus: KeyboardKey::Q,
+                button_plus: Button::Keyboard(KeyboardKey::E),
+                button_minus: Button::Keyboard(KeyboardKey::Q),
             }),
             zoom_handler: zoom::Handler::new(zoom::Parameters {
                 initial_level: 1,
                 min_level: 1,
                 max_level: 8,
-                key_plus: KeyboardKey::Plus,
-                key_minus: KeyboardKey::Minus,
+                button_plus: Button::Keyboard(KeyboardKey::Plus),
+                button_minus: Button::Keyboard(KeyboardKey::Minus),
             }),
             selection: None,
         },
@@ -170,8 +170,8 @@ impl EventHandler for Game {
         match event {
             Event::Init => self.init(graphics),
             Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
-            Event::KeyboardInput {
-                key: KeyboardKey::F,
+            Event::Button {
+                button: Button::Keyboard(KeyboardKey::F),
                 state: ButtonState::Pressed,
             } => self.add_skier(graphics),
             _ => (),

@@ -8,7 +8,7 @@ use glium::glutin::event::MouseScrollDelta;
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
 use crate::events::{
-    ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
+    Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
 };
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
@@ -93,7 +93,7 @@ where
                     }
                     glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                         self.event_handler.handle(
-                            &Event::MouseInput {
+                            &Event::Button {
                                 button: button.into(),
                                 state: state.into(),
                             },
@@ -130,8 +130,8 @@ where
                         ..
                     } => {
                         self.event_handler.handle(
-                            &Event::KeyboardInput {
-                                key: keycode.into(),
+                            &Event::Button {
+                                button: keycode.into(),
                                 state: state.into(),
                             },
                             &mut self.state,
@@ -177,20 +177,21 @@ impl From<glutin::event::ElementState> for ButtonState {
     }
 }
 
-impl From<glutin::event::MouseButton> for MouseButton {
+impl From<glutin::event::MouseButton> for Button {
     fn from(button: glutin::event::MouseButton) -> Self {
-        match button {
+        let mouse_button = match button {
             glutin::event::MouseButton::Left => MouseButton::Left,
             glutin::event::MouseButton::Right => MouseButton::Right,
             glutin::event::MouseButton::Middle => MouseButton::Middle,
             glutin::event::MouseButton::Other(_) => MouseButton::Unknown,
-        }
+        };
+        Button::Mouse(mouse_button)
     }
 }
 
-impl From<glutin::event::VirtualKeyCode> for KeyboardKey {
+impl From<glutin::event::VirtualKeyCode> for Button {
     fn from(keycode: glutin::event::VirtualKeyCode) -> Self {
-        match keycode {
+        let key = match keycode {
             glutin::event::VirtualKeyCode::Key1 => KeyboardKey::Key1,
             glutin::event::VirtualKeyCode::Key2 => KeyboardKey::Key2,
             glutin::event::VirtualKeyCode::Key3 => KeyboardKey::Key3,
@@ -230,6 +231,7 @@ impl From<glutin::event::VirtualKeyCode> for KeyboardKey {
             glutin::event::VirtualKeyCode::Plus => KeyboardKey::Plus,
             glutin::event::VirtualKeyCode::Minus => KeyboardKey::Minus,
             _ => KeyboardKey::Unknown,
-        }
+        };
+        Button::Keyboard(key)
     }
 }

@@ -2,7 +2,7 @@ use commons::geometry::XY;
 
 use crate::{
     engine::Engine,
-    events::{ButtonState, Event, EventHandler, KeyboardKey},
+    events::{Button, ButtonState, Event, EventHandler},
     graphics::Graphics,
 };
 
@@ -10,8 +10,8 @@ pub struct Handler {
     level: i32,
     min_level: i32,
     max_level: i32,
-    key_plus: KeyboardKey,
-    key_minus: KeyboardKey,
+    button_plus: Button,
+    button_minus: Button,
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -19,8 +19,8 @@ pub struct Parameters {
     pub initial_level: i32,
     pub min_level: i32,
     pub max_level: i32,
-    pub key_plus: KeyboardKey,
-    pub key_minus: KeyboardKey,
+    pub button_plus: Button,
+    pub button_minus: Button,
 }
 
 impl Handler {
@@ -29,16 +29,16 @@ impl Handler {
             initial_level: level,
             min_level,
             max_level,
-            key_plus,
-            key_minus,
+            button_plus,
+            button_minus,
         }: Parameters,
     ) -> Handler {
         Handler {
             level,
             min_level,
             max_level,
-            key_plus,
-            key_minus,
+            button_plus,
+            button_minus,
             mouse_xy: None,
         }
     }
@@ -53,13 +53,13 @@ impl EventHandler for Handler {
             Event::MouseMoved(xy) => {
                 self.mouse_xy = Some(*xy);
             }
-            Event::KeyboardInput {
-                key,
+            Event::Button {
+                button,
                 state: ButtonState::Pressed,
             } => {
-                let plus = if *key == self.key_plus {
+                let plus = if *button == self.button_plus {
                     true
-                } else if *key == self.key_minus {
+                } else if *button == self.button_minus {
                     false
                 } else {
                     return;

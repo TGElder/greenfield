@@ -5,7 +5,7 @@ use commons::color::Rgb;
 use commons::geometry::Rectangle;
 
 use crate::engine::Engine;
-use crate::events::{ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
+use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::{OverlayQuads, Quad};
 use crate::graphics::projections::isometric;
@@ -369,8 +369,8 @@ fn drag_handler() {
         &mut graphics,
     );
     drag_handler.handle(
-        &Event::MouseInput {
-            button: MouseButton::Left,
+        &Event::Button {
+            button: Button::Mouse(MouseButton::Left),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -430,8 +430,8 @@ fn yaw_handler() {
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
         initial_angle: 5,
         angles: 16,
-        key_plus: KeyboardKey::P,
-        key_minus: KeyboardKey::M,
+        button_plus: Button::Keyboard(KeyboardKey::P),
+        button_minus: Button::Keyboard(KeyboardKey::M),
     });
 
     // when
@@ -441,8 +441,8 @@ fn yaw_handler() {
         &mut graphics,
     );
     yaw_handler.handle(
-        &Event::KeyboardInput {
-            key: KeyboardKey::P,
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::P),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -466,8 +466,8 @@ fn yaw_handler() {
         &mut graphics,
     );
     yaw_handler.handle(
-        &Event::KeyboardInput {
-            key: KeyboardKey::M,
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::M),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -523,8 +523,8 @@ fn zoom_handler() {
         initial_level: 8,
         min_level: 7,
         max_level: 9,
-        key_plus: KeyboardKey::P,
-        key_minus: KeyboardKey::M,
+        button_plus: Button::Keyboard(KeyboardKey::P),
+        button_minus: Button::Keyboard(KeyboardKey::M),
     });
 
     // when
@@ -534,8 +534,8 @@ fn zoom_handler() {
         &mut graphics,
     );
     yaw_handler.handle(
-        &Event::KeyboardInput {
-            key: KeyboardKey::P,
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::P),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -559,8 +559,8 @@ fn zoom_handler() {
         &mut graphics,
     );
     yaw_handler.handle(
-        &Event::KeyboardInput {
-            key: KeyboardKey::M,
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::M),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
