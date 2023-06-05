@@ -8,7 +8,7 @@ use glium::glutin::event::MouseScrollDelta;
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
 use crate::events::{
-    ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
+    Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
 };
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
@@ -93,7 +93,7 @@ where
                     }
                     glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                         self.event_handler.handle(
-                            &Event::MouseInput {
+                            &Event::Button {
                                 button: button.into(),
                                 state: state.into(),
                             },
@@ -130,8 +130,8 @@ where
                         ..
                     } => {
                         self.event_handler.handle(
-                            &Event::KeyboardInput {
-                                key: keycode.into(),
+                            &Event::Button {
+                                button: keycode.into(),
                                 state: state.into(),
                             },
                             &mut self.state,
@@ -177,59 +177,59 @@ impl From<glutin::event::ElementState> for ButtonState {
     }
 }
 
-impl From<glutin::event::MouseButton> for MouseButton {
+impl From<glutin::event::MouseButton> for Button {
     fn from(button: glutin::event::MouseButton) -> Self {
         match button {
-            glutin::event::MouseButton::Left => MouseButton::Left,
-            glutin::event::MouseButton::Right => MouseButton::Right,
-            glutin::event::MouseButton::Middle => MouseButton::Middle,
-            glutin::event::MouseButton::Other(_) => MouseButton::Unknown,
+            glutin::event::MouseButton::Left => Button::Mouse(MouseButton::Left),
+            glutin::event::MouseButton::Right => Button::Mouse(MouseButton::Right),
+            glutin::event::MouseButton::Middle => Button::Mouse(MouseButton::Middle),
+            glutin::event::MouseButton::Other(_) => Button::Mouse(MouseButton::Unknown),
         }
     }
 }
 
-impl From<glutin::event::VirtualKeyCode> for KeyboardKey {
+impl From<glutin::event::VirtualKeyCode> for Button {
     fn from(keycode: glutin::event::VirtualKeyCode) -> Self {
         match keycode {
-            glutin::event::VirtualKeyCode::Key1 => KeyboardKey::Key1,
-            glutin::event::VirtualKeyCode::Key2 => KeyboardKey::Key2,
-            glutin::event::VirtualKeyCode::Key3 => KeyboardKey::Key3,
-            glutin::event::VirtualKeyCode::Key4 => KeyboardKey::Key4,
-            glutin::event::VirtualKeyCode::Key5 => KeyboardKey::Key5,
-            glutin::event::VirtualKeyCode::Key6 => KeyboardKey::Key6,
-            glutin::event::VirtualKeyCode::Key7 => KeyboardKey::Key7,
-            glutin::event::VirtualKeyCode::Key8 => KeyboardKey::Key8,
-            glutin::event::VirtualKeyCode::Key9 => KeyboardKey::Key9,
-            glutin::event::VirtualKeyCode::Key0 => KeyboardKey::Key0,
-            glutin::event::VirtualKeyCode::A => KeyboardKey::A,
-            glutin::event::VirtualKeyCode::B => KeyboardKey::B,
-            glutin::event::VirtualKeyCode::C => KeyboardKey::C,
-            glutin::event::VirtualKeyCode::D => KeyboardKey::D,
-            glutin::event::VirtualKeyCode::E => KeyboardKey::E,
-            glutin::event::VirtualKeyCode::F => KeyboardKey::F,
-            glutin::event::VirtualKeyCode::G => KeyboardKey::G,
-            glutin::event::VirtualKeyCode::H => KeyboardKey::H,
-            glutin::event::VirtualKeyCode::I => KeyboardKey::I,
-            glutin::event::VirtualKeyCode::J => KeyboardKey::J,
-            glutin::event::VirtualKeyCode::K => KeyboardKey::K,
-            glutin::event::VirtualKeyCode::L => KeyboardKey::L,
-            glutin::event::VirtualKeyCode::M => KeyboardKey::M,
-            glutin::event::VirtualKeyCode::N => KeyboardKey::N,
-            glutin::event::VirtualKeyCode::O => KeyboardKey::O,
-            glutin::event::VirtualKeyCode::P => KeyboardKey::P,
-            glutin::event::VirtualKeyCode::Q => KeyboardKey::Q,
-            glutin::event::VirtualKeyCode::R => KeyboardKey::R,
-            glutin::event::VirtualKeyCode::S => KeyboardKey::S,
-            glutin::event::VirtualKeyCode::T => KeyboardKey::T,
-            glutin::event::VirtualKeyCode::U => KeyboardKey::U,
-            glutin::event::VirtualKeyCode::V => KeyboardKey::V,
-            glutin::event::VirtualKeyCode::W => KeyboardKey::W,
-            glutin::event::VirtualKeyCode::X => KeyboardKey::X,
-            glutin::event::VirtualKeyCode::Y => KeyboardKey::Y,
-            glutin::event::VirtualKeyCode::Z => KeyboardKey::Z,
-            glutin::event::VirtualKeyCode::Plus => KeyboardKey::Plus,
-            glutin::event::VirtualKeyCode::Minus => KeyboardKey::Minus,
-            _ => KeyboardKey::Unknown,
+            glutin::event::VirtualKeyCode::Key1 => Button::Keyboard(KeyboardKey::Key1),
+            glutin::event::VirtualKeyCode::Key2 => Button::Keyboard(KeyboardKey::Key2),
+            glutin::event::VirtualKeyCode::Key3 => Button::Keyboard(KeyboardKey::Key3),
+            glutin::event::VirtualKeyCode::Key4 => Button::Keyboard(KeyboardKey::Key4),
+            glutin::event::VirtualKeyCode::Key5 => Button::Keyboard(KeyboardKey::Key5),
+            glutin::event::VirtualKeyCode::Key6 => Button::Keyboard(KeyboardKey::Key6),
+            glutin::event::VirtualKeyCode::Key7 => Button::Keyboard(KeyboardKey::Key7),
+            glutin::event::VirtualKeyCode::Key8 => Button::Keyboard(KeyboardKey::Key8),
+            glutin::event::VirtualKeyCode::Key9 => Button::Keyboard(KeyboardKey::Key9),
+            glutin::event::VirtualKeyCode::Key0 => Button::Keyboard(KeyboardKey::Key0),
+            glutin::event::VirtualKeyCode::A => Button::Keyboard(KeyboardKey::A),
+            glutin::event::VirtualKeyCode::B => Button::Keyboard(KeyboardKey::B),
+            glutin::event::VirtualKeyCode::C => Button::Keyboard(KeyboardKey::C),
+            glutin::event::VirtualKeyCode::D => Button::Keyboard(KeyboardKey::D),
+            glutin::event::VirtualKeyCode::E => Button::Keyboard(KeyboardKey::E),
+            glutin::event::VirtualKeyCode::F => Button::Keyboard(KeyboardKey::F),
+            glutin::event::VirtualKeyCode::G => Button::Keyboard(KeyboardKey::G),
+            glutin::event::VirtualKeyCode::H => Button::Keyboard(KeyboardKey::H),
+            glutin::event::VirtualKeyCode::I => Button::Keyboard(KeyboardKey::I),
+            glutin::event::VirtualKeyCode::J => Button::Keyboard(KeyboardKey::J),
+            glutin::event::VirtualKeyCode::K => Button::Keyboard(KeyboardKey::K),
+            glutin::event::VirtualKeyCode::L => Button::Keyboard(KeyboardKey::L),
+            glutin::event::VirtualKeyCode::M => Button::Keyboard(KeyboardKey::M),
+            glutin::event::VirtualKeyCode::N => Button::Keyboard(KeyboardKey::N),
+            glutin::event::VirtualKeyCode::O => Button::Keyboard(KeyboardKey::O),
+            glutin::event::VirtualKeyCode::P => Button::Keyboard(KeyboardKey::P),
+            glutin::event::VirtualKeyCode::Q => Button::Keyboard(KeyboardKey::Q),
+            glutin::event::VirtualKeyCode::R => Button::Keyboard(KeyboardKey::R),
+            glutin::event::VirtualKeyCode::S => Button::Keyboard(KeyboardKey::S),
+            glutin::event::VirtualKeyCode::T => Button::Keyboard(KeyboardKey::T),
+            glutin::event::VirtualKeyCode::U => Button::Keyboard(KeyboardKey::U),
+            glutin::event::VirtualKeyCode::V => Button::Keyboard(KeyboardKey::V),
+            glutin::event::VirtualKeyCode::W => Button::Keyboard(KeyboardKey::W),
+            glutin::event::VirtualKeyCode::X => Button::Keyboard(KeyboardKey::X),
+            glutin::event::VirtualKeyCode::Y => Button::Keyboard(KeyboardKey::Y),
+            glutin::event::VirtualKeyCode::Z => Button::Keyboard(KeyboardKey::Z),
+            glutin::event::VirtualKeyCode::Plus => Button::Keyboard(KeyboardKey::Plus),
+            glutin::event::VirtualKeyCode::Minus => Button::Keyboard(KeyboardKey::Minus),
+            _ => Button::Keyboard(KeyboardKey::Unknown),
         }
     }
 }

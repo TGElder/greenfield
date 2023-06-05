@@ -12,16 +12,20 @@ pub enum ButtonState {
     Released,
 }
 
+#[derive(PartialEq)]
+
+pub enum Button {
+    Mouse(MouseButton),
+    Keyboard(KeyboardKey),
+}
+
+#[derive(PartialEq)]
+
 pub enum MouseButton {
     Left,
     Middle,
     Right,
     Unknown,
-}
-
-pub enum MouseWheelDirection {
-    Up,
-    Down,
 }
 
 #[derive(PartialEq)]
@@ -70,18 +74,16 @@ pub enum KeyboardKey {
     Unknown,
 }
 
+pub enum MouseWheelDirection {
+    Up,
+    Down,
+}
+
 pub enum Event {
     Init,
     Tick,
+    Button { button: Button, state: ButtonState },
     MouseMoved(XY<u32>),
-    MouseInput {
-        button: MouseButton,
-        state: ButtonState,
-    },
     MouseWheel(MouseWheelDirection),
-    KeyboardInput {
-        key: KeyboardKey,
-        state: ButtonState,
-    },
     WindowResize(Rectangle<u32>),
 }

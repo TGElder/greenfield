@@ -1,10 +1,10 @@
 use commons::geometry::{xy, PositionedRectangle, XY, XYZ};
-use engine::events::{ButtonState, KeyboardKey};
+use engine::events::{Button, ButtonState};
 
 use super::*;
 
 pub struct Handler {
-    pub key: KeyboardKey,
+    pub button: Button,
     pub origin: Option<XY<u32>>,
 }
 
@@ -18,11 +18,11 @@ impl Handler {
     ) {
         match event {
             Event::MouseMoved(mouse_xy) => self.modify_selection(selection, mouse_xy, graphics),
-            Event::KeyboardInput {
-                key,
+            Event::Button {
+                button,
                 state: ButtonState::Pressed,
             } => {
-                if *key != self.key {
+                if *button != self.button {
                     return;
                 }
                 if self.origin.is_none() {

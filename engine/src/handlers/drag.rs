@@ -1,5 +1,6 @@
 use commons::geometry::{XY, XYZ};
 
+use crate::events::Button;
 use crate::{
     engine::Engine,
     events::{ButtonState, Event, EventHandler, MouseButton},
@@ -35,8 +36,8 @@ impl EventHandler for Handler {
                     graphics.look_at(&selection, xy);
                 }
             }
-            Event::MouseInput {
-                button: MouseButton::Left,
+            Event::Button {
+                button: Button::Mouse(MouseButton::Left),
                 state: ButtonState::Pressed,
             } => {
                 let Some(mouse_xy) = self.mouse_xy else {return};
@@ -44,8 +45,8 @@ impl EventHandler for Handler {
                     self.selection = Some(xyz)
                 }
             }
-            Event::MouseInput {
-                button: MouseButton::Left,
+            Event::Button {
+                button: Button::Mouse(MouseButton::Left),
                 state: ButtonState::Released,
             } => self.selection = None,
             _ => (),
