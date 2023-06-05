@@ -76,6 +76,7 @@ fn main() {
                 key_minus: KeyboardKey::Minus,
             }),
             selection: None,
+            costs: HashMap::new(),
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -117,6 +118,7 @@ struct Game {
     resize_handler: resize::Handler,
     yaw_handler: yaw::Handler,
     zoom_handler: zoom::Handler,
+    costs: HashMap<State, u64>,
 }
 
 struct Components {
@@ -224,11 +226,11 @@ impl EventHandler for Game {
                     println!("Computing in network");
                     let in_network = SkiingInNetwork::for_positions(&skiing_network, &positions);
                     println!("Computing costs to target");
-                    let result = in_network.costs_to_target(&lowest_states);
+                    self.costs = in_network.costs_to_target(&lowest_states);
                     // println!("Done = {:?}", result);
                     println!(
                         "Coverage = {:?}",
-                        result.len() as f32
+                        self.costs.len() as f32
                             / ((selection.width() + 1)
                                 * (selection.height() + 1)
                                 * 8
@@ -244,6 +246,7 @@ impl EventHandler for Game {
             &self.start.elapsed().as_micros(),
             &mut self.components.plans,
             &mut self.components.reserved,
+            &self.costs,
         );
         framer::run(
             &self.components.terrain,

@@ -19,6 +19,7 @@ pub fn run(
     micros: &u128,
     plans: &mut HashMap<usize, Plan>,
     reserved: &mut Grid<bool>,
+    costs: &HashMap<State, u64>,
 ) {
     for (_, current_plan) in plans.iter_mut() {
         if let Plan::Moving(ref events) = current_plan {
@@ -29,7 +30,7 @@ pub fn run(
             }
         }
         free(current_plan, reserved);
-        *current_plan = new_plan(terrain, micros, current_plan, reserved);
+        *current_plan = new_plan(terrain, micros, current_plan, reserved, costs);
         reserve(current_plan, reserved);
     }
 }
@@ -58,9 +59,15 @@ fn iter_positions<'a>(plan: &'a Plan) -> Box<dyn Iterator<Item = XY<u32>> + 'a> 
     }
 }
 
-fn new_plan(terrain: &Grid<f32>, micros: &u128, plan: &Plan, reserved: &Grid<bool>) -> Plan {
+fn new_plan(
+    terrain: &Grid<f32>,
+    micros: &u128,
+    plan: &Plan,
+    reserved: &Grid<bool>,
+    costs: &HashMap<State, u64>,
+) -> Plan {
     let from = last_state(plan);
-    match find_path(terrain, from, reserved) {
+    match find_path(terrain, from, reserved, costs) {
         Some(edges) => {
             if edges.is_empty() {
                 stop(*from)
@@ -79,17 +86,21 @@ fn last_state(plan: &Plan) -> &State {
     }
 }
 
-fn find_path(terrain: &Grid<f32>, from: &State, reserved: &Grid<bool>) -> Option<Vec<Edge<State>>> {
+fn find_path(
+    terrain: &Grid<f32>,
+    from: &State,
+    reserved: &Grid<bool>,
+    costs: &HashMap<State, u64>,
+) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
+
+    let costs = costs.clone();
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|network, state| {
-            UnsafeOrderable::new(if state.velocity <= MAX_VELOCITY_TARGET {
-                -network.terrain[state.position]
-            } else {
-                f32::NEG_INFINITY
-            })
+        &move |network, state| match costs.get(state) {
+            Some(_) => u64::MAX - costs[state],
+            None => 0,
         },
         MAX_STEPS,
     )
