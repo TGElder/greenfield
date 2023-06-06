@@ -7,6 +7,7 @@ pub trait EventHandler {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics);
 }
 
+#[derive(PartialEq)]
 pub enum ButtonState {
     Pressed,
     Released,

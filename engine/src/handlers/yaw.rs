@@ -2,26 +2,29 @@ use std::f32::consts::PI;
 
 use commons::geometry::XY;
 
-use crate::events::Button;
+use crate::binding::Binding;
 use crate::{
     engine::Engine,
-    events::{ButtonState, Event, EventHandler},
+    events::{Event, EventHandler},
     graphics::Graphics,
 };
 
 pub struct Handler {
     angle: usize,
     angles: usize,
-    button_plus: Button,
-    button_minus: Button,
+    bindings: Bindings,
     mouse_xy: Option<XY<u32>>,
 }
 
 pub struct Parameters {
     pub initial_angle: usize,
     pub angles: usize,
-    pub button_plus: Button,
-    pub button_minus: Button,
+    pub bindings: Bindings,
+}
+
+pub struct Bindings {
+    pub plus: Binding,
+    pub minus: Binding,
 }
 
 impl Handler {
@@ -29,17 +32,29 @@ impl Handler {
         Parameters {
             initial_angle: angle,
             angles,
-            button_plus,
-            button_minus,
+            bindings,
         }: Parameters,
     ) -> Handler {
         Handler {
             angle,
             angles,
-            button_plus,
-            button_minus,
+            bindings,
             mouse_xy: None,
         }
+    }
+
+    fn step_angle(&mut self, positive: bool, graphics: &mut dyn Graphics) {
+        let Some(mouse_xy) = self.mouse_xy else {return};
+        let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {return};
+
+        if positive {
+            self.angle = (self.angle + 1) % self.angles;
+        } else {
+            self.angle = (self.angle + self.angles - 1) % self.angles;
+        }
+
+        graphics.projection().yaw(self.compute_yaw());
+        graphics.look_at(&xyz, &mouse_xy);
     }
 
     fn compute_yaw(&self) -> f32 {
@@ -48,34 +63,16 @@ impl Handler {
 }
 impl EventHandler for Handler {
     fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        match event {
-            Event::MouseMoved(xy) => {
-                self.mouse_xy = Some(*xy);
-            }
-            Event::Button {
-                button,
-                state: ButtonState::Pressed,
-            } => {
-                let plus = if *button == self.button_plus {
-                    true
-                } else if *button == self.button_minus {
-                    false
-                } else {
-                    return;
-                };
-                let Some(mouse_xy) = self.mouse_xy else {return};
-                let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {return};
+        if let Event::MouseMoved(xy) = event {
+            self.mouse_xy = Some(*xy);
+        }
 
-                if plus {
-                    self.angle = (self.angle + 1) % self.angles;
-                } else {
-                    self.angle = (self.angle + self.angles - 1) % self.angles;
-                }
+        if self.bindings.plus.binds_event(event) {
+            self.step_angle(true, graphics);
+        }
 
-                graphics.projection().yaw(self.compute_yaw());
-                graphics.look_at(&xyz, &mouse_xy);
-            }
-            _ => (),
+        if self.bindings.minus.binds_event(event) {
+            self.step_angle(false, graphics);
         }
     }
 }

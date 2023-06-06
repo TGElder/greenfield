@@ -1,55 +1,51 @@
 use commons::geometry::{XY, XYZ};
 
-use crate::events::Button;
+use crate::binding::Binding;
 use crate::{
     engine::Engine,
-    events::{ButtonState, Event, EventHandler, MouseButton},
+    events::{Event, EventHandler},
     graphics::Graphics,
 };
 
 pub struct Handler {
     mouse_xy: Option<XY<u32>>,
     selection: Option<XYZ<f32>>,
+    bindings: Bindings,
+}
+
+pub struct Bindings {
+    pub start_dragging: Binding,
+    pub stop_dragging: Binding,
 }
 
 impl Handler {
-    pub fn new() -> Handler {
+    pub fn new(bindings: Bindings) -> Handler {
         Handler {
             mouse_xy: None,
             selection: None,
+            bindings,
         }
-    }
-}
-
-impl Default for Handler {
-    fn default() -> Self {
-        Self::new()
     }
 }
 
 impl EventHandler for Handler {
     fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        match event {
-            Event::MouseMoved(xy) => {
-                self.mouse_xy = Some(*xy);
-                if let Some(selection) = self.selection {
-                    graphics.look_at(&selection, xy);
-                }
+        if let Event::MouseMoved(xy) = event {
+            self.mouse_xy = Some(*xy);
+            if let Some(selection) = self.selection {
+                graphics.look_at(&selection, xy);
             }
-            Event::Button {
-                button: Button::Mouse(MouseButton::Left),
-                state: ButtonState::Pressed,
-            } => {
-                let Some(mouse_xy) = self.mouse_xy else {return};
-                if let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) {
-                    self.selection = Some(xyz)
-                }
+        }
+
+        if self.bindings.start_dragging.binds_event(event) {
+            let Some(mouse_xy) = self.mouse_xy else {return};
+            if let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) {
+                self.selection = Some(xyz)
             }
-            Event::Button {
-                button: Button::Mouse(MouseButton::Left),
-                state: ButtonState::Released,
-            } => self.selection = None,
-            _ => (),
+        }
+
+        if self.bindings.stop_dragging.binds_event(event) {
+            self.selection = None;
         }
     }
 }
