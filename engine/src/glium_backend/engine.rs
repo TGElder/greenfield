@@ -117,7 +117,7 @@ where
                             self.event_handler.handle(
                                 &Event::Button {
                                     button: Button::Mouse(MouseButton::WheelDown),
-                                    state: ButtonState::Released,
+                                    state: ButtonState::Pressed,
                                 },
                                 &mut self.state,
                                 &mut self.graphics,
