@@ -7,9 +7,7 @@ use glium::glutin::event::MouseScrollDelta;
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
-use crate::events::{
-    Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton, MouseWheelDirection,
-};
+use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
 
@@ -108,13 +106,19 @@ where
                     } => {
                         if y > 0.0 {
                             self.event_handler.handle(
-                                &Event::MouseWheel(MouseWheelDirection::Up),
+                                &Event::Button {
+                                    button: Button::Mouse(MouseButton::WheelUp),
+                                    state: ButtonState::Pressed,
+                                },
                                 &mut self.state,
                                 &mut self.graphics,
                             );
                         } else if y < 0.0 {
                             self.event_handler.handle(
-                                &Event::MouseWheel(MouseWheelDirection::Down),
+                                &Event::Button {
+                                    button: Button::Mouse(MouseButton::WheelDown),
+                                    state: ButtonState::Released,
+                                },
                                 &mut self.state,
                                 &mut self.graphics,
                             );

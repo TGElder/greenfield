@@ -26,6 +26,8 @@ pub enum MouseButton {
     Left,
     Middle,
     Right,
+    WheelUp,
+    WheelDown,
     Unknown,
 }
 
@@ -75,16 +77,10 @@ pub enum KeyboardKey {
     Unknown,
 }
 
-pub enum MouseWheelDirection {
-    Up,
-    Down,
-}
-
 pub enum Event {
     Init,
     Tick,
     Button { button: Button, state: ButtonState },
     MouseMoved(XY<u32>),
-    MouseWheel(MouseWheelDirection),
     WindowResize(Rectangle<u32>),
 }
