@@ -14,8 +14,9 @@ use commons::color::Rgba;
 use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
 
 use commons::grid::Grid;
+use engine::binding::Binding;
 use engine::engine::Engine;
-use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey};
+use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use engine::glium_backend;
 
 use engine::graphics::projections::isometric;
@@ -43,7 +44,10 @@ fn main() {
             handlers: Handlers {
                 selection: selection::Handler {
                     origin: None,
-                    button: Button::Keyboard(KeyboardKey::X),
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::X),
+                        state: ButtonState::Pressed,
+                    },
                 },
             },
             systems: Systems {
@@ -54,20 +58,45 @@ fn main() {
             },
             start: Instant::now(),
             mouse_xy: None,
-            drag_handler: drag::Handler::new(),
+            drag_handler: drag::Handler::new(drag::Bindings {
+                start_dragging: Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
+                    state: ButtonState::Pressed,
+                },
+                stop_dragging: Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
+                    state: ButtonState::Released,
+                },
+            }),
             resize_handler: resize::Handler::new(),
             yaw_handler: yaw::Handler::new(yaw::Parameters {
                 initial_angle: 5,
                 angles: 16,
-                button_plus: Button::Keyboard(KeyboardKey::E),
-                button_minus: Button::Keyboard(KeyboardKey::Q),
+                bindings: yaw::Bindings {
+                    plus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::E),
+                        state: ButtonState::Pressed,
+                    },
+                    minus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::Q),
+                        state: ButtonState::Pressed,
+                    },
+                },
             }),
             zoom_handler: zoom::Handler::new(zoom::Parameters {
                 initial_level: 1,
                 min_level: 1,
                 max_level: 8,
-                button_plus: Button::Keyboard(KeyboardKey::Plus),
-                button_minus: Button::Keyboard(KeyboardKey::Minus),
+                bindings: zoom::Bindings {
+                    plus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::Plus),
+                        state: ButtonState::Pressed,
+                    },
+                    minus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::Minus),
+                        state: ButtonState::Pressed,
+                    },
+                },
             }),
             selection: None,
         },

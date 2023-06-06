@@ -1,11 +1,11 @@
 use commons::geometry::{xy, PositionedRectangle, XY, XYZ};
-use engine::events::{Button, ButtonState};
+use engine::binding::Binding;
 
 use super::*;
 
 pub struct Handler {
-    pub button: Button,
     pub origin: Option<XY<u32>>,
+    pub binding: Binding,
 }
 
 impl Handler {
@@ -16,22 +16,16 @@ impl Handler {
         selection: &mut Option<PositionedRectangle<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
-        match event {
-            Event::MouseMoved(mouse_xy) => self.modify_selection(selection, mouse_xy, graphics),
-            Event::Button {
-                button,
-                state: ButtonState::Pressed,
-            } => {
-                if *button != self.button {
-                    return;
-                }
-                if self.origin.is_none() {
-                    self.set_origin(mouse_xy, selection, graphics);
-                } else {
-                    self.clear_selection(selection);
-                }
+        if let Event::MouseMoved(mouse_xy) = event {
+            self.modify_selection(selection, mouse_xy, graphics)
+        }
+
+        if self.binding.binds_event(event) {
+            if self.origin.is_none() {
+                self.set_origin(mouse_xy, selection, graphics);
+            } else {
+                self.clear_selection(selection);
             }
-            _ => (),
         }
     }
 

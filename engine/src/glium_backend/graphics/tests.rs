@@ -4,6 +4,7 @@ use std::f32::consts::PI;
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
 
+use crate::binding::Binding;
 use crate::engine::Engine;
 use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
@@ -360,7 +361,16 @@ fn drag_handler() {
     graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
-    let mut drag_handler = drag::Handler::new();
+    let mut drag_handler = drag::Handler::new(drag::Bindings {
+        start_dragging: Binding::Single {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Pressed,
+        },
+        stop_dragging: Binding::Single {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Released,
+        },
+    });
 
     // when
     drag_handler.handle(
@@ -430,8 +440,16 @@ fn yaw_handler() {
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
         initial_angle: 5,
         angles: 16,
-        button_plus: Button::Keyboard(KeyboardKey::P),
-        button_minus: Button::Keyboard(KeyboardKey::M),
+        bindings: yaw::Bindings {
+            plus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Plus),
+                state: ButtonState::Pressed,
+            },
+            minus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Minus),
+                state: ButtonState::Pressed,
+            },
+        },
     });
 
     // when
@@ -442,7 +460,7 @@ fn yaw_handler() {
     );
     yaw_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::P),
+            button: Button::Keyboard(KeyboardKey::Plus),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -467,7 +485,7 @@ fn yaw_handler() {
     );
     yaw_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::M),
+            button: Button::Keyboard(KeyboardKey::Minus),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -519,23 +537,31 @@ fn zoom_handler() {
     graphics.draw_quads(&index, &cube_quads()).unwrap();
     graphics.render().unwrap();
 
-    let mut yaw_handler = zoom::Handler::new(zoom::Parameters {
+    let mut zoom_handler = zoom::Handler::new(zoom::Parameters {
         initial_level: 8,
         min_level: 7,
         max_level: 9,
-        button_plus: Button::Keyboard(KeyboardKey::P),
-        button_minus: Button::Keyboard(KeyboardKey::M),
+        bindings: zoom::Bindings {
+            plus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Plus),
+                state: ButtonState::Pressed,
+            },
+            minus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Minus),
+                state: ButtonState::Pressed,
+            },
+        },
     });
 
     // when
-    yaw_handler.handle(
+    zoom_handler.handle(
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
-    yaw_handler.handle(
+    zoom_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::P),
+            button: Button::Keyboard(KeyboardKey::Plus),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -553,14 +579,14 @@ fn zoom_handler() {
     assert_eq!(actual, expected);
 
     // when
-    yaw_handler.handle(
+    zoom_handler.handle(
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
-    yaw_handler.handle(
+    zoom_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::M),
+            button: Button::Keyboard(KeyboardKey::Minus),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
