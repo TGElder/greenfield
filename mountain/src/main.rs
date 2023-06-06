@@ -88,14 +88,26 @@ fn main() {
                 min_level: 1,
                 max_level: 8,
                 bindings: zoom::Bindings {
-                    plus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Plus),
-                        state: ButtonState::Pressed,
-                    },
-                    minus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Minus),
-                        state: ButtonState::Pressed,
-                    },
+                    plus: Binding::Multi(vec![
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Plus),
+                            state: ButtonState::Pressed,
+                        },
+                        Binding::Single {
+                            button: Button::Mouse(MouseButton::WheelUp),
+                            state: ButtonState::Pressed,
+                        },
+                    ]),
+                    minus: Binding::Multi(vec![
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Minus),
+                            state: ButtonState::Pressed,
+                        },
+                        Binding::Single {
+                            button: Button::Mouse(MouseButton::WheelDown),
+                            state: ButtonState::Pressed,
+                        },
+                    ]),
                 },
             }),
             selection: None,
