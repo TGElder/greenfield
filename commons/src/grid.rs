@@ -385,6 +385,15 @@ mod tests {
     }
 
     #[test]
+    fn test_index_traits() {
+        let mut grid = Grid::from_element(2, 3, false);
+
+        grid[xy(1, 2)] = true;
+
+        assert!(grid[xy(1, 2)]);
+    }
+
+    #[test]
     fn test_xy() {
         let grid = Grid::from_element(2, 3, false);
 
