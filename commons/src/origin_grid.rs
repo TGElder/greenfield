@@ -82,6 +82,68 @@ where
     }
 }
 
+impl<T> OriginGrid<T>
+where
+    T: Copy + Default + Ord,
+{
+    pub fn paste(&self, other: &OriginGrid<T>) -> OriginGrid<T> {
+        let min = xy(
+            self.origin.x.min(other.origin.x),
+            self.origin.y.min(other.origin.y),
+        );
+        let max_plus_one = xy(
+            (self.origin.x + self.width()).max(other.origin.x + other.width()),
+            (self.origin.y + self.height()).max(other.origin.y + other.height()),
+        );
+
+        let mut out = OriginGrid {
+            origin: min,
+            grid: Grid::default(max_plus_one.x - min.x, max_plus_one.y - min.y),
+        };
+        self.iter().for_each(|xy| out[xy] = self[xy]);
+        other.iter().for_each(|xy| out[xy] = other[xy]);
+
+        out
+    }
+}
+
+impl<T> OriginGrid<T>
+where
+    T: Copy + Default + PartialEq,
+{
+    pub fn crop(&self) -> Option<OriginGrid<T>> {
+        let mut min_max: Option<(XY<u32>, XY<u32>)> = None;
+
+        self.iter().filter(|xy| self[xy] != T::default()).for_each(
+            |XY { x, y }| match &mut min_max {
+                Some((min, max)) => {
+                    min.x = min.x.min(x);
+                    max.x = max.x.max(x);
+                    min.y = min.y.min(y);
+                    max.y = max.y.max(y);
+                }
+                None => min_max = Some((xy(x, y), xy(x, y))),
+            },
+        );
+
+        let Some((min, max)) = min_max else {return None};
+
+        let mut out = OriginGrid {
+            origin: min,
+            grid: Grid::default((max.x - min.x) + 1, (max.y - min.y) + 1),
+        };
+
+        for x in min.x..=max.x {
+            for y in min.y..=max.y {
+                let xy = xy(x, y);
+                out[xy] = self[xy];
+            }
+        }
+
+        Some(out)
+    }
+}
+
 #[cfg(test)]
 mod tests {
 
@@ -168,5 +230,79 @@ mod tests {
             grid.iter().collect::<Vec<_>>(),
             vec![xy(1, 2), xy(2, 2), xy(1, 3), xy(2, 3), xy(1, 4), xy(2, 4),]
         );
+    }
+
+    #[test]
+    fn test_paste() {
+        let grid_1 = OriginGrid::new(xy(2, 4), Grid::from_element(3, 2, 1));
+        let grid_2 = OriginGrid::new(xy(1, 2), Grid::from_element(2, 3, 2));
+
+        assert_eq!(
+            grid_1.paste(&grid_2),
+            OriginGrid::new(
+                xy(1, 2),
+                Grid::from_vec(
+                    4,
+                    4,
+                    vec![
+                        2, 2, 0, 0, //
+                        2, 2, 0, 0, //
+                        2, 2, 1, 1, //
+                        0, 1, 1, 1, //
+                    ]
+                )
+            )
+        );
+    }
+
+    #[test]
+    fn test_crop() {
+        let grid = OriginGrid::new(
+            xy(1, 2),
+            Grid::from_vec(
+                4,
+                5,
+                vec![
+                    0, 0, 0, 0, //
+                    0, 1, 0, 0, //
+                    0, 0, 1, 0, //
+                    0, 1, 0, 0, //
+                    0, 0, 0, 0, //
+                ],
+            ),
+        );
+
+        assert_eq!(
+            grid.crop(),
+            Some(OriginGrid::new(
+                xy(2, 3),
+                Grid::from_vec(
+                    2,
+                    3,
+                    vec![
+                        1, 0, //
+                        0, 1, //
+                        1, 0, //
+                    ]
+                )
+            ))
+        );
+    }
+
+    #[test]
+    fn test_crop_empty() {
+        let grid = OriginGrid::new(
+            xy(1, 2),
+            Grid::from_vec(
+                2,
+                2,
+                vec![
+                    0, 0, //
+                    0, 0, //
+                ],
+            ),
+        );
+
+        assert_eq!(grid.crop(), None);
     }
 }
