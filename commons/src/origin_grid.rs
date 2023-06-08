@@ -1,5 +1,5 @@
 use std::borrow::Borrow;
-use std::ops::{Index, IndexMut, Sub};
+use std::ops::{Index, IndexMut};
 
 use crate::geometry::{xy, XY};
 use crate::grid::Grid;
@@ -84,7 +84,7 @@ where
 
 impl<T> OriginGrid<T>
 where
-    T: Copy + Default + Ord + Sub<Output = T>,
+    T: Copy + Default + Ord,
 {
     pub fn paste(&self, other: &OriginGrid<T>) -> OriginGrid<T> {
         let min = xy(
