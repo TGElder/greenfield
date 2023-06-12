@@ -1,7 +1,7 @@
 use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
-use crate::geometry::{xy, XY};
+use crate::geometry::{xy, PositionedRectangle, XY};
 use crate::grid::Grid;
 
 #[derive(Debug)]
@@ -141,6 +141,15 @@ where
         }
 
         Some(out)
+    }
+}
+
+impl From<PositionedRectangle<u32>> for OriginGrid<bool> {
+    fn from(rectangle: PositionedRectangle<u32>) -> Self {
+        OriginGrid {
+            origin: rectangle.from,
+            grid: Grid::from_element(rectangle.width(), rectangle.height(), true),
+        }
     }
 }
 
@@ -304,5 +313,23 @@ mod tests {
         );
 
         assert_eq!(grid.crop(), None);
+    }
+
+    #[test]
+    fn test_from_xy_rectangle() {
+        // given
+        let rectangle = PositionedRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = Into::<OriginGrid<bool>>::into(rectangle);
+
+        // then
+        assert_eq!(
+            result,
+            OriginGrid::new(xy(1, 2), Grid::from_element(3, 4, true))
+        );
     }
 }

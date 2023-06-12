@@ -1,6 +1,8 @@
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
 
+use num::One;
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct XY<T> {
     pub x: T,
@@ -154,14 +156,14 @@ pub struct PositionedRectangle<T> {
 
 impl<T> PositionedRectangle<T>
 where
-    T: Copy + Sub<Output = T>,
+    T: Copy + Add<Output = T> + Sub<Output = T> + One,
 {
     pub fn width(&self) -> T {
-        self.to.x.sub(self.from.x)
+        self.to.x.sub(self.from.x) + T::one()
     }
 
     pub fn height(&self) -> T {
-        self.to.y.sub(self.from.y)
+        self.to.y.sub(self.from.y) + T::one()
     }
 }
 
@@ -281,7 +283,7 @@ mod tests {
         let result = rectangle.width();
 
         // then
-        assert_eq!(result, 2);
+        assert_eq!(result, 3);
     }
 
     #[test]
@@ -296,6 +298,6 @@ mod tests {
         let result = rectangle.height();
 
         // then
-        assert_eq!(result, 3);
+        assert_eq!(result, 4);
     }
 }
