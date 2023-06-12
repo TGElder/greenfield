@@ -11,7 +11,7 @@ use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -23,7 +23,8 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::selection::{self, Handler};
+use crate::handlers::add_skier;
+use crate::handlers::selection;
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame};
 use crate::systems::selection_artist::SelectionArtist;
@@ -42,6 +43,12 @@ fn main() {
             },
             drawings: None,
             handlers: Handlers {
+                add_skier: add_skier::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::F),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 selection: selection::Handler {
                     origin: None,
                     binding: Binding::Single {
@@ -167,7 +174,8 @@ struct Drawings {
 }
 
 struct Handlers {
-    selection: Handler,
+    add_skier: add_skier::Handler,
+    selection: selection::Handler,
 }
 
 struct Systems {
@@ -190,20 +198,6 @@ impl Game {
             &xy(256, 256),
         );
     }
-
-    fn add_skier(&mut self, graphics: &mut dyn Graphics) {
-        let Some(mouse_xy) = self.mouse_xy else {return};
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) else {return};
-
-        self.components.plans.insert(
-            self.components.plans.len(),
-            skiing::Plan::Stationary(skiing::State {
-                position: xy(x.round() as u32, y.round() as u32),
-                velocity: 0,
-                travel_direction: model::Direction::NorthEast,
-            }),
-        );
-    }
 }
 
 impl EventHandler for Game {
@@ -211,10 +205,6 @@ impl EventHandler for Game {
         match event {
             Event::Init => self.init(graphics),
             Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
-            Event::Button {
-                button: Button::Keyboard(KeyboardKey::F),
-                state: ButtonState::Pressed,
-            } => self.add_skier(graphics),
             _ => (),
         }
 
@@ -245,6 +235,10 @@ impl EventHandler for Game {
         self.resize_handler.handle(event, engine, graphics);
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
+
+        self.handlers
+            .add_skier
+            .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, &mut self.selection, graphics);
