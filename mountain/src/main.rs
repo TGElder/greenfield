@@ -11,7 +11,7 @@ use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, XYRectangle, Rectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
