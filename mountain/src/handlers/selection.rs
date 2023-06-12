@@ -1,4 +1,4 @@
-use commons::geometry::{xy, PositionedRectangle, XY, XYZ};
+use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use engine::binding::Binding;
 
 use super::*;
@@ -13,7 +13,7 @@ impl Handler {
         &mut self,
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
-        selection: &mut Option<PositionedRectangle<u32>>,
+        selection: &mut Option<XYRectangle<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
@@ -32,14 +32,14 @@ impl Handler {
     fn set_origin(
         &mut self,
         mouse_xy: &Option<XY<u32>>,
-        selection: &mut Option<PositionedRectangle<u32>>,
+        selection: &mut Option<XYRectangle<u32>>,
         graphics: &mut dyn Graphics,
     ) {
         let Some(mouse_xy) = mouse_xy else {return};
         let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
         let origin = selected_cell(xyz);
         self.origin = Some(origin);
-        *selection = Some(PositionedRectangle {
+        *selection = Some(XYRectangle {
             from: origin,
             to: origin,
         });
@@ -47,7 +47,7 @@ impl Handler {
 
     fn modify_selection(
         &self,
-        selection: &mut Option<PositionedRectangle<u32>>,
+        selection: &mut Option<XYRectangle<u32>>,
         mouse_xy: &XY<u32>,
         graphics: &mut dyn Graphics,
     ) {
@@ -55,13 +55,13 @@ impl Handler {
         let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
         let focus = selected_cell(xyz);
 
-        *selection = Some(PositionedRectangle {
+        *selection = Some(XYRectangle {
             from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
             to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
         });
     }
 
-    fn clear_selection(&mut self, selection: &mut Option<PositionedRectangle<u32>>) {
+    fn clear_selection(&mut self, selection: &mut Option<XYRectangle<u32>>) {
         self.origin = None;
         *selection = None;
     }

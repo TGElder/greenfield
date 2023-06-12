@@ -11,7 +11,7 @@ use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, PositionedRectangle, Rectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY, XYZ};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -146,7 +146,7 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     start: Instant,
-    selection: Option<PositionedRectangle<u32>>,
+    selection: Option<XYRectangle<u32>>,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,

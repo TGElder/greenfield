@@ -1,5 +1,5 @@
 use commons::color::Rgba;
-use commons::geometry::PositionedRectangle;
+use commons::geometry::XYRectangle;
 use commons::grid::Grid;
 use engine::graphics::Graphics;
 
@@ -8,7 +8,7 @@ use crate::draw::terrain;
 const CLEAR_COLOR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
 pub struct SelectionArtist {
-    pub drawn_selection: Option<PositionedRectangle<u32>>,
+    pub drawn_selection: Option<XYRectangle<u32>>,
     pub selection_color: Rgba<u8>,
 }
 
@@ -17,7 +17,7 @@ impl SelectionArtist {
         &mut self,
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
-        selection: &Option<PositionedRectangle<u32>>,
+        selection: &Option<XYRectangle<u32>>,
     ) {
         if self.drawn_selection == *selection {
             return;

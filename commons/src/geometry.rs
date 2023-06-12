@@ -149,12 +149,12 @@ pub struct Rectangle<T> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-pub struct PositionedRectangle<T> {
+pub struct XYRectangle<T> {
     pub from: XY<T>,
     pub to: XY<T>,
 }
 
-impl<T> PositionedRectangle<T>
+impl<T> XYRectangle<T>
 where
     T: Copy + Add<Output = T> + Sub<Output = T> + One,
 {
@@ -274,7 +274,7 @@ mod tests {
     #[test]
     fn test_positioned_rectangle_width() {
         // given
-        let rectangle = PositionedRectangle {
+        let rectangle = XYRectangle {
             from: xy(1, 2),
             to: xy(3, 5),
         };
@@ -289,7 +289,7 @@ mod tests {
     #[test]
     fn test_positioned_rectangle_height() {
         // given
-        let rectangle = PositionedRectangle {
+        let rectangle = XYRectangle {
             from: xy(1, 2),
             to: xy(3, 5),
         };
