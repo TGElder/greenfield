@@ -62,12 +62,25 @@ impl<T> Grid<T> {
         (*x as usize) + (*y as usize) * self.width as usize
     }
 
-    pub fn xy<B>(&self, index: B) -> XY<usize>
+    pub fn xy<B>(&self, index: B) -> XY<u32>
     where
         B: Borrow<usize>,
     {
         let index = index.borrow();
-        xy(index % self.width as usize, index / self.width as usize)
+        xy(
+            (index % self.width as usize) as u32, // result must be smaller than self.width and so smaller than u32::MAX
+            (index / self.width as usize)
+                .try_into()
+                .unwrap_or_else(|_| {
+                    panic!(
+                        "y must be <= {} but would be {} for index {} in grid with width {}",
+                        u32::MAX,
+                        index / self.height as usize,
+                        index,
+                        self.height
+                    )
+                }),
+        )
     }
 
     pub fn in_bounds<B>(&self, position: B) -> bool
@@ -403,6 +416,16 @@ mod tests {
         assert_eq!(grid.xy(3), xy(1, 1));
         assert_eq!(grid.xy(4), xy(0, 2));
         assert_eq!(grid.xy(5), xy(1, 2));
+    }
+
+    #[test]
+    #[should_panic(
+        expected = "y must be <= 4294967295 but would be 4294967296 for index 4294967296 in grid with width 1"
+    )]
+    fn test_xy_y_too_large() {
+        let grid = Grid::<bool>::default(1, 1);
+
+        grid.xy(4294967296);
     }
 
     #[test]
