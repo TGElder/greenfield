@@ -40,7 +40,7 @@ impl SelectionArtist {
                 .modify_overlay(
                     graphics,
                     &selection.from,
-                    &Grid::from_element(selection.width() + 1, selection.height() + 1, color),
+                    &Grid::from_element(selection.width(), selection.height(), color),
                 )
                 .unwrap_or_else(|_| println!("WARN: Could not draw selection"));
         }
