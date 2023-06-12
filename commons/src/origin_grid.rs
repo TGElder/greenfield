@@ -30,11 +30,11 @@ impl<T> OriginGrid<T> {
         self.grid.index(*position.borrow() - self.origin)
     }
 
-    pub fn xy<B>(&self, index: B) -> XY<usize>
+    pub fn xy<B>(&self, index: B) -> XY<u32>
     where
         B: Borrow<usize>,
     {
-        self.grid.xy(index.borrow()) + xy(self.origin.x as usize, self.origin.y as usize)
+        self.grid.xy(index.borrow()) + xy(self.origin.x, self.origin.y)
     }
 
     pub fn in_bounds<B>(&self, position: B) -> bool
