@@ -23,10 +23,10 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::add_skier;
 use crate::handlers::selection;
+use crate::handlers::{add_skier, piste_builder};
 use crate::init::generate_heightmap;
-use crate::model::{skiing, Frame};
+use crate::model::{skiing, Frame, Piste};
 use crate::systems::selection_artist::SelectionArtist;
 use crate::systems::{avatar_artist, framer, planner};
 
@@ -38,6 +38,7 @@ fn main() {
                 plans: HashMap::default(),
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
+                pistes: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 terrain,
             },
@@ -46,6 +47,12 @@ fn main() {
                 add_skier: add_skier::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::F),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                piste_builder: piste_builder::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::P),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -165,6 +172,7 @@ struct Components {
     plans: HashMap<usize, skiing::Plan>,
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
+    pistes: HashMap<usize, Piste>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
 }
@@ -175,6 +183,7 @@ struct Drawings {
 
 struct Handlers {
     add_skier: add_skier::Handler,
+    piste_builder: piste_builder::Handler,
     selection: selection::Handler,
 }
 
@@ -239,6 +248,9 @@ impl EventHandler for Game {
         self.handlers
             .add_skier
             .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
+        self.handlers
+            .piste_builder
+            .handle(event, &self.selection, &mut self.components.pistes);
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, &mut self.selection, graphics);
