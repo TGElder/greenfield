@@ -23,6 +23,18 @@ impl<T> OriginGrid<T> {
         OriginGrid { origin, grid }
     }
 
+    pub fn from_rectangle<B>(rectangle: B, element: T) -> OriginGrid<T>
+    where
+        B: Borrow<XYRectangle<u32>>,
+        T: Clone,
+    {
+        let rectangle = rectangle.borrow();
+        OriginGrid {
+            origin: rectangle.from,
+            grid: Grid::from_element(rectangle.width(), rectangle.height(), element),
+        }
+    }
+
     pub fn index<B>(&self, position: B) -> usize
     where
         B: Borrow<XY<u32>>,
@@ -141,19 +153,6 @@ where
         }
 
         Some(out)
-    }
-}
-
-impl<B> From<B> for OriginGrid<bool>
-where
-    B: Borrow<XYRectangle<u32>>,
-{
-    fn from(rectangle: B) -> Self {
-        let rectangle = rectangle.borrow();
-        OriginGrid {
-            origin: rectangle.from,
-            grid: Grid::from_element(rectangle.width(), rectangle.height(), true),
-        }
     }
 }
 
@@ -320,7 +319,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_xy_rectangle() {
+    fn test_from_rectangle() {
         // given
         let rectangle = XYRectangle {
             from: xy(1, 2),
@@ -328,7 +327,7 @@ mod tests {
         };
 
         // when
-        let result = Into::<OriginGrid<bool>>::into(rectangle);
+        let result = OriginGrid::from_rectangle(rectangle, true);
 
         // then
         assert_eq!(
