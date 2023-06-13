@@ -23,7 +23,7 @@ impl Handler {
         }
 
         let Some(selection) = selection else {return};
-        let grid: OriginGrid<bool> = selection.into();
+        let grid = OriginGrid::from_xy_rectangle(selection, true);
 
         match pistes.entry(0) {
             Entry::Vacant(cell) => {
