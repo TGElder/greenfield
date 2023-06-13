@@ -144,8 +144,12 @@ where
     }
 }
 
-impl From<XYRectangle<u32>> for OriginGrid<bool> {
-    fn from(rectangle: XYRectangle<u32>) -> Self {
+impl<B> From<B> for OriginGrid<bool>
+where
+    B: Borrow<XYRectangle<u32>>,
+{
+    fn from(rectangle: B) -> Self {
+        let rectangle = rectangle.borrow();
         OriginGrid {
             origin: rectangle.from,
             grid: Grid::from_element(rectangle.width(), rectangle.height(), true),
