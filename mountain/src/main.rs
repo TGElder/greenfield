@@ -51,15 +51,21 @@ fn main() {
                     },
                 },
                 piste_builder: piste_builder::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::P),
-                        state: ButtonState::Pressed,
+                    bindings: piste_builder::Bindings {
+                        add: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::V),
+                            state: ButtonState::Pressed,
+                        },
+                        subtract: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::X),
+                            state: ButtonState::Pressed,
+                        },
                     },
                 },
                 selection: selection::Handler {
                     origin: None,
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::X),
+                        button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Pressed,
                     },
                 },

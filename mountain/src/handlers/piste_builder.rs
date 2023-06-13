@@ -8,7 +8,12 @@ use engine::binding::Binding;
 use crate::model::Piste;
 
 pub struct Handler {
-    pub binding: Binding,
+    pub bindings: Bindings,
+}
+
+pub struct Bindings {
+    pub add: Binding,
+    pub subtract: Binding,
 }
 
 impl Handler {
@@ -18,12 +23,14 @@ impl Handler {
         selection: &Option<XYRectangle<u32>>,
         pistes: &mut HashMap<usize, Piste>,
     ) {
-        if !self.binding.binds_event(event) {
+        let add = self.bindings.add.binds_event(event);
+        let subtract = self.bindings.add.binds_event(event);
+        if add || subtract {
             return;
         }
 
         let Some(selection) = selection else {return};
-        let grid = OriginGrid::from_rectangle(selection, true);
+        let grid = OriginGrid::from_rectangle(selection, add);
 
         match pistes.entry(0) {
             Entry::Vacant(cell) => {
