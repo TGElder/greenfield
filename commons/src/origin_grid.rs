@@ -23,7 +23,7 @@ impl<T> OriginGrid<T> {
         OriginGrid { origin, grid }
     }
 
-    pub fn from_xy_rectangle<B>(rectangle: B, element: T) -> OriginGrid<T>
+    pub fn from_rectangle<B>(rectangle: B, element: T) -> OriginGrid<T>
     where
         B: Borrow<XYRectangle<u32>>,
         T: Clone,
@@ -319,7 +319,7 @@ mod tests {
     }
 
     #[test]
-    fn test_from_xy_rectangle() {
+    fn test_from_rectangle() {
         // given
         let rectangle = XYRectangle {
             from: xy(1, 2),
@@ -327,7 +327,7 @@ mod tests {
         };
 
         // when
-        let result = OriginGrid::from_xy_rectangle(rectangle, true);
+        let result = OriginGrid::from_rectangle(rectangle, true);
 
         // then
         assert_eq!(
