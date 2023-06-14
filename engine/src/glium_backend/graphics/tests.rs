@@ -200,6 +200,8 @@ fn render_overlay_quads() {
         ))
         .unwrap();
 
+    let overlay_texture_pointer = graphics.create_texture_pointer(overlay_texture).unwrap();
+
     fn textured_position(position: XYZ<f32>) -> TexturedPosition {
         TexturedPosition {
             position,
@@ -225,7 +227,7 @@ fn render_overlay_quads() {
 
     let overlay_quads = OverlayQuads {
         base_texture,
-        overlay_texture,
+        overlay_texture_pointer,
         quads,
     };
     let index = graphics.create_overlay_quads().unwrap();

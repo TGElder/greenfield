@@ -74,6 +74,7 @@ fn main() {
                 selection_artist: SelectionArtist {
                     drawn_selection: None,
                     selection_color: Rgba::new(255, 255, 0, 128),
+                    texture: None,
                 },
             },
             start: Instant::now(),
@@ -184,7 +185,7 @@ struct Components {
 }
 
 struct Drawings {
-    terrain: draw::terrain::Drawing,
+    _terrain: draw::terrain::Drawing,
 }
 
 struct Handlers {
@@ -200,8 +201,14 @@ struct Systems {
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
+        self.systems.selection_artist.init(terrain, graphics);
+
+        let terrain_drawing = draw::terrain::draw(graphics, terrain);
+        terrain_drawing
+            .set_overlay(graphics, &self.systems.selection_artist.texture.unwrap())
+            .unwrap();
         self.drawings = Some(Drawings {
-            terrain: draw::terrain::draw(graphics, terrain),
+            _terrain: draw::terrain::draw(graphics, terrain),
         });
 
         graphics.look_at(
@@ -240,11 +247,7 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
-        self.systems.selection_artist.run(
-            graphics,
-            self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            &self.selection,
-        );
+        self.systems.selection_artist.run(graphics, &self.selection);
 
         self.drag_handler.handle(event, engine, graphics);
         self.resize_handler.handle(event, engine, graphics);

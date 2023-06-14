@@ -28,6 +28,10 @@ pub trait Graphics {
         image: &Grid<Rgba<u8>>,
     ) -> Result<(), DrawError>;
 
+    fn create_texture_pointer(&mut self, texture: usize) -> Result<usize, InitializationError>;
+
+    fn set_texture_pointer(&mut self, pointer: &usize, texture: usize) -> Result<(), IndexError>;
+
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
     fn create_quads(&mut self) -> Result<usize, IndexError> {
@@ -88,7 +92,7 @@ pub trait Graphics {
 
         let overlay_triangles = OverlayTriangles {
             base_texture: overlay_quads.base_texture,
-            overlay_texture: overlay_quads.overlay_texture,
+            overlay_texture_pointer: overlay_quads.overlay_texture_pointer,
             triangles,
         };
 

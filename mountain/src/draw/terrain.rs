@@ -1,7 +1,7 @@
 use std::f32::consts::PI;
 
 use commons::color::{Rgb, Rgba};
-use commons::geometry::{xy, xyz, XY, XYZ};
+use commons::geometry::{xy, xyz, XYZ};
 use commons::grid::Grid;
 
 use engine::graphics::elements::{OverlayQuads, TexturedPosition};
@@ -11,17 +11,16 @@ use engine::graphics::Graphics;
 use nalgebra::Vector3;
 
 pub struct Drawing {
-    overlay_texture: usize,
+    overlay_texture_pointer: usize,
 }
 
 impl Drawing {
-    pub fn modify_overlay(
+    pub fn set_overlay(
         &self,
         graphics: &mut dyn Graphics,
-        from: &XY<u32>,
-        image: &Grid<Rgba<u8>>,
-    ) -> Result<(), engine::graphics::errors::DrawError> {
-        graphics.modify_texture(&self.overlay_texture, from, image)
+        texture: &usize,
+    ) -> Result<(), engine::graphics::errors::IndexError> {
+        graphics.set_texture_pointer(&self.overlay_texture_pointer, *texture)
     }
 }
 
@@ -85,25 +84,28 @@ pub fn draw(graphics: &mut dyn Graphics, terrain: &Grid<f32>) -> Drawing {
     }
 
     let base_texture = graphics.load_texture(&colors).unwrap();
-    let overlay = Grid::from_element(
+    let clear = Grid::from_element(
         terrain.width() - 1,
         terrain.height() - 1,
         Rgba::new(0, 0, 0, 0),
     );
-    let overlay_texture = graphics.load_texture(&overlay).unwrap();
+    let clear_texture = graphics.load_texture(&clear).unwrap();
+    let overlay_texture_pointer = graphics.create_texture_pointer(clear_texture).unwrap();
 
     for quads in to_draw {
         let index = graphics.create_overlay_quads().unwrap();
 
         let overlay_quads = OverlayQuads {
             base_texture,
-            overlay_texture,
+            overlay_texture_pointer,
             quads,
         };
         graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
     }
 
-    Drawing { overlay_texture }
+    Drawing {
+        overlay_texture_pointer,
+    }
 }
 
 fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {

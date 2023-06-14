@@ -16,14 +16,14 @@ pub struct Quad {
 #[derive(Clone)]
 pub struct OverlayTriangles {
     pub base_texture: usize,
-    pub overlay_texture: usize,
+    pub overlay_texture_pointer: usize,
     pub triangles: Vec<[TexturedPosition; 3]>,
 }
 
 #[derive(Clone)]
 pub struct OverlayQuads {
     pub base_texture: usize,
-    pub overlay_texture: usize,
+    pub overlay_texture_pointer: usize,
     pub quads: Vec<[TexturedPosition; 4]>,
 }
 
@@ -37,5 +37,9 @@ pub struct TexturedPosition {
 pub struct Billboard {
     pub position: XYZ<f32>,
     pub dimensions: Rectangle<f32>,
+    pub texture: usize,
+}
+
+pub struct TexturePointer {
     pub texture: usize,
 }

@@ -6,7 +6,9 @@ mod vertices;
 
 use std::error::Error;
 
-use crate::graphics::elements::{self, OverlayTriangles, TexturedPosition, Triangle};
+use crate::graphics::elements::{
+    self, OverlayTriangles, TexturePointer, TexturedPosition, Triangle,
+};
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
@@ -56,6 +58,7 @@ pub struct GliumGraphics {
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
+    texture_pointers: Vec<TexturePointer>,
     primitives: Vec<Option<Primitive>>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     billboards: Vec<Option<Billboard>>,
@@ -116,6 +119,7 @@ impl GliumGraphics {
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
+            texture_pointers: vec![],
             primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
@@ -168,7 +172,7 @@ impl GliumGraphics {
     {
         let mut uniforms = None;
         let mut current_base_texture = None;
-        let mut current_overlay_texture = None;
+        let mut current_overlay_texture_pointer = None;
 
         let sampler_behavior = glium::uniforms::SamplerBehavior {
             minify_filter: glium::uniforms::MinifySamplerFilter::Nearest,
@@ -178,18 +182,26 @@ impl GliumGraphics {
 
         for primitive in self.overlay_primitives.iter().flatten() {
             if current_base_texture != Some(primitive.base_texture)
-                || current_overlay_texture != Some(primitive.overlay_texture)
+                || current_overlay_texture_pointer != Some(primitive.overlay_texture_pointer)
             {
                 current_base_texture = Some(primitive.base_texture);
-                current_overlay_texture = Some(primitive.overlay_texture);
+                current_overlay_texture_pointer = Some(primitive.overlay_texture_pointer);
                 let base = self.textures.get(primitive.base_texture).ok_or(format!(
                     "Overlay primitive refers to missing base texture {}",
                     primitive.base_texture
                 ))?;
                 let base = glium::uniforms::Sampler(base, sampler_behavior);
-                let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
-                    "Overlay primitive refers to missing overlay texture {}",
-                    primitive.overlay_texture
+                let overlay_texture = self
+                    .texture_pointers
+                    .get(primitive.overlay_texture_pointer)
+                    .ok_or(format!(
+                        "Overlay primitive pointer refers to missing overlay texture pointer {}",
+                        primitive.overlay_texture_pointer
+                    ))?
+                    .texture;
+                let overlay = self.textures.get(overlay_texture).ok_or(format!(
+                    "Overlay primitive refers to missing texture {}",
+                    primitive.overlay_texture_pointer
                 ))?;
                 let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
                 uniforms = Some(glium::uniform! {
@@ -328,8 +340,35 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn create_texture_pointer_unsafe(&mut self, texture: usize) -> Result<usize, Box<dyn Error>> {
+        if self.texture_pointers.len() == usize::MAX {
+            return Err("No space for more texture pointers".into());
+        }
+        self.texture_pointers.push(TexturePointer { texture });
+        Ok(self.texture_pointers.len() - 1)
+    }
+
+    fn set_texture_pointer_unsafe(
+        &mut self,
+        pointer: &usize,
+        texture: usize,
+    ) -> Result<(), Box<dyn Error>> {
+        if *pointer >= self.texture_pointers.len() {
+            return Err(format!(
+                "Trying to set texture pointer #{} but there are only {} pointers",
+                pointer,
+                self.texture_pointers.len()
+            )
+            .into());
+        }
+
+        self.texture_pointers[*pointer].texture = texture;
+
+        Ok(())
+    }
+
     fn create_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.primitives.len() == isize::MAX as usize {
+        if self.primitives.len() == usize::MAX {
             return Err("No space for more primitives".into());
         }
         self.primitives.push(None);
@@ -368,7 +407,7 @@ impl GliumGraphics {
     }
 
     fn create_overlay_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.overlay_primitives.len() == isize::MAX as usize {
+        if self.overlay_primitives.len() == usize::MAX {
             return Err("No space for more overlay_primitives".into());
         }
         self.overlay_primitives.push(None);
@@ -407,7 +446,7 @@ impl GliumGraphics {
 
         self.overlay_primitives[*index] = Some(OverlayPrimitive {
             base_texture: overlay.base_texture,
-            overlay_texture: overlay.overlay_texture,
+            overlay_texture_pointer: overlay.overlay_texture_pointer,
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
         });
 
@@ -415,7 +454,7 @@ impl GliumGraphics {
     }
 
     fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.billboards.len() == isize::MAX as usize {
+        if self.billboards.len() == usize::MAX {
             return Err("No space for more billboards".into());
         }
         self.billboards.push(None);
@@ -520,6 +559,14 @@ impl Graphics for GliumGraphics {
         Ok(self.modify_texture_unsafe(id, from, image)?)
     }
 
+    fn create_texture_pointer(&mut self, texture: usize) -> Result<usize, InitializationError> {
+        Ok(self.create_texture_pointer_unsafe(texture)?)
+    }
+
+    fn set_texture_pointer(&mut self, pointer: &usize, texture: usize) -> Result<(), IndexError> {
+        Ok(self.set_texture_pointer_unsafe(pointer, texture)?)
+    }
+
     fn create_triangles(&mut self) -> Result<usize, IndexError> {
         Ok(self.create_triangles_unsafe()?)
     }
@@ -610,7 +657,7 @@ struct Primitive {
 
 struct OverlayPrimitive {
     base_texture: usize,
-    overlay_texture: usize,
+    overlay_texture_pointer: usize,
     vertex_buffer: glium::VertexBuffer<TexturedVertex>,
 }
 
