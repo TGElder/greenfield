@@ -278,6 +278,34 @@ fn render_overlay_quads() {
     let expected =
         image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
     assert_eq!(actual, expected);
+
+    // when
+    let overlay_texture_2 = graphics
+        .load_texture(&Grid::from_vec(
+            2,
+            2,
+            vec![
+                Rgba::new(0, 0, 255, 255),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(0, 0, 255, 255),
+            ],
+        ))
+        .unwrap();
+    graphics
+        .set_texture_pointer_unsafe(&overlay_texture_pointer, overlay_texture_2)
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir.join("render_overlay_quads_repointed.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_overlay_quads_repointed.png").unwrap();
+    assert_eq!(actual, expected);
 }
 
 #[test]
