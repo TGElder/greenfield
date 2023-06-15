@@ -11,6 +11,10 @@ pub struct OriginGrid<T> {
 }
 
 impl<T> OriginGrid<T> {
+    pub fn origin(&self) -> &XY<u32> {
+        &self.origin
+    }
+
     pub fn width(&self) -> u32 {
         self.grid.width()
     }
