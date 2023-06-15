@@ -16,6 +16,7 @@ use canvas::*;
 use commons::color::Rgba;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
+use commons::origin_grid::OriginGrid;
 use glium::glutin;
 use programs::*;
 use vertices::*;
@@ -298,8 +299,7 @@ impl GliumGraphics {
     fn modify_texture_unsafe(
         &mut self,
         index: &usize,
-        from: &XY<u32>,
-        image: &Grid<Rgba<u8>>,
+        image: &OriginGrid<Rgba<u8>>,
     ) -> Result<(), Box<dyn Error>> {
         if *index >= self.textures.len() {
             return Err(format!(
@@ -311,8 +311,8 @@ impl GliumGraphics {
         }
         let texture = &mut self.textures[*index];
         let rect = glium::Rect {
-            left: from.x,
-            bottom: from.y,
+            left: image.origin().x,
+            bottom: image.origin().y,
             width: image.width(),
             height: image.height(),
         };
@@ -320,7 +320,7 @@ impl GliumGraphics {
         for y in 0..image.height() {
             data.push(Vec::with_capacity(image.width() as usize));
             for x in 0..image.width() {
-                let Rgba { r, g, b, a } = image[xy(x, y)];
+                let Rgba { r, g, b, a } = image[xy(x + image.origin().x, y + image.origin().y)];
                 data[y as usize].push((r, g, b, a));
             }
         }
@@ -514,10 +514,9 @@ impl Graphics for GliumGraphics {
     fn modify_texture(
         &mut self,
         id: &usize,
-        from: &XY<u32>,
-        image: &Grid<Rgba<u8>>,
+        image: &OriginGrid<Rgba<u8>>,
     ) -> Result<(), DrawError> {
-        Ok(self.modify_texture_unsafe(id, from, image)?)
+        Ok(self.modify_texture_unsafe(id, image)?)
     }
 
     fn create_triangles(&mut self) -> Result<usize, IndexError> {

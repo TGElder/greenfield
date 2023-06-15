@@ -1,6 +1,7 @@
 use commons::color::Rgba;
 use commons::geometry::XYRectangle;
 use commons::grid::Grid;
+use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
 use crate::draw::terrain;
@@ -39,8 +40,10 @@ impl SelectionArtist {
             drawing
                 .modify_overlay(
                     graphics,
-                    &selection.from,
-                    &Grid::from_element(selection.width(), selection.height(), color),
+                    &OriginGrid::new(
+                        selection.from,
+                        Grid::from_element(selection.width(), selection.height(), color),
+                    ),
                 )
                 .unwrap_or_else(|_| println!("WARN: Could not draw selection"));
         }

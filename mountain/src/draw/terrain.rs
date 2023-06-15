@@ -1,9 +1,10 @@
 use std::f32::consts::PI;
 
 use commons::color::{Rgb, Rgba};
-use commons::geometry::{xy, xyz, XY, XYZ};
+use commons::geometry::{xy, xyz, XYZ};
 use commons::grid::Grid;
 
+use commons::origin_grid::OriginGrid;
 use engine::graphics::elements::{OverlayQuads, TexturedPosition};
 
 use engine::graphics::Graphics;
@@ -18,10 +19,9 @@ impl Drawing {
     pub fn modify_overlay(
         &self,
         graphics: &mut dyn Graphics,
-        from: &XY<u32>,
-        image: &Grid<Rgba<u8>>,
+        image: &OriginGrid<Rgba<u8>>,
     ) -> Result<(), engine::graphics::errors::DrawError> {
-        graphics.modify_texture(&self.overlay_texture, from, image)
+        graphics.modify_texture(&self.overlay_texture, image)
     }
 }
 

@@ -8,6 +8,7 @@ pub mod transform;
 use commons::color::Rgba;
 use commons::geometry::{XY, XYZ};
 use commons::grid::Grid;
+use commons::origin_grid::OriginGrid;
 pub use projection::Projection;
 
 use elements::*;
@@ -21,12 +22,8 @@ pub trait Graphics {
 
     fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError>;
 
-    fn modify_texture(
-        &mut self,
-        id: &usize,
-        from: &XY<u32>,
-        image: &Grid<Rgba<u8>>,
-    ) -> Result<(), DrawError>;
+    fn modify_texture(&mut self, id: &usize, image: &OriginGrid<Rgba<u8>>)
+        -> Result<(), DrawError>;
 
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
