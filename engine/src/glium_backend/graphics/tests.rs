@@ -246,22 +246,26 @@ fn render_overlay_quads() {
     graphics
         .modify_texture(
             &overlay_texture,
-            &xy(0, 1),
-            &Grid::from_vec(
-                2,
-                1,
-                vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+            &OriginGrid::new(
+                xy(0, 1),
+                Grid::from_vec(
+                    2,
+                    1,
+                    vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+                ),
             ),
         )
         .unwrap();
     graphics
         .modify_texture(
             &overlay_texture,
-            &xy(0, 0),
-            &Grid::from_vec(
-                1,
-                2,
-                vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+            &OriginGrid::new(
+                xy(0, 0),
+                Grid::from_vec(
+                    1,
+                    2,
+                    vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+                ),
             ),
         )
         .unwrap();
