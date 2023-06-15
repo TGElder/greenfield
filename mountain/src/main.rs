@@ -27,8 +27,7 @@ use crate::handlers::selection;
 use crate::handlers::{add_skier, piste_builder};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame, Piste};
-use crate::systems::selection_artist::SelectionArtist;
-use crate::systems::{avatar_artist, framer, planner};
+use crate::systems::{avatar_artist, framer, overlay, planner};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -71,10 +70,9 @@ fn main() {
                 },
             },
             systems: Systems {
-                selection_artist: SelectionArtist {
-                    drawn_selection: None,
-                    selection_color: Rgba::new(255, 255, 0, 128),
-                },
+                overlay: overlay::System::new(overlay::Colors {
+                    selection: Rgba::new(255, 255, 0, 128),
+                }),
             },
             start: Instant::now(),
             mouse_xy: None,
@@ -194,7 +192,7 @@ struct Handlers {
 }
 
 struct Systems {
-    selection_artist: SelectionArtist,
+    overlay: overlay::System,
 }
 
 impl Game {
@@ -223,6 +221,25 @@ impl EventHandler for Game {
             _ => (),
         }
 
+        self.drag_handler.handle(event, engine, graphics);
+        self.resize_handler.handle(event, engine, graphics);
+        self.yaw_handler.handle(event, engine, graphics);
+        self.zoom_handler.handle(event, engine, graphics);
+
+        self.handlers
+            .add_skier
+            .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
+        self.handlers
+            .piste_builder
+            .handle(event, &self.selection, &mut self.components.pistes);
+        self.handlers.selection.handle(
+            event,
+            &self.mouse_xy,
+            &mut self.selection,
+            graphics,
+            &mut self.systems.overlay,
+        );
+
         planner::run(
             &self.components.terrain,
             &self.start.elapsed().as_micros(),
@@ -240,25 +257,10 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
-        self.systems.selection_artist.run(
+        self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.selection,
         );
-
-        self.drag_handler.handle(event, engine, graphics);
-        self.resize_handler.handle(event, engine, graphics);
-        self.yaw_handler.handle(event, engine, graphics);
-        self.zoom_handler.handle(event, engine, graphics);
-
-        self.handlers
-            .add_skier
-            .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
-        self.handlers
-            .piste_builder
-            .handle(event, &self.selection, &mut self.components.pistes);
-        self.handlers
-            .selection
-            .handle(event, &self.mouse_xy, &mut self.selection, graphics);
     }
 }
