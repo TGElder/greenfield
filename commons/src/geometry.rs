@@ -1,3 +1,4 @@
+use std::borrow::Borrow;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
 
@@ -167,6 +168,22 @@ where
     }
 }
 
+impl<T> XYRectangle<T>
+where
+    T: PartialOrd,
+{
+    pub fn contains<B>(&self, position: B) -> bool
+    where
+        B: Borrow<XY<T>>,
+    {
+        let position = position.borrow();
+        !(position.x < self.from.x
+            || position.x > self.to.x
+            || position.y < self.from.y
+            || position.y > self.to.y)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -272,7 +289,7 @@ mod tests {
     }
 
     #[test]
-    fn test_positioned_rectangle_width() {
+    fn test_xy_rectangle_width() {
         // given
         let rectangle = XYRectangle {
             from: xy(1, 2),
@@ -287,7 +304,7 @@ mod tests {
     }
 
     #[test]
-    fn test_positioned_rectangle_height() {
+    fn test_xy_rectangle_height() {
         // given
         let rectangle = XYRectangle {
             from: xy(1, 2),
@@ -299,5 +316,21 @@ mod tests {
 
         // then
         assert_eq!(result, 4);
+    }
+
+    #[test]
+    fn test_xy_rectangle_contains() {
+        // given
+        let rectangle = XYRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // then
+        assert!(rectangle.contains(xy(2, 3)));
+        assert!(!rectangle.contains(xy(0, 3)));
+        assert!(!rectangle.contains(xy(4, 3)));
+        assert!(!rectangle.contains(xy(2, 1)));
+        assert!(!rectangle.contains(xy(2, 6)));
     }
 }

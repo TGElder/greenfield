@@ -1,6 +1,8 @@
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use engine::binding::Binding;
 
+use crate::systems::overlay;
+
 use super::*;
 
 pub struct Handler {
@@ -15,7 +17,10 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         selection: &mut Option<XYRectangle<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
+        overlay: &mut overlay::System,
     ) {
+        let previous_selection = *selection;
+
         if let Event::MouseMoved(mouse_xy) = event {
             self.modify_selection(selection, mouse_xy, graphics)
         }
@@ -26,6 +31,13 @@ impl Handler {
             } else {
                 self.clear_selection(selection);
             }
+        }
+
+        if previous_selection != *selection {
+            previous_selection
+                .iter()
+                .for_each(|update| overlay.update(*update));
+            selection.iter().for_each(|update| overlay.update(*update));
         }
     }
 
