@@ -232,8 +232,9 @@ impl EventHandler for Game {
             .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
         self.handlers.piste_builder.handle(
             event,
-            &self.selection,
+            &mut self.selection,
             &mut self.components.pistes,
+            &mut self.handlers.selection,
             &mut self.systems.overlay,
         );
         self.handlers.selection.handle(

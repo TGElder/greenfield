@@ -41,6 +41,11 @@ impl Handler {
         }
     }
 
+    pub fn clear_selection(&mut self, selection: &mut Option<XYRectangle<u32>>) {
+        self.origin = None;
+        *selection = None;
+    }
+
     fn set_origin(
         &mut self,
         mouse_xy: &Option<XY<u32>>,
@@ -71,11 +76,6 @@ impl Handler {
             from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
             to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
         });
-    }
-
-    fn clear_selection(&mut self, selection: &mut Option<XYRectangle<u32>>) {
-        self.origin = None;
-        *selection = None;
     }
 }
 
