@@ -72,6 +72,7 @@ fn main() {
             systems: Systems {
                 overlay: overlay::System::new(overlay::Colors {
                     selection: Rgba::new(255, 255, 0, 128),
+                    piste: Rgba::new(0, 0, 255, 128),
                 }),
             },
             start: Instant::now(),
@@ -229,9 +230,12 @@ impl EventHandler for Game {
         self.handlers
             .add_skier
             .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
-        self.handlers
-            .piste_builder
-            .handle(event, &self.selection, &mut self.components.pistes);
+        self.handlers.piste_builder.handle(
+            event,
+            &self.selection,
+            &mut self.components.pistes,
+            &mut self.systems.overlay,
+        );
         self.handlers.selection.handle(
             event,
             &self.mouse_xy,
@@ -261,6 +265,7 @@ impl EventHandler for Game {
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.selection,
+            &self.components.pistes,
         );
     }
 }
