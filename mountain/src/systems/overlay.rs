@@ -6,6 +6,7 @@ use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
 use crate::draw::terrain;
+use crate::handlers::selection;
 use crate::model::Piste;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
@@ -36,8 +37,8 @@ impl System {
         &mut self,
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
-        selection: &Option<XYRectangle<u32>>,
         pistes: &HashMap<usize, Piste>,
+        selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else {return};
 
@@ -64,11 +65,11 @@ impl System {
 fn selection_color(
     color: Rgba<u8>,
     xy: &XY<u32>,
-    selection: &Option<XYRectangle<u32>>,
+    selection: &selection::Handler,
 ) -> Option<Rgba<u8>> {
-    let Some(selection) = selection else {return None};
+    let Some(rectangle) = selection.selected_rectangle() else {return None};
 
-    if selection.contains(xy) {
+    if rectangle.contains(xy) {
         Some(color)
     } else {
         None

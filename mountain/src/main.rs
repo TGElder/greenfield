@@ -11,7 +11,7 @@ use std::f32::consts::PI;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY};
+use commons::geometry::{xy, xyz, Rectangle, XY};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -61,13 +61,10 @@ fn main() {
                         },
                     },
                 },
-                selection: selection::Handler {
-                    origin: None,
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Pressed,
-                    },
-                },
+                selection: selection::Handler::new(Binding::Single {
+                    button: Button::Mouse(MouseButton::Right),
+                    state: ButtonState::Pressed,
+                }),
             },
             systems: Systems {
                 overlay: overlay::System::new(overlay::Colors {
@@ -129,7 +126,6 @@ fn main() {
                     ]),
                 },
             }),
-            selection: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -165,7 +161,6 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     start: Instant,
-    selection: Option<XYRectangle<u32>>,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -232,17 +227,13 @@ impl EventHandler for Game {
             .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
         self.handlers.piste_builder.handle(
             event,
-            &self.selection,
             &mut self.components.pistes,
+            &mut self.handlers.selection,
             &mut self.systems.overlay,
         );
-        self.handlers.selection.handle(
-            event,
-            &self.mouse_xy,
-            &mut self.selection,
-            graphics,
-            &mut self.systems.overlay,
-        );
+        self.handlers
+            .selection
+            .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
 
         planner::run(
             &self.components.terrain,
@@ -264,8 +255,8 @@ impl EventHandler for Game {
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            &self.selection,
             &self.components.pistes,
+            &self.handlers.selection,
         );
     }
 }
