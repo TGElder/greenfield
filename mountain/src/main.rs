@@ -23,10 +23,10 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::selection;
 use crate::handlers::{add_skier, piste_builder};
+use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
-use crate::model::{skiing, Frame, Piste};
+use crate::model::{skiing, Frame, Lift, Piste};
 use crate::systems::{avatar_artist, framer, overlay, planner};
 
 fn main() {
@@ -39,6 +39,7 @@ fn main() {
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
+                lifts: Vec::default(),
                 terrain,
             },
             drawings: None,
@@ -61,6 +62,10 @@ fn main() {
                         },
                     },
                 },
+                lift_builder: lift_builder::Handler::new(Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::L),
+                    state: ButtonState::Pressed,
+                }),
                 selection: selection::Handler::new(Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
                     state: ButtonState::Pressed,
@@ -70,6 +75,7 @@ fn main() {
                 overlay: overlay::System::new(overlay::Colors {
                     selection: Rgba::new(255, 255, 0, 128),
                     piste: Rgba::new(0, 0, 255, 128),
+                    lift: Rgba::new(0, 0, 0, 255),
                 }),
             },
             start: Instant::now(),
@@ -173,6 +179,7 @@ struct Components {
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
+    lifts: Vec<Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
 }
@@ -184,6 +191,7 @@ struct Drawings {
 struct Handlers {
     add_skier: add_skier::Handler,
     piste_builder: piste_builder::Handler,
+    lift_builder: lift_builder::Handler,
     selection: selection::Handler,
 }
 
@@ -231,6 +239,13 @@ impl EventHandler for Game {
             &mut self.handlers.selection,
             &mut self.systems.overlay,
         );
+        self.handlers.lift_builder.handle(
+            event,
+            &mut self.components.lifts,
+            &self.mouse_xy,
+            &mut self.systems.overlay,
+            graphics,
+        );
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
@@ -256,6 +271,7 @@ impl EventHandler for Game {
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.pistes,
+            &self.components.lifts,
             &self.handlers.selection,
         );
     }

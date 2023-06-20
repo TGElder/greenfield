@@ -27,7 +27,7 @@ impl Handler {
         plans.insert(
             plans.len(),
             skiing::Plan::Stationary(skiing::State {
-                position: xy(x.round() as u32, y.round() as u32),
+                position: xy(x.floor() as u32, y.floor() as u32),
                 velocity: 0,
                 travel_direction: Direction::NorthEast,
             }),
