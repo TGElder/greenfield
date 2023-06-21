@@ -26,8 +26,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
-use crate::model::{skiing, Frame, Lift, Piste};
-use crate::systems::{avatar_artist, framer, overlay, planner};
+use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
+use crate::systems::{avatar_artist, cost_computer, framer, overlay, planner};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -38,8 +38,9 @@ fn main() {
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
+                piste_costs: HashMap::default(),
+                lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
-                lifts: Vec::default(),
                 terrain,
             },
             drawings: None,
@@ -179,7 +180,8 @@ struct Components {
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    lifts: Vec<Lift>,
+    piste_costs: HashMap<usize, PisteCosts>,
+    lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
 }
@@ -274,5 +276,19 @@ impl EventHandler for Game {
             &self.components.lifts,
             &self.handlers.selection,
         );
+
+        const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
+            button: Button::Keyboard(KeyboardKey::C),
+            state: ButtonState::Pressed,
+        };
+
+        if COMPUTE_COSTS_BINDING.binds_event(event) {
+            cost_computer::run(
+                &self.components.terrain,
+                &self.components.pistes,
+                &mut self.components.piste_costs,
+                &self.components.lifts,
+            );
+        }
     }
 }

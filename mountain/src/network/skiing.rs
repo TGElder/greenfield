@@ -104,7 +104,7 @@ pub struct SkiingInNetwork {
 }
 
 impl SkiingInNetwork {
-    pub fn _for_positions(
+    pub fn for_positions(
         network: &dyn OutNetwork<State>,
         positions: &[XY<u32>],
     ) -> SkiingInNetwork {
