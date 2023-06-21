@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use engine::binding::Binding;
 
@@ -20,7 +22,7 @@ impl Handler {
     pub fn handle(
         &mut self,
         event: &engine::events::Event,
-        lifts: &mut Vec<Lift>,
+        lifts: &mut HashMap<usize, Lift>,
         mouse_xy: &Option<XY<u32>>,
         overlay: &mut overlay::System,
         graphics: &mut dyn engine::graphics::Graphics,
@@ -39,7 +41,7 @@ impl Handler {
         };
 
         let to = position;
-        lifts.push(Lift { from, to });
+        lifts.insert(lifts.len(), Lift { from, to });
         self.from = None;
 
         overlay.update(XYRectangle { from, to: from });

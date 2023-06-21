@@ -39,7 +39,7 @@ impl System {
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
         pistes: &HashMap<usize, Piste>,
-        lifts: &[Lift],
+        lifts: &HashMap<usize, Lift>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else {return};
@@ -89,8 +89,8 @@ fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>) ->
     None
 }
 
-fn lift_color(color: Rgba<u8>, xy: &XY<u32>, lifts: &[Lift]) -> Option<Rgba<u8>> {
-    for lift in lifts {
+fn lift_color(color: Rgba<u8>, xy: &XY<u32>, lifts: &HashMap<usize, Lift>) -> Option<Rgba<u8>> {
+    for lift in lifts.values() {
         if lift.from == *xy || lift.to == *xy {
             return Some(color);
         }
