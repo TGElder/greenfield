@@ -235,7 +235,7 @@ impl Game {
     // Temporary until we have proper logic for setting locations and targets
     fn set_locations_and_targets(&mut self) {
         let Some(piste) = self.components.pistes.keys().next() else {return};
-        let Some(lift) = self.components.lifts.keys().next() else {return};
+        let Some(lift) = self.components.lifts.keys().max() else {return};
         for (i, _) in self.components.plans.iter() {
             self.components.locations.entry(*i).or_insert(*piste);
             self.components.targets.entry(*i).or_insert(*lift);
@@ -288,6 +288,9 @@ impl EventHandler for Game {
             &self.components.terrain,
             &self.start.elapsed().as_micros(),
             &mut self.components.plans,
+            &self.components.locations,
+            &self.components.targets,
+            &self.components.piste_costs,
             &mut self.components.reserved,
         );
         framer::run(
