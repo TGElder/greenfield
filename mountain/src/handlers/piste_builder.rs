@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::origin_grid::OriginGrid;
@@ -6,6 +5,7 @@ use engine::binding::Binding;
 
 use crate::handlers::selection;
 use crate::model::Piste;
+use crate::services::id_allocator;
 use crate::systems::overlay;
 
 pub struct Handler {
@@ -24,6 +24,7 @@ impl Handler {
         pistes: &mut HashMap<usize, Piste>,
         selection: &mut selection::Handler,
         overlay: &mut overlay::System,
+        id_allocator: &mut id_allocator::Service,
     ) {
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
@@ -34,14 +35,12 @@ impl Handler {
         let Some(rectangle) = selection.selected_rectangle() else {return};
         let grid = OriginGrid::from_rectangle(rectangle, add);
 
-        match pistes.entry(0) {
-            Entry::Vacant(cell) => {
-                cell.insert(Piste { grid });
-            }
-            Entry::Occupied(mut value) => {
-                let piste = value.get_mut();
+        if pistes.is_empty() {
+            pistes.insert(id_allocator.next_id(), Piste { grid });
+        } else {
+            pistes.iter_mut().for_each(|(i, piste)| {
                 piste.grid = piste.grid.paste(&grid);
-            }
+            });
         };
 
         overlay.update(*rectangle);

@@ -4,6 +4,7 @@ mod init;
 mod model;
 mod network;
 mod physics;
+mod services;
 mod systems;
 
 use std::collections::HashMap;
@@ -27,6 +28,7 @@ use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
+use crate::services::id_allocator;
 use crate::systems::{avatar_artist, cost_computer, framer, overlay, planner};
 
 fn main() {
@@ -78,6 +80,9 @@ fn main() {
                     piste: Rgba::new(0, 0, 255, 128),
                     lift: Rgba::new(0, 0, 0, 255),
                 }),
+            },
+            services: Services {
+                id_allocator: id_allocator::Service::new(),
             },
             start: Instant::now(),
             mouse_xy: None,
@@ -167,6 +172,7 @@ struct Game {
     drawings: Option<Drawings>,
     handlers: Handlers,
     systems: Systems,
+    services: Services,
     start: Instant,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
@@ -201,6 +207,10 @@ struct Systems {
     overlay: overlay::System,
 }
 
+struct Services {
+    id_allocator: id_allocator::Service,
+}
+
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
@@ -232,20 +242,26 @@ impl EventHandler for Game {
         self.yaw_handler.handle(event, engine, graphics);
         self.zoom_handler.handle(event, engine, graphics);
 
-        self.handlers
-            .add_skier
-            .handle(event, &self.mouse_xy, &mut self.components.plans, graphics);
+        self.handlers.add_skier.handle(
+            event,
+            &self.mouse_xy,
+            &mut self.components.plans,
+            &mut self.services.id_allocator,
+            graphics,
+        );
         self.handlers.piste_builder.handle(
             event,
             &mut self.components.pistes,
             &mut self.handlers.selection,
             &mut self.systems.overlay,
+            &mut self.services.id_allocator,
         );
         self.handlers.lift_builder.handle(
             event,
             &mut self.components.lifts,
             &self.mouse_xy,
             &mut self.systems.overlay,
+            &mut self.services.id_allocator,
             graphics,
         );
         self.handlers
