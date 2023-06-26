@@ -4,6 +4,7 @@ use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use engine::binding::Binding;
 
 use crate::model::Lift;
+use crate::services::id_allocator;
 use crate::systems::overlay;
 
 pub struct Handler {
@@ -25,6 +26,7 @@ impl Handler {
         lifts: &mut HashMap<usize, Lift>,
         mouse_xy: &Option<XY<u32>>,
         overlay: &mut overlay::System,
+        id_allocator: &mut id_allocator::Service,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if !self.binding.binds_event(event) {
@@ -41,7 +43,7 @@ impl Handler {
         };
 
         let to = position;
-        lifts.insert(lifts.len(), Lift { from, to });
+        lifts.insert(id_allocator.next_id(), Lift { from, to });
         self.from = None;
 
         overlay.update(XYRectangle { from, to: from });
