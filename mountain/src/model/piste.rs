@@ -19,6 +19,10 @@ impl PisteCosts {
         }
     }
 
+    pub fn costs(&self, lift: &usize) -> Option<&HashMap<State, u64>> {
+        self.lift_to_costs.get(lift)
+    }
+
     pub fn set_costs(&mut self, lift: usize, costs: HashMap<State, u64>) {
         self.lift_to_costs.insert(lift, costs);
     }
