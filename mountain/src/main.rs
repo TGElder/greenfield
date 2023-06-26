@@ -37,6 +37,8 @@ fn main() {
         Game {
             components: Components {
                 plans: HashMap::default(),
+                locations: HashMap::default(),
+                targets: HashMap::default(),
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
@@ -183,6 +185,8 @@ struct Game {
 
 struct Components {
     plans: HashMap<usize, skiing::Plan>,
+    locations: HashMap<usize, usize>,
+    targets: HashMap<usize, usize>,
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
@@ -227,6 +231,16 @@ impl Game {
             &xy(256, 256),
         );
     }
+
+    // Temporary until we have proper logic for setting locations and targets
+    fn set_locations_and_targets(&mut self) {
+        let Some(piste) = self.components.pistes.keys().next() else {return};
+        let Some(lift) = self.components.lifts.keys().next() else {return};
+        for (i, _) in self.components.plans.iter() {
+            self.components.locations.entry(*i).or_insert(*piste);
+            self.components.targets.entry(*i).or_insert(*lift);
+        }
+    }
 }
 
 impl EventHandler for Game {
@@ -267,6 +281,8 @@ impl EventHandler for Game {
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
+
+        self.set_locations_and_targets();
 
         planner::run(
             &self.components.terrain,
