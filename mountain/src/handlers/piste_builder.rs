@@ -38,7 +38,7 @@ impl Handler {
         if pistes.is_empty() {
             pistes.insert(id_allocator.next_id(), Piste { grid });
         } else {
-            pistes.iter_mut().for_each(|(i, piste)| {
+            pistes.iter_mut().for_each(|(_, piste)| {
                 piste.grid = piste.grid.paste(&grid);
             });
         };
