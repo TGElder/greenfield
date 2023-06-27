@@ -46,7 +46,7 @@ pub trait FindBestWithinSteps<S, T, N> {
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> S,
+        scorer: &dyn Fn(&N, &T) -> Option<S>,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
@@ -60,7 +60,7 @@ where
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> S,
+        scorer: &dyn Fn(&N, &T) -> Option<S>,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -68,11 +68,12 @@ where
         let mut heap = BinaryHeap::new();
 
         for from in from.iter() {
+            let Some(score) = scorer(self, from) else {continue};
             heap.push(Node {
                 location: *from,
                 entrance: None,
                 steps_from_start: 0,
-                score: scorer(self, from),
+                score,
             });
         }
 
@@ -112,11 +113,12 @@ where
                 }
                 let steps_from_start = steps_from_start + 1;
                 if steps_from_start <= max_steps {
+                    let Some(score) = scorer(self, &to) else {continue};
                     heap.push(Node {
                         location: to,
                         entrance: Some(edge),
                         steps_from_start,
-                        score: scorer(self, &to),
+                        score,
                     });
                 }
             }
@@ -186,7 +188,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 2);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 2);
 
         // then
         assert_eq!(
@@ -259,7 +261,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 2);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 2);
 
         // then
         assert_eq!(
@@ -309,7 +311,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {2}, &|_, i| *i, 2);
+        let result = network.find_best_within_steps(hashset! {2}, &|_, i| Some(*i), 2);
 
         // then
         assert_eq!(result, Some(vec![]));
@@ -352,7 +354,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| i32::from(*i != 0), 2);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &|_, i| Some(i32::from(*i != 0)), 2);
 
         // then
         assert!(
@@ -423,7 +426,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0, 2}, &|_, i| *i, 4);
+        let result = network.find_best_within_steps(hashset! {0, 2}, &|_, i| Some(*i), 4);
 
         // then
         assert_eq!(
@@ -500,9 +503,9 @@ mod tests {
         let result = network.find_best_within_steps(
             hashset! {0},
             &|_, i| match i {
-                3 => 1,
-                5 => 1,
-                _ => 0,
+                3 => Some(1),
+                5 => Some(1),
+                _ => Some(0),
             },
             3,
         );
@@ -555,7 +558,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {}, &|_, _| 0, 4);
+        let result = network.find_best_within_steps(hashset! {}, &|_, _| Some(0), 4);
 
         // then
         assert_eq!(result, None);
@@ -576,7 +579,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, _| 0, 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, _| Some(0), 4);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
@@ -620,7 +623,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 1);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 1);
 
         // then
         assert_eq!(
@@ -663,9 +666,66 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| *i, 0);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 0);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
+    }
+
+    #[test]
+    fn must_not_use_no_score_node() {
+        // given
+        //
+        // [1] <- [0] -> [2]
+
+        struct TestNetwork {}
+
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+                match from {
+                    0 => Box::new(
+                        [
+                            Edge {
+                                from: 0,
+                                to: 1,
+                                cost: 1,
+                            },
+                            Edge {
+                                from: 0,
+                                to: 2,
+                                cost: 1,
+                            },
+                        ]
+                        .into_iter(),
+                    ),
+                    _ => Box::new(iter::empty()),
+                }
+            }
+        }
+
+        let network = TestNetwork {};
+
+        // when
+        let result = network.find_best_within_steps(
+            hashset! {0},
+            &|_, i| match i {
+                2 => None,
+                i => Some(*i),
+            },
+            2,
+        );
+
+        // then
+        assert_eq!(
+            result,
+            Some(vec![Edge {
+                from: 0,
+                to: 1,
+                cost: 1,
+            }])
+        );
     }
 }
