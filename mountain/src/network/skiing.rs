@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::iter::empty;
 
 use commons::{geometry::XY, grid::Grid};
@@ -106,7 +106,7 @@ pub struct SkiingInNetwork {
 impl SkiingInNetwork {
     pub fn for_positions(
         network: &dyn OutNetwork<State>,
-        positions: &[XY<u32>],
+        positions: &HashSet<XY<u32>>,
     ) -> SkiingInNetwork {
         let mut edges = HashMap::with_capacity(positions.len());
 
@@ -119,7 +119,10 @@ impl SkiingInNetwork {
                         travel_direction,
                     };
 
-                    for edge in network.edges_out(&state) {
+                    for edge in network
+                        .edges_out(&state)
+                        .filter(|Edge { to, .. }| positions.contains(&to.position))
+                    {
                         edges
                             .entry(edge.to)
                             .or_insert_with(|| Vec::with_capacity(5))

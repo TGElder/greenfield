@@ -30,7 +30,7 @@ impl Handler {
             id_allocator.next_id(),
             skiing::Plan::Stationary(skiing::State {
                 position: xy(x.round() as u32, y.round() as u32),
-                velocity: 0,
+                velocity: 1,
                 travel_direction: Direction::NorthEast,
             }),
         );
