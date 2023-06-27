@@ -112,10 +112,7 @@ fn find_path(
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| match costs.get(state) {
-            Some(_) => u64::MAX - costs[state],
-            None => 0,
-        },
+        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
         MAX_STEPS,
     )
 }
