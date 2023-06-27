@@ -44,12 +44,12 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
     out
 }
 
-fn piste_positions(piste: &Piste) -> Vec<XY<u32>> {
+fn piste_positions(piste: &Piste) -> HashSet<XY<u32>> {
     piste
         .grid
         .iter()
         .filter(|position| piste.grid[position])
-        .collect::<Vec<_>>()
+        .collect::<HashSet<_>>()
 }
 
 fn compute_costs_for_position(
