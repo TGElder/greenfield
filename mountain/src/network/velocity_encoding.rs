@@ -8,7 +8,7 @@ pub fn encode_velocity(v: &f32) -> Option<u8> {
     if *v > MAX_VELOCITY {
         return None;
     }
-    let encoding = ((v / MAX_VELOCITY) * (VELOCITY_LEVELS as f32 - 1.0)).round() as u8;
+    let encoding = ((v / MAX_VELOCITY) * (VELOCITY_LEVELS as f32 - 1.0)).floor() as u8;
     Some(encoding)
 }
 
