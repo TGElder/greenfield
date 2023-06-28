@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::iter::empty;
+use std::time::Duration;
 
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
@@ -13,6 +14,8 @@ use crate::{
     physics,
 };
 
+const TURNING_DURATION: Duration = Duration::from_secs(1);
+
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
@@ -23,7 +26,11 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
-        Box::new(self.skiing_edges(from).chain(self.braking_edges(from)))
+        Box::new(
+            self.skiing_edges(from)
+                .chain(self.braking_edges(from))
+                .chain(self.turning_edges(from)),
+        )
     }
 }
 
@@ -90,6 +97,37 @@ impl<'a> SkiingNetwork<'a> {
                     },
                     ..edge
                 })
+            })
+    }
+
+    fn turning_edges(
+        &'a self,
+        from: &'a State,
+    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
+        Some(from)
+            .into_iter()
+            .filter(|State { velocity, .. }| *velocity == 0)
+            .flat_map(|from| {
+                let turning_micros = TURNING_DURATION.as_micros().try_into().unwrap();
+                [
+                    Edge {
+                        from: *from,
+                        to: State {
+                            travel_direction: from.travel_direction.next_clockwise(),
+                            ..*from
+                        },
+                        cost: turning_micros,
+                    },
+                    Edge {
+                        from: *from,
+                        to: State {
+                            travel_direction: from.travel_direction.next_anticlockwise(),
+                            ..*from
+                        },
+                        cost: turning_micros,
+                    },
+                ]
+                .into_iter()
             })
     }
 
