@@ -9,7 +9,7 @@ mod systems;
 
 use std::collections::HashMap;
 use std::f32::consts::PI;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use commons::color::Rgba;
 use commons::geometry::{xy, xyz, Rectangle, XY};
@@ -28,7 +28,7 @@ use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
-use crate::services::id_allocator;
+use crate::services::{clock, id_allocator};
 use crate::systems::{avatar_artist, cost_computer, framer, overlay, planner};
 
 fn main() {
@@ -84,9 +84,9 @@ fn main() {
                 }),
             },
             services: Services {
+                clock: clock::Service::new(),
                 id_allocator: id_allocator::Service::new(),
             },
-            start: Instant::now(),
             mouse_xy: None,
             drag_handler: drag::Handler::new(drag::Bindings {
                 start_dragging: Binding::Single {
@@ -175,7 +175,6 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     services: Services,
-    start: Instant,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -212,6 +211,7 @@ struct Systems {
 }
 
 struct Services {
+    clock: clock::Service,
     id_allocator: id_allocator::Service,
 }
 
@@ -286,7 +286,7 @@ impl EventHandler for Game {
 
         planner::run(
             &self.components.terrain,
-            &self.start.elapsed().as_micros(),
+            &self.services.clock.get_micros(),
             &mut self.components.plans,
             &self.components.locations,
             &self.components.targets,
@@ -295,7 +295,7 @@ impl EventHandler for Game {
         );
         framer::run(
             &self.components.terrain,
-            &self.start.elapsed().as_micros(),
+            &self.services.clock.get_micros(),
             &self.components.plans,
             &mut self.components.frames,
         );
