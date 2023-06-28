@@ -57,11 +57,11 @@ fn main() {
                 },
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::J),
+                        button: Button::Keyboard(KeyboardKey::Comma),
                         state: ButtonState::Pressed,
                     },
                     speed_up: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::K),
+                        button: Button::Keyboard(KeyboardKey::Period),
                         state: ButtonState::Pressed,
                     },
                 }),
