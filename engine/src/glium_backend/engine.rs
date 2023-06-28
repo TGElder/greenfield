@@ -234,6 +234,8 @@ impl From<glutin::event::VirtualKeyCode> for Button {
             glutin::event::VirtualKeyCode::Z => KeyboardKey::Z,
             glutin::event::VirtualKeyCode::Plus => KeyboardKey::Plus,
             glutin::event::VirtualKeyCode::Minus => KeyboardKey::Minus,
+            glutin::event::VirtualKeyCode::Comma => KeyboardKey::Comma,
+            glutin::event::VirtualKeyCode::Period => KeyboardKey::Period,
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)

@@ -74,6 +74,9 @@ pub enum KeyboardKey {
     Plus,
     Minus,
 
+    Comma,
+    Period,
+
     Unknown,
 }
 
