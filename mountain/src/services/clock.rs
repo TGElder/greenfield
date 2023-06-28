@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 pub struct Service {
     baseline: Instant,
     real_to_game: f32,
