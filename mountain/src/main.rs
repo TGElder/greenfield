@@ -28,7 +28,7 @@ use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
-use crate::services::{clock, id_allocator};
+use crate::services::id_allocator;
 use crate::systems::{avatar_artist, cost_computer, framer, overlay, planner};
 
 fn main() {
@@ -55,6 +55,16 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
+                clock: handlers::clock::Handler::new(handlers::clock::Bindings {
+                    slow_down: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::J),
+                        state: ButtonState::Pressed,
+                    },
+                    speed_up: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::K),
+                        state: ButtonState::Pressed,
+                    },
+                }),
                 piste_builder: piste_builder::Handler {
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
@@ -84,7 +94,7 @@ fn main() {
                 }),
             },
             services: Services {
-                clock: clock::Service::new(),
+                clock: services::clock::Service::new(),
                 id_allocator: id_allocator::Service::new(),
             },
             mouse_xy: None,
@@ -201,6 +211,7 @@ struct Drawings {
 
 struct Handlers {
     add_skier: add_skier::Handler,
+    clock: handlers::clock::Handler,
     piste_builder: piste_builder::Handler,
     lift_builder: lift_builder::Handler,
     selection: selection::Handler,
@@ -211,7 +222,7 @@ struct Systems {
 }
 
 struct Services {
-    clock: clock::Service,
+    clock: services::clock::Service,
     id_allocator: id_allocator::Service,
 }
 
@@ -263,6 +274,7 @@ impl EventHandler for Game {
             &mut self.services.id_allocator,
             graphics,
         );
+        self.handlers.clock.handle(event, &mut self.services.clock);
         self.handlers.piste_builder.handle(
             event,
             &mut self.components.pistes,
