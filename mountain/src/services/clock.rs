@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 pub struct Service {
     baseline: Instant,
     real_to_game: f32,
@@ -27,7 +25,7 @@ impl Service {
             + self.offset_micros
     }
 
-    pub fn _set_speed(&mut self, real_to_game: f32) {
+    pub fn set_speed(&mut self, real_to_game: f32) {
         let new_baseline = Instant::now();
         self.offset_micros = self.get_micros_at(&new_baseline);
         self.baseline = new_baseline;
