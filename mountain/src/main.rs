@@ -29,7 +29,7 @@ use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
 use crate::services::id_allocator;
-use crate::systems::{avatar_artist, cost_computer, framer, overlay, planner};
+use crate::systems::{avatar_artist, cost_computer, framer, lift_entry, overlay, planner};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -304,6 +304,12 @@ impl EventHandler for Game {
             &self.components.targets,
             &self.components.piste_costs,
             &mut self.components.reserved,
+        );
+        lift_entry::run(
+            &self.components.plans,
+            &self.components.targets,
+            &self.components.lifts,
+            &mut self.components.locations,
         );
         framer::run(
             &self.components.terrain,
