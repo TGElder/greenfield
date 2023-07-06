@@ -14,7 +14,7 @@ use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 const MAX_STEPS: u64 = 8;
 
 pub struct System {
-    stationary: HashVec,
+    finished: HashVec,
 }
 
 pub struct Parameters<'a> {
@@ -30,7 +30,7 @@ pub struct Parameters<'a> {
 impl System {
     pub fn new() -> System {
         System {
-            stationary: HashVec::new(),
+            finished: HashVec::new(),
         }
     }
 
@@ -46,9 +46,9 @@ impl System {
             reserved,
         }: Parameters<'_>,
     ) {
-        self.add_new_stationary(plans, micros);
+        self.add_new_finished(plans, micros);
 
-        self.stationary.retain(|id| {
+        self.finished.retain(|id| {
             let Some(current_plan) = plans.get_mut(id) else {
                 return false
             };
@@ -61,24 +61,23 @@ impl System {
             };
             reserve(current_plan, reserved);
 
-            if let Plan::Moving(_) = current_plan {
-                return false;
+            match current_plan {
+                Plan::Stationary(_) => true,
+                Plan::Moving(_) => false,
             }
-
-            true
         });
     }
 
-    fn add_new_stationary(&mut self, plans: &mut HashMap<usize, Plan>, micros: &u128) {
+    fn add_new_finished(&mut self, plans: &mut HashMap<usize, Plan>, micros: &u128) {
         let new_finished = plans
             .iter_mut()
-            .filter(|(id, _)| !self.stationary.contains(id))
+            .filter(|(id, _)| !self.finished.contains(id))
             .filter(|(_, plan)| finished(plan, micros))
             .map(|(id, _)| id)
             .collect::<Vec<_>>();
 
         for id in new_finished {
-            self.stationary.push(*id);
+            self.finished.push(*id);
         }
     }
 }
