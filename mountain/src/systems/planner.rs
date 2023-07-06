@@ -13,31 +13,121 @@ use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
 const MAX_STEPS: u64 = 8;
 
-pub fn run(
-    terrain: &Grid<f32>,
-    micros: &u128,
-    plans: &mut HashMap<usize, Plan>,
-    locations: &HashMap<usize, usize>,
-    targets: &HashMap<usize, usize>,
-    costs: &HashMap<usize, PisteCosts>,
-    reserved: &mut Grid<bool>,
-) {
-    for (id, current_plan) in plans.iter_mut() {
-        if let Plan::Moving(ref events) = current_plan {
-            if let Some(last) = events.last() {
-                if *micros < last.micros {
-                    continue;
-                }
+pub struct System {
+    stationary: HashVec,
+}
+
+pub struct Parameters<'a> {
+    pub terrain: &'a Grid<f32>,
+    pub micros: &'a u128,
+    pub plans: &'a mut HashMap<usize, Plan>,
+    pub locations: &'a HashMap<usize, usize>,
+    pub targets: &'a HashMap<usize, usize>,
+    pub costs: &'a HashMap<usize, PisteCosts>,
+    pub reserved: &'a mut Grid<bool>,
+}
+
+impl System {
+    pub fn new() -> System {
+        System {
+            stationary: HashVec::new(),
+        }
+    }
+
+    pub fn run(
+        &mut self,
+        Parameters {
+            terrain,
+            micros,
+            plans,
+            locations,
+            targets,
+            costs,
+            reserved,
+        }: Parameters<'_>,
+    ) {
+        self.add_new_stationary(plans, micros);
+
+        self.stationary.retain(|id| {
+            let Some(current_plan) = plans.get_mut(id) else {
+                return false
+            };
+
+            free(current_plan, reserved);
+            let from = last_state(current_plan);
+            *current_plan = match get_costs(id, locations, targets, costs) {
+                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
+                None => stop(*from),
+            };
+            reserve(current_plan, reserved);
+
+            if let Plan::Moving(_) = current_plan {
+                return false;
+            }
+
+            true
+        });
+    }
+
+    fn add_new_stationary(&mut self, plans: &mut HashMap<usize, Plan>, micros: &u128) {
+        let new_finished = plans
+            .iter_mut()
+            .filter(|(id, _)| !self.stationary.contains(id))
+            .filter(|(_, plan)| finished(plan, micros))
+            .map(|(id, _)| id)
+            .collect::<Vec<_>>();
+
+        for id in new_finished {
+            self.stationary.push(*id);
+        }
+    }
+}
+
+struct HashVec {
+    waiting: HashSet<usize>,
+    queue: Vec<usize>,
+}
+
+impl HashVec {
+    fn new() -> HashVec {
+        HashVec {
+            waiting: HashSet::new(),
+            queue: Vec::new(),
+        }
+    }
+
+    fn contains(&self, value: &usize) -> bool {
+        self.queue.contains(value)
+    }
+
+    fn push(&mut self, value: usize) {
+        self.waiting.insert(value);
+        self.queue.push(value);
+    }
+
+    fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&usize) -> bool,
+    {
+        self.queue.retain(|value| {
+            let out = f(value);
+            if !out {
+                self.waiting.remove(value);
+            }
+            out
+        })
+    }
+}
+
+fn finished(current_plan: &Plan, micros: &u128) -> bool {
+    if let Plan::Moving(ref events) = current_plan {
+        if let Some(last) = events.last() {
+            if *micros < last.micros {
+                return false;
             }
         }
-        free(current_plan, reserved);
-        let from = last_state(current_plan);
-        *current_plan = match get_costs(id, locations, targets, costs) {
-            Some(costs) => new_plan(terrain, micros, from, reserved, costs),
-            None => stop(*from),
-        };
-        reserve(current_plan, reserved);
     }
+    true
 }
 
 fn free(plan: &Plan, reserved: &mut Grid<bool>) {

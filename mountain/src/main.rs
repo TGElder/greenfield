@@ -92,6 +92,7 @@ fn main() {
                     piste: Rgba::new(0, 0, 255, 128),
                     lift: Rgba::new(0, 0, 0, 255),
                 }),
+                planner: planner::System::new(),
             },
             services: Services {
                 clock: services::clock::Service::new(),
@@ -219,6 +220,7 @@ struct Handlers {
 
 struct Systems {
     overlay: overlay::System,
+    planner: planner::System,
 }
 
 struct Services {
@@ -296,15 +298,15 @@ impl EventHandler for Game {
 
         self.set_locations_and_targets();
 
-        planner::run(
-            &self.components.terrain,
-            &self.services.clock.get_micros(),
-            &mut self.components.plans,
-            &self.components.locations,
-            &self.components.targets,
-            &self.components.piste_costs,
-            &mut self.components.reserved,
-        );
+        self.systems.planner.run(systems::planner::Parameters {
+            terrain: &self.components.terrain,
+            micros: &self.services.clock.get_micros(),
+            plans: &mut self.components.plans,
+            locations: &self.components.locations,
+            targets: &self.components.targets,
+            costs: &self.components.piste_costs,
+            reserved: &mut self.components.reserved,
+        });
         lift_entry::run(
             &self.components.plans,
             &self.components.targets,
