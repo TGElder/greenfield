@@ -6,7 +6,7 @@ use engine::graphics::transform::Transform;
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
-use crate::model::Frame;
+use crate::model::frame::{Frame, Mode};
 
 static SKIS: Quad = Quad {
     color: Rgb::new(1.0, 0.0, 0.0),
@@ -59,14 +59,29 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
 
     let transformation = translation * rotation;
 
-    graphics
-        .draw_quads(
-            index,
-            &[
-                SKIS.transform(&transformation),
-                BODY_FRONT.transform(&transformation),
-                BODY_BACK.transform(&transformation),
-            ],
-        )
-        .unwrap();
+    match frame.mode {
+        Mode::Walking => {
+            graphics
+                .draw_quads(
+                    index,
+                    &[
+                        BODY_FRONT.transform(&transformation),
+                        BODY_BACK.transform(&transformation),
+                    ],
+                )
+                .unwrap();
+        }
+        Mode::Skiing => {
+            graphics
+                .draw_quads(
+                    index,
+                    &[
+                        SKIS.transform(&transformation),
+                        BODY_FRONT.transform(&transformation),
+                        BODY_BACK.transform(&transformation),
+                    ],
+                )
+                .unwrap();
+        }
+    }
 }
