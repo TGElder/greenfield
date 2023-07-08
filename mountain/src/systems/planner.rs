@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 
 use crate::model::skiing::{Event, Plan, State};
-use crate::model::PisteCosts;
+use crate::model::{Piste, PisteCosts};
 use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
@@ -24,6 +24,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub costs: &'a HashMap<usize, PisteCosts>,
+    pub pistes: &'a HashMap<usize, Piste>,
     pub reserved: &'a mut Grid<bool>,
 }
 
@@ -43,6 +44,7 @@ impl System {
             locations,
             targets,
             costs,
+            pistes,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -56,7 +58,14 @@ impl System {
             free(current_plan, reserved);
             let from = last_state(current_plan);
             *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
+                Some(costs) => new_plan(
+                    terrain,
+                    micros,
+                    from,
+                    reserved,
+                    costs,
+                    &pistes[&locations[id]],
+                ),
                 None => stop(*from),
             };
             reserve(current_plan, reserved);
@@ -178,8 +187,9 @@ fn new_plan(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    piste: &Piste,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(terrain, from, reserved, costs, piste) {
         Some(edges) => {
             if edges.is_empty() {
                 stop(*from)
@@ -196,12 +206,24 @@ fn find_path(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    piste: &Piste,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
+        &|_, state| {
+            if piste.grid.in_bounds(state.position) && piste.grid[state.position] {
+                Some(
+                    costs
+                        .get(state)
+                        .map(|_| u64::MAX - costs[state])
+                        .unwrap_or(0),
+                )
+            } else {
+                None
+            }
+        },
         MAX_STEPS,
     )
 }

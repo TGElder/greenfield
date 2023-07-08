@@ -43,10 +43,20 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
         let grid = &piste.grid;
         if grid.in_bounds(from) && grid[from] {
             let costs = compute_costs_for_position(&network, from, max_entry_velocity);
+            let mut adjusted = HashMap::new();
+            for (state, cost) in costs.iter() {
+                let brake_state = State {
+                    velocity: 0,
+                    ..*state
+                };
+                if let Some(_) = costs.get(&brake_state) {
+                    adjusted.insert(*state, *cost);
+                }
+            }
             let coverage =
-                costs.len() as f32 / (piste_positions.len() * DIRECTIONS.len() * 8) as f32;
+                adjusted.len() as f32 / (piste_positions.len() * DIRECTIONS.len() * 8) as f32;
             println!("INFO: Coverage for lift {} = {}", lift, coverage);
-            out.set_costs(*lift, costs)
+            out.set_costs(*lift, adjusted)
         }
     }
 
