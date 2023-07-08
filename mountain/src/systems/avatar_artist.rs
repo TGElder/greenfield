@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use engine::graphics::Graphics;
 
 use crate::draw::avatar::draw;
-use crate::model::Frame;
+use crate::model::frame::Frame;
 
 pub fn run(
     graphics: &mut dyn Graphics,

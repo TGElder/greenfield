@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use commons::grid::Grid;
 
-use crate::model::skiing::{Plan, State};
+use crate::model::skiing::{Mode, Plan, State};
 use crate::model::Lift;
 
 pub fn run(
@@ -24,7 +24,7 @@ pub fn run(
             *id,
             Plan::Stationary(State {
                 position: lift.to,
-                velocity: 1,
+                mode: Mode::Skiing { velocity: 1 },
                 travel_direction: state.travel_direction,
             }),
         );

@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
+use crate::model::skiing::Mode;
 use crate::model::{skiing, Direction};
 use crate::services::id_allocator;
 
@@ -30,7 +31,7 @@ impl Handler {
             id_allocator.next_id(),
             skiing::Plan::Stationary(skiing::State {
                 position: xy(x.round() as u32, y.round() as u32),
-                velocity: 1,
+                mode: Mode::Skiing { velocity: 1 },
                 travel_direction: Direction::NorthEast,
             }),
         );
