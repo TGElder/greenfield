@@ -1,2 +1,2 @@
 pub mod skiing;
-mod velocity_encoding;
+pub mod velocity_encoding;
