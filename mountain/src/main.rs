@@ -335,6 +335,7 @@ impl EventHandler for Game {
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.pistes,
+            &self.components.piste_costs,
             &self.components.lifts,
             &self.handlers.selection,
         );
