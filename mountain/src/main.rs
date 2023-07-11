@@ -30,7 +30,9 @@ use crate::init::generate_heightmap;
 use crate::model::frame::Frame;
 use crate::model::{skiing, Lift, Piste, PisteCosts};
 use crate::services::id_allocator;
-use crate::systems::{avatar_artist, cost_computer, framer, lift, lift_entry, overlay, planner};
+use crate::systems::{
+    avatar_artist, cost_computer, framer, lift, lift_entry, overlay, planner, walking_cost_computer,
+};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -44,6 +46,7 @@ fn main() {
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
                 piste_costs: HashMap::default(),
+                walk_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 terrain,
@@ -202,6 +205,7 @@ struct Components {
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     piste_costs: HashMap<usize, PisteCosts>,
+    walk_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
@@ -305,7 +309,8 @@ impl EventHandler for Game {
             plans: &mut self.components.plans,
             locations: &self.components.locations,
             targets: &self.components.targets,
-            costs: &self.components.piste_costs,
+            piste_costs: &self.components.piste_costs,
+            walk_costs: &self.components.walk_costs,
             pistes: &self.components.pistes,
             reserved: &mut self.components.reserved,
         });
@@ -350,6 +355,12 @@ impl EventHandler for Game {
                 &self.components.terrain,
                 &self.components.pistes,
                 &mut self.components.piste_costs,
+                &self.components.lifts,
+            );
+            walking_cost_computer::run(
+                &self.components.terrain,
+                &self.components.pistes,
+                &mut self.components.walk_costs,
                 &self.components.lifts,
             );
         }

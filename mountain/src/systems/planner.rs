@@ -8,6 +8,7 @@ use network::model::Edge;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::model::{Piste, PisteCosts};
 use crate::network::skiing::SkiingNetwork;
+use crate::network::walking::WalkingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
@@ -23,7 +24,8 @@ pub struct Parameters<'a> {
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
-    pub costs: &'a HashMap<usize, PisteCosts>,
+    pub piste_costs: &'a HashMap<usize, PisteCosts>,
+    pub walk_costs: &'a HashMap<usize, PisteCosts>,
     pub pistes: &'a HashMap<usize, Piste>,
     pub reserved: &'a mut Grid<bool>,
 }
@@ -43,7 +45,8 @@ impl System {
             plans,
             locations,
             targets,
-            costs,
+            piste_costs,
+            walk_costs,
             pistes,
             reserved,
         }: Parameters<'_>,
@@ -57,8 +60,16 @@ impl System {
 
             free(current_plan, reserved);
             let from = last_state(current_plan);
-            *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs, &pistes[&locations[id]]),
+            *current_plan = match get_costs(id, locations, targets, piste_costs, walk_costs) {
+                Some((piste_costs, walk_costs)) => new_plan(
+                    terrain,
+                    micros,
+                    from,
+                    reserved,
+                    piste_costs,
+                    walk_costs,
+                    &pistes[&locations[id]],
+                ),
                 None => brake(*from),
             };
             reserve(current_plan, reserved);
@@ -166,12 +177,14 @@ fn get_costs<'a>(
     id: &usize,
     locations: &HashMap<usize, usize>,
     targets: &HashMap<usize, usize>,
-    costs: &'a HashMap<usize, PisteCosts>,
-) -> Option<&'a HashMap<State, u64>> {
+    piste_costs: &'a HashMap<usize, PisteCosts>,
+    walk_costs: &'a HashMap<usize, PisteCosts>,
+) -> Option<(&'a HashMap<State, u64>, &'a HashMap<State, u64>)> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
-    let costs = costs.get(location)?;
-    costs.costs(target)
+    let piste_costs = piste_costs.get(location)?;
+    let walk_costs = walk_costs.get(location)?;
+    Some((piste_costs.costs(target)?, walk_costs.costs(target)?))
 }
 
 fn new_plan(
@@ -179,10 +192,11 @@ fn new_plan(
     micros: &u128,
     from: &State,
     reserved: &Grid<bool>,
-    costs: &HashMap<State, u64>,
+    piste_costs: &HashMap<State, u64>,
+    walk_costs: &HashMap<State, u64>,
     piste: &Piste,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs, piste) {
+    match find_path(terrain, from, reserved, piste_costs, walk_costs, piste) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -198,10 +212,55 @@ fn find_path(
     terrain: &Grid<f32>,
     from: &State,
     reserved: &Grid<bool>,
+    piste_costs: &HashMap<State, u64>,
+    walk_costs: &HashMap<State, u64>,
+    piste: &Piste,
+) -> Option<Vec<Edge<State>>> {
+    dbg!(from);
+    if piste_costs.contains_key(from) {
+        dbg!("skiing");
+        find_skiing_path(terrain, from, reserved, piste_costs, piste)
+    } else {
+        dbg!("walking");
+        find_walking_path(terrain, from, reserved, walk_costs, piste)
+    }
+}
+
+fn find_skiing_path(
+    terrain: &Grid<f32>,
+    from: &State,
+    reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
     piste: &Piste,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
+
+    network.find_best_within_steps(
+        HashSet::from([*from]),
+        &|_, state| {
+            if piste.grid.in_bounds(state.position) && piste.grid[state.position] {
+                Some(
+                    costs
+                        .get(state)
+                        .map(|_| u64::MAX - costs[state])
+                        .unwrap_or(0),
+                )
+            } else {
+                None
+            }
+        },
+        MAX_STEPS,
+    )
+}
+
+fn find_walking_path(
+    terrain: &Grid<f32>,
+    from: &State,
+    reserved: &Grid<bool>,
+    costs: &HashMap<State, u64>,
+    piste: &Piste,
+) -> Option<Vec<Edge<State>>> {
+    let network = WalkingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
         HashSet::from([*from]),

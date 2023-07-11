@@ -16,8 +16,6 @@ use crate::{
 
 const TURNING_DURATION: Duration = Duration::from_secs(1);
 const SKIS_ON_DURATION: Duration = Duration::from_secs(10);
-const SKIS_OFF_DURATION: Duration = Duration::from_secs(10);
-const WALK_DURATION: Duration = Duration::from_secs(1);
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
@@ -33,9 +31,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.skiing_edges(from)
                 .chain(self.braking_edges(from))
                 .chain(self.turning_edges(from))
-                .chain(self.skis_off(from))
-                .chain(self.skis_on(from))
-                .chain(self.walk(from)),
+                .chain(self.skis_on(from)),
         )
     }
 }
@@ -167,28 +163,6 @@ impl<'a> SkiingNetwork<'a> {
         })
     }
 
-    fn skis_off(
-        &'a self,
-        from: &'a State,
-    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Skiing { velocity },
-                ..
-            } if *velocity == 0 => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .map(|from| Edge {
-            from: *from,
-            to: State {
-                mode: Mode::Walking,
-                ..*from
-            },
-            cost: SKIS_OFF_DURATION.as_micros().try_into().unwrap(),
-        })
-    }
-
     fn skis_on(
         &'a self,
         from: &'a State,
@@ -208,31 +182,6 @@ impl<'a> SkiingNetwork<'a> {
                 ..*from
             },
             cost: SKIS_ON_DURATION.as_micros().try_into().unwrap(),
-        })
-    }
-
-    fn walk(&'a self, from: &'a State) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Walking,
-                ..
-            } => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .flat_map(|from| {
-            self.terrain
-                .neighbours_4(from.position)
-                .filter(|neighbour| !self.reserved[neighbour])
-                .map(|neighbour| Edge {
-                    from: *from,
-                    to: State {
-                        position: neighbour,
-                        mode: Mode::Walking,
-                        ..*from
-                    },
-                    cost: WALK_DURATION.as_micros().try_into().unwrap(),
-                })
         })
     }
 
