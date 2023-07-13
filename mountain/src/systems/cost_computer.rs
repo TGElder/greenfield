@@ -1,12 +1,14 @@
 use std::collections::{HashMap, HashSet};
+use std::iter::once;
 
-use commons::geometry::XY;
+use commons::geometry::{xy, XY};
 use commons::grid::Grid;
+use network::model::{Edge, InNetwork};
 
 use crate::model::skiing::{Mode, State};
 use crate::model::{Lift, Piste, PisteCosts, DIRECTIONS};
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
-use crate::network::velocity_encoding::encode_velocity;
+use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use network::algorithms::costs_to_target::CostsToTarget;
 
 pub fn run(
@@ -29,7 +31,7 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
         reserved: &terrain.map(|_, _| false),
     };
     let piste_positions = piste_positions(piste);
-    let network = SkiingInNetwork::for_positions(&network, &piste_positions);
+    let network = Network { terrain, piste };
 
     for (
         lift,
@@ -62,30 +64,72 @@ fn piste_positions(piste: &Piste) -> HashSet<XY<u32>> {
 }
 
 fn compute_costs_for_position(
-    network: &SkiingInNetwork,
+    network: &Network,
     position: &XY<u32>,
     max_velocity: &f32,
 ) -> HashMap<State, u64> {
-    let states_iter = skiing_states_for_position(*position, max_velocity);
-    network.costs_to_target(&HashSet::from_iter(states_iter))
+    let costs = network.costs_to_target(&HashSet::from_iter([*position]));
+    state_costs(&costs, network.piste)
 }
 
-fn skiing_states_for_position(
-    position: XY<u32>,
-    max_velocity: &f32,
-) -> impl Iterator<Item = State> {
-    encode_velocity(max_velocity)
-        .into_iter()
-        .flat_map(move |max_velocity| {
-            DIRECTIONS
-                .iter()
-                .copied()
-                .flat_map(move |travel_direction| {
-                    (0..=max_velocity).map(move |velocity| State {
-                        position,
+fn state_costs(costs: &HashMap<XY<u32>, u64>, piste: &Piste) -> HashMap<State, u64> {
+    piste
+        .grid
+        .iter()
+        .flat_map(|xy| {
+            DIRECTIONS.iter().flat_map(move |direction| {
+                (0..VELOCITY_LEVELS)
+                    .map(move |velocity| State {
+                        position: xy,
                         mode: Mode::Skiing { velocity },
-                        travel_direction,
+                        travel_direction: *direction,
                     })
-                })
+                    .chain(once(State {
+                        position: xy,
+                        mode: Mode::Walking,
+                        travel_direction: *direction,
+                    }))
+            })
         })
+        .flat_map(|state| costs.get(&state.position).map(|cost| (state, *cost)))
+        .collect()
+}
+
+struct Network<'a> {
+    terrain: &'a Grid<f32>,
+    piste: &'a Piste,
+}
+
+impl<'a> InNetwork<XY<u32>> for Network<'a> {
+    fn edges_in<'b>(
+        &'b self,
+        to: &'b XY<u32>,
+    ) -> Box<dyn Iterator<Item = network::model::Edge<XY<u32>>> + 'b> {
+        Box::new(
+            [
+                xy(-1, -1),
+                xy(0, -1),
+                xy(1, -1),
+                xy(-1, 0),
+                xy(1, 0),
+                xy(-1, 1),
+                xy(0, 1),
+                xy(1, 1),
+            ]
+            .into_iter()
+            .flat_map(move |offset| {
+                let n = self.terrain.offset(to, offset)?;
+
+                if self.piste.grid.in_bounds(n) && self.piste.grid[n] {
+                    Some(Edge {
+                        from: n,
+                        to: *to,
+                        cost: (((offset.x.abs() + offset.y.abs()) as f32).sqrt() * 100.0) as u32,
+                    })
+                } else {
+                    None
+                }
+            }),
+        )
+    }
 }

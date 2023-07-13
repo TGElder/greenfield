@@ -8,6 +8,7 @@ use network::model::Edge;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::model::PisteCosts;
 use crate::network::skiing::SkiingNetwork;
+use crate::network::velocity_encoding::VELOCITY_LEVELS;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
@@ -201,7 +202,20 @@ fn find_path(
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
+        &|_, state| {
+            let step = (VELOCITY_LEVELS + 1) - match state.mode {
+                Mode::Walking => 0,
+                Mode::Skiing { velocity } => velocity + 1,
+            };
+            costs.get(state).and_then(|_| {
+                if costs[state] > costs[from] {
+                    return None
+                }
+                let cost = costs[state] * (VELOCITY_LEVELS as u64 + 1);
+                let cost = cost + step as u64;
+                Some(u64::MAX - cost)
+            })
+        },
         MAX_STEPS,
     )
 }

@@ -17,7 +17,7 @@ use crate::{
 const TURNING_DURATION: Duration = Duration::from_secs(1);
 const SKIS_ON_DURATION: Duration = Duration::from_secs(10);
 const SKIS_OFF_DURATION: Duration = Duration::from_secs(10);
-const WALK_DURATION: Duration = Duration::from_secs(1);
+const WALK_DURATION: Duration = Duration::from_secs(5);
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
