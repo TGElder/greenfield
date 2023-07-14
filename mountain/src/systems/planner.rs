@@ -208,6 +208,9 @@ fn find_path(
                 Mode::Skiing { velocity } => velocity + 1,
             };
             costs.get(state).and_then(|_| {
+                if costs[state] == 0 {
+                    return Some(u64::MAX)
+                }
                 if costs[state] > costs[from] {
                     return None
                 }

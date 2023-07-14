@@ -16,15 +16,17 @@ struct Node<S, T> {
 impl<S, T> Ord for Node<S, T>
 where
     T: Eq,
+    S: Ord
 {
     fn cmp(&self, other: &Node<S, T>) -> Ordering {
-        self.steps_from_start.cmp(&other.steps_from_start).reverse()
+        self.score.cmp(&other.score).reverse()
     }
 }
 
 impl<S, T> PartialOrd for Node<S, T>
 where
     T: Eq,
+    S: Ord
 {
     fn partial_cmp(&self, other: &Node<S, T>) -> Option<Ordering> {
         Some(self.cmp(other))
@@ -53,7 +55,7 @@ pub trait FindBestWithinSteps<S, T, N> {
 
 impl<S, T, N> FindBestWithinSteps<S, T, N> for N
 where
-    S: Ord,
+    S: Ord + Debug,
     T: Copy + Debug + Eq + Hash,
     N: OutNetwork<T>,
 {
@@ -77,6 +79,7 @@ where
             });
         }
 
+        #[derive(Debug)]
         struct Best<S, T> {
             location: T,
             score: S,
@@ -91,6 +94,7 @@ where
             score,
         }) = heap.pop()
         {
+
             if closed.contains(&location) {
                 continue;
             }
@@ -105,6 +109,7 @@ where
                 None => Some(Best { location, score }),
                 _ => best,
             };
+            
 
             for edge in self.edges_out(&location) {
                 let to = edge.to;
