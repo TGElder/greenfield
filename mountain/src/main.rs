@@ -30,7 +30,9 @@ use crate::init::generate_heightmap;
 use crate::model::frame::Frame;
 use crate::model::{skiing, Lift, Piste, PisteCosts};
 use crate::services::id_allocator;
-use crate::systems::{avatar_artist, cost_computer, framer, lift, lift_entry, overlay, planner};
+use crate::systems::{
+    avatar_artist, backstop_computer, cost_computer, framer, lift, lift_entry, overlay, planner,
+};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -44,6 +46,7 @@ fn main() {
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
                 piste_costs: HashMap::default(),
+                backstop_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 terrain,
@@ -202,6 +205,7 @@ struct Components {
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     piste_costs: HashMap<usize, PisteCosts>,
+    backstop_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
@@ -306,6 +310,7 @@ impl EventHandler for Game {
             locations: &self.components.locations,
             targets: &self.components.targets,
             costs: &self.components.piste_costs,
+            backstop: &self.components.backstop_costs,
             reserved: &mut self.components.reserved,
         });
         lift_entry::run(
@@ -349,6 +354,12 @@ impl EventHandler for Game {
                 &self.components.terrain,
                 &self.components.pistes,
                 &mut self.components.piste_costs,
+                &self.components.lifts,
+            );
+            backstop_computer::run(
+                &self.components.terrain,
+                &self.components.pistes,
+                &mut self.components.backstop_costs,
                 &self.components.lifts,
             );
         }

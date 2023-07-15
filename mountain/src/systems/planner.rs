@@ -24,6 +24,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub costs: &'a HashMap<usize, PisteCosts>,
+    pub backstop: &'a HashMap<usize, PisteCosts>,
     pub reserved: &'a mut Grid<bool>,
 }
 
@@ -43,6 +44,7 @@ impl System {
             locations,
             targets,
             costs,
+            backstop,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -55,8 +57,10 @@ impl System {
 
             free(current_plan, reserved);
             let from = last_state(current_plan);
-            *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
+            *current_plan = match get_costs(id, locations, targets, costs, backstop) {
+                Some((costs, backstop)) => {
+                    new_plan(terrain, micros, from, reserved, costs, backstop)
+                }
                 None => brake(*from),
             };
             reserve(current_plan, reserved);
@@ -165,11 +169,13 @@ fn get_costs<'a>(
     locations: &HashMap<usize, usize>,
     targets: &HashMap<usize, usize>,
     costs: &'a HashMap<usize, PisteCosts>,
-) -> Option<&'a HashMap<State, u64>> {
+    backstop: &'a HashMap<usize, PisteCosts>,
+) -> Option<(&'a HashMap<State, u64>, &'a HashMap<State, u64>)> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
     let costs = costs.get(location)?;
-    costs.costs(target)
+    let backstop = backstop.get(location)?;
+    Some((costs.costs(target)?, backstop.costs(target)?))
 }
 
 fn new_plan(
@@ -178,8 +184,9 @@ fn new_plan(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    backstop: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(terrain, from, reserved, costs, backstop) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -196,12 +203,21 @@ fn find_path(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    backstop: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
+        &|_, state| {
+            costs.get(state).and_then(|cost| {
+                if state.position == from.position || backstop[state] < backstop[from] {
+                    Some(u64::MAX - cost)
+                } else {
+                    None
+                }
+            })
+        },
         MAX_STEPS,
     )
 }
