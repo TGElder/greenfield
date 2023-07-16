@@ -48,7 +48,7 @@ impl System {
     ) {
         self.add_new_finished(plans, micros);
 
-        self.finished.retain(|id| {
+        self.finished.retain(|(id, waiting_since)| {
             let Some(current_plan) = plans.get_mut(id) else {
                 return false
             };
@@ -56,7 +56,14 @@ impl System {
             free(current_plan, reserved);
             let from = last_state(current_plan);
             *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
+                Some(costs) => new_plan(
+                    terrain,
+                    micros,
+                    from,
+                    reserved,
+                    costs,
+                    waiting_since,
+                ),
                 None => brake(*from),
             };
             reserve(current_plan, reserved);
@@ -73,18 +80,18 @@ impl System {
             .iter_mut()
             .filter(|(id, _)| !self.finished.contains(id))
             .filter(|(_, plan)| finished(plan, micros))
-            .map(|(id, _)| id)
+            .map(|(id, _)| (*id, *micros))
             .collect::<Vec<_>>();
 
         for id in new_finished {
-            self.finished.push(*id);
+            self.finished.push(id);
         }
     }
 }
 
 struct HashVec {
     waiting: HashSet<usize>,
-    queue: Vec<usize>,
+    queue: Vec<(usize, u128)>,
 }
 
 impl HashVec {
@@ -96,22 +103,22 @@ impl HashVec {
     }
 
     fn contains(&self, value: &usize) -> bool {
-        self.queue.contains(value)
+        self.waiting.contains(value)
     }
 
-    fn push(&mut self, value: usize) {
-        self.waiting.insert(value);
+    fn push(&mut self, value: (usize, u128)) {
+        self.waiting.insert(value.0);
         self.queue.push(value);
     }
 
     fn retain<F>(&mut self, mut f: F)
     where
-        F: FnMut(&usize) -> bool,
+        F: FnMut(&(usize, u128)) -> bool,
     {
         self.queue.retain(|value| {
             let out = f(value);
             if !out {
-                self.waiting.remove(value);
+                self.waiting.remove(&value.0);
             }
             out
         })
@@ -178,8 +185,15 @@ fn new_plan(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    waiting_since: &u128,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(
+        terrain,
+        from,
+        reserved,
+        costs,
+        &(micros - waiting_since),
+    ) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -196,12 +210,21 @@ fn find_path(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    waiting_micros: &u128,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
+        &|_, state| {
+            costs.get(state).map(|cost| {
+                if state.position == from.position {
+                    (u64::MAX - cost) - *waiting_micros as u64
+                } else {
+                    u64::MAX - cost
+                }
+            })
+        },
         MAX_STEPS,
     )
 }
