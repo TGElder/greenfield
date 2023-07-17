@@ -183,7 +183,6 @@ impl<'a> SkiingNetwork<'a> {
 
     fn walk(&'a self, from: &'a State) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
         once(from)
-            .into_iter()
             .filter(|from| from.mode == Mode::Walking)
             .flat_map(|from| {
                 self.terrain
