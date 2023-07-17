@@ -96,7 +96,7 @@ impl HashVec {
     }
 
     fn contains(&self, value: &usize) -> bool {
-        self.queue.contains(value)
+        self.waiting.contains(value)
     }
 
     fn push(&mut self, value: usize) {
