@@ -27,7 +27,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
-use crate::model::{skiing, Frame, Lift, Piste, PisteCosts};
+use crate::model::frame::Frame;
+use crate::model::{skiing, Lift, Piste, PisteCosts};
 use crate::services::id_allocator;
 use crate::systems::{avatar_artist, cost_computer, framer, lift, lift_entry, overlay, planner};
 

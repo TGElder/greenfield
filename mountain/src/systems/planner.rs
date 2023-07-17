@@ -5,7 +5,7 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::model::Edge;
 
-use crate::model::skiing::{Event, Plan, State};
+use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::model::PisteCosts;
 use crate::network::skiing::SkiingNetwork;
 
@@ -57,7 +57,7 @@ impl System {
             let from = last_state(current_plan);
             *current_plan = match get_costs(id, locations, targets, costs) {
                 Some(costs) => new_plan(terrain, micros, from, reserved, costs),
-                None => stop(*from),
+                None => brake(*from),
             };
             reserve(current_plan, reserved);
 
@@ -182,12 +182,12 @@ fn new_plan(
     match find_path(terrain, from, reserved, costs) {
         Some(edges) => {
             if edges.is_empty() {
-                stop(*from)
+                brake(*from)
             } else {
                 Plan::Moving(events(micros, edges))
             }
         }
-        None => stop(*from),
+        None => brake(*from),
     }
 }
 
@@ -206,11 +206,12 @@ fn find_path(
     )
 }
 
-fn stop(state: State) -> Plan {
-    Plan::Stationary(State {
-        velocity: 0,
-        ..state
-    })
+fn brake(state: State) -> Plan {
+    let mode = match state.mode {
+        Mode::Walking => Mode::Walking,
+        Mode::Skiing { .. } => Mode::Skiing { velocity: 0 },
+    };
+    Plan::Stationary(State { mode, ..state })
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
