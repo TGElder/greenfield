@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use engine::binding::Binding;
 
-use crate::model::Lift;
+use crate::model::lift::Lift;
 use crate::services::id_allocator;
 use crate::systems::overlay;
 

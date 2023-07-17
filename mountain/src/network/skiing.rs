@@ -5,11 +5,10 @@ use std::time::Duration;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
+use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::{Mode, State};
-use crate::model::DIRECTIONS;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
-    model::Direction,
     network::velocity_encoding::{decode_velocity, encode_velocity},
     physics,
 };

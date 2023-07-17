@@ -1,6 +1,6 @@
 use commons::geometry::XY;
 
-use crate::model::Direction;
+use crate::model::direction::Direction;
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct State {

@@ -4,7 +4,7 @@ use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
 use crate::handlers::selection;
-use crate::model::Piste;
+use crate::model::piste::Piste;
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
