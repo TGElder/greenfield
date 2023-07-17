@@ -2,8 +2,8 @@ use std::collections::HashMap;
 
 use commons::grid::Grid;
 
+use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
-use crate::model::Lift;
 
 pub fn run(
     lifts: &HashMap<usize, Lift>,

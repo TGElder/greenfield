@@ -5,8 +5,8 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::model::Edge;
 
+use crate::model::piste::PisteCosts;
 use crate::model::skiing::{Event, Mode, Plan, State};
-use crate::model::PisteCosts;
 use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;

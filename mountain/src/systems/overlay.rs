@@ -7,7 +7,8 @@ use engine::graphics::Graphics;
 
 use crate::draw::terrain;
 use crate::handlers::selection;
-use crate::model::{Lift, Piste};
+use crate::model::lift::Lift;
+use crate::model::piste::Piste;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 

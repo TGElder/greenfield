@@ -3,8 +3,9 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
+use crate::model::direction::Direction;
+use crate::model::skiing;
 use crate::model::skiing::Mode;
-use crate::model::{skiing, Direction};
 use crate::services::id_allocator;
 
 pub struct Handler {

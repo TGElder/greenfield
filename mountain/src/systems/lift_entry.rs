@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
+use crate::model::lift::Lift;
 use crate::model::skiing::{Plan, State};
-use crate::model::Lift;
 
 pub fn run(
     plans: &HashMap<usize, Plan>,
