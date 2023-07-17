@@ -1,5 +1,5 @@
 use std::collections::{HashMap, HashSet};
-use std::iter::empty;
+use std::iter::{empty, once};
 use std::time::Duration;
 
 use commons::{geometry::XY, grid::Grid};
@@ -45,25 +45,19 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Skiing { velocity, .. },
-                ..
-            } => Some(velocity),
-            _ => None,
-        }
-        .into_iter()
-        .flat_map(|velocity| {
-            [
-                from.travel_direction.next_anticlockwise(),
-                from.travel_direction,
-                from.travel_direction.next_clockwise(),
-            ]
-            .into_iter()
-            .flat_map(|travel_direction| {
-                self.get_skiing_edge(from, travel_direction, *velocity, 0.0)
+        once(from)
+            .flat_map(get_skiing_velocity)
+            .flat_map(|velocity| {
+                [
+                    from.travel_direction.next_anticlockwise(),
+                    from.travel_direction,
+                    from.travel_direction.next_clockwise(),
+                ]
+                .into_iter()
+                .flat_map(|travel_direction| {
+                    self.get_skiing_edge(from, travel_direction, *velocity, 0.0)
+                })
             })
-        })
     }
 
     fn get_skiing_edge(
@@ -103,142 +97,123 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Skiing { velocity, .. },
-                ..
-            } => Some(velocity),
-            _ => None,
-        }
-        .into_iter()
-        .flat_map(move |velocity| {
-            self.get_skiing_edge(from, from.travel_direction, *velocity, 1.0)
-                .into_iter()
-                .flat_map(move |edge| {
-                    [
-                        from.travel_direction.next_anticlockwise(),
-                        from.travel_direction.next_clockwise(),
-                    ]
+        once(from)
+            .flat_map(get_skiing_velocity)
+            .flat_map(move |velocity| {
+                self.get_skiing_edge(from, from.travel_direction, *velocity, 1.0)
                     .into_iter()
-                    .map(move |to_direction| Edge {
-                        to: State {
-                            travel_direction: to_direction,
-                            ..edge.to
-                        },
-                        ..edge
+                    .flat_map(move |edge| {
+                        [
+                            from.travel_direction.next_anticlockwise(),
+                            from.travel_direction.next_clockwise(),
+                        ]
+                        .into_iter()
+                        .map(move |to_direction| Edge {
+                            to: State {
+                                travel_direction: to_direction,
+                                ..edge.to
+                            },
+                            ..edge
+                        })
                     })
-                })
-        })
+            })
     }
 
     fn turning_edges(
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Skiing { velocity, .. },
-                ..
-            } if *velocity == 0 => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .flat_map(|from| {
-            let turning_micros = TURNING_DURATION.as_micros().try_into().unwrap();
-            [
-                Edge {
-                    from: *from,
-                    to: State {
-                        travel_direction: from.travel_direction.next_clockwise(),
-                        ..*from
+        once(from)
+            .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
+            .flat_map(|from| {
+                let turning_micros = TURNING_DURATION.as_micros().try_into().unwrap();
+                [
+                    Edge {
+                        from: *from,
+                        to: State {
+                            travel_direction: from.travel_direction.next_clockwise(),
+                            ..*from
+                        },
+                        cost: turning_micros,
                     },
-                    cost: turning_micros,
-                },
-                Edge {
-                    from: *from,
-                    to: State {
-                        travel_direction: from.travel_direction.next_anticlockwise(),
-                        ..*from
+                    Edge {
+                        from: *from,
+                        to: State {
+                            travel_direction: from.travel_direction.next_anticlockwise(),
+                            ..*from
+                        },
+                        cost: turning_micros,
                     },
-                    cost: turning_micros,
-                },
-            ]
-            .into_iter()
-        })
+                ]
+                .into_iter()
+            })
     }
 
     fn skis_off(
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Skiing { velocity },
-                ..
-            } if *velocity == 0 => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .map(|from| Edge {
-            from: *from,
-            to: State {
-                mode: Mode::Walking,
-                ..*from
-            },
-            cost: SKIS_OFF_DURATION.as_micros().try_into().unwrap(),
-        })
+        once(from)
+            .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
+            .map(|from| Edge {
+                from: *from,
+                to: State {
+                    mode: Mode::Walking,
+                    ..*from
+                },
+                cost: SKIS_OFF_DURATION.as_micros().try_into().unwrap(),
+            })
     }
 
     fn skis_on(
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Walking,
-                ..
-            } => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .map(|from| Edge {
-            from: *from,
-            to: State {
-                mode: Mode::Skiing { velocity: 0 },
-                ..*from
-            },
-            cost: SKIS_ON_DURATION.as_micros().try_into().unwrap(),
-        })
+        once(from)
+            .filter(|from| from.mode == Mode::Walking)
+            .map(|from| Edge {
+                from: *from,
+                to: State {
+                    mode: Mode::Skiing { velocity: 0 },
+                    ..*from
+                },
+                cost: SKIS_ON_DURATION.as_micros().try_into().unwrap(),
+            })
     }
 
     fn walk(&'a self, from: &'a State) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        match from {
-            State {
-                mode: Mode::Walking,
-                ..
-            } => Some(from),
-            _ => None,
-        }
-        .into_iter()
-        .flat_map(|from| {
-            self.terrain
-                .neighbours_4(from.position)
-                .filter(|neighbour| !self.reserved[neighbour])
-                .map(|neighbour| Edge {
-                    from: *from,
-                    to: State {
-                        position: neighbour,
-                        mode: Mode::Walking,
-                        ..*from
-                    },
-                    cost: WALK_DURATION.as_micros().try_into().unwrap(),
-                })
-        })
+        once(from)
+            .into_iter()
+            .filter(|from| from.mode == Mode::Walking)
+            .flat_map(|from| {
+                self.terrain
+                    .neighbours_4(from.position)
+                    .filter(|neighbour| !self.reserved[neighbour])
+                    .map(|neighbour| Edge {
+                        from: *from,
+                        to: State {
+                            position: neighbour,
+                            mode: Mode::Walking,
+                            ..*from
+                        },
+                        cost: WALK_DURATION.as_micros().try_into().unwrap(),
+                    })
+            })
     }
 
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+}
+
+fn get_skiing_velocity(state: &State) -> Option<&u8> {
+    match state {
+        State {
+            mode: Mode::Skiing { velocity },
+            ..
+        } => Some(velocity),
+        _ => None,
     }
 }
 
@@ -255,26 +230,10 @@ impl SkiingInNetwork {
 
         for position in positions {
             for travel_direction in DIRECTIONS {
-                let walking = State {
-                    position: *position,
-                    mode: Mode::Walking,
-                    travel_direction,
-                };
-
-                for edge in network
-                    .edges_out(&walking)
-                    .filter(|Edge { to, .. }| positions.contains(&to.position))
-                {
-                    edges
-                        .entry(edge.to)
-                        .or_insert_with(|| Vec::with_capacity(5))
-                        .push(edge);
-                }
-
-                for velocity in 0..VELOCITY_LEVELS {
+                for mode in modes() {
                     let state = State {
                         position: *position,
-                        mode: Mode::Skiing { velocity },
+                        mode,
                         travel_direction,
                     };
 
@@ -293,6 +252,12 @@ impl SkiingInNetwork {
 
         SkiingInNetwork { edges }
     }
+}
+
+fn modes() -> impl Iterator<Item = Mode> {
+    (0..VELOCITY_LEVELS)
+        .map(|velocity| Mode::Skiing { velocity })
+        .chain(once(Mode::Walking))
 }
 
 impl InNetwork<State> for SkiingInNetwork {

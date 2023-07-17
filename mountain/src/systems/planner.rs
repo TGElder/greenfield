@@ -207,13 +207,11 @@ fn find_path(
 }
 
 fn brake(state: State) -> Plan {
-    Plan::Stationary(State {
-        mode: match state.mode {
-            Mode::Walking => Mode::Walking,
-            Mode::Skiing { .. } => Mode::Skiing { velocity: 0 },
-        },
-        ..state
-    })
+    let mode = match state.mode {
+        Mode::Walking => Mode::Walking,
+        Mode::Skiing { .. } => Mode::Skiing { velocity: 0 },
+    };
+    Plan::Stationary(State { mode, ..state })
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {

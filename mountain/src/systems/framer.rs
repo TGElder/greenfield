@@ -4,7 +4,7 @@ use commons::geometry::xyz;
 use commons::grid::Grid;
 use commons::scale::Scale;
 
-use crate::model::frame::{Frame, Mode};
+use crate::model::frame::{self, Frame};
 use crate::model::skiing::{self, Event, Plan, State};
 
 pub fn run(
@@ -40,14 +40,16 @@ fn frame_from_skiing_state(
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         angle: travel_direction.angle(),
-        mode: frame_mode(mode),
+        mode: mode.into(),
     }
 }
 
-fn frame_mode(mode: &skiing::Mode) -> Mode {
-    match mode {
-        skiing::Mode::Walking => Mode::Walking,
-        skiing::Mode::Skiing { .. } => Mode::Skiing,
+impl From<&skiing::Mode> for frame::Mode {
+    fn from(value: &skiing::Mode) -> Self {
+        match value {
+            skiing::Mode::Walking => frame::Mode::Walking,
+            skiing::Mode::Skiing { .. } => frame::Mode::Skiing,
+        }
     }
 }
 
