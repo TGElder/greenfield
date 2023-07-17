@@ -44,15 +44,6 @@ fn frame_from_skiing_state(
     }
 }
 
-impl From<&skiing::Mode> for frame::Mode {
-    fn from(value: &skiing::Mode) -> Self {
-        match value {
-            skiing::Mode::Walking => frame::Mode::Walking,
-            skiing::Mode::Skiing { .. } => frame::Mode::Skiing,
-        }
-    }
-}
-
 fn moving_frame(terrain: &Grid<f32>, events: &[Event], micros: &u128) -> Option<Frame> {
     let maybe_pair = events.windows(2).find(|maybe_pair| match maybe_pair {
         [from, to] => from.micros <= *micros && to.micros > *micros,
@@ -73,5 +64,14 @@ fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame 
         position: from.position * (1.0 - p) + to.position * p,
         mode: from.mode,
         angle: to.angle,
+    }
+}
+
+impl From<&skiing::Mode> for frame::Mode {
+    fn from(value: &skiing::Mode) -> Self {
+        match value {
+            skiing::Mode::Walking => frame::Mode::Walking,
+            skiing::Mode::Skiing { .. } => frame::Mode::Skiing,
+        }
     }
 }
