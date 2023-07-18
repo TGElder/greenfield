@@ -16,6 +16,7 @@ struct Node<S, T> {
 impl<S, T> Ord for Node<S, T>
 where
     T: Eq,
+    S: Ord,
 {
     fn cmp(&self, other: &Node<S, T>) -> Ordering {
         self.steps_from_start.cmp(&other.steps_from_start).reverse()
@@ -25,6 +26,7 @@ where
 impl<S, T> PartialOrd for Node<S, T>
 where
     T: Eq,
+    S: Ord,
 {
     fn partial_cmp(&self, other: &Node<S, T>) -> Option<Ordering> {
         Some(self.cmp(other))

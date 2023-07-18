@@ -348,7 +348,6 @@ impl EventHandler for Game {
 
         if COMPUTE_COSTS_BINDING.binds_event(event) {
             cost_computer::run(
-                &self.components.terrain,
                 &self.components.pistes,
                 &mut self.components.piste_costs,
                 &self.components.lifts,
