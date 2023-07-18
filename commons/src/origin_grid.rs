@@ -64,6 +64,27 @@ impl<T> OriginGrid<T> {
         self.grid.in_bounds(*position - self.origin)
     }
 
+    pub fn offset<B, C>(&self, position: B, offset: C) -> Option<XY<u32>>
+    where
+        B: Borrow<XY<u32>>,
+        C: Borrow<XY<i32>>,
+    {
+        self.grid
+            .offset(*position.borrow() - self.origin, offset)
+            .map(|position| position + self.origin)
+    }
+
+    pub fn offsets<'a, B>(
+        &'a self,
+        position: B,
+        offsets: &'a [XY<i32>],
+    ) -> impl Iterator<Item = XY<u32>> + 'a
+    where
+        B: Borrow<XY<u32>> + Copy + 'a,
+    {
+        offsets.iter().flat_map(move |o| self.offset(position, o))
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
         self.grid.iter().map(|xy| xy + self.origin)
     }
@@ -163,6 +184,8 @@ where
 #[cfg(test)]
 mod tests {
 
+    use std::collections::HashSet;
+
     use super::*;
 
     #[test]
@@ -236,6 +259,38 @@ mod tests {
         assert!(!grid.in_bounds(xy(1, 5)));
         assert!(!grid.in_bounds(xy(2, 5)));
         assert!(!grid.in_bounds(xy(3, 5)));
+    }
+
+    #[test]
+    fn test_offset() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::<bool>::default(2, 3));
+
+        assert_eq!(grid.offset(xy(2, 3), xy(-1, -1)), Some(xy(1, 2)));
+    }
+
+    #[test]
+    fn test_offset_out_of_bounds_negative() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::<bool>::default(2, 3));
+
+        assert_eq!(grid.offset(xy(1, 2), xy(-1, -1)), None);
+    }
+
+    #[test]
+    fn test_offset_out_of_bounds_positive() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::<bool>::default(2, 3));
+
+        assert_eq!(grid.offset(xy(3, 4), xy(1, 1)), None);
+    }
+
+    #[test]
+    fn test_offsets() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::<bool>::default(2, 3));
+
+        assert_eq!(
+            grid.offsets(xy(3, 2), &[xy(-1, -1), xy(-1, 1), xy(1, 1)])
+                .collect::<HashSet<_>>(),
+            HashSet::from([xy(2, 3)])
+        );
     }
 
     #[test]
