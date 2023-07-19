@@ -201,7 +201,17 @@ fn find_path(
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| costs.get(state).map(|_| u64::MAX - costs[state]),
+        &|_, state| {
+            costs.get(state).and_then(|cost| {
+                if *cost > costs[from] {
+                    return None;
+                }
+                Some(Score {
+                    cost: *cost,
+                    mode: state.mode,
+                })
+            })
+        },
         MAX_STEPS,
     )
 }
@@ -232,4 +242,40 @@ fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
         }
     }
     out
+}
+
+#[derive(Eq)]
+struct Score {
+    cost: u64,
+    mode: Mode,
+}
+
+impl PartialEq for Score {
+    fn eq(&self, other: &Self) -> bool {
+        self.cost == other.cost && self.mode == other.mode
+    }
+}
+
+impl Ord for Score {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.cost
+            .cmp(&other.cost)
+            .reverse()
+            .then(cmp_mode(&self.mode, &other.mode))
+    }
+}
+
+fn cmp_mode(a: &Mode, b: &Mode) -> std::cmp::Ordering {
+    match (a, b) {
+        (Mode::Walking, Mode::Walking) => std::cmp::Ordering::Equal,
+        (Mode::Walking, Mode::Skiing { .. }) => std::cmp::Ordering::Less,
+        (Mode::Skiing { .. }, Mode::Walking) => std::cmp::Ordering::Greater,
+        (Mode::Skiing { velocity: a }, Mode::Skiing { velocity: b }) => a.cmp(b),
+    }
+}
+
+impl PartialOrd for Score {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
 }
