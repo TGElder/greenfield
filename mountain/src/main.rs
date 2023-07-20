@@ -69,6 +69,7 @@ fn main() {
                     },
                 }),
                 piste_builder: piste_builder::Handler {
+                    id: 0,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
                             button: Button::Keyboard(KeyboardKey::V),
@@ -76,6 +77,10 @@ fn main() {
                         },
                         subtract: Binding::Single {
                             button: Button::Keyboard(KeyboardKey::X),
+                            state: ButtonState::Pressed,
+                        },
+                        new: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::P),
                             state: ButtonState::Pressed,
                         },
                     },
