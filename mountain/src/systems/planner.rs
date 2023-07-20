@@ -258,19 +258,14 @@ impl PartialEq for Score {
 
 impl Ord for Score {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.cost
-            .cmp(&other.cost)
-            .reverse()
-            .then(cmp_mode(&self.mode, &other.mode))
-    }
-}
-
-fn cmp_mode(a: &Mode, b: &Mode) -> std::cmp::Ordering {
-    match (a, b) {
-        (Mode::Walking, Mode::Walking) => std::cmp::Ordering::Equal,
-        (Mode::Walking, Mode::Skiing { .. }) => std::cmp::Ordering::Less,
-        (Mode::Skiing { .. }, Mode::Walking) => std::cmp::Ordering::Greater,
-        (Mode::Skiing { velocity: a }, Mode::Skiing { velocity: b }) => a.cmp(b),
+        match (self.mode, other.mode) {
+            (Mode::Walking, Mode::Walking) => self.cost.cmp(&other.cost),
+            (Mode::Walking, Mode::Skiing { .. }) => std::cmp::Ordering::Less,
+            (Mode::Skiing { .. }, Mode::Walking) => std::cmp::Ordering::Greater,
+            (Mode::Skiing { velocity: a }, Mode::Skiing { velocity: b }) => {
+                self.cost.cmp(&other.cost).reverse().then(a.cmp(&b))
+            }
+        }
     }
 }
 
