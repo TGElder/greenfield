@@ -5,8 +5,8 @@ use crate::model::skiing::{Plan, State};
 
 pub fn run(
     plans: &HashMap<usize, Plan>,
-    targets: &HashMap<usize, usize>,
     lifts: &HashMap<usize, Lift>,
+    targets: &mut HashMap<usize, usize>,
     locations: &mut HashMap<usize, usize>,
 ) {
     for (id, plan) in plans {
@@ -15,6 +15,7 @@ pub fn run(
         match lifts.get(target) {
             Some(Lift { from, .. }) if from == position => {
                 locations.insert(*id, *target);
+                targets.remove(id);
             }
             _ => (),
         }

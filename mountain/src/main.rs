@@ -32,7 +32,10 @@ use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
-use crate::systems::{avatar_artist, cost_computer, framer, lift, lift_entry, overlay, planner};
+use crate::systems::{
+    avatar_artist, cost_computer, framer, lift, lift_entry, overlay, piste_adopter, planner,
+    target_setter,
+};
 
 fn main() {
     let terrain = generate_heightmap();
@@ -252,16 +255,6 @@ impl Game {
             &xy(256, 256),
         );
     }
-
-    // Temporary until we have proper logic for setting locations and targets
-    fn set_locations_and_targets(&mut self) {
-        let Some(piste) = self.components.pistes.keys().next() else {return};
-        let Some(lift) = self.components.lifts.keys().max() else {return};
-        for (i, _) in self.components.plans.iter() {
-            self.components.locations.entry(*i).or_insert(*piste);
-            self.components.targets.entry(*i).or_insert(*lift);
-        }
-    }
 }
 
 impl EventHandler for Game {
@@ -304,8 +297,18 @@ impl EventHandler for Game {
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
 
-        self.set_locations_and_targets();
-
+        piste_adopter::run(
+            &self.components.plans,
+            &self.components.pistes,
+            &mut self.components.locations,
+        );
+        target_setter::run(
+            &self.components.plans,
+            &self.components.locations,
+            &self.components.pistes,
+            &self.components.lifts,
+            &mut self.components.targets,
+        );
         self.systems.planner.run(systems::planner::Parameters {
             terrain: &self.components.terrain,
             micros: &self.services.clock.get_micros(),
@@ -317,8 +320,8 @@ impl EventHandler for Game {
         });
         lift_entry::run(
             &self.components.plans,
-            &self.components.targets,
             &self.components.lifts,
+            &mut self.components.targets,
             &mut self.components.locations,
         );
         lift::run(

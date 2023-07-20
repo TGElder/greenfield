@@ -10,4 +10,5 @@ commons = { path = "../commons" }
 engine = { path = "../engine" }
 nalgebra = { workspace = true }
 network = { path = "../network" }
+rand = { workspace = true }
 terrain_gen = { path = "../terrain_gen" }

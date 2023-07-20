@@ -4,4 +4,6 @@ pub mod framer;
 pub mod lift;
 pub mod lift_entry;
 pub mod overlay;
+pub mod piste_adopter;
 pub mod planner;
+pub mod target_setter;
