@@ -1,6 +1,7 @@
 use std::iter::once;
 use std::time::Duration;
 
+use commons::grid::OFFSETS_8;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, OutNetwork};
 
@@ -14,7 +15,8 @@ use crate::{
 const TURNING_DURATION: Duration = Duration::from_secs(1);
 const SKIS_ON_DURATION: Duration = Duration::from_secs(10);
 const SKIS_OFF_DURATION: Duration = Duration::from_secs(10);
-const WALK_DURATION: Duration = Duration::from_secs(1);
+const WALK_DURATION: Duration = Duration::from_micros(1_000_000);
+const WALK_DIAGONAL_DURATION: Duration = Duration::from_micros(1_414_214);
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
@@ -182,17 +184,22 @@ impl<'a> SkiingNetwork<'a> {
         once(from)
             .filter(|from| from.mode == Mode::Walking)
             .flat_map(|from| {
-                self.terrain
-                    .neighbours_4(from.position)
-                    .filter(|neighbour| !self.reserved[neighbour])
-                    .map(|neighbour| Edge {
+                OFFSETS_8
+                    .iter()
+                    .flat_map(|offset| {
+                        self.terrain
+                            .offset(from.position, offset)
+                            .map(|neighbour| (offset, neighbour))
+                    })
+                    .filter(|(_, neighbour)| !self.reserved[neighbour])
+                    .map(|(offset, neighbour)| Edge {
                         from: *from,
                         to: State {
                             position: neighbour,
                             mode: Mode::Walking,
                             ..*from
                         },
-                        cost: WALK_DURATION.as_micros().try_into().unwrap(),
+                        cost: walk_duration(offset).as_micros().try_into().unwrap(),
                     })
             })
     }
@@ -210,5 +217,16 @@ fn get_skiing_velocity(state: &State) -> Option<&u8> {
             ..
         } => Some(velocity),
         _ => None,
+    }
+}
+
+fn walk_duration(XY { x, y }: &XY<i32>) -> Duration {
+    match x.abs() + y.abs() {
+        1 => WALK_DURATION,
+        2 => WALK_DIAGONAL_DURATION,
+        value => panic!(
+            "{} is not a valid key for values precomputed to cover offsets in OFFSETS_8",
+            value
+        ),
     }
 }
