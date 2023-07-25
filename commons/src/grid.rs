@@ -158,6 +158,23 @@ impl<T> Grid<T> {
         self.offsets(position, &OFFSETS_4)
     }
 
+    pub fn neighbours_8<'a, B>(&'a self, position: B) -> impl Iterator<Item = XY<u32>> + 'a
+    where
+        B: Borrow<XY<u32>> + Copy + 'a,
+    {
+        const OFFSETS_8: [XY<i32>; 8] = [
+            xy(1, 0),
+            xy(1, 1),
+            xy(0, 1),
+            xy(-1, 1),
+            xy(-1, 0),
+            xy(-1, -1),
+            xy(0, -1),
+            xy(1, -1),
+        ];
+        self.offsets(position, &OFFSETS_8)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
         (0..self.height).flat_map(|y| (0..self.width).map(move |x| XY { x, y }))
     }
@@ -560,6 +577,26 @@ mod tests {
 
     #[test]
     fn test_neighbours_4_in_corner() {
+        let grid = Grid::from_element(3, 3, false);
+
+        assert_eq!(
+            grid.neighbours_4(xy(0, 0)).collect::<HashSet<_>>(),
+            hashset! {xy(1, 0), xy(0, 1)}
+        );
+    }
+
+    #[test]
+    fn test_neighbours_8_in_middle() {
+        let grid = Grid::from_element(3, 3, false);
+
+        assert_eq!(
+            grid.neighbours_8(xy(1, 1)).collect::<HashSet<_>>(),
+            hashset! {xy(2, 1), xy(2, 2), xy(1, 2), xy(0, 2), xy(0, 1), xy(0, 0), xy(1, 0), xy(2, 0)}
+        );
+    }
+
+    #[test]
+    fn test_neighbours_8_in_corner() {
         let grid = Grid::from_element(3, 3, false);
 
         assert_eq!(
