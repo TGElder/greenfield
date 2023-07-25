@@ -1,18 +1,8 @@
-use commons::geometry::{xy, XY};
+use commons::geometry::XY;
+use commons::grid::OFFSETS_8;
 use network::model::{Edge, InNetwork};
 
 use crate::model::piste::Piste;
-
-const OFFSETS_8: [XY<i32>; 8] = [
-    xy(-1, -1),
-    xy(0, -1),
-    xy(1, -1),
-    xy(-1, 0),
-    xy(1, 0),
-    xy(-1, 1),
-    xy(0, 1),
-    xy(1, 1),
-];
 
 pub struct DistanceNetwork<'a> {
     piste: &'a Piste,
