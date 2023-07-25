@@ -1,16 +1,18 @@
 use commons::geometry::XY;
+use commons::grid::Grid;
 use commons::grid::OFFSETS_8;
 use network::model::{Edge, InNetwork};
 
 use crate::model::piste::Piste;
 
 pub struct DistanceNetwork<'a> {
+    terrain: &'a Grid<f32>,
     piste: &'a Piste,
 }
 
 impl<'a> DistanceNetwork<'a> {
-    pub fn new(piste: &'a Piste) -> DistanceNetwork<'a> {
-        DistanceNetwork { piste }
+    pub fn new(terrain: &'a Grid<f32>, piste: &'a Piste) -> DistanceNetwork<'a> {
+        DistanceNetwork { terrain, piste }
     }
 }
 
@@ -21,31 +23,23 @@ impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
     ) -> Box<dyn Iterator<Item = network::model::Edge<XY<u32>>> + 'b> {
         let iter = OFFSETS_8
             .iter()
-            .flat_map(move |offset| {
-                self.piste
-                    .grid
-                    .offset(to, offset)
-                    .map(|from| (offset, from))
-            })
-            .filter(|(_, from)| self.piste.grid.in_bounds(from))
-            .filter(|(_, from)| self.piste.grid[from])
-            .map(|(offset, from)| Edge {
+            .flat_map(move |offset| self.piste.grid.offset(to, offset))
+            .filter(|from| self.piste.grid.in_bounds(from))
+            .filter(|from| self.piste.grid[from])
+            .map(move |from| Edge {
                 from,
                 to: *to,
-                cost: distance(offset),
+                cost: self.cost(&from, to),
             });
 
         Box::new(iter)
     }
 }
 
-fn distance(XY { x, y }: &XY<i32>) -> u32 {
-    match x.abs() + y.abs() {
-        1 => 1000,
-        2 => 1414,
-        value => panic!(
-            "{} is not a valid key for values precomputed to cover offsets in OFFSETS_8",
-            value
-        ),
+impl<'a> DistanceNetwork<'a> {
+    fn cost(&self, from: &XY<u32>, to: &XY<u32>) -> u32 {
+        const COST_PER_Z_UNIT: f32 = 1000.0;
+
+        ((self.terrain[from] - self.terrain[to]).abs() * COST_PER_Z_UNIT) as u32
     }
 }

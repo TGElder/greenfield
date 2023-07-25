@@ -8,23 +8,25 @@ use crate::model::skiing::{Mode, State};
 use crate::network::distance::DistanceNetwork;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
+use commons::grid::Grid;
 use network::algorithms::costs_to_target::CostsToTarget;
 
 pub fn run(
+    terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
     piste_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
     for (piste_index, piste) in pistes.iter() {
-        let costs = compute_costs(piste, lifts);
+        let costs = compute_costs(terrain, piste, lifts);
         piste_costs.insert(*piste_index, costs);
     }
 }
 
-fn compute_costs(piste: &Piste, lifts: &HashMap<usize, Lift>) -> PisteCosts {
+fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift>) -> PisteCosts {
     let mut out = PisteCosts::new();
 
-    let network = DistanceNetwork::new(piste);
+    let network = DistanceNetwork::new(terrain, piste);
 
     for (lift, Lift { from, .. }) in lifts {
         let grid = &piste.grid;
