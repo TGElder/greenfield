@@ -3,6 +3,18 @@ use std::ops::{Add, Index, IndexMut, Sub};
 
 use crate::geometry::{xy, XY};
 
+pub const OFFSETS_4: [XY<i32>; 4] = [xy(1, 0), xy(0, 1), xy(-1, 0), xy(0, -1)];
+pub const OFFSETS_8: [XY<i32>; 8] = [
+    xy(1, 0),
+    xy(1, 1),
+    xy(0, 1),
+    xy(-1, 1),
+    xy(-1, 0),
+    xy(-1, -1),
+    xy(0, -1),
+    xy(1, -1),
+];
+
 #[derive(Debug)]
 pub struct Grid<T> {
     width: u32,
@@ -154,7 +166,6 @@ impl<T> Grid<T> {
     where
         B: Borrow<XY<u32>> + Copy + 'a,
     {
-        const OFFSETS_4: [XY<i32>; 4] = [xy(1, 0), xy(0, 1), xy(-1, 0), xy(0, -1)];
         self.offsets(position, &OFFSETS_4)
     }
 
@@ -162,16 +173,6 @@ impl<T> Grid<T> {
     where
         B: Borrow<XY<u32>> + Copy + 'a,
     {
-        const OFFSETS_8: [XY<i32>; 8] = [
-            xy(1, 0),
-            xy(1, 1),
-            xy(0, 1),
-            xy(-1, 1),
-            xy(-1, 0),
-            xy(-1, -1),
-            xy(0, -1),
-            xy(1, -1),
-        ];
         self.offsets(position, &OFFSETS_8)
     }
 
