@@ -8,8 +8,14 @@ pub struct Solution {
     pub velocity: f32,
 }
 
-pub fn solve(initial_velocity: f32, run: f32, rise: f32, friction: f32) -> Option<Solution> {
-    let acceleration = get_acceleration(run, rise, friction)?;
+pub fn solve(
+    initial_velocity: f32,
+    run: f32,
+    rise: f32,
+    boost: f32,
+    friction: f32,
+) -> Option<Solution> {
+    let acceleration = get_acceleration(run, rise, friction)? + boost;
     let distance = (run.powi(2) + rise.powi(2)).sqrt();
 
     let duration = get_duration(acceleration, initial_velocity, distance)?;
