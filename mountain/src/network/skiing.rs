@@ -20,8 +20,8 @@ const WALK_DIAGONAL_DURATION: Duration = Duration::from_micros(1_414_214);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
-const SCHUSS_ACCELERATION: f32 = 2.5;
-const SCHUSS_MAX_VELOCITY: f32 = 2.0;
+const POLING_ACCELERATION: f32 = 2.5;
+const POLING_MAX_VELOCITY: f32 = 2.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
@@ -37,7 +37,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.skiing_edges(from)
                 .chain(self.braking_edges(from))
                 .chain(self.turning_edges(from))
-                .chain(self.schussing_edges(from))
+                .chain(self.poling_edges(from))
                 .chain(self.skis_off(from))
                 .chain(self.skis_on(from))
                 .chain(self.walk(from)),
@@ -154,19 +154,19 @@ impl<'a> SkiingNetwork<'a> {
             })
     }
 
-    fn schussing_edges(
+    fn poling_edges(
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        let max_velocity_encoded = encode_velocity(&SCHUSS_MAX_VELOCITY).unwrap();
+        let max_velocity_encoded = encode_velocity(&POLING_MAX_VELOCITY).unwrap();
 
         once(from)
             .flat_map(get_skiing_velocity)
             .filter(move |velocity| **velocity <= max_velocity_encoded)
-            .flat_map(move |velocity| self.get_schussing_edge(from, velocity))
+            .flat_map(move |velocity| self.get_poling_edge(from, velocity))
     }
 
-    fn get_schussing_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
+    fn get_poling_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &from.travel_direction)?;
 
         if self.reserved[to_position] {
@@ -178,7 +178,7 @@ impl<'a> SkiingNetwork<'a> {
         let run = from.travel_direction.run();
         let rise = self.terrain[to_position] - self.terrain[from.position];
         let physics::skiing::Solution { velocity, duration } =
-            physics::skiing::solve(initial_velocity, run, rise, SCHUSS_ACCELERATION, 0.0)?;
+            physics::skiing::solve(initial_velocity, run, rise, POLING_ACCELERATION, 0.0)?;
 
         Some(Edge {
             from: *from,
