@@ -7,3 +7,4 @@ pub mod overlay;
 pub mod piste_adopter;
 pub mod planner;
 pub mod target_setter;
+pub mod twizzler;

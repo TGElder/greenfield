@@ -224,7 +224,7 @@ fn brake(state: State) -> Plan {
     Plan::Stationary(State { mode, ..state })
 }
 
-fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
+pub fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
     let mut out = Vec::with_capacity(edges.len());
     let mut micros = *start;
     let last_i = edges.len() - 1;

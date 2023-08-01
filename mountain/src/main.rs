@@ -34,7 +34,7 @@ use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
     avatar_artist, cost_computer, framer, lift, lift_entry, overlay, piste_adopter, planner,
-    target_setter,
+    target_setter, twizzler,
 };
 
 fn main() {
@@ -347,6 +347,16 @@ impl EventHandler for Game {
             &self.components.pistes,
             &self.components.lifts,
             &self.handlers.selection,
+        );
+
+        twizzler::run(
+            &self.components.terrain,
+            &self.services.clock.get_micros(),
+            &self.components.locations,
+            &self.components.targets,
+            &self.components.piste_costs,
+            &mut self.components.reserved,
+            &mut self.components.plans,
         );
 
         const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
