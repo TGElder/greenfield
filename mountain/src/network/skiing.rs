@@ -1,4 +1,4 @@
-use std::iter::once;
+use std::iter::{once, empty};
 use std::time::Duration;
 
 use commons::grid::OFFSETS_8;
@@ -25,7 +25,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
-    pub reserved: &'a Grid<bool>,
+    pub reserved: &'a Grid<u8>,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -33,6 +33,10 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
+        if self.reserved[from.position] > 0 {
+            return Box::new(empty());
+        }
+
         Box::new(
             self.skiing_edges(from)
                 .chain(self.braking_edges(from))
@@ -74,7 +78,7 @@ impl<'a> SkiingNetwork<'a> {
     ) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
-        if self.reserved[to_position] {
+        if self.reserved[to_position] > 0 {
             return None;
         }
 
@@ -169,7 +173,7 @@ impl<'a> SkiingNetwork<'a> {
     fn get_poling_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &from.travel_direction)?;
 
-        if self.reserved[to_position] {
+        if self.reserved[to_position] > 0 {
             return None;
         }
 
@@ -236,7 +240,7 @@ impl<'a> SkiingNetwork<'a> {
                             .offset(from.position, offset)
                             .map(|neighbour| (offset, neighbour))
                     })
-                    .filter(|(_, neighbour)| !self.reserved[neighbour])
+                    .filter(|(_, neighbour)| self.reserved[neighbour] == 0)
                     .map(|(offset, neighbour)| Edge {
                         from: *from,
                         to: State {

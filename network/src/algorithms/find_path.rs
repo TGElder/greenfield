@@ -48,6 +48,7 @@ pub trait FindPath<T, N> {
         &self,
         from: HashSet<T>,
         to: HashSet<T>,
+        max_cost: u64,
         heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>>;
 }
@@ -61,6 +62,7 @@ where
         &self,
         from: HashSet<T>,
         to: HashSet<T>,
+        max_cost: u64,
         heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -102,12 +104,14 @@ where
                     continue;
                 }
                 let cost_from_start = cost_from_start + edge.cost as u64;
-                heap.push(Node {
-                    location: to,
-                    entrance: Some(edge),
-                    cost_from_start,
-                    estimated_cost_via_this_node: cost_from_start + heuristic(self, &location),
-                });
+                if cost_from_start <= max_cost {
+                    heap.push(Node {
+                        location: to,
+                        entrance: Some(edge),
+                        cost_from_start,
+                        estimated_cost_via_this_node: cost_from_start + heuristic(self, &location),
+                    });
+                }
             }
         }
 

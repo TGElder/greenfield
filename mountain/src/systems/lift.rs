@@ -8,18 +8,18 @@ use crate::model::skiing::{Mode, Plan, State};
 pub fn run(
     lifts: &HashMap<usize, Lift>,
     locations: &mut HashMap<usize, usize>,
-    reserved: &mut Grid<bool>,
+    reserved: &mut Grid<u8>,
     plans: &mut HashMap<usize, Plan>,
 ) {
     locations.retain(|id, location| {
         let Some(lift) = lifts.get(location) else {return true};
         let Some(Plan::Stationary(state)) = plans.get(id) else {return true};
 
-        if reserved[lift.to] {
+        if reserved[lift.to] > 0 {
             return true;
         }
 
-        reserved[state.position] = false;
+        reserved[state.position] -= 1;
         plans.insert(
             *id,
             Plan::Stationary(State {
@@ -28,7 +28,7 @@ pub fn run(
                 travel_direction: state.travel_direction,
             }),
         );
-        reserved[lift.to] = true;
+        reserved[lift.to] += 1;
         false
     });
 }

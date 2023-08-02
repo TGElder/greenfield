@@ -16,7 +16,7 @@ pub fn run(
     locations: &HashMap<usize, usize>,
     targets: &HashMap<usize, usize>,
     piste_costs: &HashMap<usize, PisteCosts>,
-    reserved: &mut Grid<bool>,
+    reserved: &mut Grid<u8>,
     plans: &mut HashMap<usize, Plan>,
 ) {
     let mut twizzles = Vec::new();
@@ -32,6 +32,7 @@ pub fn run(
             costs.get(state).copied()
         };
 
+        println!("Getting stationary");
         let stationary = plans
             .iter()
             .flat_map(|(id, plan)| get_state(plan).map(|State { position, .. }| (*position, *id)))
@@ -73,19 +74,21 @@ pub fn run(
         let position_a = state_a.position;
         let position_b = state_b.position;
 
-        reserved[position_a] = false;
-        reserved[position_b] = false;
+        reserved[position_a] -= 1;
+        reserved[position_b] -= 1;
 
         let network = SkiingNetwork { terrain, reserved };
 
         let path_a = network.find_path(
             HashSet::from([*state_a]),
             target_states(position_b),
+            30_000_000,
             &|_, _| 0,
         );
         let path_b = network.find_path(
             HashSet::from([*state_b]),
             target_states(position_a),
+            30_000_000,
             &|_, _| 0,
         );
 
@@ -95,9 +98,14 @@ pub fn run(
             plans.insert(b, Plan::Moving(events(micros, path_b)));
         }
 
-        reserved[position_a] = true;
-        reserved[position_b] = true;
+        reserved[position_a] = 2;
+        reserved[position_b] = 2;
+        println!("Twizzled {} and {}, {} and {}", position_a, position_b, reserved[position_a], reserved[position_b]);
+
     }
+
+    println!("Twizzling jobs all done");
+
 }
 
 fn get_state(plan: &Plan) -> Option<&State> {

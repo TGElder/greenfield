@@ -2,6 +2,7 @@ use std::collections::HashMap;
 
 use commons::color::Rgba;
 use commons::geometry::{xy, XYRectangle, XY};
+use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
@@ -42,6 +43,7 @@ impl System {
         pistes: &HashMap<usize, Piste>,
         lifts: &HashMap<usize, Lift>,
         selection: &selection::Handler,
+        reserved: &Grid<u8>,
     ) {
         let Some(drawing) = drawing else {return};
 
@@ -54,7 +56,7 @@ impl System {
                     let position = xy(x, y);
                     image[position] = selection_color(self.colors.selection, &position, selection)
                         .or_else(|| lift_color(self.colors.lift, &position, lifts))
-                        .or_else(|| piste_color(self.colors.piste, &position, pistes))
+                        .or_else(|| piste_color(self.colors.piste, &position, pistes, reserved))
                         .unwrap_or(CLEAR);
                 }
             }
@@ -80,10 +82,15 @@ fn selection_color(
     }
 }
 
-fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>) -> Option<Rgba<u8>> {
+fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>, reserved: &Grid<u8>) -> Option<Rgba<u8>> {
     for piste in pistes.values() {
         if piste.grid.in_bounds(xy) && piste.grid[xy] {
-            return Some(color);
+            if reserved[xy] > 1 {
+                return Some(Rgba::new(0, 255, 0, 255));
+            } else {
+                return Some(color);
+
+            }
         }
     }
 

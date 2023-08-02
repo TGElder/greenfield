@@ -214,7 +214,7 @@ struct Components {
     piste_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
-    reserved: Grid<bool>,
+    reserved: Grid<u8>,
 }
 
 struct Drawings {
@@ -347,6 +347,7 @@ impl EventHandler for Game {
             &self.components.pistes,
             &self.components.lifts,
             &self.handlers.selection,
+            &self.components.reserved,
         );
 
         twizzler::run(
