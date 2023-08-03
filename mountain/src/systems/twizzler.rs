@@ -4,10 +4,12 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::find_path::FindPath;
 
+use crate::handlers;
 use crate::model::direction::DIRECTIONS;
 use crate::model::piste::PisteCosts;
 use crate::model::skiing::{Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
+use crate::services::clock;
 use crate::systems::planner::events;
 
 pub fn run(
@@ -18,6 +20,8 @@ pub fn run(
     piste_costs: &HashMap<usize, PisteCosts>,
     reserved: &mut Grid<u8>,
     plans: &mut HashMap<usize, Plan>,
+    clock: &mut clock::Service,
+    clock_hander: &mut handlers::clock::Handler,
 ) {
     let mut twizzles = Vec::new();
 
@@ -32,7 +36,6 @@ pub fn run(
             costs.get(state).copied()
         };
 
-        println!("Getting stationary");
         let stationary = plans
             .iter()
             .flat_map(|(id, plan)| get_state(plan).map(|State { position, .. }| (*position, *id)))
@@ -41,11 +44,11 @@ pub fn run(
         let mut used = HashSet::new();
 
         for (position, id) in stationary.iter() {
-            if used.contains(position) {
+            if used.contains(position) || reserved[position] > 1 {
                 continue;
             }
             for neighbour in terrain.neighbours_8(position) {
-                if used.contains(&neighbour) {
+                if used.contains(&neighbour) || reserved[neighbour] > 1 {
                     continue;
                 }
                 let Some(neighbour_id) = stationary.get(&neighbour) else {continue};
@@ -56,7 +59,9 @@ pub fn run(
                 let Some(potential) = get_cost(id, neighbour_id) else {continue};
                 let Some(neighbour_current) = get_cost(neighbour_id, neighbour_id) else {continue};
                 let Some(neighbour_potential) = get_cost(neighbour_id, id) else {continue};
-                if potential < current && neighbour_potential < neighbour_current {
+                if (potential <= current && neighbour_potential <= neighbour_current)
+                    && (potential < current && neighbour_potential < neighbour_current)
+                {
                     used.insert(*position);
                     used.insert(neighbour);
                     twizzles.push((*id, *neighbour_id));
@@ -96,16 +101,16 @@ pub fn run(
             println!("Twizzled {} and {}", a, b);
             plans.insert(a, Plan::Moving(events(micros, path_a)));
             plans.insert(b, Plan::Moving(events(micros, path_b)));
+            reserved[position_a] = 2;
+            reserved[position_b] = 2;
+
+            println!(
+                "Twizzled {} and {}, {} and {}",
+                position_a, position_b, reserved[position_a], reserved[position_b]
+            );
         }
-
-        reserved[position_a] = 2;
-        reserved[position_b] = 2;
-        println!("Twizzled {} and {}, {} and {}", position_a, position_b, reserved[position_a], reserved[position_b]);
-
+        // clock_hander.slow(clock);
     }
-
-    println!("Twizzling jobs all done");
-
 }
 
 fn get_state(plan: &Plan) -> Option<&State> {

@@ -54,9 +54,10 @@ impl System {
             for x in from.x..=to.x {
                 for y in from.y..=to.y {
                     let position = xy(x, y);
-                    image[position] = selection_color(self.colors.selection, &position, selection)
+                    image[position] = twizzle_color(&position, pistes, reserved)
+                        .or_else(|| selection_color(self.colors.selection, &position, selection))
                         .or_else(|| lift_color(self.colors.lift, &position, lifts))
-                        .or_else(|| piste_color(self.colors.piste, &position, pistes, reserved))
+                        .or_else(|| piste_color(self.colors.piste, &position, pistes))
                         .unwrap_or(CLEAR);
                 }
             }
@@ -82,15 +83,29 @@ fn selection_color(
     }
 }
 
-fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>, reserved: &Grid<u8>) -> Option<Rgba<u8>> {
+fn twizzle_color(
+    xy: &XY<u32>,
+    pistes: &HashMap<usize, Piste>,
+    reserved: &Grid<u8>,
+) -> Option<Rgba<u8>> {
     for piste in pistes.values() {
         if piste.grid.in_bounds(xy) && piste.grid[xy] {
-            if reserved[xy] > 1 {
-                return Some(Rgba::new(0, 255, 0, 255));
-            } else {
-                return Some(color);
-
+            if reserved[xy] == 2 {
+                return Some(Rgba::new(255, 127, 0, 255));
             }
+            // } else if reserved[xy] == 1 {
+            //     return Some(Rgba::new(0, 255, 0, 255));
+            // }
+        }
+    }
+
+    None
+}
+
+fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>) -> Option<Rgba<u8>> {
+    for piste in pistes.values() {
+        if piste.grid.in_bounds(xy) && piste.grid[xy] {
+            return Some(color);
         }
     }
 

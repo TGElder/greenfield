@@ -27,6 +27,11 @@ impl Handler {
         }
     }
 
+    pub fn slow(&mut self, clock: &mut clock::Service) {
+        self.power = -2;
+        clock.set_speed(self.multiplier());
+    }
+
     fn multiplier(&self) -> f32 {
         2.0f32.powi(self.power)
     }

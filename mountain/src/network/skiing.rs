@@ -1,4 +1,4 @@
-use std::iter::{once, empty};
+use std::iter::{empty, once};
 use std::time::Duration;
 
 use commons::grid::OFFSETS_8;

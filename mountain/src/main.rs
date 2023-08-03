@@ -12,7 +12,7 @@ use std::f32::consts::PI;
 use std::time::Duration;
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XY};
+use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -341,14 +341,6 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
-        self.systems.overlay.run(
-            graphics,
-            self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            &self.components.pistes,
-            &self.components.lifts,
-            &self.handlers.selection,
-            &self.components.reserved,
-        );
 
         twizzler::run(
             &self.components.terrain,
@@ -358,6 +350,49 @@ impl EventHandler for Game {
             &self.components.piste_costs,
             &mut self.components.reserved,
             &mut self.components.plans,
+            &mut self.services.clock,
+            &mut self.handlers.clock,
+        );
+
+        let min_x = self
+            .components
+            .pistes
+            .values()
+            .flat_map(|piste| piste.grid.iter().map(|XY { x, .. }| x))
+            .min();
+        let max_x = self
+            .components
+            .pistes
+            .values()
+            .flat_map(|piste| piste.grid.iter().map(|XY { x, .. }| x))
+            .max();
+        let min_y = self
+            .components
+            .pistes
+            .values()
+            .flat_map(|piste| piste.grid.iter().map(|XY { y, .. }| y))
+            .min();
+        let max_y = self
+            .components
+            .pistes
+            .values()
+            .flat_map(|piste| piste.grid.iter().map(|XY { y, .. }| y))
+            .max();
+
+        if let (Some(min_x), Some(min_y), Some(max_x), Some(max_y)) = (min_x, min_y, max_x, max_y) {
+            self.systems.overlay.update(XYRectangle {
+                from: xy(min_x, min_y),
+                to: xy(max_x, max_y),
+            })
+        }
+
+        self.systems.overlay.run(
+            graphics,
+            self.drawings.as_ref().map(|drawings| &drawings.terrain),
+            &self.components.pistes,
+            &self.components.lifts,
+            &self.handlers.selection,
+            &self.components.reserved,
         );
 
         const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
