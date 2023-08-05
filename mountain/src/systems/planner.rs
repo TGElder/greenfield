@@ -5,6 +5,7 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::model::Edge;
 
+use crate::model::lift::Lift;
 use crate::model::piste::PisteCosts;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
@@ -24,6 +25,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub costs: &'a HashMap<usize, PisteCosts>,
+    pub lifts: &'a HashMap<usize, Lift>,
     pub reserved: &'a mut Grid<u8>,
 }
 
@@ -42,10 +44,17 @@ impl System {
             plans,
             locations,
             targets,
+            lifts,
             costs,
             reserved,
         }: Parameters<'_>,
     ) {
+
+        let mut lift_map = Grid::default(terrain.width(), terrain.height());
+        for (id, lift) in lifts.iter() {
+            lift_map[lift.from] = Some(*id);
+        }
+
         self.add_new_finished(plans, micros);
 
         self.finished.retain(|id| {
@@ -53,14 +62,10 @@ impl System {
                 return false
             };
 
-            if !finished(current_plan, micros) {
-                return false;
-            }
-
             free(current_plan, reserved);
             let from = last_state(current_plan);
             *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
+                Some(costs) => new_plan(terrain, micros, from, reserved, costs, &lift_map, &targets[id]),
                 None => brake(*from),
             };
             reserve(current_plan, reserved);
@@ -184,8 +189,10 @@ fn new_plan(
     from: &State,
     reserved: &Grid<u8>,
     costs: &HashMap<State, u64>,
+    lift_map: &Grid<Option<usize>>,
+    target: &usize,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(terrain, from, reserved, costs, lift_map, target) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -202,12 +209,20 @@ fn find_path(
     from: &State,
     reserved: &Grid<u8>,
     costs: &HashMap<State, u64>,
+    lift_map: &Grid<Option<usize>>,
+    target: &usize,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
+            match lift_map[state.position] {
+                Some(lift) => if lift != *target {
+                    return None;
+                },
+                None => (),
+            };
             costs.get(state).and_then(|cost| {
                 if *cost > costs[from] {
                     return None;
@@ -250,7 +265,7 @@ pub fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
     out
 }
 
-#[derive(Eq)]
+#[derive(Eq, Debug)]
 struct Score {
     cost: u64,
     mode: Mode,

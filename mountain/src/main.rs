@@ -317,6 +317,7 @@ impl EventHandler for Game {
             targets: &self.components.targets,
             costs: &self.components.piste_costs,
             reserved: &mut self.components.reserved,
+            lifts: &self.components.lifts,
         });
         lift_entry::run(
             &self.components.plans,
