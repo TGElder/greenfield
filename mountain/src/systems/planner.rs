@@ -212,6 +212,9 @@ fn find_path(
                 })
             })
         },
+        &|_, state| {
+            state.position != from.position && (state.position.x % 2 == state.position.y % 2 || costs.get(state).map(|cost| *cost == 0).unwrap_or(false))
+        },
         MAX_STEPS,
     )
 }
