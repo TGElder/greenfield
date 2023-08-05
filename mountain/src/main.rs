@@ -51,6 +51,7 @@ fn main() {
                 piste_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
+                stationary: Grid::default(terrain.width(), terrain.height()),
                 terrain,
             },
             drawings: None,
@@ -215,6 +216,7 @@ struct Components {
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
+    stationary: Grid<bool>,
 }
 
 struct Drawings {
@@ -317,6 +319,8 @@ impl EventHandler for Game {
             targets: &self.components.targets,
             costs: &self.components.piste_costs,
             reserved: &mut self.components.reserved,
+            stationary: &mut self.components.stationary,
+            lifts: &self.components.lifts,
         });
         lift_entry::run(
             &self.components.plans,
@@ -328,6 +332,7 @@ impl EventHandler for Game {
             &self.components.lifts,
             &mut self.components.locations,
             &mut self.components.reserved,
+            &mut self.components.stationary,
             &mut self.components.plans,
         );
         framer::run(

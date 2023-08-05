@@ -26,6 +26,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
+    pub stationary: &'a Grid<bool>,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -74,7 +75,7 @@ impl<'a> SkiingNetwork<'a> {
     ) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
-        if self.reserved[to_position] {
+        if self.reserved[to_position] || self.stationary[to_position] {
             return None;
         }
 

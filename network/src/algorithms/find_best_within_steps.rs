@@ -47,13 +47,14 @@ pub trait FindBestWithinSteps<S, T, N> {
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> Option<S>,
+        finishable: &dyn Fn(&N, &T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
 
 impl<S, T, N> FindBestWithinSteps<S, T, N> for N
 where
-    S: Ord,
+    S: Ord +  Debug,
     T: Copy + Debug + Eq + Hash,
     N: OutNetwork<T>,
 {
@@ -61,6 +62,7 @@ where
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> Option<S>,
+        finishable: &dyn Fn(&N, &T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -77,6 +79,7 @@ where
             });
         }
 
+        #[derive(Debug)]
         struct Best<S, T> {
             location: T,
             score: S,
@@ -100,11 +103,13 @@ where
                 entrances.insert(location, entrance);
             }
 
-            best = match best {
-                Some(current) if score > current.score => Some(Best { location, score }),
-                None => Some(Best { location, score }),
-                _ => best,
-            };
+            if finishable(self, &location) {
+                best = match best {
+                    Some(current) if score > current.score => Some(Best { location, score }),
+                    None => Some(Best { location, score }),
+                    _ => best,
+                };
+            }
 
             for edge in self.edges_out(&location) {
                 let to = edge.to;
