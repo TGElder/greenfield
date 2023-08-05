@@ -8,11 +8,20 @@ use crate::model::piste::Piste;
 pub struct DistanceNetwork<'a> {
     terrain: &'a Grid<f32>,
     piste: &'a Piste,
+    lifts: &'a Grid<bool>,
 }
 
 impl<'a> DistanceNetwork<'a> {
-    pub fn new(terrain: &'a Grid<f32>, piste: &'a Piste) -> DistanceNetwork<'a> {
-        DistanceNetwork { terrain, piste }
+    pub fn new(
+        terrain: &'a Grid<f32>,
+        piste: &'a Piste,
+        lifts: &'a Grid<bool>,
+    ) -> DistanceNetwork<'a> {
+        DistanceNetwork {
+            terrain,
+            piste,
+            lifts,
+        }
     }
 }
 
@@ -26,6 +35,7 @@ impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
             .flat_map(move |offset| self.piste.grid.offset(to, offset))
             .filter(|from| self.piste.grid.in_bounds(from))
             .filter(|from| self.piste.grid[from])
+            .filter(|from| !self.lifts[from])
             .map(move |from| Edge {
                 from,
                 to: *to,
