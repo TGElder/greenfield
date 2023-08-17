@@ -68,26 +68,45 @@ where
         self.event_handler
             .handle(&Event::Init, &mut self.state, &mut self.graphics);
 
-        self.event_loop.run(move |event, _, control_flow| {
-            match event {
+        let mut cursor_position: Option<glutin::dpi::PhysicalPosition<f64>> = None;
+
+        self.event_loop
+            .run(move |event, _, control_flow| match event {
                 glutin::event::Event::NewEvents(cause) => match cause {
-                    glutin::event::StartCause::ResumeTimeReached { .. } => (),
-                    glutin::event::StartCause::Init => (),
-                    _ => return,
+                    glutin::event::StartCause::Init
+                    | glutin::event::StartCause::ResumeTimeReached { .. } => {
+                        let next_frame_time =
+                            std::time::Instant::now() + self.parameters.frame_duration;
+                        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+
+                        if let Some(position) = cursor_position {
+                            let (x, y) = position.into();
+                            self.event_handler.handle(
+                                &Event::MouseMoved(xy(x, y)),
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+
+                        self.event_handler.handle(
+                            &Event::Tick,
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+
+                        match self.graphics.render() {
+                            Ok(_) => (),
+                            Err(err) => println!("Failed to render frame: {err}"),
+                        };
+                    }
+                    _ => (),
                 },
                 glutin::event::Event::WindowEvent { event, .. } => match event {
                     glutin::event::WindowEvent::CloseRequested => {
                         *control_flow = glutin::event_loop::ControlFlow::Exit;
-                        return;
                     }
                     glutin::event::WindowEvent::CursorMoved { position, .. } => {
-                        let (x, y) = position.into();
-                        self.event_handler.handle(
-                            &Event::MouseMoved(xy(x, y)),
-                            &mut self.state,
-                            &mut self.graphics,
-                        );
-                        return;
+                        cursor_position = Some(position);
                     }
                     glutin::event::WindowEvent::MouseInput { button, state, .. } => {
                         self.event_handler.handle(
@@ -98,7 +117,6 @@ where
                             &mut self.state,
                             &mut self.graphics,
                         );
-                        return;
                     }
                     glutin::event::WindowEvent::MouseWheel {
                         delta: MouseScrollDelta::LineDelta(_, y),
@@ -141,7 +159,6 @@ where
                             &mut self.state,
                             &mut self.graphics,
                         );
-                        return;
                     }
                     glutin::event::WindowEvent::Resized(glutin::dpi::PhysicalSize {
                         width,
@@ -152,23 +169,11 @@ where
                             &mut self.state,
                             &mut self.graphics,
                         );
-                        return;
                     }
-                    _ => return,
+                    _ => (),
                 },
-                _ => return,
-            }
-            let next_frame_time = std::time::Instant::now() + self.parameters.frame_duration;
-            *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
-
-            self.event_handler
-                .handle(&Event::Tick, &mut self.state, &mut self.graphics);
-
-            match self.graphics.render() {
-                Ok(_) => (),
-                Err(err) => println!("Failed to render frame: {err}"),
-            };
-        });
+                _ => (),
+            });
     }
 }
 
