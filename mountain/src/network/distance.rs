@@ -6,14 +6,9 @@ use network::model::{Edge, InNetwork};
 use crate::model::piste::Piste;
 
 pub struct DistanceNetwork<'a> {
-    terrain: &'a Grid<f32>,
-    piste: &'a Piste,
-}
-
-impl<'a> DistanceNetwork<'a> {
-    pub fn new(terrain: &'a Grid<f32>, piste: &'a Piste) -> DistanceNetwork<'a> {
-        DistanceNetwork { terrain, piste }
-    }
+    pub terrain: &'a Grid<f32>,
+    pub piste: &'a Piste,
+    pub is_allowed: &'a dyn Fn(&XY<u32>) -> bool,
 }
 
 impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
@@ -26,6 +21,7 @@ impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
             .flat_map(move |offset| self.piste.grid.offset(to, offset))
             .filter(|from| self.piste.grid.in_bounds(from))
             .filter(|from| self.piste.grid[from])
+            .filter(|from| (self.is_allowed)(from))
             .map(move |from| Edge {
                 from,
                 to: *to,

@@ -26,7 +26,13 @@ pub fn run(
 fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift>) -> PisteCosts {
     let mut out = PisteCosts::new();
 
-    let network = DistanceNetwork::new(terrain, piste);
+    let lift_positions = lifts.values().map(|lift| lift.from).collect::<HashSet<_>>();
+
+    let network = DistanceNetwork {
+        terrain,
+        piste,
+        is_allowed: &|position| !lift_positions.contains(position),
+    };
 
     for (lift, Lift { from, .. }) in lifts {
         let grid = &piste.grid;
