@@ -10,7 +10,7 @@ struct Node<S, T> {
     location: T,
     entrance: Option<Edge<T>>,
     steps_from_start: u64,
-    score: S,
+    score: Option<S>,
 }
 
 impl<S, T> Ord for Node<S, T>
@@ -47,6 +47,7 @@ pub trait FindBestWithinSteps<S, T, N> {
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> Option<S>,
+        is_allowed: &dyn Fn(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
@@ -61,6 +62,7 @@ where
         &self,
         from: HashSet<T>,
         scorer: &dyn Fn(&N, &T) -> Option<S>,
+        is_allowed: &dyn Fn(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -68,13 +70,14 @@ where
         let mut heap = BinaryHeap::new();
 
         for from in from.iter() {
-            let Some(score) = scorer(self, from) else {continue};
-            heap.push(Node {
-                location: *from,
-                entrance: None,
-                steps_from_start: 0,
-                score,
-            });
+            if is_allowed(from) {
+                heap.push(Node {
+                    location: *from,
+                    entrance: None,
+                    steps_from_start: 0,
+                    score: scorer(self, from),
+                });
+            }
         }
 
         struct Best<S, T> {
@@ -100,25 +103,26 @@ where
                 entrances.insert(location, entrance);
             }
 
-            best = match best {
-                Some(current) if score > current.score => Some(Best { location, score }),
-                None => Some(Best { location, score }),
-                _ => best,
-            };
+            if let Some(score) = score {
+                best = match best {
+                    Some(current) if score > current.score => Some(Best { location, score }),
+                    None => Some(Best { location, score }),
+                    _ => best,
+                };
+            }
 
             for edge in self.edges_out(&location) {
                 let to = edge.to;
-                if closed.contains(&to) {
+                if !is_allowed(&to) || closed.contains(&to) {
                     continue;
                 }
                 let steps_from_start = steps_from_start + 1;
                 if steps_from_start <= max_steps {
-                    let Some(score) = scorer(self, &to) else {continue};
                     heap.push(Node {
                         location: to,
                         entrance: Some(edge),
                         steps_from_start,
-                        score,
+                        score: scorer(self, &to),
                     });
                 }
             }
@@ -188,7 +192,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 2);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 2);
 
         // then
         assert_eq!(
@@ -261,7 +265,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 2);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 2);
 
         // then
         assert_eq!(
@@ -311,7 +315,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {2}, &|_, i| Some(*i), 2);
+        let result = network.find_best_within_steps(hashset! {2}, &|_, i| Some(*i), &|_| true, 2);
 
         // then
         assert_eq!(result, Some(vec![]));
@@ -354,8 +358,12 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result =
-            network.find_best_within_steps(hashset! {0}, &|_, i| Some(i32::from(*i != 0)), 2);
+        let result = network.find_best_within_steps(
+            hashset! {0},
+            &|_, i| Some(i32::from(*i != 0)),
+            &|_| true,
+            2,
+        );
 
         // then
         assert!(
@@ -426,7 +434,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0, 2}, &|_, i| Some(*i), 4);
+        let result =
+            network.find_best_within_steps(hashset! {0, 2}, &|_, i| Some(*i), &|_| true, 4);
 
         // then
         assert_eq!(
@@ -507,6 +516,7 @@ mod tests {
                 5 => Some(1),
                 _ => Some(0),
             },
+            &|_| true,
             3,
         );
 
@@ -558,7 +568,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {}, &|_, _| Some(0), 4);
+        let result = network.find_best_within_steps(hashset! {}, &|_, _| Some(0), &|_| true, 4);
 
         // then
         assert_eq!(result, None);
@@ -579,7 +589,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, _| Some(0), 4);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, _| Some(0), &|_| true, 4);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
@@ -623,7 +633,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 1);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 1);
 
         // then
         assert_eq!(
@@ -666,14 +676,14 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), 0);
+        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 0);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
     }
 
     #[test]
-    fn must_not_use_no_score_node() {
+    fn must_not_finish_on_no_score_node() {
         // given
         //
         // [1] <- [0] -> [2]
@@ -715,6 +725,7 @@ mod tests {
                 2 => None,
                 i => Some(*i),
             },
+            &|_| true,
             2,
         );
 
@@ -727,5 +738,125 @@ mod tests {
                 cost: 1,
             }])
         );
+    }
+
+    #[test]
+    fn may_pass_through_not_allowed_node() {
+        // given
+        //
+        // [0] -> [1] -> [2]
+
+        struct TestNetwork {}
+
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+                match from {
+                    0 => Box::new(
+                        [Edge {
+                            from: 0,
+                            to: 1,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    1 => Box::new(
+                        [Edge {
+                            from: 1,
+                            to: 2,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    _ => Box::new(iter::empty()),
+                }
+            }
+        }
+
+        let network = TestNetwork {};
+
+        // when
+        let result = network.find_best_within_steps(
+            hashset! {0},
+            &|_, i| match i {
+                0 => Some(0),
+                2 => Some(2),
+                _ => None,
+            },
+            &|_| true,
+            2,
+        );
+
+        // then
+        assert_eq!(
+            result,
+            Some(vec![
+                Edge {
+                    from: 0,
+                    to: 1,
+                    cost: 1,
+                },
+                Edge {
+                    from: 1,
+                    to: 2,
+                    cost: 1,
+                }
+            ])
+        );
+    }
+
+    #[test]
+    fn may_not_pass_through_not_allowed_node() {
+        // given
+        //
+        // [0] -> [1] -> [2]
+
+        struct TestNetwork {}
+
+        impl OutNetwork<usize> for TestNetwork {
+            fn edges_out<'a>(
+                &'a self,
+                from: &'a usize,
+            ) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+                match from {
+                    0 => Box::new(
+                        [Edge {
+                            from: 0,
+                            to: 1,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    1 => Box::new(
+                        [Edge {
+                            from: 1,
+                            to: 2,
+                            cost: 1,
+                        }]
+                        .into_iter(),
+                    ),
+                    _ => Box::new(iter::empty()),
+                }
+            }
+        }
+
+        let network = TestNetwork {};
+
+        // when
+        let result = network.find_best_within_steps(
+            hashset! {0},
+            &|_, i| match i {
+                0 => Some(0),
+                2 => Some(2),
+                _ => None,
+            },
+            &|i| *i != 1,
+            2,
+        );
+
+        // then
+        assert_eq!(result, Some(vec![]));
     }
 }
