@@ -31,7 +31,7 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
     let network = DistanceNetwork {
         terrain,
         piste,
-        is_allowed: &|position| !lift_positions.contains(position),
+        can_visit: &|position| !lift_positions.contains(position),
     };
 
     for (lift, Lift { from, .. }) in lifts {
