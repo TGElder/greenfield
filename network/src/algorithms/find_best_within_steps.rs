@@ -741,7 +741,7 @@ mod tests {
     }
 
     #[test]
-    fn may_pass_through_not_allowed_node() {
+    fn may_pass_through_allowed_node() {
         // given
         //
         // [0] -> [1] -> [2]
