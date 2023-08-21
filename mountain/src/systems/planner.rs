@@ -199,18 +199,21 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
+    let from_cost = costs[from];
+
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
-            costs.get(state).and_then(|cost| {
-                if *cost > costs[from] {
-                    return None;
-                }
-                Some(Score {
-                    cost: *cost,
-                    mode: state.mode,
-                })
+            costs.get(state).map(|&cost| Score {
+                cost,
+                mode: state.mode,
             })
+        },
+        &|state| {
+            costs
+                .get(state)
+                .map(|cost| *cost <= from_cost)
+                .unwrap_or_default()
         },
         MAX_STEPS,
     )
