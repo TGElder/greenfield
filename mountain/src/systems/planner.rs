@@ -204,6 +204,9 @@ fn find_path(
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
+            if state.position == from.position {
+                return None;
+            }
             costs.get(state).map(|&cost| Score {
                 cost,
                 mode: state.mode,
