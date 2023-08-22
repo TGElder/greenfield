@@ -204,10 +204,16 @@ fn find_path(
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
-            if state.position == from.position {
+            let cost = costs.get(state);
+
+            // check for forbidden tiles
+            if cost != Some(&0) // goal tile is never forbidden
+                && (state.position == from.position || is_white_tile(&state.position))
+            {
                 return None;
             }
-            costs.get(state).map(|&cost| Score {
+
+            cost.map(|&cost| Score {
                 cost,
                 mode: state.mode,
             })
@@ -220,6 +226,10 @@ fn find_path(
         },
         MAX_STEPS,
     )
+}
+
+fn is_white_tile(position: &XY<u32>) -> bool {
+    position.x % 2 == position.y % 2
 }
 
 fn brake(state: State) -> Plan {
