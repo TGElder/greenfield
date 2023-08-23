@@ -88,6 +88,16 @@ impl<T> OriginGrid<T> {
     pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
         self.grid.iter().map(|xy| xy + self.origin)
     }
+
+    pub fn map<F, U>(&self, mut function: F) -> OriginGrid<U>
+    where
+        F: FnMut(XY<u32>, &T) -> U,
+    {
+        OriginGrid {
+            origin: self.origin,
+            grid: self.grid.map(|xy, value| function(xy + self.origin, value)),
+        }
+    }
 }
 
 impl<T> PartialEq for OriginGrid<T>
@@ -300,6 +310,27 @@ mod tests {
         assert_eq!(
             grid.iter().collect::<Vec<_>>(),
             vec![xy(1, 2), xy(2, 2), xy(1, 3), xy(2, 3), xy(1, 4), xy(2, 4),]
+        );
+    }
+
+    #[test]
+    fn test_map() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::from_fn(2, 3, |XY { x, y }| x + y));
+
+        assert_eq!(
+            grid.map(|XY { x, y }, value| x + y + value),
+            OriginGrid::new(
+                xy(1, 2),
+                Grid::from_vec(
+                    2,
+                    3,
+                    vec![
+                        3, 5, //
+                        5, 7, //
+                        7, 9, //
+                    ]
+                )
+            )
         );
     }
 
