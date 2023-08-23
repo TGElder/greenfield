@@ -51,6 +51,7 @@ fn main() {
                 piste_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
+                piste_map: Grid::default(terrain.width(), terrain.height()),
                 terrain,
             },
             drawings: None,
@@ -215,6 +216,7 @@ struct Components {
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
+    piste_map: Grid<Option<usize>>,
 }
 
 struct Drawings {
@@ -281,6 +283,7 @@ impl EventHandler for Game {
         self.handlers.piste_builder.handle(
             event,
             &mut self.components.pistes,
+            &mut self.components.piste_map,
             &mut self.handlers.selection,
             &mut self.systems.overlay,
             &mut self.services.id_allocator,

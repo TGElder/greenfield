@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
@@ -24,6 +25,7 @@ impl Handler {
         &mut self,
         event: &engine::events::Event,
         pistes: &mut HashMap<usize, Piste>,
+        piste_map: &mut Grid<Option<usize>>,
         selection: &mut selection::Handler,
         overlay: &mut overlay::System,
         id_allocator: &mut id_allocator::Service,
@@ -35,7 +37,24 @@ impl Handler {
         }
 
         let Some(rectangle) = selection.selected_rectangle() else {return};
-        let grid = OriginGrid::from_rectangle(rectangle, add);
+        let mut grid = OriginGrid::from_rectangle(rectangle, false);
+
+        if add {
+            for position in grid.iter() {
+                if piste_map[position].is_none() {
+                    grid[position] = true;
+                    piste_map[position] = Some(self.id)
+                } else if piste_map[position] == Some(self.id) {
+                    grid[position] = true;
+                }
+            }
+        } else {
+            for position in grid.iter() {
+                if piste_map[position] == Some(self.id) {
+                    piste_map[position] = None
+                }
+            }
+        }
 
         if pistes.is_empty() || self.bindings.new.binds_event(event) {
             self.id = id_allocator.next_id();
