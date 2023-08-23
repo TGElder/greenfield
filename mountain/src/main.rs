@@ -302,7 +302,7 @@ impl EventHandler for Game {
 
         piste_adopter::run(
             &self.components.plans,
-            &self.components.pistes,
+            &self.components.piste_map,
             &mut self.components.locations,
         );
         target_setter::run(
