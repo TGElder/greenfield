@@ -176,8 +176,10 @@ impl<T> Grid<T> {
         self.offsets(position, &OFFSETS_8)
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
-        (0..self.height).flat_map(|y| (0..self.width).map(move |x| XY { x, y }))
+    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> {
+        let height = self.height;
+        let width = self.width;
+        (0..height).flat_map(move |y| (0..width).map(move |x| XY { x, y }))
     }
 }
 
