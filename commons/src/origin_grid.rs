@@ -95,7 +95,7 @@ impl<T> OriginGrid<T> {
     {
         OriginGrid {
             origin: self.origin,
-            grid: self.grid.map(|xy, t| function(xy + self.origin, t)),
+            grid: self.grid.map(|xy, value| function(xy + self.origin, value)),
         }
     }
 }
