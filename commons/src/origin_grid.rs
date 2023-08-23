@@ -85,8 +85,9 @@ impl<T> OriginGrid<T> {
         offsets.iter().flat_map(move |o| self.offset(position, o))
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
-        self.grid.iter().map(|xy| xy + self.origin)
+    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> {
+        let origin = self.origin;
+        self.grid.iter().map(move |xy| xy + origin)
     }
 
     pub fn map<F, U>(&self, mut function: F) -> OriginGrid<U>
