@@ -35,8 +35,10 @@ impl Handler {
             return;
         }
 
-        let Some(mouse_xy) = mouse_xy else {return};
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {return};
+        let Some(mouse_xy) = mouse_xy else { return };
+        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
         let position = xy(x.floor() as u32, y.floor() as u32);
 
         let Some(from) = self.from else {

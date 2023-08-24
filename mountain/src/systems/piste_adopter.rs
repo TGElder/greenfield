@@ -13,7 +13,9 @@ pub fn run(
         if locations.contains_key(id) {
             continue;
         }
-        let Plan::Stationary(State{position, ..}) = plan else {continue};
+        let Plan::Stationary(State { position, .. }) = plan else {
+            continue;
+        };
 
         if let Some(piste) = piste_map[position] {
             locations.insert(*id, piste);

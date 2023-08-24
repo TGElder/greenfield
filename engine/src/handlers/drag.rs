@@ -38,7 +38,9 @@ impl EventHandler for Handler {
         }
 
         if self.bindings.start_dragging.binds_event(event) {
-            let Some(mouse_xy) = self.mouse_xy else {return};
+            let Some(mouse_xy) = self.mouse_xy else {
+                return;
+            };
             if let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) {
                 self.selection = Some(xyz)
             }

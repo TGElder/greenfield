@@ -43,7 +43,7 @@ impl System {
         lifts: &HashMap<usize, Lift>,
         selection: &selection::Handler,
     ) {
-        let Some(drawing) = drawing else {return};
+        let Some(drawing) = drawing else { return };
 
         for update in self.updates.drain(..) {
             let mut image = OriginGrid::from_rectangle(update, CLEAR);
@@ -71,7 +71,9 @@ fn selection_color(
     xy: &XY<u32>,
     selection: &selection::Handler,
 ) -> Option<Rgba<u8>> {
-    let Some(rectangle) = selection.selected_rectangle() else {return None};
+    let Some(rectangle) = selection.selected_rectangle() else {
+        return None;
+    };
 
     if rectangle.contains(xy) {
         Some(color)

@@ -44,8 +44,12 @@ impl Handler {
     }
 
     fn step_angle(&mut self, positive: bool, graphics: &mut dyn Graphics) {
-        let Some(mouse_xy) = self.mouse_xy else {return};
-        let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {return};
+        let Some(mouse_xy) = self.mouse_xy else {
+            return;
+        };
+        let Ok(xyz) = graphics.world_xyz_at(&mouse_xy) else {
+            return;
+        };
 
         if positive {
             self.angle = (self.angle + 1) % self.angles;

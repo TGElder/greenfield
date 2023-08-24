@@ -61,8 +61,10 @@ impl Handler {
     }
 
     fn set_origin(&mut self, mouse_xy: &Option<XY<u32>>, graphics: &mut dyn Graphics) {
-        let Some(mouse_xy) = mouse_xy else {return};
-        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
+        let Some(mouse_xy) = mouse_xy else { return };
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
         let origin = selected_cell(xyz);
         self.origin = Some(origin);
         self.rectangle = Some(XYRectangle {
@@ -72,8 +74,10 @@ impl Handler {
     }
 
     fn modify_selection(&mut self, mouse_xy: &XY<u32>, graphics: &mut dyn Graphics) {
-        let Some(origin) = self.origin else {return};
-        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {return};
+        let Some(origin) = self.origin else { return };
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
         let focus = selected_cell(xyz);
 
         self.rectangle = Some(XYRectangle {
