@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::grid::Grid;
@@ -39,6 +40,10 @@ impl Handler {
         let Some(rectangle) = selection.selected_rectangle() else {return};
         let mut grid = OriginGrid::from_rectangle(rectangle, false);
 
+        if pistes.is_empty() || self.bindings.new.binds_event(event) {
+            self.id = id_allocator.next_id();
+        }
+
         if add {
             for position in grid.iter() {
                 if piste_map[position].is_none() {
@@ -56,13 +61,14 @@ impl Handler {
             }
         }
 
-        if pistes.is_empty() || self.bindings.new.binds_event(event) {
-            self.id = id_allocator.next_id();
-            println!("Building piste {}", self.id);
-            pistes.insert(self.id, Piste { grid });
-        } else {
-            pistes.get_mut(&self.id).unwrap().grid = pistes[&self.id].grid.paste(&grid);
-        };
+        match pistes.entry(self.id) {
+            Entry::Occupied(mut entry) => {
+                entry.get_mut().grid = entry.get().grid.paste(&grid);
+            }
+            Entry::Vacant(entry) => {
+                entry.insert(Piste { grid });
+            }
+        }
 
         overlay.update(*rectangle);
         selection.clear_selection();
