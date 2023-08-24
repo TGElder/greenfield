@@ -12,8 +12,12 @@ pub fn run(
     plans: &mut HashMap<usize, Plan>,
 ) {
     locations.retain(|id, location| {
-        let Some(lift) = lifts.get(location) else {return true};
-        let Some(Plan::Stationary(state)) = plans.get(id) else {return true};
+        let Some(lift) = lifts.get(location) else {
+            return true;
+        };
+        let Some(Plan::Stationary(state)) = plans.get(id) else {
+            return true;
+        };
 
         if reserved[lift.to] {
             return true;

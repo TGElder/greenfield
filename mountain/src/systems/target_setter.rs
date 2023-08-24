@@ -17,8 +17,12 @@ pub fn run(
         if targets.contains_key(id) {
             continue;
         }
-        let Some(location) = locations.get(id) else {continue};
-        let Some(piste) = pistes.get(location) else {continue};
+        let Some(location) = locations.get(id) else {
+            continue;
+        };
+        let Some(piste) = pistes.get(location) else {
+            continue;
+        };
 
         let candidates = lifts
             .iter()

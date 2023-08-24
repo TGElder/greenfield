@@ -37,7 +37,9 @@ impl Handler {
             return;
         }
 
-        let Some(rectangle) = selection.selected_rectangle() else {return};
+        let Some(rectangle) = selection.selected_rectangle() else {
+            return;
+        };
         let mut grid = OriginGrid::from_rectangle(rectangle, false);
 
         if pistes.is_empty() || self.bindings.new.binds_event(event) {

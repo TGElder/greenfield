@@ -50,7 +50,7 @@ impl System {
 
         self.finished.retain(|id| {
             let Some(current_plan) = plans.get_mut(id) else {
-                return false
+                return false;
             };
 
             free(current_plan, reserved);

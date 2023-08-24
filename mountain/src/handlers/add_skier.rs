@@ -25,8 +25,10 @@ impl Handler {
             return;
         }
 
-        let Some(mouse_xy) = mouse_xy else {return};
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {return};
+        let Some(mouse_xy) = mouse_xy else { return };
+        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
 
         plans.insert(
             id_allocator.next_id(),

@@ -494,7 +494,9 @@ impl GliumGraphics {
     }
 
     fn world_xyz_at_unsafe(&self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, Box<dyn Error>> {
-        let Some(canvas) = &self.canvas else{return Err("Need the depth at the cursor position to get world coordinate, but there is no canvas to read the depth from.".into())};
+        let Some(canvas) = &self.canvas else {
+            return Err("Need the depth at the cursor position to get world coordinate, but there is no canvas to read the depth from.".into());
+        };
         let gl_z = canvas.read_pixel(*screen_xy)?.a;
         let XY { x: gl_x, y: gl_y } = self.screen_to_gl(screen_xy);
         let gl_xyz = xyz(gl_x, gl_y, gl_z);

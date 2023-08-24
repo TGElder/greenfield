@@ -54,7 +54,9 @@ mod tests {
         let result = solve(a, b, c);
 
         // then
-        let Solution::RealRoots{min, max} = result else {panic!("Expected RealRoots but got {:?}", result)};
+        let Solution::RealRoots { min, max } = result else {
+            panic!("Expected RealRoots but got {:?}", result)
+        };
 
         assert!(min <= max);
         test_solution(min, a, b, c);
@@ -69,7 +71,9 @@ mod tests {
         let result = solve(a, b, c);
 
         // then
-        let Solution::EqualRoots(root) = result else {panic!("Expected EqualRoots but got {:?}", result)};
+        let Solution::EqualRoots(root) = result else {
+            panic!("Expected EqualRoots but got {:?}", result)
+        };
 
         test_solution(root, a, b, c);
     }
