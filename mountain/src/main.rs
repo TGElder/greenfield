@@ -51,7 +51,7 @@ fn main() {
                 piste_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
-                piste_map: Grid::default(terrain.width(), terrain.height()),
+                piste_map: Grid::default(terrain.width() - 1, terrain.height() - 1),
                 terrain,
             },
             drawings: None,

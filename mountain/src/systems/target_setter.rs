@@ -26,8 +26,7 @@ pub fn run(
 
         let candidates = lifts
             .iter()
-            .filter(|(_, lift)| piste.grid.in_bounds(lift.from))
-            .filter(|(_, lift)| piste.grid[lift.from])
+            .filter(|(_, lift)| piste.is_on_piste(&lift.from))
             .map(|(id, _)| *id)
             .collect::<Vec<_>>();
         let choice = candidates.choose(&mut rand::thread_rng());

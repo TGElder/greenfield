@@ -1,11 +1,22 @@
 use std::collections::HashMap;
 
+use commons::geometry::{xy, XY};
 use commons::origin_grid::OriginGrid;
 
 use crate::model::skiing::State;
 
+const CORNERS: [XY<i32>; 4] = [xy(0, 0), xy(-1, 0), xy(0, -1), xy(-1, -1)];
+
 pub struct Piste {
     pub grid: OriginGrid<bool>,
+}
+
+impl Piste {
+    pub fn is_on_piste(&self, position: &XY<u32>) -> bool {
+        self.grid
+            .offsets(position, &CORNERS)
+            .any(|corner| self.grid.in_bounds(corner) && self.grid[corner])
+    }
 }
 
 pub struct PisteCosts {

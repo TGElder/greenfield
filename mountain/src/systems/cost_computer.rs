@@ -35,8 +35,7 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
     };
 
     for (lift, Lift { from, .. }) in lifts {
-        let grid = &piste.grid;
-        if grid.in_bounds(from) && grid[from] {
+        if piste.is_on_piste(from) {
             let costs = compute_costs_to_position(&network, from);
             let coverage = costs.len() as f32
                 / (piste_positions(piste).len() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
