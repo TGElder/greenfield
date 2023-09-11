@@ -14,6 +14,7 @@ pub const OFFSETS_8: [XY<i32>; 8] = [
     xy(0, -1),
     xy(1, -1),
 ];
+pub const CORNERS: [XY<i32>; 4] = [xy(0, 0), xy(0, 1), xy(1, 1), xy(1, 0)];
 
 #[derive(Debug)]
 pub struct Grid<T> {
