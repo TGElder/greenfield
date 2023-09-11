@@ -82,9 +82,18 @@ fn selection_color(
     }
 }
 
-fn piste_color(color: Rgba<u8>, xy: &XY<u32>, pistes: &HashMap<usize, Piste>) -> Option<Rgba<u8>> {
+fn piste_color(
+    color: Rgba<u8>,
+    position: &XY<u32>,
+    pistes: &HashMap<usize, Piste>,
+) -> Option<Rgba<u8>> {
     for piste in pistes.values() {
-        if piste.grid.in_bounds(xy) && piste.grid[xy] {
+        if piste
+            .grid
+            .offsets(position, &[xy(0, 0), xy(1, 0), xy(0, 1), xy(1, 1)])
+            .filter(|corner| piste.grid.in_bounds(corner) && piste.grid[corner])
+            .count() == 4
+        {
             return Some(color);
         }
     }
