@@ -39,7 +39,7 @@ impl Handler {
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
             return;
         };
-        let position = xy(x.floor() as u32, y.floor() as u32);
+        let position = xy(x.round() as u32, y.round() as u32);
 
         let Some(from) = self.from else {
             self.from = Some(position);
