@@ -1,6 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
+use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
@@ -40,7 +41,13 @@ impl Handler {
         let Some(rectangle) = selection.selected_rectangle() else {
             return;
         };
-        let mut grid = OriginGrid::from_rectangle(rectangle, false);
+        let mut grid = OriginGrid::from_rectangle(
+            XYRectangle {
+                from: rectangle.from,
+                to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
+            },
+            false,
+        );
 
         if pistes.is_empty() || self.bindings.new.binds_event(event) {
             self.id = id_allocator.next_id();
@@ -72,7 +79,13 @@ impl Handler {
             }
         }
 
-        overlay.update(*rectangle);
+        overlay.update(XYRectangle {
+            from: xy(
+                rectangle.to.x.saturating_sub(1),
+                rectangle.from.y.saturating_sub(1),
+            ),
+            to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
+        });
         selection.clear_selection();
     }
 }
