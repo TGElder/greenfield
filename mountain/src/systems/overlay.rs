@@ -72,7 +72,7 @@ fn selection_color(
     xy: &XY<u32>,
     selection: &selection::Handler,
 ) -> Option<Rgba<u8>> {
-    let Some(rectangle) = selection.selected_rectangle() else {
+    let Some(rectangle) = selection.rectangle else {
         return None;
     };
 

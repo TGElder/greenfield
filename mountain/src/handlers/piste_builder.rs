@@ -12,14 +12,12 @@ use crate::services::id_allocator;
 use crate::systems::overlay;
 
 pub struct Handler {
-    pub id: usize,
     pub bindings: Bindings,
 }
 
 pub struct Bindings {
     pub add: Binding,
     pub subtract: Binding,
-    pub new: Binding,
 }
 
 impl Handler {
@@ -32,13 +30,13 @@ impl Handler {
         overlay: &mut overlay::System,
         id_allocator: &mut id_allocator::Service,
     ) {
-        let add = self.bindings.add.binds_event(event) || self.bindings.new.binds_event(event);
+        let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
         if !(add || subtract) {
             return;
         }
 
-        let Some(rectangle) = selection.selected_rectangle() else {
+        let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
             return;
         };
         let mut grid = OriginGrid::from_rectangle(
@@ -49,28 +47,26 @@ impl Handler {
             false,
         );
 
-        if pistes.is_empty() || self.bindings.new.binds_event(event) {
-            self.id = id_allocator.next_id();
-        }
+        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
 
         if add {
             for position in grid.iter() {
                 if piste_map[position].is_none() {
                     grid[position] = true;
-                    piste_map[position] = Some(self.id)
-                } else if piste_map[position] == Some(self.id) {
+                    piste_map[position] = Some(id)
+                } else if piste_map[position] == Some(id) {
                     grid[position] = true;
                 }
             }
         } else {
             for position in grid.iter() {
-                if piste_map[position] == Some(self.id) {
+                if piste_map[position] == Some(id) {
                     piste_map[position] = None
                 }
             }
         }
 
-        match pistes.entry(self.id) {
+        match pistes.entry(id) {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().grid = entry.get().grid.paste(&grid);
             }
