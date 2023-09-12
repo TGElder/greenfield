@@ -33,8 +33,8 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    avatar_artist, cost_computer, framer, lift, lift_entry, overlay, piste_adopter, planner,
-    target_setter,
+    avatar_artist, cost_computer, framer, lift, lift_artist, lift_entry, overlay, piste_adopter,
+    planner, target_setter,
 };
 
 fn main() {
@@ -97,7 +97,6 @@ fn main() {
                 overlay: overlay::System::new(overlay::Colors {
                     selection: Rgba::new(255, 255, 0, 128),
                     piste: Rgba::new(0, 0, 255, 128),
-                    lift: Rgba::new(0, 0, 0, 255),
                 }),
                 planner: planner::System::new(),
             },
@@ -339,11 +338,16 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
+        lift_artist::run(
+            graphics,
+            &self.components.lifts,
+            &self.components.terrain,
+            &mut self.components.drawings,
+        );
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.pistes,
-            &self.components.lifts,
             &self.handlers.selection,
         );
 

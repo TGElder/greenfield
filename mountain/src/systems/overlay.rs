@@ -8,7 +8,6 @@ use engine::graphics::Graphics;
 
 use crate::draw::terrain;
 use crate::handlers::selection;
-use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
@@ -21,7 +20,6 @@ pub struct System {
 pub struct Colors {
     pub selection: Rgba<u8>,
     pub piste: Rgba<u8>,
-    pub lift: Rgba<u8>,
 }
 
 impl System {
@@ -41,7 +39,6 @@ impl System {
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
         pistes: &HashMap<usize, Piste>,
-        lifts: &HashMap<usize, Lift>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else { return };
@@ -54,7 +51,6 @@ impl System {
                 for y in from.y..=to.y {
                     let position = xy(x, y);
                     image[position] = selection_color(self.colors.selection, &position, selection)
-                        .or_else(|| lift_color(self.colors.lift, &position, lifts))
                         .or_else(|| piste_color(self.colors.piste, &position, pistes))
                         .unwrap_or(CLEAR);
                 }
@@ -96,16 +92,6 @@ fn piste_color(
             .count()
             == 4
         {
-            return Some(color);
-        }
-    }
-
-    None
-}
-
-fn lift_color(color: Rgba<u8>, xy: &XY<u32>, lifts: &HashMap<usize, Lift>) -> Option<Rgba<u8>> {
-    for lift in lifts.values() {
-        if lift.from == *xy || lift.to == *xy {
             return Some(color);
         }
     }
