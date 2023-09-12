@@ -51,10 +51,6 @@ impl Handler {
         }
     }
 
-    pub fn selected_rectangle(&self) -> &Option<XYRectangle<u32>> {
-        &self.rectangle
-    }
-
     pub fn clear_selection(&mut self) {
         self.rectangle = None;
         self.origin = None;
