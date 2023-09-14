@@ -8,3 +8,4 @@ edition = "2021"
 [dependencies]
 commons = { path = "../commons" }
 maplit = { workspace = true }
+rand = { workspace = true }

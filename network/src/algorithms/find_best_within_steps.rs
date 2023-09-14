@@ -2,6 +2,8 @@ use core::hash::Hash;
 use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt::Debug;
+use rand::seq::SliceRandom;
+
 
 use crate::algorithms::get_path;
 use crate::model::{Edge, OutNetwork};
@@ -68,6 +70,7 @@ where
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
         let mut heap = BinaryHeap::new();
+        let mut best = BinaryHeap::new();
 
         for from in from.iter() {
             if is_allowed(from) {
@@ -80,12 +83,41 @@ where
             }
         }
 
-        struct Best<S, T> {
+        struct Candidate<S, T> {
             location: T,
             score: S,
         }
 
-        let mut best: Option<Best<S, T>> = None;
+
+        impl<S, T> Ord for Candidate<S, T>
+        where
+            T: Eq, S: Ord
+        {
+            fn cmp(&self, other: &Candidate<S, T>) -> Ordering {
+                self.score.cmp(&other.score)
+            }
+        }
+
+        impl<S, T> PartialOrd for Candidate<S, T>
+        where
+            T: Eq, S: Ord
+        {
+            fn partial_cmp(&self, other: &Candidate<S, T>) -> Option<Ordering> {
+                Some(self.cmp(other))
+            }
+        }
+
+        impl<S, T> PartialEq for Candidate<S, T>
+        where
+            T: Eq,
+        {
+            fn eq(&self, other: &Candidate<S, T>) -> bool {
+                self.location == other.location
+            }
+        }
+
+        impl<S, T> Eq for Candidate<S, T> where T: Eq {}
+
 
         while let Some(Node {
             location,
@@ -104,11 +136,7 @@ where
             }
 
             if let Some(score) = score {
-                best = match best {
-                    Some(current) if score > current.score => Some(Best { location, score }),
-                    None => Some(Best { location, score }),
-                    _ => best,
-                };
+                best.push(Candidate { location, score });
             }
 
             for edge in self.edges_out(&location) {
@@ -128,7 +156,14 @@ where
             }
         }
 
-        best.map(|Best { location, .. }| get_path(&from, &location, &mut entrances))
+        let mut candidates = Vec::with_capacity(10);
+        while !best.is_empty() && candidates.len() <= 10 {
+            candidates.push(best.pop().unwrap())
+        }
+
+        let best = candidates.choose(&mut rand::thread_rng());
+
+        best.map(|Candidate { location, .. }| get_path(&from, location, &mut entrances))
     }
 }
 
