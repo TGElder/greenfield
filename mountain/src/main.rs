@@ -300,6 +300,7 @@ impl EventHandler for Game {
             &mut self.components.locations,
         );
         target_setter::run(
+            &self.components.terrain,
             &self.components.plans,
             &self.components.locations,
             &self.components.pistes,
