@@ -6,6 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 
 use crate::model::piste::PisteCosts;
+use crate::model::reservation::Reservation;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -24,7 +25,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub costs: &'a HashMap<usize, PisteCosts>,
-    pub reserved: &'a mut Grid<bool>,
+    pub reserved: &'a mut Grid<Vec<Reservation>>,
 }
 
 impl System {
@@ -53,13 +54,13 @@ impl System {
                 return false;
             };
 
-            free(current_plan, reserved);
+            free(id, current_plan, reserved);
             let from = last_state(current_plan);
             *current_plan = match get_costs(id, locations, targets, costs) {
                 Some(costs) => new_plan(terrain, micros, from, reserved, costs),
                 None => brake(*from),
             };
-            reserve(current_plan, reserved);
+            reserve(id, current_plan, reserved, micros);
 
             match current_plan {
                 Plan::Stationary(_) => true,
@@ -129,15 +130,48 @@ fn finished(current_plan: &Plan, micros: &u128) -> bool {
     true
 }
 
-fn free(plan: &Plan, reserved: &mut Grid<bool>) {
+fn free(id: &usize, plan: &Plan, reserved: &mut Grid<Vec<Reservation>>) {
     for position in iter_positions(plan) {
-        reserved[position] = false
+        reserved[position].retain(|reservation| reservation.id() != id)
     }
 }
 
-fn reserve(plan: &Plan, reserved: &mut Grid<bool>) {
-    for position in iter_positions(plan) {
-        reserved[position] = true
+fn reserve(id: &usize, plan: &Plan, reserved: &mut Grid<Vec<Reservation>>, micros: &u128) {
+    match plan {
+        Plan::Stationary(State { position, .. }) => {
+            reserved[position].push(Reservation::Permanent {
+                id: *id,
+                from: *micros,
+            })
+        }
+        Plan::Moving(events) => {
+            events.windows(2).for_each(|pair| match pair {
+                [a, b] => {
+                    reserved[a.state.position].push(Reservation::Temporary {
+                        id: *id,
+                        from: a.micros,
+                        to: b.micros,
+                    });
+                    reserved[b.state.position].push(Reservation::Temporary {
+                        id: *id,
+                        from: a.micros,
+                        to: b.micros,
+                    });
+                }
+                _ => (),
+            });
+            events.last().iter().for_each(
+                |Event {
+                     micros,
+                     state: State { position, .. },
+                 }| {
+                    reserved[position].push(Reservation::Permanent {
+                        id: *id,
+                        from: *micros,
+                    })
+                },
+            )
+        }
     }
 }
 
@@ -176,10 +210,10 @@ fn new_plan(
     terrain: &Grid<f32>,
     micros: &u128,
     from: &State,
-    reserved: &Grid<bool>,
+    reserved: &Grid<Vec<Reservation>>,
     costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(micros, terrain, from, reserved, costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -192,11 +226,18 @@ fn new_plan(
 }
 
 fn find_path(
+    micros: &u128,
     terrain: &Grid<f32>,
     from: &State,
-    reserved: &Grid<bool>,
+    reserved: &Grid<Vec<Reservation>>,
     costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
+    let reserved = &reserved.map(|_, reservations| {
+        reservations.iter().any(|reservation| match reservation {
+            Reservation::Permanent { .. } => true,
+            Reservation::Temporary { to, .. } => to >= micros,
+        })
+    });
     let network = SkiingNetwork { terrain, reserved };
 
     let from_cost = costs[from];

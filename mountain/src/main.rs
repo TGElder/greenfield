@@ -30,6 +30,7 @@ use crate::init::generate_heightmap;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
+use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
@@ -209,7 +210,7 @@ struct Components {
     piste_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
-    reserved: Grid<bool>,
+    reserved: Grid<Vec<Reservation>>,
     piste_map: Grid<Option<usize>>,
 }
 
@@ -322,6 +323,7 @@ impl EventHandler for Game {
             &mut self.components.locations,
         );
         lift::run(
+            &self.services.clock.get_micros(),
             &self.components.lifts,
             &mut self.components.locations,
             &mut self.components.reserved,
