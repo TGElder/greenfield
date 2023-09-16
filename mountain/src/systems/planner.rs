@@ -46,7 +46,7 @@ impl System {
             reserved,
         }: Parameters<'_>,
     ) {
-        self.add_new_finished(plans, micros);
+        self.add_new_finished(plans);
 
         self.finished.retain(|id| {
             let Some(current_plan) = plans.get_mut(id) else {
@@ -54,11 +54,60 @@ impl System {
             };
 
             free(current_plan, reserved);
-            let from = last_state(current_plan);
-            *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
-                None => brake(*from),
+
+
+            let plan = match current_plan {
+
+                Plan::Moving(events) => {
+                    let current_pair = events.windows(2).find(|pair| match pair {
+                        [a, b] => {*micros >= a.micros && *micros < b.micros},
+                        _ => false,
+                    });
+
+                    match current_pair {
+                        Some(pair) => Plan::Moving(
+                            pair.to_vec()
+                        ),
+                        None => brake(events.last().unwrap().state),
+                    }
+                }
+                Plan::Stationary(state) => brake(*state),
             };
+
+            println!("Truncated plan = {:?}", plan);
+
+            let from = last_state(&plan);
+
+            let onward_path = match get_costs(id, locations, targets, costs) {
+                Some(costs) => find_path(terrain, from, reserved, costs),
+                None => None,
+            };
+
+            println!("Onward path = {:?}", onward_path);
+
+            if let Some(onward_path) = onward_path {
+                if !onward_path.is_empty() {
+                    match plan {
+                        Plan::Stationary(_) => {
+                            *current_plan = Plan::Moving(events(micros, onward_path));
+                        },
+                        Plan::Moving(mut e) => {
+                            let start = e.pop().unwrap().micros;
+                            e.append(&mut events(&start, onward_path));
+                            *current_plan = Plan::Moving(e);
+                        },
+                    }
+
+                } else {
+                    *current_plan = plan;
+                }
+            } else {
+                *current_plan = plan;
+            }
+
+            println!("New plan = {:?}", current_plan);
+
+
             reserve(current_plan, reserved);
 
             match current_plan {
@@ -68,11 +117,10 @@ impl System {
         });
     }
 
-    fn add_new_finished(&mut self, plans: &mut HashMap<usize, Plan>, micros: &u128) {
+    fn add_new_finished(&mut self, plans: &mut HashMap<usize, Plan>) {
         let new_finished = plans
             .iter_mut()
             .filter(|(id, _)| !self.finished.contains(id))
-            .filter(|(_, plan)| finished(plan, micros))
             .map(|(id, _)| id)
             .collect::<Vec<_>>();
 
@@ -118,16 +166,6 @@ impl HashVec {
     }
 }
 
-fn finished(current_plan: &Plan, micros: &u128) -> bool {
-    if let Plan::Moving(ref events) = current_plan {
-        if let Some(last) = events.last() {
-            if *micros < last.micros {
-                return false;
-            }
-        }
-    }
-    true
-}
 
 fn free(plan: &Plan, reserved: &mut Grid<bool>) {
     for position in iter_positions(plan) {
@@ -170,25 +208,6 @@ fn get_costs<'a>(
     let target = targets.get(id)?;
     let costs = costs.get(location)?;
     costs.costs(target)
-}
-
-fn new_plan(
-    terrain: &Grid<f32>,
-    micros: &u128,
-    from: &State,
-    reserved: &Grid<bool>,
-    costs: &HashMap<State, u64>,
-) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
-        Some(edges) => {
-            if edges.is_empty() {
-                brake(*from)
-            } else {
-                Plan::Moving(events(micros, edges))
-            }
-        }
-        None => brake(*from),
-    }
 }
 
 fn find_path(
