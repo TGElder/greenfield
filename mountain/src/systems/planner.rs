@@ -24,6 +24,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub costs: &'a HashMap<usize, PisteCosts>,
+    pub true_costs: &'a HashMap<usize, PisteCosts>,
     pub reserved: &'a mut Grid<bool>,
 }
 
@@ -43,6 +44,7 @@ impl System {
             locations,
             targets,
             costs,
+            true_costs,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -55,9 +57,14 @@ impl System {
 
             free(current_plan, reserved);
             let from = last_state(current_plan);
-            *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
-                None => brake(*from),
+            *current_plan = match (
+                get_costs(id, locations, targets, costs),
+                get_costs(id, locations, targets, true_costs),
+            ) {
+                (Some(costs), Some(true_costs)) => {
+                    new_plan(terrain, micros, from, reserved, costs, true_costs)
+                }
+                _ => brake(*from),
             };
             reserve(current_plan, reserved);
 
@@ -178,8 +185,9 @@ fn new_plan(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    true_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs) {
+    match find_path(terrain, from, reserved, costs, true_costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -196,6 +204,7 @@ fn find_path(
     from: &State,
     reserved: &Grid<bool>,
     costs: &HashMap<State, u64>,
+    true_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork { terrain, reserved };
 
@@ -204,17 +213,22 @@ fn find_path(
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
-            let cost = costs.get(state);
+            let Some(cost) = costs.get(state) else {
+                return None;
+            };
+            let Some(true_cost) = true_costs.get(state) else {
+                return None;
+            };
 
             // check for forbidden tiles
-            if cost != Some(&0) // goal tile is never forbidden
+            if cost != &0 // goal tile is never forbidden
                 && (state.position == from.position || is_white_tile(&state.position))
             {
                 return None;
             }
 
-            cost.map(|&cost| Score {
-                cost,
+            Some(Score {
+                cost: *true_cost,
                 mode: state.mode,
             })
         },

@@ -8,3 +8,4 @@ pub mod overlay;
 pub mod piste_adopter;
 pub mod planner;
 pub mod target_setter;
+pub mod true_cost_computer;

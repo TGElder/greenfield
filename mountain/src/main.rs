@@ -34,7 +34,7 @@ use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
     avatar_artist, cost_computer, framer, lift, lift_artist, lift_entry, overlay, piste_adopter,
-    planner, target_setter,
+    planner, target_setter, true_cost_computer,
 };
 
 fn main() {
@@ -49,6 +49,7 @@ fn main() {
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
                 piste_costs: HashMap::default(),
+                true_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
@@ -207,6 +208,7 @@ struct Components {
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     piste_costs: HashMap<usize, PisteCosts>,
+    true_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
@@ -314,6 +316,7 @@ impl EventHandler for Game {
             locations: &self.components.locations,
             targets: &self.components.targets,
             costs: &self.components.piste_costs,
+            true_costs: &self.components.true_costs,
             reserved: &mut self.components.reserved,
         });
         lift_entry::run(
@@ -362,6 +365,12 @@ impl EventHandler for Game {
                 &self.components.terrain,
                 &self.components.pistes,
                 &mut self.components.piste_costs,
+                &self.components.lifts,
+            );
+            true_cost_computer::run(
+                &self.components.terrain,
+                &self.components.pistes,
+                &mut self.components.true_costs,
                 &self.components.lifts,
             );
         }
