@@ -3,12 +3,14 @@ use std::collections::HashMap;
 use commons::grid::Grid;
 
 use crate::model::lift::Lift;
+use crate::model::reservation::Reservation;
 use crate::model::skiing::{Mode, Plan, State};
 
 pub fn run(
+    micros: &u128,
     lifts: &HashMap<usize, Lift>,
     locations: &mut HashMap<usize, usize>,
-    reserved: &mut Grid<bool>,
+    reserved: &mut Grid<Vec<Reservation>>,
     plans: &mut HashMap<usize, Plan>,
 ) {
     locations.retain(|id, location| {
@@ -19,11 +21,17 @@ pub fn run(
             return true;
         };
 
-        if reserved[lift.to] {
+        if reserved[lift.to]
+            .iter()
+            .any(|reservation| match reservation {
+                Reservation::Permanent { from, .. } => micros >= from,
+                Reservation::Temporary { from, to, .. } => micros >= from && micros < to,
+            })
+        {
             return true;
         }
 
-        reserved[state.position] = false;
+        reserved[state.position].retain(|reservation| reservation.id() != id);
         plans.insert(
             *id,
             Plan::Stationary(State {
@@ -32,7 +40,10 @@ pub fn run(
                 travel_direction: state.travel_direction,
             }),
         );
-        reserved[lift.to] = true;
+        reserved[lift.to].push(Reservation::Permanent {
+            id: *id,
+            from: *micros,
+        });
         false
     });
 }
