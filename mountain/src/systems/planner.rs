@@ -206,22 +206,17 @@ fn find_path(
     costs: &HashMap<State, u64>,
     true_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
-    let network = SkiingNetwork { terrain, reserved };
-
-    let from_cost = costs[from];
+    let network = SkiingNetwork { terrain, reserved, costs };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
-            let Some(cost) = costs.get(state) else {
-                return None;
-            };
             let Some(true_cost) = true_costs.get(state) else {
                 return None;
             };
 
             // check for forbidden tiles
-            if cost != &0 // goal tile is never forbidden
+            if true_cost != &0 // goal tile is never forbidden
                 && (state.position == from.position || is_white_tile(&state.position))
             {
                 return None;
@@ -232,12 +227,7 @@ fn find_path(
                 mode: state.mode,
             })
         },
-        &|state| {
-            costs
-                .get(state)
-                .map(|cost| *cost <= from_cost)
-                .unwrap_or_default()
-        },
+        &|_| true,
         MAX_STEPS,
     )
 }

@@ -28,6 +28,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
+    pub costs: &'a HashMap<State, u64>,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -36,13 +37,18 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
         Box::new(
-            self.skiing_edges(from)
-                .chain(self.braking_edges(from))
-                .chain(self.turning_edges(from))
-                .chain(self.poling_edges(from))
-                .chain(self.skis_off(from))
-                .chain(self.skis_on(from))
-                .chain(self.walk(from)),
+            self.poling_edges(from)
+            .chain(self.walk(from))
+            .chain(self.skiing_edges(from))
+            .chain(self.braking_edges(from))
+            .filter(|edge| match (self.costs.get(&edge.to), self.costs.get(&edge.from)) {
+                (Some(to), Some(from)) => to < from,
+                _ => false,
+            })
+            .chain(self.turning_edges(from))
+            .chain(self.skis_off(from))
+            .chain(self.skis_on(from))
+        
         )
     }
 }

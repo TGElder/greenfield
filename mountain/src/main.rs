@@ -370,6 +370,7 @@ impl EventHandler for Game {
             true_cost_computer::run(
                 &self.components.terrain,
                 &self.components.pistes,
+                &mut self.components.piste_costs,
                 &mut self.components.true_costs,
                 &self.components.lifts,
             );
