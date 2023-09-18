@@ -1,5 +1,5 @@
 pub mod avatar_artist;
-pub mod cost_computer;
+pub mod distance_cost_computer;
 pub mod framer;
 pub mod lift;
 pub mod lift_artist;
@@ -7,5 +7,5 @@ pub mod lift_entry;
 pub mod overlay;
 pub mod piste_adopter;
 pub mod planner;
+pub mod skiing_cost_computer;
 pub mod target_setter;
-pub mod true_cost_computer;

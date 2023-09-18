@@ -23,8 +23,8 @@ pub struct Parameters<'a> {
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
-    pub costs: &'a HashMap<usize, PisteCosts>,
-    pub true_costs: &'a HashMap<usize, PisteCosts>,
+    pub distance_costs: &'a HashMap<usize, PisteCosts>,
+    pub skiing_costs: &'a HashMap<usize, PisteCosts>,
     pub reserved: &'a mut Grid<bool>,
 }
 
@@ -43,8 +43,8 @@ impl System {
             plans,
             locations,
             targets,
-            costs,
-            true_costs,
+            distance_costs: costs,
+            skiing_costs: skiing_costs,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -59,11 +59,16 @@ impl System {
             let from = last_state(current_plan);
             *current_plan = match (
                 get_costs(id, locations, targets, costs),
-                get_costs(id, locations, targets, true_costs),
+                get_costs(id, locations, targets, skiing_costs),
             ) {
-                (Some(costs), Some(true_costs)) => {
-                    new_plan(terrain, micros, from, reserved, costs, true_costs)
-                }
+                (Some(distance_costs), Some(skiing_costs)) => new_plan(
+                    terrain,
+                    micros,
+                    from,
+                    reserved,
+                    distance_costs,
+                    skiing_costs,
+                ),
                 _ => brake(*from),
             };
             reserve(current_plan, reserved);
@@ -184,10 +189,10 @@ fn new_plan(
     micros: &u128,
     from: &State,
     reserved: &Grid<bool>,
-    costs: &HashMap<State, u64>,
-    true_costs: &HashMap<State, u64>,
+    distance_costs: &HashMap<State, u64>,
+    skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, reserved, costs, true_costs) {
+    match find_path(terrain, from, reserved, distance_costs, skiing_costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -203,27 +208,31 @@ fn find_path(
     terrain: &Grid<f32>,
     from: &State,
     reserved: &Grid<bool>,
-    costs: &HashMap<State, u64>,
-    true_costs: &HashMap<State, u64>,
+    distance_costs: &HashMap<State, u64>,
+    skiing_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
-    let network = SkiingNetwork { terrain, reserved, costs };
+    let network = SkiingNetwork {
+        terrain,
+        reserved,
+        distance_costs,
+    };
 
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
-            let Some(true_cost) = true_costs.get(state) else {
+            let Some(cost) = skiing_costs.get(state) else {
                 return None;
             };
 
             // check for forbidden tiles
-            if true_cost != &0 // goal tile is never forbidden
+            if cost != &0 // goal tile is never forbidden
                 && (state.position == from.position || is_white_tile(&state.position))
             {
                 return None;
             }
 
             Some(Score {
-                cost: *true_cost,
+                cost: *cost,
                 mode: state.mode,
             })
         },

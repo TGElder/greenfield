@@ -14,7 +14,7 @@ use network::algorithms::costs_to_target::CostsToTarget;
 pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
-    piste_costs: &mut HashMap<usize, PisteCosts>, 
+    piste_costs: &HashMap<usize, PisteCosts>,
     true_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
@@ -24,10 +24,13 @@ pub fn run(
     }
 }
 
-fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift>,     piste_costs: &PisteCosts, 
+fn compute_costs(
+    terrain: &Grid<f32>,
+    piste: &Piste,
+    lifts: &HashMap<usize, Lift>,
+    piste_costs: &PisteCosts,
 ) -> PisteCosts {
     let mut out = PisteCosts::new();
-
 
     let piste_positions = piste_positions(piste);
 
@@ -40,22 +43,22 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
         },
     ) in lifts
     {
-        let costs = piste_costs.costs(lift).unwrap();
-        let network = SkiingNetwork {
-            terrain,
-            reserved: &terrain.map(|_, _| false),
-            costs,
-        };
-        let network = SkiingInNetwork::for_positions(&network, &piste_positions);
-
         let grid = &piste.grid;
         if grid.in_bounds(from) && grid[from] {
+            let costs = piste_costs.costs(lift).unwrap();
+            let network = SkiingNetwork {
+                terrain,
+                reserved: &terrain.map(|_, _| false),
+                distance_costs: costs,
+            };
+            let network = SkiingInNetwork::for_positions(&network, &piste_positions);
+
             let costs = compute_costs_for_position(&network, from, max_entry_velocity);
             let coverage = costs.len() as f32
                 / (piste_positions.len() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
                     as f32;
             println!("INFO: Coverage for lift {} = {}", lift, coverage);
-            out.set_costs(*lift, costs)
+            out.set_costs(*lift, costs);
         }
     }
 
