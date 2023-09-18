@@ -44,7 +44,7 @@ impl System {
             locations,
             targets,
             distance_costs: costs,
-            skiing_costs: skiing_costs,
+            skiing_costs,
             reserved,
         }: Parameters<'_>,
     ) {
