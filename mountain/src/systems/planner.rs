@@ -43,7 +43,7 @@ impl System {
             plans,
             locations,
             targets,
-            distance_costs: costs,
+            distance_costs,
             skiing_costs,
             reserved,
         }: Parameters<'_>,
@@ -58,7 +58,7 @@ impl System {
             free(current_plan, reserved);
             let from = last_state(current_plan);
             *current_plan = match (
-                get_costs(id, locations, targets, costs),
+                get_costs(id, locations, targets, distance_costs),
                 get_costs(id, locations, targets, skiing_costs),
             ) {
                 (Some(distance_costs), Some(skiing_costs)) => new_plan(

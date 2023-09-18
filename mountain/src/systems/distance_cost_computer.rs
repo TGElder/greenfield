@@ -14,12 +14,12 @@ use network::algorithms::costs_to_target::CostsToTarget;
 pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
-    piste_costs: &mut HashMap<usize, PisteCosts>,
+    distance_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
     for (piste_index, piste) in pistes.iter() {
         let costs = compute_costs(terrain, piste, lifts);
-        piste_costs.insert(*piste_index, costs);
+        distance_costs.insert(*piste_index, costs);
     }
 }
 

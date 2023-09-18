@@ -14,13 +14,18 @@ use network::algorithms::costs_to_target::CostsToTarget;
 pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
-    piste_costs: &HashMap<usize, PisteCosts>,
-    true_costs: &mut HashMap<usize, PisteCosts>,
+    distance_costs: &HashMap<usize, PisteCosts>,
+    skiing_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
     for (piste_index, piste) in pistes.iter() {
-        let costs = compute_costs(terrain, piste, lifts, piste_costs.get(piste_index).unwrap());
-        true_costs.insert(*piste_index, costs);
+        let costs = compute_costs(
+            terrain,
+            piste,
+            lifts,
+            distance_costs.get(piste_index).unwrap(),
+        );
+        skiing_costs.insert(*piste_index, costs);
     }
 }
 
