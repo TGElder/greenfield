@@ -1,12 +1,14 @@
-use std::iter::once;
+use std::collections::{HashMap, HashSet};
+use std::iter::{empty, once};
 use std::time::Duration;
 
 use commons::grid::OFFSETS_8;
 use commons::{geometry::XY, grid::Grid};
-use network::model::{Edge, OutNetwork};
+use network::model::{Edge, InNetwork, OutNetwork};
 
-use crate::model::direction::Direction;
+use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::{Mode, State};
+use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
     physics,
@@ -26,6 +28,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
+    pub distance_costs: &'a HashMap<State, u64>,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -34,13 +37,22 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
         Box::new(
-            self.skiing_edges(from)
+            self.poling_edges(from)
+                .chain(self.walk(from))
+                .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
+                .filter(|edge| {
+                    match (
+                        self.distance_costs.get(&edge.to),
+                        self.distance_costs.get(&edge.from),
+                    ) {
+                        (Some(to), Some(from)) => to < from,
+                        _ => false,
+                    }
+                })
                 .chain(self.turning_edges(from))
-                .chain(self.poling_edges(from))
                 .chain(self.skis_off(from))
-                .chain(self.skis_on(from))
-                .chain(self.walk(from)),
+                .chain(self.skis_on(from)),
         )
     }
 }
@@ -273,5 +285,57 @@ fn walk_duration(XY { x, y }: &XY<i32>) -> Duration {
             "{} is not a valid key for values precomputed to cover offsets in OFFSETS_8",
             value
         ),
+    }
+}
+
+pub struct SkiingInNetwork {
+    pub edges: HashMap<State, Vec<Edge<State>>>,
+}
+
+impl SkiingInNetwork {
+    pub fn for_positions(
+        network: &dyn OutNetwork<State>,
+        positions: &HashSet<XY<u32>>,
+    ) -> SkiingInNetwork {
+        let mut edges = HashMap::with_capacity(positions.len());
+
+        for position in positions {
+            for travel_direction in DIRECTIONS {
+                for mode in modes() {
+                    let state = State {
+                        position: *position,
+                        mode,
+                        travel_direction,
+                    };
+
+                    for edge in network
+                        .edges_out(&state)
+                        .filter(|Edge { to, .. }| positions.contains(&to.position))
+                    {
+                        edges
+                            .entry(edge.to)
+                            .or_insert_with(|| Vec::with_capacity(5))
+                            .push(edge);
+                    }
+                }
+            }
+        }
+
+        SkiingInNetwork { edges }
+    }
+}
+
+fn modes() -> impl Iterator<Item = Mode> {
+    (0..VELOCITY_LEVELS)
+        .map(|velocity| Mode::Skiing { velocity })
+        .chain(once(Mode::Walking))
+}
+
+impl InNetwork<State> for SkiingInNetwork {
+    fn edges_in<'a>(&'a self, to: &'a State) -> Box<dyn Iterator<Item = Edge<State>> + 'a> {
+        match self.edges.get(to) {
+            Some(edges) => Box::new(edges.iter().copied()),
+            None => Box::new(empty()),
+        }
     }
 }

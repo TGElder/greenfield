@@ -33,8 +33,8 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    avatar_artist, cost_computer, framer, lift, lift_artist, lift_entry, overlay, piste_adopter,
-    planner, target_setter,
+    avatar_artist, distance_cost_computer, framer, lift, lift_artist, lift_entry, overlay,
+    piste_adopter, planner, skiing_cost_computer, target_setter,
 };
 
 fn main() {
@@ -48,7 +48,8 @@ fn main() {
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
-                piste_costs: HashMap::default(),
+                distance_costs: HashMap::default(),
+                skiing_costs: HashMap::default(),
                 lifts: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
@@ -206,7 +207,8 @@ struct Components {
     frames: HashMap<usize, Frame>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    piste_costs: HashMap<usize, PisteCosts>,
+    distance_costs: HashMap<usize, PisteCosts>,
+    skiing_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
@@ -313,7 +315,8 @@ impl EventHandler for Game {
             plans: &mut self.components.plans,
             locations: &self.components.locations,
             targets: &self.components.targets,
-            costs: &self.components.piste_costs,
+            distance_costs: &self.components.distance_costs,
+            skiing_costs: &self.components.skiing_costs,
             reserved: &mut self.components.reserved,
         });
         lift_entry::run(
@@ -358,10 +361,17 @@ impl EventHandler for Game {
         };
 
         if COMPUTE_COSTS_BINDING.binds_event(event) {
-            cost_computer::run(
+            distance_cost_computer::run(
                 &self.components.terrain,
                 &self.components.pistes,
-                &mut self.components.piste_costs,
+                &mut self.components.distance_costs,
+                &self.components.lifts,
+            );
+            skiing_cost_computer::run(
+                &self.components.terrain,
+                &self.components.pistes,
+                &self.components.distance_costs,
+                &mut self.components.skiing_costs,
                 &self.components.lifts,
             );
         }

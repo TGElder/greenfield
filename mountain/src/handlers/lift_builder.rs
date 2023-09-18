@@ -7,8 +7,6 @@ use crate::model::lift::Lift;
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
-const MAX_ENTRY_VELOCITY: f32 = 1.5;
-
 pub struct Handler {
     pub binding: Binding,
     from: Option<XY<u32>>,
@@ -47,14 +45,7 @@ impl Handler {
         };
 
         let to = position;
-        lifts.insert(
-            id_allocator.next_id(),
-            Lift {
-                from,
-                to,
-                max_entry_velocity: MAX_ENTRY_VELOCITY,
-            },
-        );
+        lifts.insert(id_allocator.next_id(), Lift { from, to });
         self.from = None;
 
         overlay.update(XYRectangle { from, to: from });
