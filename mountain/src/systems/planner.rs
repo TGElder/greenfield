@@ -231,10 +231,7 @@ fn find_path(
                 return None;
             }
 
-            Some(Score {
-                cost: *cost,
-                mode: state.mode,
-            })
+            Some(Score { cost: *cost })
         },
         &|_| true,
         MAX_STEPS,
@@ -276,25 +273,17 @@ fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
 #[derive(Eq)]
 struct Score {
     cost: u64,
-    mode: Mode,
 }
 
 impl PartialEq for Score {
     fn eq(&self, other: &Self) -> bool {
-        self.cost == other.cost && self.mode == other.mode
+        self.cost == other.cost
     }
 }
 
 impl Ord for Score {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.mode, other.mode) {
-            (Mode::Walking, Mode::Walking) => self.cost.cmp(&other.cost),
-            (Mode::Walking, Mode::Skiing { .. }) => std::cmp::Ordering::Less,
-            (Mode::Skiing { .. }, Mode::Walking) => std::cmp::Ordering::Greater,
-            (Mode::Skiing { velocity: a }, Mode::Skiing { velocity: b }) => {
-                self.cost.cmp(&other.cost).reverse().then(a.cmp(&b))
-            }
-        }
+        self.cost.cmp(&other.cost).reverse()
     }
 }
 
