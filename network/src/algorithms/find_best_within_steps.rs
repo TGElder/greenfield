@@ -3,94 +3,102 @@ use std::cmp::Ordering;
 use std::collections::{BinaryHeap, HashMap, HashSet};
 use std::fmt::Debug;
 
+use commons::scale::Scale;
+use rand::Rng;
+
 use crate::algorithms::get_path;
 use crate::model::{Edge, OutNetwork};
 
-struct Node<S, T> {
+struct Node<T> {
     location: T,
     entrance: Option<Edge<T>>,
     steps_from_start: u64,
-    score: Option<S>,
+    cost_from_start: u64,
+    score: Option<f32>,
 }
 
-impl<S, T> Ord for Node<S, T>
+impl<T> Ord for Node<T>
 where
     T: Eq,
 {
-    fn cmp(&self, other: &Node<S, T>) -> Ordering {
+    fn cmp(&self, other: &Node<T>) -> Ordering {
         self.steps_from_start.cmp(&other.steps_from_start).reverse()
     }
 }
 
-impl<S, T> PartialOrd for Node<S, T>
+impl<T> PartialOrd for Node<T>
 where
     T: Eq,
 {
-    fn partial_cmp(&self, other: &Node<S, T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Node<T>) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl<S, T> PartialEq for Node<S, T>
+impl<T> PartialEq for Node<T>
 where
     T: Eq,
 {
-    fn eq(&self, other: &Node<S, T>) -> bool {
+    fn eq(&self, other: &Node<T>) -> bool {
         self.location == other.location && self.entrance == other.entrance
     }
 }
 
-impl<S, T> Eq for Node<S, T> where T: Eq {}
+impl <T> Eq for Node<T> where T: Eq {}
 
-pub trait FindBestWithinSteps<S, T, N> {
+pub trait FindBestWithinSteps<T, N> {
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> Option<S>,
+        scorer: &dyn Fn(&N, &T) -> Option<f32>,
         can_visit: &dyn Fn(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
 
-impl<S, T, N> FindBestWithinSteps<S, T, N> for N
+impl<T, N> FindBestWithinSteps<T, N> for N
 where
-    S: Ord,
     T: Copy + Debug + Eq + Hash,
     N: OutNetwork<T>,
 {
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> Option<S>,
+        scorer: &dyn Fn(&N, &T) -> Option<f32>,
         is_allowed: &dyn Fn(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
+        let mut rng = rand::thread_rng();
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
         let mut heap = BinaryHeap::new();
 
+
         for from in from.iter() {
             if is_allowed(from) {
+                let score = scorer(self, from);
                 heap.push(Node {
                     location: *from,
                     entrance: None,
                     steps_from_start: 0,
-                    score: scorer(self, from),
+                    cost_from_start: 0,
+                    score,
                 });
             }
         }
 
-        struct Best<S, T> {
+        struct Best<T> {
             location: T,
-            score: S,
+            score: f32,
         }
 
-        let mut best: Option<Best<S, T>> = None;
+        let mut best: Option<Best<T>> = None;
 
         while let Some(Node {
             location,
             entrance,
             steps_from_start,
+            cost_from_start,
             score,
         }) = heap.pop()
         {
@@ -104,8 +112,13 @@ where
             }
 
             if let Some(score) = score {
+                // let score = (start_score - score) / (cost_from_start as f32);
+                let score = score;
+                // let scale = Scale::new((0.0, 1.0), (score, score * 16.0));
+                // let score = scale.scale(rng.gen::<f32>());
+                
                 best = match best {
-                    Some(current) if score > current.score => Some(Best { location, score }),
+                    Some(current) if score < current.score => Some(Best { location, score }),
                     None => Some(Best { location, score }),
                     _ => best,
                 };
@@ -116,12 +129,14 @@ where
                 if !is_allowed(&to) || closed.contains(&to) {
                     continue;
                 }
+                let cost_from_start = cost_from_start + edge.cost as u64;
                 let steps_from_start = steps_from_start + 1;
                 if steps_from_start <= max_steps {
                     heap.push(Node {
                         location: to,
                         entrance: Some(edge),
                         steps_from_start,
+                        cost_from_start,
                         score: scorer(self, &to),
                     });
                 }

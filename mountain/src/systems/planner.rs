@@ -217,6 +217,8 @@ fn find_path(
         distance_costs,
     };
 
+    let from_cost = skiing_costs.get(from)?;
+
     network.find_best_within_steps(
         HashSet::from([*from]),
         &|_, state| {
@@ -231,7 +233,7 @@ fn find_path(
                 return None;
             }
 
-            Some(Score { cost: *cost })
+            Some(*cost as f32)
         },
         &|_| true,
         MAX_STEPS,
