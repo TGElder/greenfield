@@ -36,6 +36,11 @@ impl<'a> DistanceNetwork<'a> {
     fn cost(&self, from: &XY<u32>, to: &XY<u32>) -> u32 {
         const COST_PER_Z_UNIT: f32 = 1000.0;
 
-        ((self.terrain[from] - self.terrain[to]).abs() * COST_PER_Z_UNIT) as u32
+        if from.x == to.x || from.y == to.y {
+            1000
+        } else {
+            1414
+        }
+        // ((self.terrain[from] - self.terrain[to]).abs() * COST_PER_Z_UNIT) as u32
     }
 }

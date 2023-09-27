@@ -11,7 +11,7 @@ use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const MAX_STEPS: u64 = 8;
+const MAX_STEPS: u64 = 24;
 
 pub struct System {
     finished: HashVec,

@@ -114,8 +114,8 @@ where
             if let Some(score) = score {
                 // let score = (start_score - score) / (cost_from_start as f32);
                 let score = score;
-                // let scale = Scale::new((0.0, 1.0), (score, score * 16.0));
-                // let score = scale.scale(rng.gen::<f32>());
+                let scale = Scale::new((0.0, 1.0), (score, score * 2.0));
+                let score = scale.scale(rng.gen::<f32>());
                 
                 best = match best {
                     Some(current) if score < current.score => Some(Best { location, score }),
