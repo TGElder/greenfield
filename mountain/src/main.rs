@@ -7,7 +7,7 @@ mod physics;
 mod services;
 mod systems;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::time::Duration;
 
@@ -24,7 +24,7 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::{add_skier, piste_builder};
+use crate::handlers::{add_skier, diamond, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::frame::Frame;
@@ -54,6 +54,7 @@ fn main() {
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
                 terrain,
+                diamond: HashSet::new(),
             },
             drawings: None,
             handlers: Handlers {
@@ -93,11 +94,18 @@ fn main() {
                     button: Button::Mouse(MouseButton::Right),
                     state: ButtonState::Pressed,
                 }),
+                diamond: diamond::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::I),
+                        state: ButtonState::Pressed,
+                    },
+                },
             },
             systems: Systems {
                 overlay: overlay::System::new(overlay::Colors {
                     selection: Rgba::new(255, 255, 0, 128),
                     piste: Rgba::new(0, 0, 255, 128),
+                    diamond: Rgba::new(0, 255, 0, 128),
                 }),
                 planner: planner::System::new(),
             },
@@ -213,6 +221,7 @@ struct Components {
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
+    diamond: HashSet<XY<u32>>,
 }
 
 struct Drawings {
@@ -225,6 +234,7 @@ struct Handlers {
     piste_builder: piste_builder::Handler,
     lift_builder: lift_builder::Handler,
     selection: selection::Handler,
+    diamond: diamond::Handler,
 }
 
 struct Systems {
@@ -295,6 +305,15 @@ impl EventHandler for Game {
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
+        self.handlers.diamond.handle(
+            event,
+            &self.mouse_xy,
+            graphics,
+            &self.components.terrain,
+            &self.components.distance_costs,
+            &self.components.piste_map,
+            &mut self.components.diamond,
+        );
 
         piste_adopter::run(
             &self.components.plans,
@@ -353,6 +372,7 @@ impl EventHandler for Game {
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.pistes,
             &self.handlers.selection,
+            &self.components.diamond,
         );
 
         const COMPUTE_COSTS_BINDING: Binding = Binding::Single {

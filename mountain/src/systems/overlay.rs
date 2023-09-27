@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::color::Rgba;
 use commons::geometry::{xy, XYRectangle, XY};
@@ -20,6 +20,7 @@ pub struct System {
 pub struct Colors {
     pub selection: Rgba<u8>,
     pub piste: Rgba<u8>,
+    pub diamond: Rgba<u8>,
 }
 
 impl System {
@@ -40,6 +41,7 @@ impl System {
         drawing: Option<&terrain::Drawing>,
         pistes: &HashMap<usize, Piste>,
         selection: &selection::Handler,
+        diamond: &HashSet<XY<u32>>,
     ) {
         let Some(drawing) = drawing else { return };
 
@@ -50,7 +52,8 @@ impl System {
             for x in from.x..=to.x {
                 for y in from.y..=to.y {
                     let position = xy(x, y);
-                    image[position] = selection_color(self.colors.selection, &position, selection)
+                    image[position] = diamond_color(self.colors.diamond, &position, diamond)
+                        .or_else(|| selection_color(self.colors.selection, &position, selection))
                         .or_else(|| piste_color(self.colors.piste, &position, pistes))
                         .unwrap_or(CLEAR);
                 }
@@ -60,6 +63,14 @@ impl System {
                 .modify_overlay(graphics, &image)
                 .unwrap_or_else(|_| println!("WARN: Could not draw overlay"));
         }
+    }
+}
+
+fn diamond_color(color: Rgba<u8>, xy: &XY<u32>, diamond: &HashSet<XY<u32>>) -> Option<Rgba<u8>> {
+    if diamond.contains(xy) {
+        Some(color)
+    } else {
+        None
     }
 }
 

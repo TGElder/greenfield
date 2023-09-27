@@ -19,6 +19,10 @@ impl PisteCosts {
         }
     }
 
+    pub fn lifts(&self) -> impl Iterator<Item = &usize> {
+        self.lift_to_costs.keys()
+    }
+
     pub fn costs(&self, lift: &usize) -> Option<&HashMap<State, u64>> {
         self.lift_to_costs.get(lift)
     }
