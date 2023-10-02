@@ -219,7 +219,7 @@ fn find_path(
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| {
+        &mut |_, state| {
             let Some(cost) = skiing_costs.get(state) else {
                 return None;
             };
@@ -233,7 +233,7 @@ fn find_path(
 
             Some(Score { cost: *cost })
         },
-        &|_| true,
+        &mut |_| true,
         MAX_STEPS,
     )
 }
