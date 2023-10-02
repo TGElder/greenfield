@@ -4,6 +4,7 @@ use std::iter::once;
 use commons::geometry::XY;
 use commons::grid::Grid;
 use network::model::Edge;
+use rand::Rng;
 
 use crate::model::piste::PisteCosts;
 use crate::model::skiing::{Event, Mode, Plan, State};
@@ -11,7 +12,8 @@ use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const MAX_STEPS: u64 = 8;
+const MAX_STEPS: u64 = 32;
+const MAX_DETOUR: u64 = 2;
 
 pub struct System {
     finished: HashVec,
@@ -217,6 +219,10 @@ fn find_path(
         distance_costs,
     };
 
+    let mut rng = rand::thread_rng();
+
+    let steps = rng.gen_range(1..=MAX_STEPS);
+
     network.find_best_within_steps(
         HashSet::from([*from]),
         &mut |_, state| {
@@ -231,15 +237,24 @@ fn find_path(
                 return None;
             }
 
-            Some(Score { cost: *cost })
+            Some(score(&mut rng, cost))
         },
         &mut |_| true,
-        MAX_STEPS,
+        steps,
     )
 }
 
 fn is_white_tile(position: &XY<u32>) -> bool {
     position.x % 2 == position.y % 2
+}
+
+fn score<R>(rng: &mut R, cost: &u64) -> Score
+where
+    R: Rng,
+{
+    Score {
+        cost: rng.gen_range(*cost..=cost * MAX_DETOUR),
+    }
 }
 
 fn brake(state: State) -> Plan {
