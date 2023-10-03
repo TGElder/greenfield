@@ -38,21 +38,22 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
         Box::new(
             self.poling_edges(from)
-                .chain(self.walk(from))
+                // .chain(self.walk(from))
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| {
-                    match (
-                        self.distance_costs.get(&edge.to),
-                        self.distance_costs.get(&edge.from),
-                    ) {
-                        (Some(to), Some(from)) => to < from,
-                        _ => false,
-                    }
-                })
+                // .filter(|edge| {
+                //     match (
+                //         self.distance_costs.get(&edge.to),
+                //         self.distance_costs.get(&edge.from),
+                //     ) {
+                //         (Some(to), Some(from)) => to < from,
+                //         _ => false,
+                //     }
+                // })
                 .chain(self.turning_edges(from))
                 .chain(self.skis_off(from))
-                .chain(self.skis_on(from)),
+                .chain(self.skis_on(from))
+                .chain(self.stop_edge(from)),
         )
     }
 }
@@ -163,6 +164,28 @@ impl<'a> SkiingNetwork<'a> {
                     },
                 ]
                 .into_iter()
+            })
+    }
+
+
+    fn stop_edge(
+        &'a self,
+        from: &'a State,
+    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
+        once(from)
+            .filter(|from| from.mode == Mode::Skiing { velocity: 1 })
+            .filter(|from| matches!(from.mode, Mode::Skiing { .. }))
+            .map(|from| {
+            
+                    Edge {
+                        from: *from,
+                        to: State {
+                            mode: Mode::Skiing { velocity: 0 },
+                            ..*from
+                        },
+                        cost: 0,
+                    }
+               
             })
     }
 

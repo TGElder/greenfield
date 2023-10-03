@@ -12,8 +12,8 @@ use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const MAX_STEPS: u64 = 32;
-const MAX_DETOUR: u64 = 2;
+const MAX_STEPS: u64 = 8;
+const MAX_DETOUR: u64 = 1;
 
 pub struct System {
     finished: HashVec,
@@ -50,7 +50,7 @@ impl System {
             reserved,
         }: Parameters<'_>,
     ) {
-        self.add_new_finished(plans, micros);
+        self.add_new_finished(plans);
 
         self.finished.retain(|id| {
             let Some(current_plan) = plans.get_mut(id) else {
@@ -58,21 +58,64 @@ impl System {
             };
 
             free(current_plan, reserved);
-            let from = last_state(current_plan);
-            *current_plan = match (
+
+            let plan = match current_plan {
+                Plan::Moving(events) => {
+                    let current_pair = events.windows(2).find(|pair| match pair {
+                        [a, b] => *micros >= a.micros && *micros < b.micros,
+                        _ => false,
+                    });
+
+                    match current_pair {
+                        Some(pair) => Plan::Moving(pair.to_vec()),
+                        None => Plan::Stationary(events.last().unwrap().state),
+                    }
+                }
+                Plan::Stationary(state) => Plan::Stationary(*state),
+            };
+
+
+            let from = last_state(&plan);
+
+            let onward_path = match (
                 get_costs(id, locations, targets, distance_costs),
                 get_costs(id, locations, targets, skiing_costs),
             ) {
-                (Some(distance_costs), Some(skiing_costs)) => new_plan(
-                    terrain,
-                    micros,
-                    from,
-                    reserved,
-                    distance_costs,
-                    skiing_costs,
-                ),
-                _ => brake(*from),
+                (Some(distance_costs), Some(skiing_costs)) => {
+                    find_path(terrain, from, reserved, skiing_costs, distance_costs)
+                }
+                _ => None,
             };
+
+            if let Some(onward_path) = onward_path {
+                if !onward_path.is_empty() {
+                    let last = onward_path.last().unwrap();
+                    if last.to.mode != (Mode::Skiing { velocity: 0 }) {
+                        println!("Current Plan = {:?}", current_plan);
+                        println!("Plan = {:?}", plan);
+                        println!("Onward = {:?}", onward_path);
+                    }
+                    match plan {
+                        Plan::Stationary(_) => {
+                            *current_plan = Plan::Moving(events(micros, onward_path));
+                        }
+                        Plan::Moving(mut e) => {
+                            let start = e.pop().unwrap().micros;
+                            e.append(&mut events(&start, onward_path));
+                            *current_plan = Plan::Moving(e);
+                        }
+                    }
+                } else {
+                    if matches!(plan, Plan::Stationary(..)) {
+                        *current_plan = plan;
+                    }
+                }
+            } else {
+                if matches!(plan, Plan::Stationary(..)) {
+                    *current_plan = plan;
+                }
+            }
+
             reserve(current_plan, reserved);
 
             match current_plan {
@@ -82,11 +125,10 @@ impl System {
         });
     }
 
-    fn add_new_finished(&mut self, plans: &mut HashMap<usize, Plan>, micros: &u128) {
+    fn add_new_finished(&mut self, plans: &mut HashMap<usize, Plan>) {
         let new_finished = plans
             .iter_mut()
             .filter(|(id, _)| !self.finished.contains(id))
-            .filter(|(_, plan)| finished(plan, micros))
             .map(|(id, _)| id)
             .collect::<Vec<_>>();
 
@@ -186,25 +228,6 @@ fn get_costs<'a>(
     costs.costs(target)
 }
 
-fn new_plan(
-    terrain: &Grid<f32>,
-    micros: &u128,
-    from: &State,
-    reserved: &Grid<bool>,
-    distance_costs: &HashMap<State, u64>,
-    skiing_costs: &HashMap<State, u64>,
-) -> Plan {
-    match find_path(terrain, from, reserved, distance_costs, skiing_costs) {
-        Some(edges) => {
-            if edges.is_empty() {
-                brake(*from)
-            } else {
-                Plan::Moving(events(micros, edges))
-            }
-        }
-        None => brake(*from),
-    }
-}
 
 fn find_path(
     terrain: &Grid<f32>,
@@ -221,25 +244,33 @@ fn find_path(
 
     let mut rng = rand::thread_rng();
 
-    let steps = rng.gen_range(1..=MAX_STEPS);
+    // let steps = rng.gen_range(1..=MAX_STEPS);
+    let steps = MAX_STEPS;
 
     network.find_best_within_steps(
         HashSet::from([*from]),
         &mut |_, state| {
+
+            if let Mode::Skiing { velocity } = state.mode {
+                if velocity != 0 {
+                    return None;
+                }
+            }
+
             let Some(cost) = skiing_costs.get(state) else {
                 return None;
             };
 
             // check for forbidden tiles
             if cost != &0 // goal tile is never forbidden
-                && (state.position == from.position || is_white_tile(&state.position))
+                && is_white_tile(&state.position)
             {
                 return None;
             }
 
             Some(score(&mut rng, cost))
         },
-        &mut |_| true,
+        &mut |state| skiing_costs.contains_key(state),
         steps,
     )
 }
@@ -257,13 +288,6 @@ where
     }
 }
 
-fn brake(state: State) -> Plan {
-    let mode = match state.mode {
-        Mode::Walking => Mode::Walking,
-        Mode::Skiing { .. } => Mode::Skiing { velocity: 0 },
-    };
-    Plan::Stationary(State { mode, ..state })
-}
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
     let mut out = Vec::with_capacity(edges.len());

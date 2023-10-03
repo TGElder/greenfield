@@ -21,7 +21,7 @@ pub enum Plan {
     Moving(Vec<Event>),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct Event {
     pub micros: u128,
     pub state: State,
