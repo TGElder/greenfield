@@ -82,7 +82,7 @@ impl System {
                 get_costs(id, locations, targets, skiing_costs),
             ) {
                 (Some(distance_costs), Some(skiing_costs)) => {
-                    find_path(terrain, from, reserved, skiing_costs, distance_costs)
+                    find_path(terrain, from, reserved, distance_costs, skiing_costs)
                 }
                 _ => None,
             };
