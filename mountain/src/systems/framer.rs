@@ -35,6 +35,7 @@ fn frame_from_skiing_state(
         position,
         mode,
         travel_direction,
+        ..
     }: &State,
 ) -> Frame {
     Frame {

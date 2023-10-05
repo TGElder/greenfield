@@ -97,6 +97,8 @@ impl<'a> SkiingNetwork<'a> {
         let physics::skiing::Solution { velocity, duration } =
             physics::skiing::solve(initial_velocity, run, rise, 0.0, friction)?;
 
+        let cost = (duration * 1_000_000.0).round() as u32;
+
         Some(Edge {
             from: *from,
             to: State {
@@ -105,8 +107,9 @@ impl<'a> SkiingNetwork<'a> {
                     velocity: encode_velocity(&velocity)?,
                 },
                 travel_direction,
+                micros: from.micros + cost as u128,
             },
-            cost: (duration * 1_000_000.0).round() as u32,
+            cost,
         })
     }
 
@@ -143,23 +146,25 @@ impl<'a> SkiingNetwork<'a> {
         once(from)
             .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
             .flat_map(|from| {
-                let turning_micros = TURNING_DURATION.as_micros().try_into().unwrap();
+                let cost = TURNING_DURATION.as_micros().try_into().unwrap();
                 [
                     Edge {
                         from: *from,
                         to: State {
                             travel_direction: from.travel_direction.next_clockwise(),
+                            micros: from.micros + cost as u128,
                             ..*from
                         },
-                        cost: turning_micros,
+                        cost,
                     },
                     Edge {
                         from: *from,
                         to: State {
                             travel_direction: from.travel_direction.next_anticlockwise(),
+                            micros: from.micros + cost as u128,
                             ..*from
                         },
-                        cost: turning_micros,
+                        cost,
                     },
                 ]
                 .into_iter()
@@ -192,6 +197,8 @@ impl<'a> SkiingNetwork<'a> {
         let physics::skiing::Solution { velocity, duration } =
             physics::skiing::solve(initial_velocity, run, rise, POLING_ACCELERATION, 0.0)?;
 
+        let cost = (duration * 1_000_000.0).round() as u32;
+
         Some(Edge {
             from: *from,
             to: State {
@@ -200,8 +207,9 @@ impl<'a> SkiingNetwork<'a> {
                     velocity: encode_velocity(&velocity)?,
                 },
                 travel_direction: from.travel_direction,
+                micros: from.micros + cost as u128,
             },
-            cost: (duration * 1_000_000.0).round() as u32,
+            cost,
         })
     }
 
@@ -211,13 +219,17 @@ impl<'a> SkiingNetwork<'a> {
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
         once(from)
             .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
-            .map(|from| Edge {
-                from: *from,
-                to: State {
-                    mode: Mode::Walking,
-                    ..*from
-                },
-                cost: SKIS_OFF_DURATION.as_micros().try_into().unwrap(),
+            .map(|from| {
+                let cost = SKIS_OFF_DURATION.as_micros().try_into().unwrap();
+                Edge {
+                    from: *from,
+                    to: State {
+                        mode: Mode::Walking,
+                        micros: from.micros + cost as u128,
+                        ..*from
+                    },
+                    cost,
+                }
             })
     }
 
@@ -227,13 +239,17 @@ impl<'a> SkiingNetwork<'a> {
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
         once(from)
             .filter(|from| from.mode == Mode::Walking)
-            .map(|from| Edge {
-                from: *from,
-                to: State {
-                    mode: Mode::Skiing { velocity: 0 },
-                    ..*from
-                },
-                cost: SKIS_ON_DURATION.as_micros().try_into().unwrap(),
+            .map(|from| {
+                let cost = SKIS_ON_DURATION.as_micros().try_into().unwrap();
+                Edge {
+                    from: *from,
+                    to: State {
+                        mode: Mode::Skiing { velocity: 0 },
+                        micros: from.micros + cost as u128,
+                        ..*from
+                    },
+                    cost,
+                }
             })
     }
 
@@ -249,14 +265,18 @@ impl<'a> SkiingNetwork<'a> {
                             .map(|neighbour| (offset, neighbour))
                     })
                     .filter(|(_, neighbour)| !self.reserved[neighbour])
-                    .map(|(offset, neighbour)| Edge {
-                        from: *from,
-                        to: State {
-                            position: neighbour,
-                            mode: Mode::Walking,
-                            ..*from
-                        },
-                        cost: walk_duration(offset).as_micros().try_into().unwrap(),
+                    .map(|(offset, neighbour)| {
+                        let cost = walk_duration(offset).as_micros().try_into().unwrap();
+                        Edge {
+                            from: *from,
+                            to: State {
+                                position: neighbour,
+                                mode: Mode::Walking,
+                                micros: from.micros + cost as u128,
+                                ..*from
+                            },
+                            cost,
+                        }
                     })
             })
     }
@@ -306,6 +326,7 @@ impl SkiingInNetwork {
                         position: *position,
                         mode,
                         travel_direction,
+                        micros: 0,
                     };
 
                     for edge in network

@@ -271,6 +271,7 @@ impl EventHandler for Game {
 
         self.handlers.add_skier.handle(
             event,
+            &self.services.clock,
             &self.mouse_xy,
             &mut self.components.plans,
             &mut self.services.id_allocator,

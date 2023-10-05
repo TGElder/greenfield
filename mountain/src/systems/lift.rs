@@ -38,6 +38,7 @@ pub fn run(
                 position: lift.to,
                 mode: Mode::Skiing { velocity: 1 },
                 travel_direction: state.travel_direction,
+                micros: *micros,
             }),
         );
         reserved[lift.to].push(Reservation::Permanent {

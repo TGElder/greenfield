@@ -93,6 +93,7 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
                 position,
                 mode: Mode::Skiing { velocity },
                 travel_direction,
+                micros: 0,
             })
         })
 }

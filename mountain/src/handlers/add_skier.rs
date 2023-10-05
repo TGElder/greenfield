@@ -6,7 +6,7 @@ use engine::binding::Binding;
 use crate::model::direction::Direction;
 use crate::model::skiing;
 use crate::model::skiing::Mode;
-use crate::services::id_allocator;
+use crate::services::{clock, id_allocator};
 
 pub struct Handler {
     pub binding: Binding,
@@ -16,6 +16,7 @@ impl Handler {
     pub fn handle(
         &self,
         event: &engine::events::Event,
+        clock: &clock::Service,
         mouse_xy: &Option<XY<u32>>,
         plans: &mut HashMap<usize, skiing::Plan>,
         id_allocator: &mut id_allocator::Service,
@@ -36,6 +37,7 @@ impl Handler {
                 position: xy(x.round() as u32, y.round() as u32),
                 mode: Mode::Skiing { velocity: 1 },
                 travel_direction: Direction::NorthEast,
+                micros: clock.get_micros(),
             }),
         );
     }

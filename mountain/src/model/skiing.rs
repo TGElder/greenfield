@@ -7,6 +7,7 @@ pub struct State {
     pub position: XY<u32>,
     pub mode: Mode,
     pub travel_direction: Direction,
+    pub micros: u128,
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]

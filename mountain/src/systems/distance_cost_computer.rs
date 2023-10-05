@@ -77,6 +77,7 @@ fn states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
             position,
             mode,
             travel_direction,
+            micros: 0,
         })
     })
 }

@@ -60,6 +60,10 @@ impl System {
 
             free(id, current_plan, reserved);
             let from = last_state(current_plan);
+            let from = &State {
+                micros: *micros,
+                ..*from
+            };
             *current_plan = match (
                 get_costs(id, locations, targets, distance_costs),
                 get_costs(id, locations, targets, skiing_costs),
@@ -228,7 +232,14 @@ fn new_plan(
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(micros, terrain, from, reserved, distance_costs, skiing_costs) {
+    match find_path(
+        micros,
+        terrain,
+        from,
+        reserved,
+        distance_costs,
+        skiing_costs,
+    ) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
