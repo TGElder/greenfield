@@ -4,6 +4,7 @@ use std::iter::once;
 use commons::geometry::XY;
 use commons::grid::Grid;
 use network::model::Edge;
+use rand::Rng;
 
 use crate::model::piste::PisteCosts;
 use crate::model::reservation::Reservation;
@@ -12,7 +13,8 @@ use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const MAX_STEPS: u64 = 8;
+const MAX_STEPS: u64 = 32;
+const MAX_DETOUR: u64 = 2;
 
 pub struct System {
     finished: HashVec,
@@ -24,7 +26,8 @@ pub struct Parameters<'a> {
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
-    pub costs: &'a HashMap<usize, PisteCosts>,
+    pub distance_costs: &'a HashMap<usize, PisteCosts>,
+    pub skiing_costs: &'a HashMap<usize, PisteCosts>,
     pub reserved: &'a mut Grid<Vec<Reservation>>,
 }
 
@@ -43,7 +46,8 @@ impl System {
             plans,
             locations,
             targets,
-            costs,
+            distance_costs,
+            skiing_costs,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -56,9 +60,19 @@ impl System {
 
             free(id, current_plan, reserved);
             let from = last_state(current_plan);
-            *current_plan = match get_costs(id, locations, targets, costs) {
-                Some(costs) => new_plan(terrain, micros, from, reserved, costs),
-                None => brake(*from),
+            *current_plan = match (
+                get_costs(id, locations, targets, distance_costs),
+                get_costs(id, locations, targets, skiing_costs),
+            ) {
+                (Some(distance_costs), Some(skiing_costs)) => new_plan(
+                    terrain,
+                    micros,
+                    from,
+                    reserved,
+                    distance_costs,
+                    skiing_costs,
+                ),
+                _ => brake(*from),
             };
             reserve(id, current_plan, reserved, micros);
 
@@ -211,9 +225,10 @@ fn new_plan(
     micros: &u128,
     from: &State,
     reserved: &Grid<Vec<Reservation>>,
-    costs: &HashMap<State, u64>,
+    distance_costs: &HashMap<State, u64>,
+    skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(micros, terrain, from, reserved, costs) {
+    match find_path(micros, terrain, from, reserved, distance_costs, skiing_costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -230,7 +245,8 @@ fn find_path(
     terrain: &Grid<f32>,
     from: &State,
     reserved: &Grid<Vec<Reservation>>,
-    costs: &HashMap<State, u64>,
+    distance_costs: &HashMap<State, u64>,
+    skiing_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let reserved = &reserved.map(|_, reservations| {
         reservations.iter().any(|reservation| match reservation {
@@ -238,39 +254,49 @@ fn find_path(
             Reservation::Temporary { to, .. } => to >= micros,
         })
     });
-    let network = SkiingNetwork { terrain, reserved };
 
-    let from_cost = costs[from];
+    let network = SkiingNetwork {
+        terrain,
+        reserved,
+        distance_costs,
+    };
+
+    let mut rng = rand::thread_rng();
+
+    let steps = rng.gen_range(1..=MAX_STEPS);
 
     network.find_best_within_steps(
         HashSet::from([*from]),
-        &|_, state| {
-            let cost = costs.get(state);
+        &mut |_, state| {
+            let Some(cost) = skiing_costs.get(state) else {
+                return None;
+            };
 
             // check for forbidden tiles
-            if cost != Some(&0) // goal tile is never forbidden
+            if cost != &0 // goal tile is never forbidden
                 && (state.position == from.position || is_white_tile(&state.position))
             {
                 return None;
             }
 
-            cost.map(|&cost| Score {
-                cost,
-                mode: state.mode,
-            })
+            Some(score(&mut rng, cost))
         },
-        &|state| {
-            costs
-                .get(state)
-                .map(|cost| *cost <= from_cost)
-                .unwrap_or_default()
-        },
-        MAX_STEPS,
+        &mut |_| true,
+        steps,
     )
 }
 
 fn is_white_tile(position: &XY<u32>) -> bool {
     position.x % 2 == position.y % 2
+}
+
+fn score<R>(rng: &mut R, cost: &u64) -> Score
+where
+    R: Rng,
+{
+    Score {
+        cost: rng.gen_range(*cost..=cost * MAX_DETOUR),
+    }
 }
 
 fn brake(state: State) -> Plan {
@@ -304,25 +330,17 @@ fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
 #[derive(Eq)]
 struct Score {
     cost: u64,
-    mode: Mode,
 }
 
 impl PartialEq for Score {
     fn eq(&self, other: &Self) -> bool {
-        self.cost == other.cost && self.mode == other.mode
+        self.cost == other.cost
     }
 }
 
 impl Ord for Score {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.mode, other.mode) {
-            (Mode::Walking, Mode::Walking) => self.cost.cmp(&other.cost),
-            (Mode::Walking, Mode::Skiing { .. }) => std::cmp::Ordering::Less,
-            (Mode::Skiing { .. }, Mode::Walking) => std::cmp::Ordering::Greater,
-            (Mode::Skiing { velocity: a }, Mode::Skiing { velocity: b }) => {
-                self.cost.cmp(&other.cost).reverse().then(a.cmp(&b))
-            }
-        }
+        self.cost.cmp(&other.cost).reverse()
     }
 }
 

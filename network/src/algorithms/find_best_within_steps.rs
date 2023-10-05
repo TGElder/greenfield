@@ -46,8 +46,8 @@ pub trait FindBestWithinSteps<S, T, N> {
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> Option<S>,
-        can_visit: &dyn Fn(&T) -> bool,
+        scorer: &mut dyn FnMut(&N, &T) -> Option<S>,
+        can_visit: &mut dyn FnMut(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>>;
 }
@@ -61,8 +61,8 @@ where
     fn find_best_within_steps(
         &self,
         from: HashSet<T>,
-        scorer: &dyn Fn(&N, &T) -> Option<S>,
-        is_allowed: &dyn Fn(&T) -> bool,
+        scorer: &mut dyn FnMut(&N, &T) -> Option<S>,
+        is_allowed: &mut dyn FnMut(&T) -> bool,
         max_steps: u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -192,7 +192,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 2);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &mut |_, i| Some(*i), &mut |_| true, 2);
 
         // then
         assert_eq!(
@@ -265,7 +266,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 2);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &mut |_, i| Some(*i), &mut |_| true, 2);
 
         // then
         assert_eq!(
@@ -315,7 +317,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {2}, &|_, i| Some(*i), &|_| true, 2);
+        let result =
+            network.find_best_within_steps(hashset! {2}, &mut |_, i| Some(*i), &mut |_| true, 2);
 
         // then
         assert_eq!(result, Some(vec![]));
@@ -360,8 +363,8 @@ mod tests {
         // when
         let result = network.find_best_within_steps(
             hashset! {0},
-            &|_, i| Some(i32::from(*i != 0)),
-            &|_| true,
+            &mut |_, i| Some(i32::from(*i != 0)),
+            &mut |_| true,
             2,
         );
 
@@ -435,7 +438,7 @@ mod tests {
 
         // when
         let result =
-            network.find_best_within_steps(hashset! {0, 2}, &|_, i| Some(*i), &|_| true, 4);
+            network.find_best_within_steps(hashset! {0, 2}, &mut |_, i| Some(*i), &mut |_| true, 4);
 
         // then
         assert_eq!(
@@ -511,12 +514,12 @@ mod tests {
         // when
         let result = network.find_best_within_steps(
             hashset! {0},
-            &|_, i| match i {
+            &mut |_, i| match i {
                 3 => Some(1),
                 5 => Some(1),
                 _ => Some(0),
             },
-            &|_| true,
+            &mut |_| true,
             3,
         );
 
@@ -568,7 +571,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {}, &|_, _| Some(0), &|_| true, 4);
+        let result =
+            network.find_best_within_steps(hashset! {}, &mut |_, _| Some(0), &mut |_| true, 4);
 
         // then
         assert_eq!(result, None);
@@ -589,7 +593,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, _| Some(0), &|_| true, 4);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &mut |_, _| Some(0), &mut |_| true, 4);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
@@ -633,7 +638,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 1);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &mut |_, i| Some(*i), &mut |_| true, 1);
 
         // then
         assert_eq!(
@@ -676,7 +682,8 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.find_best_within_steps(hashset! {0}, &|_, i| Some(*i), &|_| true, 0);
+        let result =
+            network.find_best_within_steps(hashset! {0}, &mut |_, i| Some(*i), &mut |_| true, 0);
 
         // then
         assert_eq!(result, Some(vec![])); // path to current location
@@ -721,11 +728,11 @@ mod tests {
         // when
         let result = network.find_best_within_steps(
             hashset! {0},
-            &|_, i| match i {
+            &mut |_, i| match i {
                 2 => None,
                 i => Some(*i),
             },
-            &|_| true,
+            &mut |_| true,
             2,
         );
 
@@ -780,12 +787,12 @@ mod tests {
         // when
         let result = network.find_best_within_steps(
             hashset! {0},
-            &|_, i| match i {
+            &mut |_, i| match i {
                 0 => Some(0),
                 2 => Some(2),
                 _ => None,
             },
-            &|_| true,
+            &mut |_| true,
             2,
         );
 
@@ -847,12 +854,12 @@ mod tests {
         // when
         let result = network.find_best_within_steps(
             hashset! {0},
-            &|_, i| match i {
+            &mut |_, i| match i {
                 0 => Some(0),
                 2 => Some(2),
                 _ => None,
             },
-            &|i| *i != 1,
+            &mut |i| *i != 1,
             2,
         );
 
