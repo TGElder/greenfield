@@ -259,13 +259,6 @@ fn find_path(
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
-    let reserved = &reserved.map(|_, reservations| {
-        reservations.iter().any(|reservation| match reservation {
-            Reservation::Permanent { .. } => true,
-            Reservation::Temporary { to, .. } => to >= micros,
-        })
-    });
-
     let network = SkiingNetwork {
         terrain,
         reserved,

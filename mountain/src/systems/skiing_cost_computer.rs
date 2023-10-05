@@ -39,21 +39,21 @@ fn compute_costs(
 
     let piste_positions = piste_positions(piste);
     let lift_positions = lifts.values().map(|lift| lift.from).collect::<HashSet<_>>();
-    let mut reserved = terrain.map(|position, _| lift_positions.contains(&position));
+    let reserved = terrain.map(|_, _| vec![]); // TODO restore lift blocking
 
     for (lift, Lift { from, .. }) in lifts {
         let grid = &piste.grid;
         if grid.in_bounds(from) && grid[from] {
             let distance_costs = distance_costs.costs(lift).unwrap();
 
-            reserved[from] = false;
+            // reserved[from] = false;
             let network = SkiingNetwork {
                 terrain,
                 reserved: &reserved,
                 distance_costs,
             };
             let in_network = SkiingInNetwork::for_positions(&network, &piste_positions);
-            reserved[from] = true;
+            // reserved[from] = true;
 
             let costs = compute_costs_for_position(&in_network, from);
 

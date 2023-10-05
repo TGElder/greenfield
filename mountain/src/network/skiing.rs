@@ -7,6 +7,7 @@ use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::direction::{Direction, DIRECTIONS};
+use crate::model::reservation::Reservation;
 use crate::model::skiing::{Mode, State};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
@@ -27,7 +28,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
-    pub reserved: &'a Grid<bool>,
+    pub reserved: &'a Grid<Vec<Reservation>>,
     pub distance_costs: &'a HashMap<State, u64>,
 }
 
@@ -52,7 +53,26 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 })
                 .chain(self.turning_edges(from))
                 .chain(self.skis_off(from))
-                .chain(self.skis_on(from)),
+                .chain(self.skis_on(from))
+                .filter(|edge| {
+                    if is_reserved(
+                        &self.reserved[edge.from.position],
+                        &edge.from.micros,
+                        &edge.to.micros,
+                    ) {
+                        return false;
+                    }
+
+                    if is_reserved(
+                        &self.reserved[edge.to.position],
+                        &edge.from.micros,
+                        &edge.to.micros,
+                    ) {
+                        return false;
+                    }
+
+                    true
+                }),
         )
     }
 }
@@ -86,10 +106,6 @@ impl<'a> SkiingNetwork<'a> {
     ) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
-        if self.reserved[to_position] {
-            return None;
-        }
-
         let initial_velocity: f32 = decode_velocity(&velocity)?;
 
         let run = travel_direction.run();
@@ -98,6 +114,7 @@ impl<'a> SkiingNetwork<'a> {
             physics::skiing::solve(initial_velocity, run, rise, 0.0, friction)?;
 
         let cost = (duration * 1_000_000.0).round() as u32;
+        let to = from.micros + cost as u128;
 
         Some(Edge {
             from: *from,
@@ -107,7 +124,7 @@ impl<'a> SkiingNetwork<'a> {
                     velocity: encode_velocity(&velocity)?,
                 },
                 travel_direction,
-                micros: from.micros + cost as u128,
+                micros: to,
             },
             cost,
         })
@@ -147,12 +164,13 @@ impl<'a> SkiingNetwork<'a> {
             .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
             .flat_map(|from| {
                 let cost = TURNING_DURATION.as_micros().try_into().unwrap();
+                let to = from.micros + cost as u128;
                 [
                     Edge {
                         from: *from,
                         to: State {
                             travel_direction: from.travel_direction.next_clockwise(),
-                            micros: from.micros + cost as u128,
+                            micros: to,
                             ..*from
                         },
                         cost,
@@ -161,7 +179,7 @@ impl<'a> SkiingNetwork<'a> {
                         from: *from,
                         to: State {
                             travel_direction: from.travel_direction.next_anticlockwise(),
-                            micros: from.micros + cost as u128,
+                            micros: to,
                             ..*from
                         },
                         cost,
@@ -186,10 +204,6 @@ impl<'a> SkiingNetwork<'a> {
     fn get_poling_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &from.travel_direction)?;
 
-        if self.reserved[to_position] {
-            return None;
-        }
-
         let initial_velocity: f32 = decode_velocity(velocity)?;
 
         let run = from.travel_direction.run();
@@ -198,6 +212,7 @@ impl<'a> SkiingNetwork<'a> {
             physics::skiing::solve(initial_velocity, run, rise, POLING_ACCELERATION, 0.0)?;
 
         let cost = (duration * 1_000_000.0).round() as u32;
+        let to = from.micros + cost as u128;
 
         Some(Edge {
             from: *from,
@@ -207,7 +222,7 @@ impl<'a> SkiingNetwork<'a> {
                     velocity: encode_velocity(&velocity)?,
                 },
                 travel_direction: from.travel_direction,
-                micros: from.micros + cost as u128,
+                micros: to,
             },
             cost,
         })
@@ -264,19 +279,19 @@ impl<'a> SkiingNetwork<'a> {
                             .offset(from.position, offset)
                             .map(|neighbour| (offset, neighbour))
                     })
-                    .filter(|(_, neighbour)| !self.reserved[neighbour])
-                    .map(|(offset, neighbour)| {
+                    .flat_map(|(offset, neighbour)| {
                         let cost = walk_duration(offset).as_micros().try_into().unwrap();
-                        Edge {
+                        let to = from.micros + cost as u128;
+                        Some(Edge {
                             from: *from,
                             to: State {
                                 position: neighbour,
                                 mode: Mode::Walking,
-                                micros: from.micros + cost as u128,
+                                micros: to,
                                 ..*from
                             },
                             cost,
-                        }
+                        })
                     })
             })
     }
@@ -359,4 +374,15 @@ impl InNetwork<State> for SkiingInNetwork {
             None => Box::new(empty()),
         }
     }
+}
+
+fn is_reserved(reservations: &[Reservation], from: &u128, to: &u128) -> bool {
+    reservations.iter().any(|reservation| match reservation {
+        Reservation::Permanent { .. } => true,
+        Reservation::Temporary {
+            from: reserved_from,
+            to: reserved_to,
+            ..
+        } => (reserved_from > to) || (from > reserved_to),
+    })
 }
