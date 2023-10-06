@@ -7,5 +7,4 @@ pub mod lift_entry;
 pub mod overlay;
 pub mod piste_adopter;
 pub mod planner;
-pub mod skiing_cost_computer;
 pub mod target_setter;

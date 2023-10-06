@@ -3,13 +3,18 @@ use std::iter::once;
 
 use commons::geometry::XY;
 use commons::grid::Grid;
+use commons::origin_grid::OriginGrid;
+use network::algorithms::find_path::FindPath;
 use network::model::Edge;
 use rand::Rng;
 
-use crate::model::piste::PisteCosts;
+use crate::model::direction::DIRECTIONS;
+use crate::model::lift::Lift;
+use crate::model::piste::{Piste, PisteCosts};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
+use crate::network::velocity_encoding::{VELOCITY_LEVELS, decode_velocity};
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
@@ -28,6 +33,8 @@ pub struct Parameters<'a> {
     pub targets: &'a HashMap<usize, usize>,
     pub distance_costs: &'a HashMap<usize, PisteCosts>,
     pub skiing_costs: &'a HashMap<usize, PisteCosts>,
+    pub lifts: &'a HashMap<usize, Lift>,
+    pub pistes: &'a HashMap<usize, Piste>,
     pub reserved: &'a mut Grid<Vec<Reservation>>,
 }
 
@@ -48,6 +55,8 @@ impl System {
             targets,
             distance_costs,
             skiing_costs,
+            lifts,
+            pistes,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -58,26 +67,31 @@ impl System {
                 return false;
             };
 
+            let Some(target) = targets.get(id) else {
+                return false;
+            };
+
+            let Some(lift) = lifts.get(target) else {
+                return false;
+            };
+
+            let Some(location) = locations.get(id) else {
+                return false;
+            };
+
+            let Some(piste) = pistes.get(location) else {
+                return false;
+            };
+
+            let to = &lift.from;
+
             free(id, current_plan, reserved);
             let from = last_state(current_plan);
             let from = &State {
                 micros: *micros,
                 ..*from
             };
-            *current_plan = match (
-                get_costs(id, locations, targets, distance_costs),
-                get_costs(id, locations, targets, skiing_costs),
-            ) {
-                (Some(distance_costs), Some(skiing_costs)) => new_plan(
-                    terrain,
-                    micros,
-                    from,
-                    reserved,
-                    distance_costs,
-                    skiing_costs,
-                ),
-                _ => brake(*from),
-            };
+            *current_plan = new_plan(terrain, micros, from, to, reserved, &piste.grid);
             reserve(id, current_plan, reserved, micros);
 
             match current_plan {
@@ -178,17 +192,17 @@ fn reserve(id: &usize, plan: &Plan, reserved: &mut Grid<Vec<Reservation>>, micro
                 }
                 _ => (),
             });
-            events.last().iter().for_each(
-                |Event {
-                     micros,
-                     state: State { position, .. },
-                 }| {
-                    reserved[position].push(Reservation::Permanent {
-                        id: *id,
-                        from: *micros,
-                    })
-                },
-            )
+            // events.last().iter().for_each(
+            //     |Event {
+            //          micros,
+            //          state: State { position, .. },
+            //      }| {
+            //         reserved[position].push(Reservation::Permanent {
+            //             id: *id,
+            //             from: *micros,
+            //         })
+            //     },
+            // )
         }
     }
 }
@@ -228,18 +242,11 @@ fn new_plan(
     terrain: &Grid<f32>,
     micros: &u128,
     from: &State,
+    to: &XY<u32>,
     reserved: &Grid<Vec<Reservation>>,
-    distance_costs: &HashMap<State, u64>,
-    skiing_costs: &HashMap<State, u64>,
+    piste: &OriginGrid<bool>,
 ) -> Plan {
-    match find_path(
-        micros,
-        terrain,
-        from,
-        reserved,
-        distance_costs,
-        skiing_costs,
-    ) {
+    match find_path(micros, terrain, from, to, reserved, piste) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -255,38 +262,22 @@ fn find_path(
     micros: &u128,
     terrain: &Grid<f32>,
     from: &State,
+    to: &XY<u32>,
     reserved: &Grid<Vec<Reservation>>,
-    distance_costs: &HashMap<State, u64>,
-    skiing_costs: &HashMap<State, u64>,
+    piste: &OriginGrid<bool>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
         reserved,
-        distance_costs,
+        piste,
     };
 
-    let mut rng = rand::thread_rng();
+    let max_velocity = decode_velocity(&(VELOCITY_LEVELS - 1)).unwrap();
 
-    let steps = rng.gen_range(1..=MAX_STEPS);
-
-    network.find_best_within_steps(
+    network.find_path(
         HashSet::from([*from]),
-        &mut |_, state| {
-            let Some(cost) = skiing_costs.get(state) else {
-                return None;
-            };
-
-            // check for forbidden tiles
-            if cost != &0 // goal tile is never forbidden
-                && (state.position == from.position || is_white_tile(&state.position))
-            {
-                return None;
-            }
-
-            Some(score(&mut rng, cost))
-        },
-        &mut |_| true,
-        steps,
+        &|state| state.position == *to,
+        &|_, state| ((((state.position.x.abs_diff(to.x).pow(2) + state.position.y.abs_diff(to.y).pow(2)) as f32).sqrt() / max_velocity) * 1_000_000.0) as u64,
     )
 }
 
@@ -352,4 +343,18 @@ impl PartialOrd for Score {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(other))
     }
+}
+
+fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
+    DIRECTIONS
+        .iter()
+        .copied()
+        .flat_map(move |travel_direction| {
+            (0..=VELOCITY_LEVELS).map(move |velocity| State {
+                position,
+                mode: Mode::Skiing { velocity },
+                travel_direction,
+                micros: 0,
+            })
+        })
 }

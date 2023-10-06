@@ -3,6 +3,7 @@ use std::iter::{empty, once};
 use std::time::Duration;
 
 use commons::grid::OFFSETS_8;
+use commons::origin_grid::OriginGrid;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
@@ -29,7 +30,7 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<Vec<Reservation>>,
-    pub distance_costs: &'a HashMap<State, u64>,
+    pub piste: &'a OriginGrid<bool>,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -39,21 +40,12 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
         Box::new(
             self.poling_edges(from)
-                .chain(self.walk(from))
+                // .chain(self.walk(from))
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| {
-                    match (
-                        self.distance_costs.get(&edge.to),
-                        self.distance_costs.get(&edge.from),
-                    ) {
-                        (Some(to), Some(from)) => to < from,
-                        _ => false,
-                    }
-                })
                 .chain(self.turning_edges(from))
-                .chain(self.skis_off(from))
-                .chain(self.skis_on(from))
+                // .chain(self.skis_off(from))
+                // .chain(self.skis_on(from))
                 .filter(|edge| {
                     if is_reserved(
                         &self.reserved[edge.from.position],
@@ -72,6 +64,9 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                     }
 
                     true
+                })
+                .filter(|edge| {
+                    self.piste.in_bounds(edge.to.position) && self.piste[edge.to.position]
                 }),
         )
     }
@@ -383,6 +378,6 @@ fn is_reserved(reservations: &[Reservation], from: &u128, to: &u128) -> bool {
             from: reserved_from,
             to: reserved_to,
             ..
-        } => (reserved_from > to) || (from > reserved_to),
+        } => !((reserved_from > to) || (from > reserved_to)),
     })
 }

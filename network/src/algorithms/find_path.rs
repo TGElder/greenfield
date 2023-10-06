@@ -47,7 +47,7 @@ pub trait FindPath<T, N> {
     fn find_path(
         &self,
         from: HashSet<T>,
-        to: HashSet<T>,
+        to: &dyn Fn(&T) -> bool,
         heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>>;
 }
@@ -60,7 +60,7 @@ where
     fn find_path(
         &self,
         from: HashSet<T>,
-        to: HashSet<T>,
+        to: &dyn Fn(&T) -> bool,
         heuristic: &dyn Fn(&N, &T) -> u64,
     ) -> Option<Vec<Edge<T>>> {
         let mut closed = HashSet::new();
@@ -83,6 +83,8 @@ where
             ..
         }) = heap.pop()
         {
+            dbg!(&location);
+
             if closed.contains(&location) {
                 continue;
             }
@@ -92,7 +94,7 @@ where
                 entrances.insert(location, entrance);
             }
 
-            if to.contains(&location) {
+            if to(&location) {
                 return Some(get_path(&from, &location, &mut entrances));
             }
 
