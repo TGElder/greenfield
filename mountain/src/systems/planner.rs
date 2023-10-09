@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 use rand::Rng;
 
-use crate::model::piste::PisteCosts;
+use crate::model::piste::{PisteCosts, Piste};
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -27,6 +27,7 @@ pub struct Parameters<'a> {
     pub targets: &'a HashMap<usize, usize>,
     pub distance_costs: &'a HashMap<usize, PisteCosts>,
     pub skiing_costs: &'a HashMap<usize, PisteCosts>,
+    pub pistes: &'a HashMap<usize, Piste>,
     pub reserved: &'a mut Grid<bool>,
 }
 
@@ -47,6 +48,7 @@ impl System {
             targets,
             distance_costs,
             skiing_costs,
+            pistes,
             reserved,
         }: Parameters<'_>,
     ) {
@@ -54,6 +56,14 @@ impl System {
 
         self.finished.retain(|id| {
             let Some(current_plan) = plans.get_mut(id) else {
+                return false;
+            };
+
+            let Some(location) = locations.get(id) else {
+                return false;
+            };
+
+            let Some(piste) = pistes.get(location) else {
                 return false;
             };
 
@@ -81,7 +91,7 @@ impl System {
                 get_costs(id, locations, targets, skiing_costs),
             ) {
                 (Some(distance_costs), Some(skiing_costs)) => {
-                    find_path(terrain, from, reserved, distance_costs, skiing_costs)
+                    find_path(terrain, from, reserved, distance_costs, skiing_costs, piste)
                 }
                 _ => None,
             };
@@ -233,6 +243,7 @@ fn find_path(
     reserved: &Grid<bool>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
+    piste: &Piste,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
@@ -252,28 +263,9 @@ fn find_path(
                 return None;
             }
 
-            let Some(cost) = skiing_costs.get(from) else {
-                return None;
-            };
-
-            // check for forbidden tiles
-            if *cost != 0 {
-                // goal tile is never forbidden
-
-                if is_white_tile(&state.position) {
-                    return None;
-                }
-
-                if let Mode::Skiing { velocity } = state.mode {
-                    if velocity != 0 {
-                        return None;
-                    }
-                }
-            }
-
-            Some(cost)
+            skiing_costs.get(state)
         },
-        &mut |state| skiing_costs.contains_key(state),
+        &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
         steps,
     )
 }

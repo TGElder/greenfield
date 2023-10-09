@@ -107,6 +107,16 @@ fn compute_cost_for_state(
         // println!("Target");
         return Some(0);
     }
+    
+    if is_white_tile(&from.position) {
+        return None;
+    }
+
+    if let Mode::Skiing { velocity } = from.mode {
+        if velocity != 0 {
+            return None;
+        }
+    }
 
     if let Some(cost) = costs.get(from) {
         // println!("Cached");
@@ -126,28 +136,19 @@ fn compute_cost_for_state(
                 return None;
             }
 
-            let Some(cost) =
-                compute_cost_for_state(requested, costs, network, state, target, piste_positions)
-            else {
-                return None;
-            };
+            compute_cost_for_state(requested, costs, network, state, target, piste_positions)
+            // else {
+            //     return None;
+            // };
 
-            // check for forbidden tiles
-            if cost != 0 {
-                // goal tile is never forbidden
+            // // check for forbidden tiles
+            // if cost != 0 {
+            //     // goal tile is never forbidden
 
-                if is_white_tile(&state.position) {
-                    return None;
-                }
 
-                if let Mode::Skiing { velocity } = state.mode {
-                    if velocity != 0 {
-                        return None;
-                    }
-                }
-            }
+            // }
 
-            Some(cost)
+            // Some(cost)
         },
         &mut |state| piste_positions.contains(&state.position),
         8,
