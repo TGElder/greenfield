@@ -74,7 +74,6 @@ impl System {
                 Plan::Stationary(state) => Plan::Stationary(*state),
             };
 
-
             let from = last_state(&plan);
 
             let onward_path = match (
@@ -228,7 +227,6 @@ fn get_costs<'a>(
     costs.costs(target)
 }
 
-
 fn find_path(
     terrain: &Grid<f32>,
     from: &State,
@@ -250,25 +248,30 @@ fn find_path(
     network.find_best_within_steps(
         HashSet::from([*from]),
         &mut |_, state| {
-
-            if let Mode::Skiing { velocity } = state.mode {
-                if velocity != 0 {
-                    return None;
-                }
+            if state.position == from.position {
+                return None;
             }
 
-            let Some(cost) = skiing_costs.get(state) else {
+            let Some(cost) = skiing_costs.get(from) else {
                 return None;
             };
 
             // check for forbidden tiles
-            if cost != &0 // goal tile is never forbidden
-                && is_white_tile(&state.position)
-            {
-                return None;
+            if *cost != 0 {
+                // goal tile is never forbidden
+
+                if is_white_tile(&state.position) {
+                    return None;
+                }
+
+                if let Mode::Skiing { velocity } = state.mode {
+                    if velocity != 0 {
+                        return None;
+                    }
+                }
             }
 
-            Some(score(&mut rng, cost))
+            Some(cost)
         },
         &mut |state| skiing_costs.contains_key(state),
         steps,
@@ -287,7 +290,6 @@ where
         cost: rng.gen_range(*cost..=cost * MAX_DETOUR),
     }
 }
-
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {
     let mut out = Vec::with_capacity(edges.len());

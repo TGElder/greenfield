@@ -41,15 +41,15 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 // .chain(self.walk(from))
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                // .filter(|edge| {
-                //     match (
-                //         self.distance_costs.get(&edge.to),
-                //         self.distance_costs.get(&edge.from),
-                //     ) {
-                //         (Some(to), Some(from)) => to < from,
-                //         _ => false,
-                //     }
-                // })
+                .filter(|edge| {
+                    match (
+                        self.distance_costs.get(&edge.to),
+                        self.distance_costs.get(&edge.from),
+                    ) {
+                        (Some(to), Some(from)) => to < from,
+                        _ => false,
+                    }
+                })
                 .chain(self.turning_edges(from))
                 .chain(self.skis_off(from))
                 .chain(self.skis_on(from))
@@ -167,7 +167,6 @@ impl<'a> SkiingNetwork<'a> {
             })
     }
 
-
     fn stop_edge(
         &'a self,
         from: &'a State,
@@ -175,17 +174,13 @@ impl<'a> SkiingNetwork<'a> {
         once(from)
             .filter(|from| from.mode == Mode::Skiing { velocity: 1 })
             .filter(|from| matches!(from.mode, Mode::Skiing { .. }))
-            .map(|from| {
-            
-                    Edge {
-                        from: *from,
-                        to: State {
-                            mode: Mode::Skiing { velocity: 0 },
-                            ..*from
-                        },
-                        cost: 0,
-                    }
-               
+            .map(|from| Edge {
+                from: *from,
+                to: State {
+                    mode: Mode::Skiing { velocity: 0 },
+                    ..*from
+                },
+                cost: 0,
             })
     }
 
