@@ -150,7 +150,7 @@ fn compute_cost_for_state(
             // Some(cost)
         },
         &mut |state| piste_positions.contains(&state.position),
-        8,
+        4,
     );
 
     let Some(path) = path else {

@@ -13,7 +13,7 @@ use crate::network::skiing::SkiingNetwork;
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
 const MAX_STEPS: u64 = 8;
-const MAX_DETOUR: u64 = 1;
+const MAX_DETOUR: u64 = 2;
 
 pub struct System {
     finished: HashVec,
@@ -253,8 +253,8 @@ fn find_path(
 
     let mut rng = rand::thread_rng();
 
-    // let steps = rng.gen_range(1..=MAX_STEPS);
-    let steps = MAX_STEPS;
+    let steps = rng.gen_range(1..=MAX_STEPS);
+    // let steps = MAX_STEPS;
 
     network.find_best_within_steps(
         HashSet::from([*from]),
@@ -263,7 +263,7 @@ fn find_path(
                 return None;
             }
 
-            skiing_costs.get(state)
+            skiing_costs.get(state).map(|cost| score(&mut rng, cost))
         },
         &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
         steps,
