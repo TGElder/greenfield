@@ -107,7 +107,7 @@ fn compute_cost_for_state(
         // println!("Target");
         return Some(0);
     }
-    
+
     if is_white_tile(&from.position) {
         return None;
     }
@@ -144,7 +144,6 @@ fn compute_cost_for_state(
             // // check for forbidden tiles
             // if cost != 0 {
             //     // goal tile is never forbidden
-
 
             // }
 

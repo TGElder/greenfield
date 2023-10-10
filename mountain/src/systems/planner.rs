@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 use rand::Rng;
 
-use crate::model::piste::{PisteCosts, Piste};
+use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -274,13 +274,11 @@ fn is_white_tile(position: &XY<u32>) -> bool {
     position.x % 2 == position.y % 2
 }
 
-fn score<R>(rng: &mut R, cost: &u64) -> Score
+fn score<R>(rng: &mut R, cost: &u64) -> u64
 where
     R: Rng,
 {
-    Score {
-        cost: rng.gen_range(*cost..=cost * MAX_DETOUR),
-    }
+    rng.gen_range(*cost..=cost * MAX_DETOUR)
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {

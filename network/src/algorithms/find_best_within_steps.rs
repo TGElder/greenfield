@@ -105,7 +105,7 @@ where
 
             if let Some(score) = score {
                 best = match best {
-                    Some(current) if score > current.score => Some(Best { location, score }),
+                    Some(current) if score < current.score => Some(Best { location, score }),
                     None => Some(Best { location, score }),
                     _ => best,
                 };
