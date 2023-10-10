@@ -25,6 +25,8 @@ const BRAKING_FRICTION: f32 = 1.0;
 const POLING_ACCELERATION: f32 = 2.5;
 const POLING_MAX_VELOCITY: f32 = 2.0;
 
+const STOP_MAX_VELOCITY: f32 = 1.5;
+
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
@@ -51,9 +53,9 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                     }
                 })
                 .chain(self.turning_edges(from))
+                .chain(self.stop_edge(from))
                 .chain(self.skis_off(from))
-                .chain(self.skis_on(from))
-                .chain(self.stop_edge(from)),
+                .chain(self.skis_on(from)),
         )
     }
 }
@@ -171,9 +173,12 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
+        let max_velocity_encoded = encode_velocity(&STOP_MAX_VELOCITY).unwrap();
+
         once(from)
-            .filter(|from| from.mode == Mode::Skiing { velocity: 1 })
-            .map(|from| Edge {
+            .flat_map(get_skiing_velocity)
+            .filter(move |velocity| **velocity <= max_velocity_encoded)
+            .map(|_| Edge {
                 from: *from,
                 to: State {
                     mode: Mode::Skiing { velocity: 0 },
