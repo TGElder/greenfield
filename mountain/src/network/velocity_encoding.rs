@@ -98,7 +98,7 @@ mod tests {
     #[test]
     fn decode_gt_max() {
         // given
-        let encoding = VELOCITY_LEVELS + 1;
+        let encoding = VELOCITY_LEVELS;
 
         // when
         let velocity = decode_velocity(&encoding);
