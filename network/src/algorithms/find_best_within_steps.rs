@@ -42,6 +42,12 @@ where
 
 impl<S, T> Eq for Node<S, T> where T: Eq {}
 
+#[derive(Debug, PartialEq)]
+pub struct Result<S, T> {
+    pub score: S,
+    pub path: Vec<Edge<T>>,
+}
+
 pub trait FindBestWithinSteps<S, T, N> {
     fn find_best_within_steps(
         &self,
@@ -49,7 +55,7 @@ pub trait FindBestWithinSteps<S, T, N> {
         scorer: &mut dyn FnMut(&N, &T) -> Option<S>,
         can_visit: &mut dyn FnMut(&T) -> bool,
         max_steps: u64,
-    ) -> Option<Vec<Edge<T>>>;
+    ) -> Option<Result<S, T>>;
 }
 
 impl<S, T, N> FindBestWithinSteps<S, T, N> for N
@@ -64,7 +70,7 @@ where
         scorer: &mut dyn FnMut(&N, &T) -> Option<S>,
         is_allowed: &mut dyn FnMut(&T) -> bool,
         max_steps: u64,
-    ) -> Option<Vec<Edge<T>>> {
+    ) -> Option<Result<S, T>> {
         let mut closed = HashSet::new();
         let mut entrances = HashMap::new();
         let mut heap = BinaryHeap::new();
@@ -81,8 +87,8 @@ where
         }
 
         struct Best<S, T> {
-            location: T,
             score: S,
+            location: T,
         }
 
         let mut best: Option<Best<S, T>> = None;
@@ -128,7 +134,10 @@ where
             }
         }
 
-        best.map(|Best { location, .. }| get_path(&from, &location, &mut entrances))
+        best.map(|Best { location, score }| Result {
+            score,
+            path: get_path(&from, &location, &mut entrances),
+        })
     }
 }
 
@@ -198,18 +207,21 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![
-                Edge {
-                    from: 0,
-                    to: 3,
-                    cost: 1,
-                },
-                Edge {
-                    from: 3,
-                    to: 4,
-                    cost: 1,
-                }
-            ])
+            Some(Result {
+                score: 4,
+                path: vec![
+                    Edge {
+                        from: 0,
+                        to: 3,
+                        cost: 1,
+                    },
+                    Edge {
+                        from: 3,
+                        to: 4,
+                        cost: 1,
+                    }
+                ]
+            })
         );
     }
 
@@ -272,11 +284,14 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![Edge {
-                from: 0,
-                to: 4,
-                cost: 1,
-            }])
+            Some(Result {
+                score: 4,
+                path: vec![Edge {
+                    from: 0,
+                    to: 4,
+                    cost: 1,
+                }]
+            }),
         );
     }
 
@@ -321,7 +336,13 @@ mod tests {
             network.find_best_within_steps(hashset! {2}, &mut |_, i| Some(*i), &mut |_| true, 2);
 
         // then
-        assert_eq!(result, Some(vec![]));
+        assert_eq!(
+            result,
+            Some(Result {
+                score: 2,
+                path: vec![]
+            })
+        );
     }
 
     #[test]
@@ -371,17 +392,23 @@ mod tests {
         // then
         assert!(
             result
-                == Some(vec![Edge {
-                    from: 0,
-                    to: 1,
-                    cost: 1,
-                }])
-                || result
-                    == Some(vec![Edge {
+                == Some(Result {
+                    score: 1,
+                    path: vec![Edge {
                         from: 0,
-                        to: 2,
+                        to: 1,
                         cost: 1,
-                    }])
+                    }]
+                })
+                || result
+                    == Some(Result {
+                        score: 1,
+                        path: vec![Edge {
+                            from: 0,
+                            to: 2,
+                            cost: 1,
+                        }]
+                    })
         );
     }
 
@@ -443,11 +470,14 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![Edge {
-                from: 2,
-                to: 3,
-                cost: 1,
-            }])
+            Some(Result {
+                score: 3,
+                path: vec![Edge {
+                    from: 2,
+                    to: 3,
+                    cost: 1,
+                }]
+            })
         );
     }
 
@@ -526,18 +556,21 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![
-                Edge {
-                    from: 0,
-                    to: 4,
-                    cost: 1,
-                },
-                Edge {
-                    from: 4,
-                    to: 5,
-                    cost: 1,
-                }
-            ])
+            Some(Result {
+                score: 1,
+                path: vec![
+                    Edge {
+                        from: 0,
+                        to: 4,
+                        cost: 1,
+                    },
+                    Edge {
+                        from: 4,
+                        to: 5,
+                        cost: 1,
+                    }
+                ]
+            })
         );
     }
 
@@ -597,7 +630,13 @@ mod tests {
             network.find_best_within_steps(hashset! {0}, &mut |_, _| Some(0), &mut |_| true, 4);
 
         // then
-        assert_eq!(result, Some(vec![])); // path to current location
+        assert_eq!(
+            result,
+            Some(Result {
+                score: 0,
+                path: vec![]
+            })
+        ); // path to current location
     }
 
     #[test]
@@ -644,11 +683,14 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![Edge {
-                from: 0,
-                to: 1,
-                cost: 1,
-            }])
+            Some(Result {
+                score: 1,
+                path: vec![Edge {
+                    from: 0,
+                    to: 1,
+                    cost: 1,
+                }]
+            })
         );
     }
 
@@ -686,7 +728,13 @@ mod tests {
             network.find_best_within_steps(hashset! {0}, &mut |_, i| Some(*i), &mut |_| true, 0);
 
         // then
-        assert_eq!(result, Some(vec![])); // path to current location
+        assert_eq!(
+            result,
+            Some(Result {
+                score: 0,
+                path: vec![]
+            })
+        ); // path to current location
     }
 
     #[test]
@@ -739,11 +787,14 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![Edge {
-                from: 0,
-                to: 1,
-                cost: 1,
-            }])
+            Some(Result {
+                score: 1,
+                path: vec![Edge {
+                    from: 0,
+                    to: 1,
+                    cost: 1,
+                }]
+            })
         );
     }
 
@@ -799,18 +850,21 @@ mod tests {
         // then
         assert_eq!(
             result,
-            Some(vec![
-                Edge {
-                    from: 0,
-                    to: 1,
-                    cost: 1,
-                },
-                Edge {
-                    from: 1,
-                    to: 2,
-                    cost: 1,
-                }
-            ])
+            Some(Result {
+                score: 2,
+                path: vec![
+                    Edge {
+                        from: 0,
+                        to: 1,
+                        cost: 1,
+                    },
+                    Edge {
+                        from: 1,
+                        to: 2,
+                        cost: 1,
+                    }
+                ]
+            })
         );
     }
 
@@ -864,6 +918,12 @@ mod tests {
         );
 
         // then
-        assert_eq!(result, Some(vec![]));
+        assert_eq!(
+            result,
+            Some(Result {
+                score: 0,
+                path: vec![]
+            })
+        );
     }
 }

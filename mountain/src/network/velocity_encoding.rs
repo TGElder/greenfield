@@ -13,7 +13,7 @@ pub fn encode_velocity(v: &f32) -> Option<u8> {
 }
 
 pub fn decode_velocity(encoding: &u8) -> Option<f32> {
-    if *encoding > VELOCITY_LEVELS {
+    if *encoding >= VELOCITY_LEVELS {
         return None;
     }
     Some((*encoding as f32 / (VELOCITY_LEVELS as f32 - 1.0)) * MAX_VELOCITY)
