@@ -315,6 +315,7 @@ impl EventHandler for Game {
             plans: &mut self.components.plans,
             locations: &self.components.locations,
             targets: &self.components.targets,
+            pistes: &self.components.pistes,
             distance_costs: &self.components.distance_costs,
             skiing_costs: &self.components.skiing_costs,
             reserved: &mut self.components.reserved,

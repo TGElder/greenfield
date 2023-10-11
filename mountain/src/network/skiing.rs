@@ -1,13 +1,12 @@
-use std::collections::{HashMap, HashSet};
-use std::iter::{empty, once};
+use std::collections::HashMap;
+use std::iter::once;
 use std::time::Duration;
 
 use commons::{geometry::XY, grid::Grid};
-use network::model::{Edge, InNetwork, OutNetwork};
+use network::model::{Edge, OutNetwork};
 
-use crate::model::direction::{Direction, DIRECTIONS};
+use crate::model::direction::Direction;
 use crate::model::skiing::{Mode, State};
-use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
     physics,
@@ -268,57 +267,5 @@ fn get_skiing_velocity(state: &State) -> Option<&u8> {
             ..
         } => Some(velocity),
         _ => None,
-    }
-}
-
-pub struct SkiingInNetwork {
-    pub edges: HashMap<State, Vec<Edge<State>>>,
-}
-
-impl SkiingInNetwork {
-    pub fn for_positions(
-        network: &dyn OutNetwork<State>,
-        positions: &HashSet<XY<u32>>,
-    ) -> SkiingInNetwork {
-        let mut edges = HashMap::with_capacity(positions.len());
-
-        for position in positions {
-            for travel_direction in DIRECTIONS {
-                for mode in modes() {
-                    let state = State {
-                        position: *position,
-                        mode,
-                        travel_direction,
-                    };
-
-                    for edge in network
-                        .edges_out(&state)
-                        .filter(|Edge { to, .. }| positions.contains(&to.position))
-                    {
-                        edges
-                            .entry(edge.to)
-                            .or_insert_with(|| Vec::with_capacity(5))
-                            .push(edge);
-                    }
-                }
-            }
-        }
-
-        SkiingInNetwork { edges }
-    }
-}
-
-fn modes() -> impl Iterator<Item = Mode> {
-    (0..VELOCITY_LEVELS)
-        .map(|velocity| Mode::Skiing { velocity })
-        .chain(once(Mode::Walking))
-}
-
-impl InNetwork<State> for SkiingInNetwork {
-    fn edges_in<'a>(&'a self, to: &'a State) -> Box<dyn Iterator<Item = Edge<State>> + 'a> {
-        match self.edges.get(to) {
-            Some(edges) => Box::new(edges.iter().copied()),
-            None => Box::new(empty()),
-        }
     }
 }

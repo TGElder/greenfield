@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 use rand::Rng;
 
-use crate::model::piste::PisteCosts;
+use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -25,6 +25,7 @@ pub struct Parameters<'a> {
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
+    pub pistes: &'a HashMap<usize, Piste>,
     pub distance_costs: &'a HashMap<usize, PisteCosts>,
     pub skiing_costs: &'a HashMap<usize, PisteCosts>,
     pub reserved: &'a mut Grid<bool>,
@@ -45,6 +46,7 @@ impl System {
             plans,
             locations,
             targets,
+            pistes,
             distance_costs,
             skiing_costs,
             reserved,
@@ -57,7 +59,16 @@ impl System {
                 return false;
             };
 
+            let Some(location) = locations.get(id) else {
+                return false;
+            };
+
+            let Some(piste) = pistes.get(location) else {
+                return false;
+            };
+
             free(current_plan, reserved);
+
             let from = last_state(current_plan);
             *current_plan = match (
                 get_costs(id, locations, targets, distance_costs),
@@ -67,6 +78,7 @@ impl System {
                     terrain,
                     micros,
                     from,
+                    piste,
                     reserved,
                     distance_costs,
                     skiing_costs,
@@ -190,11 +202,12 @@ fn new_plan(
     terrain: &Grid<f32>,
     micros: &u128,
     from: &State,
+    piste: &Piste,
     reserved: &Grid<bool>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, reserved, distance_costs, skiing_costs) {
+    match find_path(terrain, from, piste, reserved, distance_costs, skiing_costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -209,6 +222,7 @@ fn new_plan(
 fn find_path(
     terrain: &Grid<f32>,
     from: &State,
+    piste: &Piste,
     reserved: &Grid<bool>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
@@ -227,27 +241,16 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
-                let Some(cost) = skiing_costs.get(state) else {
-                    return None;
-                };
-
-                // check for forbidden tiles
-                if cost != &0 // goal tile is never forbidden
-                && (state.position == from.position || is_white_tile(&state.position))
-                {
+                if state.position == from.position {
                     return None;
                 }
 
-                Some(score(&mut rng, cost))
+                skiing_costs.get(state).map(|cost| score(&mut rng, cost))
             },
-            &mut |_| true,
+            &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
             steps,
         )
         .map(|result| result.path)
-}
-
-fn is_white_tile(position: &XY<u32>) -> bool {
-    position.x % 2 == position.y % 2
 }
 
 fn score<R>(rng: &mut R, cost: &u64) -> Score
