@@ -241,7 +241,7 @@ fn find_path(
         },
         &mut |_| true,
         steps,
-    )
+    ).map(|result| result.path)
 }
 
 fn is_white_tile(position: &XY<u32>) -> bool {
