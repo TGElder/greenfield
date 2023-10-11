@@ -227,27 +227,16 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
-                let Some(cost) = skiing_costs.get(state) else {
-                    return None;
-                };
-
-                // check for forbidden tiles
-                if cost != &0 // goal tile is never forbidden
-                && (state.position == from.position || is_white_tile(&state.position))
-                {
+                if state.position == from.position {
                     return None;
                 }
 
-                Some(score(&mut rng, cost))
+                skiing_costs.get(state).map(|cost| score(&mut rng, cost))
             },
             &mut |_| true,
             steps,
         )
         .map(|result| result.path)
-}
-
-fn is_white_tile(position: &XY<u32>) -> bool {
-    position.x % 2 == position.y % 2
 }
 
 fn score<R>(rng: &mut R, cost: &u64) -> Score

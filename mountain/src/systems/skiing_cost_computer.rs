@@ -2,15 +2,17 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::XY;
 use commons::grid::Grid;
-use network::algorithms::find_best_within_steps::FindBestWithinSteps;
+use network::algorithms::find_best_within_steps::{self, FindBestWithinSteps};
+use network::model::Edge;
 
 use crate::model::direction::DIRECTIONS;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
-use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
+use crate::network::skiing::SkiingNetwork;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
-use network::algorithms::costs_to_target::CostsToTarget;
+
+pub const MAX_STEPS: u64 = 4;
 
 pub fn run(
     terrain: &Grid<f32>,
@@ -56,8 +58,9 @@ fn compute_costs_for_piste(
             reserved[from] = true;
 
             let coverage = costs.len() as f32
-                / (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
-                    as f32;
+                / (piste_positions(piste).count()
+                    * DIRECTIONS.len()
+                    * (VELOCITY_LEVELS as usize + 1)) as f32;
             println!("INFO: Coverage for lift {} = {}", lift, coverage);
             out.set_costs(*lift, costs);
         }
@@ -66,11 +69,8 @@ fn compute_costs_for_piste(
     out
 }
 
-fn piste_positions<'a>(piste: &'a Piste) -> impl Iterator<Item = XY<u32>> + 'a {
-    piste
-        .grid
-        .iter()
-        .filter(|position| piste.grid[position])
+fn piste_positions(piste: &Piste) -> impl Iterator<Item = XY<u32>> + '_ {
+    piste.grid.iter().filter(|position| piste.grid[position])
 }
 
 fn compute_costs_for_target(
@@ -82,7 +82,7 @@ fn compute_costs_for_target(
     let mut cache = HashMap::with_capacity(piste_positions(piste).count());
     for position in piste_positions(piste) {
         for state in skiing_states_for_position(position) {
-            let cost = compute_cost_for_state(&state, network, target, piste, &mut cache);
+            let cost = compute_cost_from_state(&state, network, target, piste, &mut cache);
             if let Some(cost) = cost {
                 out.insert(state, cost);
             }
@@ -91,61 +91,47 @@ fn compute_costs_for_target(
     out
 }
 
-fn compute_cost_for_state(
-    state: &State,
+fn compute_cost_from_state(
+    from: &State,
     network: &SkiingNetwork,
     target: &XY<u32>,
     piste: &Piste,
     cache: &mut HashMap<State, Option<u64>>,
 ) -> Option<u64> {
-    if state.position == *target {
+    if from.position == *target {
         return Some(0);
     }
 
-    if is_white_tile(&state.position) {
+    if is_white_tile(&from.position) {
         return None;
     }
 
-    if let Mode::Skiing { velocity } = state.mode {
+    if let Mode::Skiing { velocity } = from.mode {
         if velocity != 0 {
             return None;
         }
     }
 
-    if let Some(cost) = cache.get(state) {
+    if let Some(cost) = cache.get(from) {
         return *cost;
     }
 
-    let path = network.find_best_within_steps(
-        HashSet::from([*state]),
-        &mut |_, focus| {
-            if focus.position == state.position {
+    let result = network.find_best_within_steps(
+        HashSet::from([*from]),
+        &mut |_, state| {
+            if state.position == from.position {
                 return None;
             }
 
-            compute_cost_for_state(state, network, target, piste, cache)
+            compute_cost_from_state(state, network, target, piste, cache)
         },
         &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
-        4
+        MAX_STEPS,
     );
 
-    
-
-
-}
-
-
-
-fn compute_costs_for_position(
-    network: &SkiingInNetwork,
-    position: &XY<u32>,
-) -> HashMap<State, u64> {
-    let states_iter = skiing_states_for_position(*position);
-    network.costs_to_target(&HashSet::from_iter(states_iter))
-}
-
-fn is_white_tile(position: &XY<u32>) -> bool {
-    position.x % 2 == position.y % 2
+    let out = result.map(|find_best_within_steps::Result { score, path }| score + path_cost(&path));
+    cache.insert(*from, out);
+    out
 }
 
 fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
@@ -159,4 +145,12 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
                 travel_direction,
             })
         })
+}
+
+fn is_white_tile(position: &XY<u32>) -> bool {
+    position.x % 2 == position.y % 2
+}
+
+fn path_cost(edges: &[Edge<State>]) -> u64 {
+    edges.iter().map(|edge| edge.cost as u64).sum()
 }
