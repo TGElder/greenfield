@@ -59,14 +59,15 @@ impl System {
                 return false;
             };
 
-            free(current_plan, reserved);
-
             let Some(location) = locations.get(id) else {
                 return false;
             };
+
             let Some(piste) = pistes.get(location) else {
                 return false;
             };
+
+            free(current_plan, reserved);
 
             let from = last_state(current_plan);
             *current_plan = match (
