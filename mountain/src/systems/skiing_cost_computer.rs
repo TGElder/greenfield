@@ -89,7 +89,7 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
         .iter()
         .copied()
         .flat_map(move |travel_direction| {
-            (0..=VELOCITY_LEVELS).map(move |velocity| State {
+            (0..VELOCITY_LEVELS).map(move |velocity| State {
                 position,
                 mode: Mode::Skiing { velocity },
                 travel_direction,
