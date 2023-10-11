@@ -91,6 +91,19 @@ fn compute_costs_for_target(
     out
 }
 
+fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
+    DIRECTIONS
+        .iter()
+        .copied()
+        .flat_map(move |travel_direction| {
+            (0..VELOCITY_LEVELS).map(move |velocity| State {
+                position,
+                mode: Mode::Skiing { velocity },
+                travel_direction,
+            })
+        })
+}
+
 fn compute_cost_from_state(
     from: &State,
     network: &SkiingNetwork,
@@ -102,14 +115,14 @@ fn compute_cost_from_state(
         return Some(0);
     }
 
-    if is_white_tile(&from.position) {
-        return None;
-    }
-
     if let Mode::Skiing { velocity } = from.mode {
         if velocity != 0 {
             return None;
         }
+    }
+
+    if is_white_tile(&from.position) {
+        return None;
     }
 
     if let Some(cost) = cache.get(from) {
@@ -132,19 +145,6 @@ fn compute_cost_from_state(
     let out = result.map(|find_best_within_steps::Result { score, path }| score + path_cost(&path));
     cache.insert(*from, out);
     out
-}
-
-fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
-    DIRECTIONS
-        .iter()
-        .copied()
-        .flat_map(move |travel_direction| {
-            (0..VELOCITY_LEVELS).map(move |velocity| State {
-                position,
-                mode: Mode::Skiing { velocity },
-                travel_direction,
-            })
-        })
 }
 
 fn is_white_tile(position: &XY<u32>) -> bool {
