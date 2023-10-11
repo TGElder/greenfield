@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 use std::iter::{empty, once};
 use std::time::Duration;
 
-use commons::grid::OFFSETS_8;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
@@ -17,8 +16,6 @@ use crate::{
 const TURNING_DURATION: Duration = Duration::from_secs(1);
 const SKIS_ON_DURATION: Duration = Duration::from_secs(10);
 const SKIS_OFF_DURATION: Duration = Duration::from_secs(10);
-const WALK_DURATION: Duration = Duration::from_micros(1_000_000);
-const WALK_DIAGONAL_DURATION: Duration = Duration::from_micros(1_414_214);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
@@ -40,7 +37,6 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
         Box::new(
             self.poling_edges(from)
-                .chain(self.walk(from))
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
                 .filter(|edge| {
@@ -259,30 +255,6 @@ impl<'a> SkiingNetwork<'a> {
             })
     }
 
-    fn walk(&'a self, from: &'a State) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        once(from)
-            .filter(|from| from.mode == Mode::Walking)
-            .flat_map(|from| {
-                OFFSETS_8
-                    .iter()
-                    .flat_map(|offset| {
-                        self.terrain
-                            .offset(from.position, offset)
-                            .map(|neighbour| (offset, neighbour))
-                    })
-                    .filter(|(_, neighbour)| !self.reserved[neighbour])
-                    .map(|(offset, neighbour)| Edge {
-                        from: *from,
-                        to: State {
-                            position: neighbour,
-                            mode: Mode::Walking,
-                            ..*from
-                        },
-                        cost: walk_duration(offset).as_micros().try_into().unwrap(),
-                    })
-            })
-    }
-
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
@@ -296,17 +268,6 @@ fn get_skiing_velocity(state: &State) -> Option<&u8> {
             ..
         } => Some(velocity),
         _ => None,
-    }
-}
-
-fn walk_duration(XY { x, y }: &XY<i32>) -> Duration {
-    match x.abs() + y.abs() {
-        1 => WALK_DURATION,
-        2 => WALK_DIAGONAL_DURATION,
-        value => panic!(
-            "{} is not a valid key for values precomputed to cover offsets in OFFSETS_8",
-            value
-        ),
     }
 }
 
