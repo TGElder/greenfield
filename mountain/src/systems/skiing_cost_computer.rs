@@ -115,18 +115,20 @@ fn compute_cost_from_state(
         return Some(0);
     }
 
-    if let Mode::Skiing { velocity } = from.mode {
-        if velocity != 0 {
-            return None;
-        }
-    }
-
     if is_white_tile(&from.position) {
         return None;
     }
 
     if let Some(cost) = cache.get(from) {
         return *cost;
+    }
+
+    if !matches!(from.mode, Mode::Skiing { velocity: 0 }) {
+        let zero_state = State {
+            mode: Mode::Skiing { velocity: 0 },
+            ..*from
+        };
+        compute_cost_from_state(&zero_state, network, target, piste, cache)?;
     }
 
     let result = network.find_best_within_steps(
