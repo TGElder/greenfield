@@ -27,14 +27,15 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
+use crate::model::car::Car;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    avatar_artist, distance_cost_computer, framer, lift, lift_artist, lift_entry, overlay,
-    piste_adopter, planner, skiing_cost_computer, target_setter,
+    avatar_artist, carousel, distance_cost_computer, framer, lift, lift_artist, lift_entry,
+    overlay, piste_adopter, planner, skiing_cost_computer, target_setter,
 };
 
 fn main() {
@@ -51,6 +52,7 @@ fn main() {
                 distance_costs: HashMap::default(),
                 skiing_costs: HashMap::default(),
                 lifts: HashMap::default(),
+                cars: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
                 terrain,
@@ -100,6 +102,7 @@ fn main() {
                     piste: Rgba::new(0, 0, 255, 128),
                 }),
                 planner: planner::System::new(),
+                carousel: carousel::System::new(),
             },
             services: Services {
                 clock: services::clock::Service::new(),
@@ -210,6 +213,7 @@ struct Components {
     distance_costs: HashMap<usize, PisteCosts>,
     skiing_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
+    cars: HashMap<usize, Car>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -230,6 +234,7 @@ struct Handlers {
 struct Systems {
     overlay: overlay::System,
     planner: planner::System,
+    carousel: carousel::System,
 }
 
 struct Services {
@@ -286,15 +291,27 @@ impl EventHandler for Game {
         );
         self.handlers.lift_builder.handle(
             event,
-            &mut self.components.lifts,
             &self.mouse_xy,
+            &self.components.terrain,
+            &mut self.components.lifts,
             &mut self.systems.overlay,
             &mut self.services.id_allocator,
+            &mut self.components.cars,
             graphics,
         );
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
+
+        self.systems.carousel.run(
+            &self.services.clock.get_micros(),
+            &self.components.terrain,
+            &self.components.lifts,
+            &mut self.components.reserved,
+            &mut self.components.plans,
+            &mut self.components.locations,
+            &mut self.components.cars,
+        );
 
         piste_adopter::run(
             &self.components.plans,
@@ -309,6 +326,7 @@ impl EventHandler for Game {
             &self.components.lifts,
             &mut self.components.targets,
         );
+
         self.systems.planner.run(systems::planner::Parameters {
             terrain: &self.components.terrain,
             micros: &self.services.clock.get_micros(),
@@ -320,18 +338,18 @@ impl EventHandler for Game {
             skiing_costs: &self.components.skiing_costs,
             reserved: &mut self.components.reserved,
         });
-        lift_entry::run(
-            &self.components.plans,
-            &self.components.lifts,
-            &mut self.components.targets,
-            &mut self.components.locations,
-        );
-        lift::run(
-            &self.components.lifts,
-            &mut self.components.locations,
-            &mut self.components.reserved,
-            &mut self.components.plans,
-        );
+        // lift_entry::run(
+        //     &self.components.plans,
+        //     &self.components.lifts,
+        //     &mut self.components.targets,
+        //     &mut self.components.locations,
+        // );
+        // lift::run(
+        //     &self.components.lifts,
+        //     &mut self.components.locations,
+        //     &mut self.components.reserved,
+        //     &mut self.components.plans,
+        // );
         framer::run(
             &self.components.terrain,
             &self.services.clock.get_micros(),
