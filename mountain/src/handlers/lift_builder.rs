@@ -22,6 +22,18 @@ pub struct Bindings {
     pub carousel: Binding,
 }
 
+pub struct Parameters<'a> {
+    pub event: &'a engine::events::Event,
+    pub mouse_xy: &'a Option<XY<u32>>,
+    pub terrain: &'a Grid<f32>,
+    pub lifts: &'a mut HashMap<usize, Lift>,
+    pub carousels: &'a mut HashMap<usize, Carousel>,
+    pub overlay: &'a mut overlay::System,
+    pub id_allocator: &'a mut id_allocator::Service,
+    pub cars: &'a mut HashMap<usize, Car>,
+    pub graphics: &'a mut dyn engine::graphics::Graphics,
+}
+
 impl Handler {
     pub fn new(bindings: Bindings) -> Handler {
         Handler {
@@ -32,15 +44,17 @@ impl Handler {
 
     pub fn handle(
         &mut self,
-        event: &engine::events::Event,
-        mouse_xy: &Option<XY<u32>>,
-        terrain: &Grid<f32>,
-        lifts: &mut HashMap<usize, Lift>,
-        carousels: &mut HashMap<usize, Carousel>,
-        overlay: &mut overlay::System,
-        id_allocator: &mut id_allocator::Service,
-        cars: &mut HashMap<usize, Car>,
-        graphics: &mut dyn engine::graphics::Graphics,
+        Parameters {
+            event,
+            mouse_xy,
+            terrain,
+            lifts,
+            carousels,
+            overlay,
+            id_allocator,
+            cars,
+            graphics,
+        }: Parameters<'_>,
     ) {
         if !(self.bindings.carousel.binds_event(event)
             || self.bindings.teleporter.binds_event(event))

@@ -298,32 +298,34 @@ impl EventHandler for Game {
             &mut self.systems.overlay,
             &mut self.services.id_allocator,
         );
-        self.handlers.lift_builder.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.terrain,
-            &mut self.components.lifts,
-            &mut self.components.carousels,
-            &mut self.systems.overlay,
-            &mut self.services.id_allocator,
-            &mut self.components.cars,
-            graphics,
-        );
+        self.handlers
+            .lift_builder
+            .handle(handlers::lift_builder::Parameters {
+                event,
+                mouse_xy: &self.mouse_xy,
+                terrain: &self.components.terrain,
+                lifts: &mut self.components.lifts,
+                carousels: &mut self.components.carousels,
+                overlay: &mut self.systems.overlay,
+                id_allocator: &mut self.services.id_allocator,
+                cars: &mut self.components.cars,
+                graphics,
+            });
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
 
-        self.systems.carousel.run(
-            &self.services.clock.get_micros(),
-            &self.components.terrain,
-            &self.components.lifts,
-            &self.components.carousels,
-            &mut self.components.reserved,
-            &mut self.components.plans,
-            &mut self.components.locations,
-            &mut self.components.targets,
-            &mut self.components.cars,
-        );
+        self.systems.carousel.run(systems::carousel::Parameters {
+            micros: &self.services.clock.get_micros(),
+            terrain: &self.components.terrain,
+            lifts: &self.components.lifts,
+            carousels: &self.components.carousels,
+            reserved: &mut self.components.reserved,
+            plans: &mut self.components.plans,
+            locations: &mut self.components.locations,
+            targets: &mut self.components.targets,
+            cars: &mut self.components.cars,
+        });
 
         piste_adopter::run(
             &self.components.plans,
