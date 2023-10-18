@@ -4,6 +4,7 @@ use commons::geometry::xyz;
 use commons::grid::Grid;
 
 use crate::model::car::Car;
+use crate::model::carousel::Carousel;
 use crate::model::direction::Direction;
 use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
@@ -22,9 +23,11 @@ impl System {
         micros: &u128,
         terrain: &Grid<f32>,
         lifts: &HashMap<usize, Lift>,
+        carousels: &HashMap<usize, Carousel>,
         reserved: &mut Grid<bool>,
         plans: &mut HashMap<usize, Plan>,
         locations: &mut HashMap<usize, usize>,
+        targets: &mut HashMap<usize, usize>,
         cars: &mut HashMap<usize, Car>,
     ) {
         let Some(last_micros) = self.last_micros else {
@@ -42,9 +45,11 @@ impl System {
                 &elasped_seconds,
                 terrain,
                 lifts,
+                carousels,
                 reserved,
                 plans,
                 locations,
+                targets,
                 car,
             )
         }
@@ -56,14 +61,20 @@ impl System {
         elasped_seconds: &f32,
         terrain: &Grid<f32>,
         lifts: &HashMap<usize, Lift>,
+        carousels: &HashMap<usize, Carousel>,
         reserved: &mut Grid<bool>,
         plans: &mut HashMap<usize, Plan>,
         locations: &mut HashMap<usize, usize>,
+        targets: &mut HashMap<usize, usize>,
         car: &mut Car,
     ) {
         let Some(lift) = lifts.get(&car.lift) else {
             return;
         };
+        let Some(carousel) = carousels.get(&car.lift) else {
+            return;
+        };
+
         if reserved[lift.to] {
             return;
         }
@@ -74,7 +85,7 @@ impl System {
         let midpoint =
             ((from.x - to.x).powf(2.0) + (from.y - to.y).powf(2.0) + (from.z - to.z)).sqrt();
         let end = midpoint * 2.0;
-        let new_position = car.position + lift.velocity * elasped_seconds;
+        let new_position = car.position + carousel.velocity * elasped_seconds;
 
         // TODO what if both drop off and pick up happen?
 
@@ -102,10 +113,10 @@ impl System {
         else if new_position >= end {
             car.position = new_position - end;
             plans.retain(|id, plan| {
-                if matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from)
-                {
+                if matches!(targets.get(id), Some(&target) if target == car.lift) && matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
                     println!("{} is riding in {}", id, car_id);
                     locations.insert(*id, *car_id);
+                    targets.remove(id);
                     reserved[lift.from] = false;
                     return false;
                 }

@@ -5,6 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::model::car::Car;
+use crate::model::carousel::Carousel;
 use crate::model::lift::Lift;
 use crate::services::id_allocator;
 use crate::systems::overlay;
@@ -12,14 +13,19 @@ use crate::systems::overlay;
 pub const LIFT_VELOCITY: f32 = 2.0;
 
 pub struct Handler {
-    pub binding: Binding,
+    pub bindings: Bindings,
     from: Option<XY<u32>>,
 }
 
+pub struct Bindings {
+    pub teleporter: Binding,
+    pub carousel: Binding,
+}
+
 impl Handler {
-    pub fn new(binding: Binding) -> Handler {
+    pub fn new(bindings: Bindings) -> Handler {
         Handler {
-            binding,
+            bindings,
             from: None,
         }
     }
@@ -30,12 +36,15 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         terrain: &Grid<f32>,
         lifts: &mut HashMap<usize, Lift>,
+        carousels: &mut HashMap<usize, Carousel>,
         overlay: &mut overlay::System,
         id_allocator: &mut id_allocator::Service,
         cars: &mut HashMap<usize, Car>,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
-        if !self.binding.binds_event(event) {
+        if !(self.bindings.carousel.binds_event(event)
+            || self.bindings.teleporter.binds_event(event))
+        {
             return;
         }
 
@@ -52,36 +61,39 @@ impl Handler {
 
         let to = position;
         let lift_id = id_allocator.next_id();
-        lifts.insert(
-            lift_id,
-            Lift {
-                from,
-                to,
-                velocity: LIFT_VELOCITY,
-            },
-        );
+        lifts.insert(lift_id, Lift { from, to });
         self.from = None;
 
         overlay.update(XYRectangle { from, to: from });
         overlay.update(XYRectangle { from: to, to });
 
         // cars
-        let from = xyz(from.x as f32, from.y as f32, terrain[from]);
-        let to = xyz(to.x as f32, to.y as f32, terrain[to]);
 
-        let length =
-            ((from.x - to.x).powf(2.0) + (from.y - to.y).powf(2.0) + (from.z - to.z)).sqrt();
-
-        let mut position = 0.0;
-        while position < length * 2.0 {
-            position += 10.0;
-            cars.insert(
-                id_allocator.next_id(),
-                Car {
-                    position,
-                    lift: lift_id,
+        if self.bindings.carousel.binds_event(event) {
+            carousels.insert(
+                lift_id,
+                Carousel {
+                    velocity: LIFT_VELOCITY,
                 },
             );
+
+            let from = xyz(from.x as f32, from.y as f32, terrain[from]);
+            let to = xyz(to.x as f32, to.y as f32, terrain[to]);
+
+            let length =
+                ((from.x - to.x).powf(2.0) + (from.y - to.y).powf(2.0) + (from.z - to.z)).sqrt();
+
+            let mut position = 0.0;
+            while position < length * 2.0 {
+                position += 10.0;
+                cars.insert(
+                    id_allocator.next_id(),
+                    Car {
+                        position,
+                        lift: lift_id,
+                    },
+                );
+            }
         }
     }
 }
