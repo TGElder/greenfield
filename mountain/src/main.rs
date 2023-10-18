@@ -305,9 +305,9 @@ impl EventHandler for Game {
                 mouse_xy: &self.mouse_xy,
                 terrain: &self.components.terrain,
                 lifts: &mut self.components.lifts,
-                carousels: &mut self.components.carousels,
                 overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.services.id_allocator,
+                carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
                 graphics,
             });

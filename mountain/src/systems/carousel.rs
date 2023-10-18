@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use commons::geometry::xyz;
 use commons::grid::Grid;
+use nalgebra::Point3;
 
 use crate::model::car::Car;
 use crate::model::carousel::Carousel;
@@ -65,15 +65,13 @@ impl System {
                 return;
             }
 
-            let from = xyz(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]);
-            let to = xyz(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]);
-
-            let midpoint =
-                ((from.x - to.x).powf(2.0) + (from.y - to.y).powf(2.0) + (from.z - to.z)).sqrt();
+            let midpoint = nalgebra::distance(
+                &Point3::new(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]),
+                &Point3::new(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]),
+            );
             let end = midpoint * 2.0;
-            let new_position = car.position + carousel.velocity * elasped_seconds;
 
-            // TODO what if both drop off and pick up happen?
+            let new_position = car.position + carousel.velocity * elasped_seconds;
 
             // drop off
             if car.position <= midpoint && new_position > midpoint {
@@ -99,14 +97,17 @@ impl System {
             else if new_position >= end {
                 car.position = new_position - end;
                 plans.retain(|id, plan| {
-                    if matches!(targets.get(id), Some(&target) if target == car.lift) && matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
-                        println!("{} is riding in {}", id, car_id);
-                        locations.insert(*id, *car_id);
-                        targets.remove(id);
-                        reserved[lift.from] = false;
-                        return false;
+                    if !matches!(targets.get(id), Some(&target) if target == car.lift) {
+                        return true;
                     }
-                    true
+                    if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
+                        return true;
+                    }
+                    println!("{} was picked up by {}", id, car_id);
+                    targets.remove(id);
+                    locations.insert(*id, *car_id);
+                    reserved[lift.from] = false;
+                    false
                 });
             } else {
                 car.position = new_position;

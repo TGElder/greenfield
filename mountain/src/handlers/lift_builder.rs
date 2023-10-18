@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
+use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
+use nalgebra::Point3;
 
 use crate::model::car::Car;
 use crate::model::carousel::Carousel;
@@ -11,6 +12,7 @@ use crate::services::id_allocator;
 use crate::systems::overlay;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
+pub const CAR_INTERVAL_METRES: f32 = 10.0;
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -27,9 +29,9 @@ pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub lifts: &'a mut HashMap<usize, Lift>,
-    pub carousels: &'a mut HashMap<usize, Carousel>,
     pub overlay: &'a mut overlay::System,
     pub id_allocator: &'a mut id_allocator::Service,
+    pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -49,9 +51,9 @@ impl Handler {
             mouse_xy,
             terrain,
             lifts,
-            carousels,
             overlay,
             id_allocator,
+            carousels,
             cars,
             graphics,
         }: Parameters<'_>,
@@ -78,10 +80,12 @@ impl Handler {
         lifts.insert(lift_id, Lift { from, to });
         self.from = None;
 
+        // update overlay
+
         overlay.update(XYRectangle { from, to: from });
         overlay.update(XYRectangle { from: to, to });
 
-        // cars
+        // setup carousel
 
         if self.bindings.carousel.binds_event(event) {
             carousels.insert(
@@ -91,15 +95,14 @@ impl Handler {
                 },
             );
 
-            let from = xyz(from.x as f32, from.y as f32, terrain[from]);
-            let to = xyz(to.x as f32, to.y as f32, terrain[to]);
-
-            let length =
-                ((from.x - to.x).powf(2.0) + (from.y - to.y).powf(2.0) + (from.z - to.z)).sqrt();
+            let length = nalgebra::distance(
+                &Point3::new(from.x as f32, from.y as f32, terrain[from]),
+                &Point3::new(to.x as f32, to.y as f32, terrain[to]),
+            );
 
             let mut position = 0.0;
             while position < length * 2.0 {
-                position += 10.0;
+                position += CAR_INTERVAL_METRES;
                 cars.insert(
                     id_allocator.next_id(),
                     Car {
