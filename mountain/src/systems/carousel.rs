@@ -53,11 +53,8 @@ impl System {
 
         self.last_micros = Some(*micros);
 
-        for (car_id, car) in cars {
-            let Some(lift) = lifts.get(&car.lift) else {
-                return;
-            };
-            let Some(carousel) = carousels.get(&car.lift) else {
+        for (carousel_id, carousel) in carousels {
+            let Some(lift) = lifts.get(carousel_id) else {
                 return;
             };
 
@@ -65,52 +62,58 @@ impl System {
                 return;
             }
 
-            let midpoint = nalgebra::distance(
-                &Point3::new(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]),
-                &Point3::new(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]),
-            );
-            let end = midpoint * 2.0;
+            for car_id in carousel.cars.iter() {
+                let Some(car) = cars.get_mut(car_id) else {
+                    continue;
+                };
 
-            let new_position = car.position + carousel.velocity * elasped_seconds;
+                let midpoint = nalgebra::distance(
+                    &Point3::new(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]),
+                    &Point3::new(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]),
+                );
+                let end = midpoint * 2.0;
 
-            // drop off
-            if car.position <= midpoint && new_position > midpoint {
-                car.position = new_position;
-                locations.retain(|id, location| {
-                    if location != car_id {
-                        return true;
-                    }
-                    println!("{} was dropped off from {}", id, car_id);
-                    plans.insert(
-                        *id,
-                        Plan::Stationary(State {
-                            position: lift.to,
-                            mode: Mode::Skiing { velocity: 0 },
-                            travel_direction: Direction::NorthEast,
-                        }),
-                    );
-                    reserved[lift.to] = true;
-                    false
-                });
-            }
-            // pick up
-            else if new_position >= end {
-                car.position = new_position - end;
-                plans.retain(|id, plan| {
-                    if !matches!(targets.get(id), Some(&target) if target == car.lift) {
-                        return true;
-                    }
-                    if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
-                        return true;
-                    }
-                    println!("{} was picked up by {}", id, car_id);
-                    targets.remove(id);
-                    locations.insert(*id, *car_id);
-                    reserved[lift.from] = false;
-                    false
-                });
-            } else {
-                car.position = new_position;
+                let new_position = car.position + carousel.velocity * elasped_seconds;
+
+                // drop off
+                if car.position <= midpoint && new_position > midpoint {
+                    car.position = new_position;
+                    locations.retain(|location_id, location| {
+                        if *location != *car_id {
+                            return true;
+                        }
+                        println!("{} was dropped off from {}", location_id, car_id);
+                        plans.insert(
+                            *location_id,
+                            Plan::Stationary(State {
+                                position: lift.to,
+                                mode: Mode::Skiing { velocity: 0 },
+                                travel_direction: Direction::NorthEast,
+                            }),
+                        );
+                        reserved[lift.to] = true;
+                        false
+                    });
+                }
+                // pick up
+                else if new_position >= end {
+                    car.position = new_position - end;
+                    plans.retain(|plan_id, plan| {
+                        if !matches!(targets.get(plan_id), Some(&target) if target == *carousel_id) {
+                            return true;
+                        }
+                        if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
+                            return true;
+                        }
+                        println!("{} was picked up by {}", plan_id, car_id);
+                        targets.remove(plan_id);
+                        locations.insert(*plan_id, *car_id);
+                        reserved[lift.from] = false;
+                        false
+                    });
+                } else {
+                    car.position = new_position;
+                }
             }
         }
     }

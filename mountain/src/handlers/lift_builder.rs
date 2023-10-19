@@ -88,29 +88,27 @@ impl Handler {
         // setup carousel
 
         if self.bindings.carousel.binds_event(event) {
-            carousels.insert(
-                lift_id,
-                Carousel {
-                    velocity: LIFT_VELOCITY,
-                },
-            );
-
             let length = nalgebra::distance(
                 &Point3::new(from.x as f32, from.y as f32, terrain[from]),
                 &Point3::new(to.x as f32, to.y as f32, terrain[to]),
             );
 
             let mut position = 0.0;
+            let mut car_vec = vec![];
             while position < length * 2.0 {
                 position += CAR_INTERVAL_METRES;
-                cars.insert(
-                    id_allocator.next_id(),
-                    Car {
-                        position,
-                        lift: lift_id,
-                    },
-                );
+                let car_id = id_allocator.next_id();
+                cars.insert(car_id, Car { position });
+                car_vec.push(car_id);
             }
+
+            carousels.insert(
+                lift_id,
+                Carousel {
+                    velocity: LIFT_VELOCITY,
+                    cars: car_vec,
+                },
+            );
         }
     }
 }
