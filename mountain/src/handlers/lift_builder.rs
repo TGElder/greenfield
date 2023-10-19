@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XYRectangle, XY, XYZ};
+use commons::geometry::{xy, XYRectangle, XY, XYZ, xyz};
 use commons::grid::Grid;
 use engine::binding::Binding;
 use nalgebra::Point3;
 
 use crate::model::car::Car;
 use crate::model::carousel::Carousel;
-use crate::model::lift::Lift;
+use crate::model::lift::{Lift, self};
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
@@ -77,7 +77,27 @@ impl Handler {
 
         let to = position;
         let lift_id = id_allocator.next_id();
-        lifts.insert(lift_id, Lift { from, to });
+        let from_3d = xyz(from.x as f32, from.y as f32, terrain[from]);
+        let to_3d = xyz(to.x as f32, to.y as f32, terrain[to]);
+        let length = nalgebra::distance(
+            &Point3::new(from_3d.x, from_3d.y, from_3d.z),
+            &Point3::new(to_3d.x, to_3d.y, to_3d.z)
+        );
+        let nodes = vec![
+            lift::Node{ 
+                from: from_3d, 
+                to: to_3d, 
+                distance_metres: length,
+                from_action: Some(lift::Action::PickUp(from)),
+            },
+            lift::Node{ 
+                    from: from_3d, 
+                    to: to_3d, 
+                    distance_metres: length,
+                    from_action: Some(lift::Action::DropOff(to)),
+            }
+                    ];
+        lifts.insert(lift_id, Lift { nodes  });
         self.from = None;
 
         // update overlay
@@ -95,21 +115,18 @@ impl Handler {
                 },
             );
 
-            let length = nalgebra::distance(
-                &Point3::new(from.x as f32, from.y as f32, terrain[from]),
-                &Point3::new(to.x as f32, to.y as f32, terrain[to]),
-            );
+            let mut from_position = 0.0;
+            let mut car_position = 0.0;
+            for node in nodes {
 
-            let mut position = 0.0;
-            while position < length * 2.0 {
-                position += CAR_INTERVAL_METRES;
-                cars.insert(
-                    id_allocator.next_id(),
-                    Car {
-                        position,
-                        lift: lift_id,
-                    },
-                );
+                while car_position < from_position + node.distance_metres {
+                    cars.insert(
+                        id_allocator.next_id(),
+                        Car { lift: lift_id, position: car_position });
+                    car_position += CAR_INTERVAL_METRES;
+                }
+
+                from_position = from_position + node.distance_metres;
             }
         }
     }

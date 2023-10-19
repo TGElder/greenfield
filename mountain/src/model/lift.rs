@@ -1,6 +1,17 @@
-use commons::geometry::XY;
+use commons::geometry::{XY, XYZ};
 
 pub struct Lift {
-    pub from: XY<u32>,
-    pub to: XY<u32>,
+    pub nodes: Vec<Node>,
+}
+
+pub struct Node{
+    pub from: XYZ<f32>,
+    pub to: XYZ<f32>,
+    pub distance_metres: f32,
+    pub from_action: Option<Action>,
+}
+
+pub enum Action{
+    PickUp(XY<u32>),
+    DropOff(XY<u32>)
 }
