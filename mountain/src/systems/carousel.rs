@@ -61,6 +61,8 @@ impl System {
                 return;
             };
 
+            let max_metres_travelled = 
+
             if reserved[lift.to] {
                 return;
             }
