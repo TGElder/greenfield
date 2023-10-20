@@ -91,7 +91,7 @@ impl System {
             events.sort_by(|b, a| unsafe_ordering(&b.metres, &a.metres));
 
             for event in events {
-                if event.metres > max_travel_metres {
+                if event.metres >= max_travel_metres {
                     break;
                 }
                 match event.action {
