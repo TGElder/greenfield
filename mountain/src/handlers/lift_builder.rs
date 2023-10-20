@@ -107,27 +107,32 @@ impl Handler {
 
         // setup carousel
 
-        if self.bindings.carousel.binds_event(event) {
-            carousels.insert(
-                lift_id,
-                Carousel {
-                    velocity: LIFT_VELOCITY,
-                },
-            );
+        if self.bindings.carousel.binds_event(event) {    
 
             let mut from_position = 0.0;
             let mut car_position = 0.0;
-            for node in nodes {
+            let mut car_vec = vec![];
+            for (segment, node) in nodes.iter().enumerate() {
 
                 while car_position < from_position + node.distance_metres {
+                    let car_id = id_allocator.next_id();
                     cars.insert(
-                        id_allocator.next_id(),
-                        Car { lift: lift_id, position: car_position });
+                        car_id,
+                        Car {  position_metres: car_position, segment });
+                    car_vec.push(car_id);
                     car_position += CAR_INTERVAL_METRES;
                 }
 
                 from_position = from_position + node.distance_metres;
             }
+
+            carousels.insert(
+                lift_id,
+                Carousel {
+                    velocity: LIFT_VELOCITY,
+                    cars: car_vec,
+                },
+            );
         }
     }
 }
