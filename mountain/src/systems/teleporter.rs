@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use commons::grid::Grid;
 
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::skiing::{Mode, Plan, State};
 
 pub fn run(
@@ -19,20 +19,26 @@ pub fn run(
             return true;
         };
 
-        if reserved[lift.to] {
-            return true;
+        for node in lift.nodes.iter() {
+            if let Some(lift::Action::DropOff(to)) = node.from_action {
+                if reserved[to] {
+                    return true;
+                }
+
+                reserved[state.position] = false;
+                plans.insert(
+                    *id,
+                    Plan::Stationary(State {
+                        position: to,
+                        mode: Mode::Skiing { velocity: 1 },
+                        travel_direction: state.travel_direction,
+                    }),
+                );
+                reserved[to] = true;
+                return false;
+            }
         }
 
-        reserved[state.position] = false;
-        plans.insert(
-            *id,
-            Plan::Stationary(State {
-                position: lift.to,
-                mode: Mode::Skiing { velocity: 1 },
-                travel_direction: state.travel_direction,
-            }),
-        );
-        reserved[lift.to] = true;
         false
     });
 }

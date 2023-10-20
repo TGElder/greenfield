@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::model::carousel::Carousel;
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::skiing::{Plan, State};
 
 pub fn run(
@@ -15,18 +15,25 @@ pub fn run(
         let Plan::Stationary(State { position, .. }) = plan else {
             continue;
         };
-        let Some(target) = targets.get(id) else {
+        let Some(&target) = targets.get(id) else {
             continue;
         };
-        if carousels.contains_key(target) {
-            return;
+        if carousels.contains_key(&target) {
+            continue;
         }
-        match lifts.get(target) {
-            Some(Lift { from, .. }) if from == position => {
-                locations.insert(*id, *target);
-                targets.remove(id);
+        let Some(lift) = lifts.get(&target) else {
+            continue;
+        };
+
+        for node in lift.nodes.iter() {
+            match node.from_action {
+                Some(lift::Action::PickUp(from)) if from == *position => {
+                    locations.insert(*id, target);
+                    targets.remove(id);
+                    continue;
+                }
+                _ => (),
             }
-            _ => (),
         }
     }
 }

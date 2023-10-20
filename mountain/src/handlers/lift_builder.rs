@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XYRectangle, XY, XYZ, xyz};
+use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 use nalgebra::Point3;
 
 use crate::model::car::Car;
 use crate::model::carousel::Carousel;
-use crate::model::lift::{Lift, self};
+use crate::model::lift::{self, Lift};
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
@@ -81,49 +81,43 @@ impl Handler {
         let to_3d = xyz(to.x as f32, to.y as f32, terrain[to]);
         let length = nalgebra::distance(
             &Point3::new(from_3d.x, from_3d.y, from_3d.z),
-            &Point3::new(to_3d.x, to_3d.y, to_3d.z)
+            &Point3::new(to_3d.x, to_3d.y, to_3d.z),
         );
         let nodes = vec![
-            lift::Node{ 
-                from: from_3d, 
-                to: to_3d, 
+            lift::Node {
+                from: from_3d,
+                to: to_3d,
                 distance_metres: length,
                 from_action: Some(lift::Action::PickUp(from)),
             },
-            lift::Node{ 
-                    from: from_3d, 
-                    to: to_3d, 
-                    distance_metres: length,
-                    from_action: Some(lift::Action::DropOff(to)),
-            }
-                    ];
-        lifts.insert(lift_id, Lift { nodes  });
-        self.from = None;
-
-        // update overlay
-
-        overlay.update(XYRectangle { from, to: from });
-        overlay.update(XYRectangle { from: to, to });
+            lift::Node {
+                from: from_3d,
+                to: to_3d,
+                distance_metres: length,
+                from_action: Some(lift::Action::DropOff(to)),
+            },
+        ];
 
         // setup carousel
 
-        if self.bindings.carousel.binds_event(event) {    
-
-            let mut from_position = 0.0;
+        if self.bindings.carousel.binds_event(event) {
             let mut car_position = 0.0;
             let mut car_vec = vec![];
             for (segment, node) in nodes.iter().enumerate() {
-
-                while car_position < from_position + node.distance_metres {
+                while car_position < node.distance_metres {
                     let car_id = id_allocator.next_id();
                     cars.insert(
                         car_id,
-                        Car {  position_metres: car_position, segment });
+                        Car {
+                            position_metres: car_position,
+                            segment,
+                        },
+                    );
                     car_vec.push(car_id);
                     car_position += CAR_INTERVAL_METRES;
                 }
 
-                from_position = from_position + node.distance_metres;
+                car_position -= node.distance_metres;
             }
 
             carousels.insert(
@@ -134,5 +128,15 @@ impl Handler {
                 },
             );
         }
+
+        // insert lift
+
+        lifts.insert(lift_id, Lift { nodes });
+        self.from = None;
+
+        // update overlay
+
+        overlay.update(XYRectangle { from, to: from });
+        overlay.update(XYRectangle { from: to, to });
     }
 }

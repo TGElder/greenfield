@@ -317,7 +317,6 @@ impl EventHandler for Game {
 
         self.systems.carousel.run(systems::carousel::Parameters {
             micros: &self.services.clock.get_micros(),
-            terrain: &self.components.terrain,
             lifts: &self.components.lifts,
             carousels: &self.components.carousels,
             reserved: &mut self.components.reserved,
@@ -379,7 +378,6 @@ impl EventHandler for Game {
         lift_artist::run(
             graphics,
             &self.components.lifts,
-            &self.components.terrain,
             &mut self.components.drawings,
         );
         self.systems.overlay.run(

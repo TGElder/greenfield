@@ -1,3 +1,4 @@
 pub struct Car {
-    pub position: f32,
+    pub position_metres: f32,
+    pub segment: usize,
 }

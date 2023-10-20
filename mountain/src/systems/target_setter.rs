@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
 use rand::seq::SliceRandom;
 
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::piste::Piste;
 use crate::model::skiing::Plan;
 
@@ -33,12 +33,18 @@ pub fn run(
 
         let candidates = lifts
             .iter()
-            .filter(|(_, lift)| piste.grid.in_bounds(lift.from))
-            .filter(|(_, lift)| piste.grid[lift.from])
-            .filter(|(_, lift)| terrain[lift.from] < elevation)
+            .flat_map(|(i, lift)| lift.nodes.iter().map(move |node| (i, node)))
+            .flat_map(|(i, node)| match node.from_action {
+                Some(lift::Action::PickUp(position)) => Some((i, position)),
+                _ => None,
+            })
+            .filter(|(_, position)| piste.grid.in_bounds(position))
+            .filter(|(_, position)| piste.grid[position])
+            .filter(|(_, position)| terrain[position] < elevation)
             .map(|(id, _)| *id)
-            .collect::<Vec<_>>();
-        let choice = candidates.choose(&mut rand::thread_rng());
+            .collect::<HashSet<_>>();
+        let candidaes = candidates.into_iter().collect::<Vec<_>>();
+        let choice = candidaes.choose(&mut rand::thread_rng());
 
         if let Some(choice) = choice {
             targets.insert(*id, *choice);
