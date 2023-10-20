@@ -46,7 +46,7 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
         let from = nodes
             .iter()
             .flat_map(|node| match node.from_action {
-                Some(lift::Action::DropOff(position)) => Some(position),
+                Some(lift::Action::PickUp(position)) => Some(position),
                 _ => None,
             })
             .filter(|position| grid.in_bounds(position) && grid[position])

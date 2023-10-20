@@ -120,6 +120,8 @@ impl Handler {
                 car_position -= node.distance_metres;
             }
 
+            dbg!(&cars);
+
             carousels.insert(
                 lift_id,
                 Carousel {

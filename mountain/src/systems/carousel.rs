@@ -96,6 +96,7 @@ impl System {
                 }
                 match event.action {
                     lift::Action::PickUp(pick_up_position) => {
+                        println!("{} passed pick up point", event.car_id);
                         plans.retain(|plan_id, plan| {
                             if !matches!(targets.get(plan_id), Some(&target) if target == *lift_id) {
                                 return true;
@@ -111,6 +112,7 @@ impl System {
                         });
                     }
                     lift::Action::DropOff(drop_off_position) => {
+                        println!("{} passed drop off point", event.car_id);
                         if reserved[drop_off_position] {
                             max_travel_metres = event.metres;
                             continue;
@@ -147,7 +149,7 @@ impl System {
                     car.segment = (car.segment + 1) % lift.nodes.len();
                 }
 
-                car.position_metres = residual;
+                car.position_metres += residual;
             }
         }
     }
