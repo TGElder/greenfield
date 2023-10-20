@@ -68,16 +68,16 @@ impl System {
 
             for car_id in carousel.cars.iter() {
                 let Some(car) = cars.get(car_id) else {
-                    return;
+                    continue;
                 };
                 let mut segment = car.segment;
-                let mut residual = max_travel_metres;
                 let mut position_metres = car.position_metres;
+                let mut residual = max_travel_metres;
 
                 while residual >= lift.nodes[segment].distance_metres - position_metres {
                     residual -= lift.nodes[segment].distance_metres - position_metres;
-                    position_metres = 0.0;
                     segment = (segment + 1) % lift.nodes.len();
+                    position_metres = 0.0;
                     if let Some(action) = &lift.nodes[segment].from_action {
                         events.push(Event {
                             car_id: *car_id,
