@@ -1,66 +1,35 @@
 use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
-use commons::grid::Grid;
 use engine::binding::Binding;
-use nalgebra::Point3;
 
-use crate::model::car::Car;
-use crate::model::carousel::Carousel;
 use crate::model::lift::Lift;
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
-pub const LIFT_VELOCITY: f32 = 2.0;
-pub const CAR_INTERVAL_METRES: f32 = 10.0;
-
 pub struct Handler {
-    pub bindings: Bindings,
+    pub binding: Binding,
     from: Option<XY<u32>>,
 }
 
-pub struct Bindings {
-    pub teleporter: Binding,
-    pub carousel: Binding,
-}
-
-pub struct Parameters<'a> {
-    pub event: &'a engine::events::Event,
-    pub mouse_xy: &'a Option<XY<u32>>,
-    pub terrain: &'a Grid<f32>,
-    pub lifts: &'a mut HashMap<usize, Lift>,
-    pub overlay: &'a mut overlay::System,
-    pub id_allocator: &'a mut id_allocator::Service,
-    pub carousels: &'a mut HashMap<usize, Carousel>,
-    pub cars: &'a mut HashMap<usize, Car>,
-    pub graphics: &'a mut dyn engine::graphics::Graphics,
-}
-
 impl Handler {
-    pub fn new(bindings: Bindings) -> Handler {
+    pub fn new(binding: Binding) -> Handler {
         Handler {
-            bindings,
+            binding,
             from: None,
         }
     }
 
     pub fn handle(
         &mut self,
-        Parameters {
-            event,
-            mouse_xy,
-            terrain,
-            lifts,
-            overlay,
-            id_allocator,
-            carousels,
-            cars,
-            graphics,
-        }: Parameters<'_>,
+        event: &engine::events::Event,
+        lifts: &mut HashMap<usize, Lift>,
+        mouse_xy: &Option<XY<u32>>,
+        overlay: &mut overlay::System,
+        id_allocator: &mut id_allocator::Service,
+        graphics: &mut dyn engine::graphics::Graphics,
     ) {
-        if !(self.bindings.carousel.binds_event(event)
-            || self.bindings.teleporter.binds_event(event))
-        {
+        if !self.binding.binds_event(event) {
             return;
         }
 
@@ -76,39 +45,10 @@ impl Handler {
         };
 
         let to = position;
-        let lift_id = id_allocator.next_id();
-        lifts.insert(lift_id, Lift { from, to });
+        lifts.insert(id_allocator.next_id(), Lift { from, to });
         self.from = None;
-
-        // update overlay
 
         overlay.update(XYRectangle { from, to: from });
         overlay.update(XYRectangle { from: to, to });
-
-        // setup carousel
-
-        if self.bindings.carousel.binds_event(event) {
-            let length = nalgebra::distance(
-                &Point3::new(from.x as f32, from.y as f32, terrain[from]),
-                &Point3::new(to.x as f32, to.y as f32, terrain[to]),
-            );
-
-            let mut position = 0.0;
-            let mut car_vec = vec![];
-            while position < length * 2.0 {
-                position += CAR_INTERVAL_METRES;
-                let car_id = id_allocator.next_id();
-                cars.insert(car_id, Car { position });
-                car_vec.push(car_id);
-            }
-
-            carousels.insert(
-                lift_id,
-                Carousel {
-                    velocity: LIFT_VELOCITY,
-                    cars: car_vec,
-                },
-            );
-        }
     }
 }
