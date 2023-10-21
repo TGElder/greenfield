@@ -106,17 +106,17 @@ impl Handler {
                 &Point3::new(to.x as f32, to.y as f32, terrain[to]),
             );
 
-            let mut position = 0.0;
+            let mut meters_from_start = 0.0;
             let mut car_vec = vec![];
-            while position < length * 2.0 {
-                position += CAR_INTERVAL_METERS;
+            while meters_from_start < length * 2.0 {
+                meters_from_start += CAR_INTERVAL_METERS;
                 let car_id = id_allocator.next_id();
                 cars.insert(
                     car_id,
                     Car {
                         lift_id,
                         segment: 0,
-                        meters_from_start_of_segment: position,
+                        meters_from_start,
                     },
                 );
                 car_vec.push(car_id);

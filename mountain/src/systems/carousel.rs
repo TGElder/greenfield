@@ -81,12 +81,11 @@ impl System {
                 );
                 let end = midpoint * 2.0;
 
-                let new_position =
-                    car.meters_from_start_of_segment + carousel.velocity * elasped_seconds;
+                let new_position = car.meters_from_start + carousel.velocity * elasped_seconds;
 
                 // drop off
-                if car.meters_from_start_of_segment <= midpoint && new_position > midpoint {
-                    car.meters_from_start_of_segment = new_position;
+                if car.meters_from_start <= midpoint && new_position > midpoint {
+                    car.meters_from_start = new_position;
                     locations.retain(|location_id, location| {
                         if *location != *car_id {
                             return true;
@@ -106,7 +105,7 @@ impl System {
                 }
                 // pick up
                 else if new_position >= end {
-                    car.meters_from_start_of_segment = new_position - end;
+                    car.meters_from_start = new_position - end;
                     plans.retain(|plan_id, plan| {
                         if !matches!(targets.get(plan_id), Some(&target) if target == *carousel_id) {
                             return true;
@@ -121,7 +120,7 @@ impl System {
                         false
                     });
                 } else {
-                    car.meters_from_start_of_segment = new_position;
+                    car.meters_from_start = new_position;
                 }
             }
         }
