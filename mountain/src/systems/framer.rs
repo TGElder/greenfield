@@ -11,15 +11,20 @@ pub fn run(
     terrain: &Grid<f32>,
     micros: &u128,
     plans: &HashMap<usize, Plan>,
-    frames: &mut HashMap<usize, Frame>,
+    frames: &mut HashMap<usize, Option<Frame>>,
 ) {
     for (id, plan) in plans {
         let frame = frame_from_plan(terrain, micros, plan);
         match frame {
-            Some(frame) => frames.insert(*id, frame),
-            None => frames.remove(id),
+            Some(frame) => frames.insert(*id, Some(frame)),
+            None => frames.insert(*id, None),
         };
     }
+    frames.iter_mut().for_each(|(id, frame)| {
+        if !plans.contains_key(id) {
+            *frame = None;
+        }
+    });
 }
 
 fn frame_from_plan(terrain: &Grid<f32>, micros: &u128, plan: &Plan) -> Option<Frame> {

@@ -91,8 +91,8 @@ impl Handler {
                 from_action: Some(lift::Action::PickUp(from)),
             },
             lift::Node {
-                from: from_3d,
-                to: to_3d,
+                from: to_3d,
+                to: from_3d,
                 distance_metres: length,
                 from_action: Some(lift::Action::DropOff(to)),
             },
@@ -119,8 +119,6 @@ impl Handler {
 
                 car_position -= node.distance_metres;
             }
-
-            dbg!(&cars);
 
             carousels.insert(
                 lift_id,

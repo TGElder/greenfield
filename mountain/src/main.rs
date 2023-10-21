@@ -35,8 +35,8 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    avatar_artist, carousel, distance_cost_computer, framer, lift_artist, overlay, piste_adopter,
-    planner, skiing_cost_computer, target_setter, teleporter, teleporter_entry,
+    avatar_artist, carousel, carousel_artist, distance_cost_computer, framer, overlay,
+    piste_adopter, planner, skiing_cost_computer, target_setter, teleporter, teleporter_entry,
 };
 
 fn main() {
@@ -215,7 +215,7 @@ struct Components {
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
-    frames: HashMap<usize, Frame>,
+    frames: HashMap<usize, Option<Frame>>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     distance_costs: HashMap<usize, PisteCosts>,
@@ -375,10 +375,13 @@ impl EventHandler for Game {
             &self.components.frames,
             &mut self.components.drawings,
         );
-        lift_artist::run(
-            graphics,
+        carousel_artist::run(
+            &self.components.carousels,
             &self.components.lifts,
+            &self.components.cars,
+            &self.components.locations,
             &mut self.components.drawings,
+            graphics,
         );
         self.systems.overlay.run(
             graphics,
