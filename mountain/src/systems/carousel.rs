@@ -58,7 +58,7 @@ impl System {
                 return;
             };
 
-            if reserved[lift.to] {
+            if reserved[lift.drop_off.position] {
                 return;
             }
 
@@ -68,16 +68,24 @@ impl System {
                 };
 
                 let midpoint = nalgebra::distance(
-                    &Point3::new(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]),
-                    &Point3::new(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]),
+                    &Point3::new(
+                        lift.pick_up.position.x as f32,
+                        lift.pick_up.position.y as f32,
+                        terrain[lift.pick_up.position],
+                    ),
+                    &Point3::new(
+                        lift.drop_off.position.x as f32,
+                        lift.drop_off.position.y as f32,
+                        terrain[lift.drop_off.position],
+                    ),
                 );
                 let end = midpoint * 2.0;
 
-                let new_position = car.position + carousel.velocity * elasped_seconds;
+                let new_position = car.meters_from_start + carousel.velocity * elasped_seconds;
 
                 // drop off
-                if car.position <= midpoint && new_position > midpoint {
-                    car.position = new_position;
+                if car.meters_from_start <= midpoint && new_position > midpoint {
+                    car.meters_from_start = new_position;
                     locations.retain(|location_id, location| {
                         if *location != *car_id {
                             return true;
@@ -86,33 +94,33 @@ impl System {
                         plans.insert(
                             *location_id,
                             Plan::Stationary(State {
-                                position: lift.to,
+                                position: lift.drop_off.position,
                                 mode: Mode::Skiing { velocity: 0 },
                                 travel_direction: Direction::NorthEast,
                             }),
                         );
-                        reserved[lift.to] = true;
+                        reserved[lift.drop_off.position] = true;
                         false
                     });
                 }
                 // pick up
                 else if new_position >= end {
-                    car.position = new_position - end;
+                    car.meters_from_start = new_position - end;
                     plans.retain(|plan_id, plan| {
                         if !matches!(targets.get(plan_id), Some(&target) if target == *carousel_id) {
                             return true;
                         }
-                        if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.from) {
+                        if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.pick_up.position) {
                             return true;
                         }
                         println!("{} was picked up by {}", plan_id, car_id);
                         targets.remove(plan_id);
                         locations.insert(*plan_id, *car_id);
-                        reserved[lift.from] = false;
+                        reserved[lift.pick_up.position] = false;
                         false
                     });
                 } else {
-                    car.position = new_position;
+                    car.meters_from_start = new_position;
                 }
             }
         }

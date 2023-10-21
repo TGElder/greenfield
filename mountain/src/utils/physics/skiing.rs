@@ -1,4 +1,4 @@
-use crate::physics::get_duration;
+use super::get_duration;
 
 const GRAVITY: f32 = 9.81;
 

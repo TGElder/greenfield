@@ -15,8 +15,16 @@ pub fn run(
     drawings: &mut HashMap<usize, usize>,
 ) {
     for (id, lift) in lifts {
-        let from = xyz(lift.from.x as f32, lift.from.y as f32, terrain[lift.from]);
-        let to = xyz(lift.to.x as f32, lift.to.y as f32, terrain[lift.to]);
+        let from = xyz(
+            lift.pick_up.position.x as f32,
+            lift.pick_up.position.y as f32,
+            terrain[lift.pick_up.position],
+        );
+        let to = xyz(
+            lift.drop_off.position.x as f32,
+            lift.drop_off.position.y as f32,
+            terrain[lift.drop_off.position],
+        );
         match drawings.entry(*id) {
             Entry::Occupied(value) => draw(graphics, value.get(), &from, &to, 0.5),
             Entry::Vacant(cell) => {

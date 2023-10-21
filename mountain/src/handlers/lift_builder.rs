@@ -7,12 +7,12 @@ use nalgebra::Point3;
 
 use crate::model::car::Car;
 use crate::model::carousel::Carousel;
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
-pub const CAR_INTERVAL_METRES: f32 = 10.0;
+pub const CAR_INTERVAL_METERS: f32 = 10.0;
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -77,7 +77,20 @@ impl Handler {
 
         let to = position;
         let lift_id = id_allocator.next_id();
-        lifts.insert(lift_id, Lift { from, to });
+        lifts.insert(
+            lift_id,
+            Lift {
+                pick_up: lift::Portal {
+                    segment: 0,
+                    position: from,
+                },
+                drop_off: lift::Portal {
+                    segment: 0,
+                    position: to,
+                },
+                segments: vec![],
+            },
+        );
         self.from = None;
 
         // update overlay
@@ -93,12 +106,19 @@ impl Handler {
                 &Point3::new(to.x as f32, to.y as f32, terrain[to]),
             );
 
-            let mut position = 0.0;
+            let mut meters_from_start = 0.0;
             let mut car_vec = vec![];
-            while position < length * 2.0 {
-                position += CAR_INTERVAL_METRES;
+            while meters_from_start < length * 2.0 {
+                meters_from_start += CAR_INTERVAL_METERS;
                 let car_id = id_allocator.next_id();
-                cars.insert(car_id, Car { position });
+                cars.insert(
+                    car_id,
+                    Car {
+                        lift_id,
+                        segment: 0,
+                        meters_from_start,
+                    },
+                );
                 car_vec.push(car_id);
             }
 

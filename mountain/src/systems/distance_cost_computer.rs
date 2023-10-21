@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::iter::once;
 
 use crate::model::direction::DIRECTIONS;
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
 use crate::network::distance::DistanceNetwork;
@@ -26,7 +26,10 @@ pub fn run(
 fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift>) -> PisteCosts {
     let mut out = PisteCosts::new();
 
-    let lift_positions = lifts.values().map(|lift| lift.from).collect::<HashSet<_>>();
+    let lift_positions = lifts
+        .values()
+        .map(|lift| lift.pick_up.position)
+        .collect::<HashSet<_>>();
 
     let network = DistanceNetwork {
         terrain,
@@ -34,10 +37,17 @@ fn compute_costs(terrain: &Grid<f32>, piste: &Piste, lifts: &HashMap<usize, Lift
         can_visit: &|position| !lift_positions.contains(position),
     };
 
-    for (lift, Lift { from, .. }) in lifts {
+    for (
+        lift,
+        Lift {
+            pick_up: lift::Portal { position, .. },
+            ..
+        },
+    ) in lifts
+    {
         let grid = &piste.grid;
-        if grid.in_bounds(from) && grid[from] {
-            let costs = compute_costs_to_position(&network, from);
+        if grid.in_bounds(position) && grid[position] {
+            let costs = compute_costs_to_position(&network, position);
             let coverage = costs.len() as f32
                 / (piste_positions(piste).len() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
                     as f32;
