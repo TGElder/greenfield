@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::model::carousel::Carousel;
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::skiing::{Plan, State};
 
 pub fn run(
@@ -22,7 +22,14 @@ pub fn run(
             continue;
         }
         match lifts.get(target) {
-            Some(Lift { from, .. }) if from == position => {
+            Some(Lift {
+                pick_up:
+                    lift::Portal {
+                        position: pick_up_position,
+                        ..
+                    },
+                ..
+            }) if pick_up_position == position => {
                 locations.insert(*id, *target);
                 targets.remove(id);
             }

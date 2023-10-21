@@ -19,7 +19,7 @@ pub fn run(
             return true;
         };
 
-        if reserved[lift.to] {
+        if reserved[lift.drop_off.position] {
             return true;
         }
 
@@ -27,12 +27,12 @@ pub fn run(
         plans.insert(
             *id,
             Plan::Stationary(State {
-                position: lift.to,
+                position: lift.drop_off.position,
                 mode: Mode::Skiing { velocity: 1 },
                 travel_direction: state.travel_direction,
             }),
         );
-        reserved[lift.to] = true;
+        reserved[lift.drop_off.position] = true;
         false
     });
 }

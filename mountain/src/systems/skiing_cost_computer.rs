@@ -6,7 +6,7 @@ use network::algorithms::find_best_within_steps::{self, FindBestWithinSteps};
 use network::model::Edge;
 
 use crate::model::direction::DIRECTIONS;
-use crate::model::lift::Lift;
+use crate::model::lift::{self, Lift};
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
 use crate::network::skiing::SkiingNetwork;
@@ -40,22 +40,32 @@ fn compute_costs_for_piste(
 ) -> PisteCosts {
     let mut out = PisteCosts::new();
 
-    let lift_positions = lifts.values().map(|lift| lift.from).collect::<HashSet<_>>();
+    let lift_positions = lifts
+        .values()
+        .map(|lift| lift.pick_up.position)
+        .collect::<HashSet<_>>();
     let mut reserved = terrain.map(|position, _| lift_positions.contains(&position));
 
-    for (lift, Lift { from, .. }) in lifts {
+    for (
+        lift,
+        Lift {
+            pick_up: lift::Portal { position, .. },
+            ..
+        },
+    ) in lifts
+    {
         let grid = &piste.grid;
-        if grid.in_bounds(from) && grid[from] {
+        if grid.in_bounds(position) && grid[position] {
             let distance_costs = distance_costs.costs(lift).unwrap();
 
-            reserved[from] = false;
+            reserved[position] = false;
             let network = SkiingNetwork {
                 terrain,
                 reserved: &reserved,
                 distance_costs,
             };
-            let costs = compute_costs_for_target(from, piste, &network);
-            reserved[from] = true;
+            let costs = compute_costs_for_target(position, piste, &network);
+            reserved[position] = true;
 
             let coverage = costs.len() as f32
                 / (piste_positions(piste).count()
