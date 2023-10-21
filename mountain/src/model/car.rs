@@ -1,3 +1,4 @@
+#[derive(Debug)]
 pub struct Car {
     pub lift_id: usize,
     pub segment: usize,
