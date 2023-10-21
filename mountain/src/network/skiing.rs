@@ -9,7 +9,7 @@ use crate::model::direction::Direction;
 use crate::model::skiing::{Mode, State};
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
-    physics,
+    utils::physics,
 };
 
 const TURNING_DURATION: Duration = Duration::from_secs(1);
