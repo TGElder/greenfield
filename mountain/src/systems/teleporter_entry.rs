@@ -19,7 +19,7 @@ pub fn run(
             continue;
         };
         if carousels.contains_key(target) {
-            return;
+            continue;
         }
         match lifts.get(target) {
             Some(Lift { from, .. }) if from == position => {
