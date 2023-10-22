@@ -9,29 +9,34 @@ pub fn create_cars(
     segments: &[Segment],
     min_lift_interval_meters: &f32,
 ) -> Vec<Car> {
-    let mut meters_from_start_of_segment = 0.0;
-    let mut result = vec![];
+    let lift_interval_meters = lift_interval_meters(min_lift_interval_meters, segments);
 
+    let mut result = vec![];
+    let mut distance_from_segment_start_meters = 0.0;
+
+    for (segment_id, segment) in segments.iter().enumerate() {
+        while distance_from_segment_start_meters < *segment.length_meters() {
+            result.push(Car {
+                lift_id: *lift_id,
+                segment: segment_id,
+                distance_from_start_meters: distance_from_segment_start_meters,
+            });
+            distance_from_segment_start_meters += lift_interval_meters;
+        }
+
+        distance_from_segment_start_meters -= segment.length_meters();
+    }
+
+    result
+}
+
+fn lift_interval_meters(min_lift_interval_meters: &f32, segments: &[Segment]) -> f32 {
     let total_distance = segments
         .iter()
         .map(|segment| segment.length_meters())
         .sum::<f32>();
     let car_count = (total_distance / min_lift_interval_meters).floor();
-    let lift_interval_meters = total_distance / car_count;
-
-    for (segment_id, segment) in segments.iter().enumerate() {
-        while meters_from_start_of_segment < *segment.length_meters() {
-            result.push(Car {
-                lift_id: *lift_id,
-                segment: segment_id,
-                meters_from_start: meters_from_start_of_segment,
-            });
-            meters_from_start_of_segment += lift_interval_meters;
-        }
-
-        meters_from_start_of_segment -= segment.length_meters();
-    }
-    result
+    total_distance / car_count
 }
 
 #[derive(Debug)]
@@ -42,7 +47,7 @@ pub struct RevolveResult {
 
 #[derive(Debug)]
 pub struct RevolveEvent {
-    pub meters: f32,
+    pub revolve_meters: f32,
     pub car_index: usize,
     pub action: RevolveAction,
     pub position: XY<u32>,
@@ -55,6 +60,9 @@ pub enum RevolveAction {
 }
 
 pub fn revolve(lift: &Lift, cars: &[&Car], meters: f32) -> RevolveResult {
+    if meters < 0.0 {
+        panic!("Negative revolutions are not supported");
+    }
     let mut result = cars
         .iter()
         .enumerate()
@@ -73,7 +81,7 @@ pub fn revolve(lift: &Lift, cars: &[&Car], meters: f32) -> RevolveResult {
 
     result
         .events
-        .sort_by(|a, b| unsafe_ordering(&a.meters, &b.meters));
+        .sort_by(|a, b| unsafe_ordering(&a.revolve_meters, &b.revolve_meters));
 
     result
 }
@@ -83,46 +91,47 @@ pub struct RevolveCarResult {
     pub events: Vec<RevolveEvent>,
 }
 
-fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, meters: f32) -> RevolveCarResult {
+fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -> RevolveCarResult {
     let mut segment = car.segment;
-    let mut meters_from_start = car.meters_from_start;
-    let mut residual = meters;
+    let mut residual_meters = revolve_meters;
+    let mut distance_from_segment_start_meters = car.distance_from_start_meters;
 
     let mut events = vec![];
 
     loop {
-        if meters_from_start == 0.0 {
-            if lift.drop_off.segment == segment {
+        if distance_from_segment_start_meters == 0.0 {
+            if segment == lift.drop_off.segment {
                 events.push(RevolveEvent {
-                    meters: meters - residual,
+                    revolve_meters: revolve_meters - residual_meters,
                     car_index: *car_index,
                     action: RevolveAction::DropOff,
                     position: lift.drop_off.position,
                 });
             }
-            if lift.pick_up.segment == segment {
+            if segment == lift.pick_up.segment {
                 events.push(RevolveEvent {
-                    meters: meters - residual,
+                    revolve_meters: revolve_meters - residual_meters,
                     car_index: *car_index,
                     action: RevolveAction::PickUp,
                     position: lift.pick_up.position,
                 });
             }
         }
-        let meters_to_end = lift.segments[segment].length_meters() - meters_from_start;
-        if residual <= meters_to_end {
+        let distance_to_segment_end_meters =
+            lift.segments[segment].length_meters() - distance_from_segment_start_meters;
+        if residual_meters <= distance_to_segment_end_meters {
             break;
         }
-        residual -= meters_to_end;
         segment = (segment + 1) % lift.segments.len();
-        meters_from_start = 0.0;
+        residual_meters -= distance_to_segment_end_meters;
+        distance_from_segment_start_meters = 0.0;
     }
 
     RevolveCarResult {
         car: Car {
             lift_id: car.lift_id,
             segment,
-            meters_from_start: meters_from_start + residual,
+            distance_from_start_meters: distance_from_segment_start_meters + residual_meters,
         },
         events,
     }
@@ -137,6 +146,35 @@ mod tests {
 
     use super::*;
 
+    fn compare_results(actual: &RevolveResult, expected: &RevolveResult) {
+        compare_cars(&actual.cars, &expected.cars);
+        compare_events(&actual.events, &expected.events);
+    }
+
+    fn compare_cars(actual: &[Car], expected: &[Car]) {
+        dbg!(actual);
+        for (i, actual) in actual.iter().enumerate() {
+            let expected = &expected[i];
+            assert_eq!(actual.lift_id, expected.lift_id);
+            assert_eq!(actual.segment, expected.segment);
+            assert_almost_eq(
+                actual.distance_from_start_meters,
+                expected.distance_from_start_meters,
+            );
+        }
+    }
+
+    fn compare_events(actual: &[RevolveEvent], expected: &[RevolveEvent]) {
+        dbg!(actual);
+        for (i, actual) in actual.iter().enumerate() {
+            let expected = &expected[i];
+            assert_almost_eq(actual.revolve_meters, expected.revolve_meters);
+            assert_eq!(actual.car_index, expected.car_index);
+            assert_eq!(actual.action, expected.action);
+            assert_eq!(actual.position, expected.position);
+        }
+    }
+
     #[test]
     fn test_create_cars() {
         // given
@@ -145,43 +183,37 @@ mod tests {
 
         // when
         let result = create_cars(&1986, &segments, &0.19);
-        dbg!(&result);
 
         // then
         let expected = vec![
             Car {
                 lift_id: 1986,
                 segment: 0,
-                meters_from_start: 0.0,
+                distance_from_start_meters: 0.0,
             },
             Car {
                 lift_id: 1986,
                 segment: 0,
-                meters_from_start: 0.2,
+                distance_from_start_meters: 0.2,
             },
             Car {
                 lift_id: 1986,
                 segment: 0,
-                meters_from_start: 0.4,
+                distance_from_start_meters: 0.4,
             },
             Car {
                 lift_id: 1986,
                 segment: 1,
-                meters_from_start: 0.1,
+                distance_from_start_meters: 0.1,
             },
             Car {
                 lift_id: 1986,
                 segment: 1,
-                meters_from_start: 0.3,
+                distance_from_start_meters: 0.3,
             },
         ];
 
-        for (i, actual) in result.iter().enumerate() {
-            let expected = &expected[i];
-            assert_eq!(actual.lift_id, expected.lift_id);
-            assert_eq!(actual.segment, expected.segment);
-            assert_almost_eq(actual.meters_from_start, expected.meters_from_start);
-        }
+        compare_cars(&result, &expected);
     }
 
     #[test]
@@ -206,23 +238,22 @@ mod tests {
             &Car {
                 lift_id: 0,
                 segment: 0,
-                meters_from_start: 0.0,
+                distance_from_start_meters: 0.0,
             },
             &Car {
                 lift_id: 0,
                 segment: 0,
-                meters_from_start: 0.67,
+                distance_from_start_meters: 0.67,
             },
             &Car {
                 lift_id: 0,
                 segment: 1,
-                meters_from_start: 0.33,
+                distance_from_start_meters: 0.33,
             },
         ];
 
         // when
         let result = revolve(&lift, &cars, 1.0);
-        dbg!(&result);
 
         // then
         let expected = RevolveResult {
@@ -230,34 +261,34 @@ mod tests {
                 Car {
                     lift_id: 0,
                     segment: 0,
-                    meters_from_start: 1.0,
+                    distance_from_start_meters: 1.0,
                 },
                 Car {
                     lift_id: 0,
                     segment: 1,
-                    meters_from_start: 0.67,
+                    distance_from_start_meters: 0.67,
                 },
                 Car {
                     lift_id: 0,
                     segment: 0,
-                    meters_from_start: 0.33,
+                    distance_from_start_meters: 0.33,
                 },
             ],
             events: vec![
                 RevolveEvent {
-                    meters: 0.0,
+                    revolve_meters: 0.0,
                     car_index: 0,
                     action: RevolveAction::PickUp,
                     position: xy(0, 0),
                 },
                 RevolveEvent {
-                    meters: 0.33,
+                    revolve_meters: 0.33,
                     car_index: 1,
                     action: RevolveAction::DropOff,
                     position: xy(1, 0),
                 },
                 RevolveEvent {
-                    meters: 0.67,
+                    revolve_meters: 0.67,
                     car_index: 2,
                     action: RevolveAction::PickUp,
                     position: xy(0, 0),
@@ -265,20 +296,7 @@ mod tests {
             ],
         };
 
-        for (i, actual) in result.cars.iter().enumerate() {
-            let expected = &expected.cars[i];
-            assert_eq!(actual.lift_id, expected.lift_id);
-            assert_eq!(actual.segment, expected.segment);
-            assert_almost_eq(actual.meters_from_start, expected.meters_from_start);
-        }
-
-        for (i, actual) in result.events.iter().enumerate() {
-            let expected = &expected.events[i];
-            assert_almost_eq(actual.meters, expected.meters);
-            assert_eq!(actual.car_index, expected.car_index);
-            assert_eq!(actual.action, expected.action);
-            assert_eq!(actual.position, expected.position);
-        }
+        compare_results(&result, &expected);
     }
 
     #[test]
@@ -302,7 +320,7 @@ mod tests {
         let cars = vec![&Car {
             lift_id: 0,
             segment: 0,
-            meters_from_start: 0.5,
+            distance_from_start_meters: 0.5,
         }];
 
         // when
@@ -310,9 +328,15 @@ mod tests {
         dbg!(&result);
 
         // then
-        assert_eq!(result.cars[0].segment, 0);
-        assert_almost_eq(result.cars[0].meters_from_start, 1.0);
-        assert!(result.events.is_empty());
+        let expected = RevolveResult {
+            cars: vec![Car {
+                lift_id: 0,
+                segment: 0,
+                distance_from_start_meters: 1.0,
+            }],
+            events: vec![],
+        };
+        compare_results(&result, &expected);
 
         // given
         // cars initialized with output of last revolution
@@ -320,12 +344,21 @@ mod tests {
 
         // when
         let result = revolve(&lift, &cars, 0.5);
-        dbg!(&result);
 
         // then
-        assert_eq!(result.cars[0].segment, 1);
-        assert_almost_eq(result.cars[0].meters_from_start, 0.5);
-        assert_almost_eq(result.events[0].meters, 0.0);
-        assert_eq!(result.events[0].action, RevolveAction::DropOff);
+        let expected = RevolveResult {
+            cars: vec![Car {
+                lift_id: 0,
+                segment: 1,
+                distance_from_start_meters: 0.5,
+            }],
+            events: vec![RevolveEvent {
+                revolve_meters: 0.0,
+                car_index: 0,
+                action: RevolveAction::DropOff,
+                position: xy(1, 0),
+            }],
+        };
+        compare_results(&result, &expected);
     }
 }

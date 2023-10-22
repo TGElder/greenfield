@@ -115,7 +115,7 @@ impl Handler {
                     Car {
                         lift_id,
                         segment: 0,
-                        meters_from_start,
+                        distance_from_start_meters: meters_from_start,
                     },
                 );
                 car_vec.push(car_id);
