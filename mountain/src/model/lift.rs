@@ -31,6 +31,13 @@ impl Segment {
         }
     }
 
+    pub fn _segments(points: &[XYZ<f32>]) -> Vec<Segment> {
+        points
+            .windows(2)
+            .map(|pair| Segment::_new(pair[0], pair[1]))
+            .collect()
+    }
+
     pub fn length_meters(&self) -> &f32 {
         &self.length_meters
     }

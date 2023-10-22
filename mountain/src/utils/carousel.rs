@@ -1,7 +1,7 @@
 use commons::geometry::XY;
 use commons::unsafe_ordering::unsafe_ordering;
 
-use crate::model::car::Car;
+use crate::model::carousel::Car;
 use crate::model::lift::{Lift, Segment};
 
 pub fn create_cars(
@@ -140,10 +140,8 @@ mod tests {
     #[test]
     fn test_create_cars() {
         // given
-        let segments = vec![
-            Segment::_new(xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0)),
-            Segment::_new(xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0)),
-        ];
+        let segments =
+            Segment::_segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
 
         // when
         let result = create_cars(&1986, &segments, &0.19);
@@ -198,10 +196,11 @@ mod tests {
                 segment: 1,
                 position: xy(1, 0),
             },
-            segments: vec![
-                Segment::_new(xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0)),
-                Segment::_new(xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0)),
-            ],
+            segments: Segment::_segments(&[
+                xyz(0.0, 0.0, 0.0),
+                xyz(1.0, 0.0, 0.0),
+                xyz(0.0, 0.0, 0.0),
+            ]),
         };
         let cars = vec![
             &Car {
@@ -294,10 +293,11 @@ mod tests {
                 segment: 1,
                 position: xy(1, 0),
             },
-            segments: vec![
-                Segment::_new(xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0)),
-                Segment::_new(xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0)),
-            ],
+            segments: Segment::_segments(&[
+                xyz(0.0, 0.0, 0.0),
+                xyz(1.0, 0.0, 0.0),
+                xyz(0.0, 0.0, 0.0),
+            ]),
         };
         let cars = vec![&Car {
             lift_id: 0,

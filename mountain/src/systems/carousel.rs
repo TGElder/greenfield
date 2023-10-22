@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use commons::grid::Grid;
 use nalgebra::Point3;
 
-use crate::model::car::Car;
-use crate::model::carousel::Carousel;
+use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
