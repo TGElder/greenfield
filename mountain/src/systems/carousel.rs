@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use commons::grid::Grid;
 use nalgebra::Point3;
 
-use crate::model::car::Car;
-use crate::model::carousel::Carousel;
+use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
@@ -81,11 +80,12 @@ impl System {
                 );
                 let end = midpoint * 2.0;
 
-                let new_position = car.meters_from_start + carousel.velocity * elasped_seconds;
+                let new_position =
+                    car.distance_from_start_meters + carousel.velocity * elasped_seconds;
 
                 // drop off
-                if car.meters_from_start <= midpoint && new_position > midpoint {
-                    car.meters_from_start = new_position;
+                if car.distance_from_start_meters <= midpoint && new_position > midpoint {
+                    car.distance_from_start_meters = new_position;
                     locations.retain(|location_id, location| {
                         if *location != *car_id {
                             return true;
@@ -105,7 +105,7 @@ impl System {
                 }
                 // pick up
                 else if new_position >= end {
-                    car.meters_from_start = new_position - end;
+                    car.distance_from_start_meters = new_position - end;
                     plans.retain(|plan_id, plan| {
                         if !matches!(targets.get(plan_id), Some(&target) if target == *carousel_id) {
                             return true;
@@ -120,7 +120,7 @@ impl System {
                         false
                     });
                 } else {
-                    car.meters_from_start = new_position;
+                    car.distance_from_start_meters = new_position;
                 }
             }
         }

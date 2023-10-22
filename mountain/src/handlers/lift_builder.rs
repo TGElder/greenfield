@@ -5,8 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 use nalgebra::Point3;
 
-use crate::model::car::Car;
-use crate::model::carousel::Carousel;
+use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::{self, Lift};
 use crate::services::id_allocator;
 use crate::systems::overlay;
@@ -116,7 +115,7 @@ impl Handler {
                     Car {
                         lift_id,
                         segment: 0,
-                        meters_from_start,
+                        distance_from_start_meters: meters_from_start,
                     },
                 );
                 car_vec.push(car_id);
