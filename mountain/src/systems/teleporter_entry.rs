@@ -18,7 +18,11 @@ pub fn run(
         let Some(target) = targets.get(id) else {
             continue;
         };
-        if carousels.contains_key(target) {
+        if carousels
+            .values()
+            .map(|carousel| carousel.lift_id)
+            .any(|lift_id| lift_id == *target)
+        {
             continue;
         }
         match lifts.get(target) {
