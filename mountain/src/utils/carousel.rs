@@ -298,7 +298,6 @@ mod tests {
 
         // when
         let result = revolve(&lift, &cars, 0.5);
-        dbg!(&result);
 
         // then
         let expected = RevolveResult {

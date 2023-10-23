@@ -6,8 +6,7 @@ use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
-use crate::utils;
-use crate::utils::carousel::{RevolveAction, RevolveEvent, RevolveResult};
+use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
 
 pub struct System {
     last_micros: Option<u128>,
@@ -50,7 +49,7 @@ impl System {
         let elasped_seconds = (micros - last_micros) as f32 / 1_000_000.0;
         self.last_micros = Some(*micros);
 
-        for (carousel_id, carousel) in carousels {
+        for carousel in carousels.values() {
             let Some(lift) = lifts.get(&carousel.lift_id) else {
                 return;
             };
@@ -74,7 +73,7 @@ impl System {
             let RevolveResult {
                 cars: new_cars,
                 events,
-            } = utils::carousel::revolve(lift, &current_cars, meters);
+            } = revolve(lift, &current_cars, meters);
 
             // process events
 
@@ -82,7 +81,6 @@ impl System {
                 car_index, action, ..
             } in events
             {
-                dbg!(&action);
                 let car_id = car_ids[car_index];
                 match action {
                     RevolveAction::PickUp => {
@@ -123,12 +121,9 @@ impl System {
 
             // update cars
 
-            car_ids
-                .into_iter()
-                .zip(new_cars.into_iter())
-                .for_each(|(id, car)| {
-                    cars.insert(*id, car);
-                });
+            car_ids.into_iter().zip(new_cars).for_each(|(id, car)| {
+                cars.insert(*id, car);
+            });
         }
     }
 }

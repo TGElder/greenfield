@@ -19,7 +19,7 @@ pub struct Portal {
 }
 
 impl Segment {
-    pub fn _new(from: XYZ<f32>, to: XYZ<f32>) -> Segment {
+    pub fn new(from: XYZ<f32>, to: XYZ<f32>) -> Segment {
         let length_meters = nalgebra::distance(
             &Point3::new(from.x, from.y, from.z),
             &Point3::new(to.x, to.y, to.z),
@@ -34,7 +34,7 @@ impl Segment {
     pub fn segments(points: &[XYZ<f32>]) -> Vec<Segment> {
         points
             .windows(2)
-            .map(|pair| Segment::_new(pair[0], pair[1]))
+            .map(|pair| Segment::new(pair[0], pair[1]))
             .collect()
     }
 

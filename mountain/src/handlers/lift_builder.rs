@@ -79,13 +79,11 @@ impl Handler {
         // create lift
 
         let to = position;
+        let from_3d = xyz(from.x as f32, from.y as f32, terrain[from]);
+        let to_3d = xyz(to.x as f32, to.y as f32, terrain[to]);
         let lift_id = id_allocator.next_id();
         let lift = Lift {
-            segments: Segment::segments(&[
-                xyz(from.x as f32, from.y as f32, terrain[from]),
-                xyz(to.x as f32, to.y as f32, terrain[to]),
-                xyz(from.x as f32, from.y as f32, terrain[from]),
-            ]),
+            segments: Segment::segments(&[from_3d, to_3d, from_3d]),
             pick_up: lift::Portal {
                 segment: 0,
                 position: from,
@@ -101,12 +99,13 @@ impl Handler {
         if self.bindings.carousel.binds_event(event) {
             let new_cars = utils::carousel::create_cars(&lift.segments, &CAR_INTERVAL_METERS);
 
-            let mut car_ids = vec![];
-            for car in new_cars {
-                let car_id = id_allocator.next_id();
-                cars.insert(car_id, car);
-                car_ids.push(car_id);
-            }
+            let car_ids = (0..new_cars.len())
+                .map(|_| id_allocator.next_id())
+                .collect::<Vec<_>>();
+
+            car_ids.iter().zip(new_cars).for_each(|(id, car)| {
+                cars.insert(*id, car);
+            });
 
             carousels.insert(
                 id_allocator.next_id(),
