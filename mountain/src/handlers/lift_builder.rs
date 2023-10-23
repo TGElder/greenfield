@@ -1,14 +1,14 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XYRectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
-use nalgebra::Point3;
 
 use crate::model::carousel::{Car, Carousel};
-use crate::model::lift::{self, Lift};
+use crate::model::lift::{self, Lift, Segment};
 use crate::services::id_allocator;
 use crate::systems::overlay;
+use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
@@ -69,65 +69,66 @@ impl Handler {
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
+        // handle case where from position is not set
+
         let Some(from) = self.from else {
             self.from = Some(position);
             return;
         };
 
+        // create lift
+
         let to = position;
         let lift_id = id_allocator.next_id();
-        lifts.insert(
-            lift_id,
-            Lift {
-                pick_up: lift::Portal {
-                    segment: 0,
-                    position: from,
-                },
-                drop_off: lift::Portal {
-                    segment: 0,
-                    position: to,
-                },
-                segments: vec![],
+        let lift = Lift {
+            segments: Segment::segments(&[
+                xyz(from.x as f32, from.y as f32, terrain[from]),
+                xyz(to.x as f32, to.y as f32, terrain[to]),
+                xyz(from.x as f32, from.y as f32, terrain[from]),
+            ]),
+            pick_up: lift::Portal {
+                segment: 0,
+                position: from,
             },
-        );
-        self.from = None;
+            drop_off: lift::Portal {
+                segment: 1,
+                position: to,
+            },
+        };
+
+        // setup carousel
+
+        if self.bindings.carousel.binds_event(event) {
+            let new_cars = utils::carousel::create_cars(&lift.segments, &CAR_INTERVAL_METERS);
+
+            let mut car_ids = vec![];
+            for car in new_cars {
+                let car_id = id_allocator.next_id();
+                cars.insert(car_id, car);
+                car_ids.push(car_id);
+            }
+
+            carousels.insert(
+                id_allocator.next_id(),
+                Carousel {
+                    lift_id,
+                    velocity: LIFT_VELOCITY,
+                    car_ids,
+                },
+            );
+        }
+
+        // register lift
+
+        lifts.insert(lift_id, lift);
 
         // update overlay
 
         overlay.update(XYRectangle { from, to: from });
         overlay.update(XYRectangle { from: to, to });
 
-        // setup carousel
+        // clear from position
 
-        if self.bindings.carousel.binds_event(event) {
-            let length = nalgebra::distance(
-                &Point3::new(from.x as f32, from.y as f32, terrain[from]),
-                &Point3::new(to.x as f32, to.y as f32, terrain[to]),
-            );
-
-            let mut meters_from_start = 0.0;
-            let mut car_vec = vec![];
-            while meters_from_start < length * 2.0 {
-                meters_from_start += CAR_INTERVAL_METERS;
-                let car_id = id_allocator.next_id();
-                cars.insert(
-                    car_id,
-                    Car {
-                        lift_id,
-                        segment: 0,
-                        distance_from_start_meters: meters_from_start,
-                    },
-                );
-                car_vec.push(car_id);
-            }
-
-            carousels.insert(
-                lift_id,
-                Carousel {
-                    velocity: LIFT_VELOCITY,
-                    cars: car_vec,
-                },
-            );
-        }
+        self.from = None;
     }
 }

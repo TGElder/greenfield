@@ -31,7 +31,7 @@ impl Segment {
         }
     }
 
-    pub fn _segments(points: &[XYZ<f32>]) -> Vec<Segment> {
+    pub fn segments(points: &[XYZ<f32>]) -> Vec<Segment> {
         points
             .windows(2)
             .map(|pair| Segment::_new(pair[0], pair[1]))

@@ -316,7 +316,6 @@ impl EventHandler for Game {
 
         self.systems.carousel.run(systems::carousel::Parameters {
             micros: &self.services.clock.get_micros(),
-            terrain: &self.components.terrain,
             lifts: &self.components.lifts,
             carousels: &self.components.carousels,
             reserved: &mut self.components.reserved,

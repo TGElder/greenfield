@@ -1,14 +1,9 @@
-use commons::geometry::XY;
 use commons::unsafe_ordering::unsafe_ordering;
 
 use crate::model::carousel::Car;
 use crate::model::lift::{Lift, Segment};
 
-pub fn create_cars(
-    lift_id: &usize,
-    segments: &[Segment],
-    min_lift_interval_meters: &f32,
-) -> Vec<Car> {
+pub fn create_cars(segments: &[Segment], min_lift_interval_meters: &f32) -> Vec<Car> {
     let lift_interval_meters = lift_interval_meters(min_lift_interval_meters, segments);
 
     let mut result = vec![];
@@ -17,7 +12,6 @@ pub fn create_cars(
     for (segment_id, segment) in segments.iter().enumerate() {
         while distance_from_segment_start_meters < *segment.length_meters() {
             result.push(Car {
-                lift_id: *lift_id,
                 segment: segment_id,
                 distance_from_start_meters: distance_from_segment_start_meters,
             });
@@ -50,7 +44,6 @@ pub struct RevolveEvent {
     pub revolve_meters: f32,
     pub car_index: usize,
     pub action: RevolveAction,
-    pub position: XY<u32>,
 }
 
 #[derive(Debug, PartialEq)]
@@ -105,7 +98,6 @@ fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -
                     revolve_meters: revolve_meters - residual_meters,
                     car_index: *car_index,
                     action: RevolveAction::DropOff,
-                    position: lift.drop_off.position,
                 });
             }
             if segment == lift.pick_up.segment {
@@ -113,7 +105,6 @@ fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -
                     revolve_meters: revolve_meters - residual_meters,
                     car_index: *car_index,
                     action: RevolveAction::PickUp,
-                    position: lift.pick_up.position,
                 });
             }
         }
@@ -129,7 +120,6 @@ fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -
 
     RevolveCarResult {
         car: Car {
-            lift_id: car.lift_id,
             segment,
             distance_from_start_meters: distance_from_segment_start_meters + residual_meters,
         },
@@ -155,7 +145,6 @@ mod tests {
         dbg!(actual);
         for (i, actual) in actual.iter().enumerate() {
             let expected = &expected[i];
-            assert_eq!(actual.lift_id, expected.lift_id);
             assert_eq!(actual.segment, expected.segment);
             assert_almost_eq(
                 actual.distance_from_start_meters,
@@ -171,7 +160,6 @@ mod tests {
             assert_almost_eq(actual.revolve_meters, expected.revolve_meters);
             assert_eq!(actual.car_index, expected.car_index);
             assert_eq!(actual.action, expected.action);
-            assert_eq!(actual.position, expected.position);
         }
     }
 
@@ -179,35 +167,30 @@ mod tests {
     fn test_create_cars() {
         // given
         let segments =
-            Segment::_segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
+            Segment::segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
 
         // when
-        let result = create_cars(&1986, &segments, &0.19);
+        let result = create_cars(&segments, &0.19);
 
         // then
         let expected = vec![
             Car {
-                lift_id: 1986,
                 segment: 0,
                 distance_from_start_meters: 0.0,
             },
             Car {
-                lift_id: 1986,
                 segment: 0,
                 distance_from_start_meters: 0.2,
             },
             Car {
-                lift_id: 1986,
                 segment: 0,
                 distance_from_start_meters: 0.4,
             },
             Car {
-                lift_id: 1986,
                 segment: 1,
                 distance_from_start_meters: 0.1,
             },
             Car {
-                lift_id: 1986,
                 segment: 1,
                 distance_from_start_meters: 0.3,
             },
@@ -228,7 +211,7 @@ mod tests {
                 segment: 1,
                 position: xy(1, 0),
             },
-            segments: Segment::_segments(&[
+            segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),
                 xyz(1.0, 0.0, 0.0),
                 xyz(0.0, 0.0, 0.0),
@@ -236,17 +219,14 @@ mod tests {
         };
         let cars = vec![
             &Car {
-                lift_id: 0,
                 segment: 0,
                 distance_from_start_meters: 0.0,
             },
             &Car {
-                lift_id: 0,
                 segment: 0,
                 distance_from_start_meters: 0.67,
             },
             &Car {
-                lift_id: 0,
                 segment: 1,
                 distance_from_start_meters: 0.33,
             },
@@ -259,17 +239,14 @@ mod tests {
         let expected = RevolveResult {
             cars: vec![
                 Car {
-                    lift_id: 0,
                     segment: 0,
                     distance_from_start_meters: 1.0,
                 },
                 Car {
-                    lift_id: 0,
                     segment: 1,
                     distance_from_start_meters: 0.67,
                 },
                 Car {
-                    lift_id: 0,
                     segment: 0,
                     distance_from_start_meters: 0.33,
                 },
@@ -279,19 +256,16 @@ mod tests {
                     revolve_meters: 0.0,
                     car_index: 0,
                     action: RevolveAction::PickUp,
-                    position: xy(0, 0),
                 },
                 RevolveEvent {
                     revolve_meters: 0.33,
                     car_index: 1,
                     action: RevolveAction::DropOff,
-                    position: xy(1, 0),
                 },
                 RevolveEvent {
                     revolve_meters: 0.67,
                     car_index: 2,
                     action: RevolveAction::PickUp,
-                    position: xy(0, 0),
                 },
             ],
         };
@@ -311,14 +285,13 @@ mod tests {
                 segment: 1,
                 position: xy(1, 0),
             },
-            segments: Segment::_segments(&[
+            segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),
                 xyz(1.0, 0.0, 0.0),
                 xyz(0.0, 0.0, 0.0),
             ]),
         };
         let cars = vec![&Car {
-            lift_id: 0,
             segment: 0,
             distance_from_start_meters: 0.5,
         }];
@@ -330,7 +303,6 @@ mod tests {
         // then
         let expected = RevolveResult {
             cars: vec![Car {
-                lift_id: 0,
                 segment: 0,
                 distance_from_start_meters: 1.0,
             }],
@@ -348,7 +320,6 @@ mod tests {
         // then
         let expected = RevolveResult {
             cars: vec![Car {
-                lift_id: 0,
                 segment: 1,
                 distance_from_start_meters: 0.5,
             }],
@@ -356,7 +327,6 @@ mod tests {
                 revolve_meters: 0.0,
                 car_index: 0,
                 action: RevolveAction::DropOff,
-                position: xy(1, 0),
             }],
         };
         compare_results(&result, &expected);
