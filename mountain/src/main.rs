@@ -214,7 +214,7 @@ struct Components {
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
-    frames: HashMap<usize, Frame>,
+    frames: HashMap<usize, Option<Frame>>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     distance_costs: HashMap<usize, PisteCosts>,

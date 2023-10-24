@@ -11,13 +11,13 @@ pub fn run(
     terrain: &Grid<f32>,
     micros: &u128,
     plans: &HashMap<usize, Plan>,
-    frames: &mut HashMap<usize, Frame>,
+    frames: &mut HashMap<usize, Option<Frame>>,
 ) {
+    frames.iter_mut().for_each(|(_, frame)| *frame = None);
+
     for (id, plan) in plans {
-        let frame = frame_from_plan(terrain, micros, plan);
-        match frame {
-            Some(frame) => frames.insert(*id, frame),
-            None => frames.remove(id),
+        if let Some(frame) = frame_from_plan(terrain, micros, plan) {
+            frames.insert(*id, Some(frame));
         };
     }
 }
