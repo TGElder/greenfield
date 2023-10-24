@@ -43,6 +43,10 @@ impl Direction {
         (self.index() as f32 / 4.0) * PI
     }
 
+    pub fn snap_to_direction(angle: f32) -> Direction {
+        DIRECTIONS[((angle / (PI / 4.0)).round() as usize) % 8]
+    }
+
     pub fn offset(&self) -> XY<i32> {
         match self {
             Direction::East => xy(1, 0),
@@ -83,6 +87,14 @@ impl Direction {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_snap_to_direction() {
+        assert_eq!(Direction::snap_to_direction(0.7), Direction::NorthEast);
+        assert_eq!(Direction::snap_to_direction(0.1), Direction::East);
+        assert_eq!(Direction::snap_to_direction(6.1), Direction::East);
+        assert_eq!(Direction::snap_to_direction(5.5), Direction::SouthEast);
+    }
 
     #[test]
     fn test_next_clockwise() {
