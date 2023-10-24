@@ -8,18 +8,24 @@ use crate::model::frame::Frame;
 
 pub fn run(
     graphics: &mut dyn Graphics,
-    frames: &HashMap<usize, Frame>,
+    frames: &HashMap<usize, Option<Frame>>,
     drawings: &mut HashMap<usize, usize>,
 ) {
     for (id, frame) in frames {
-        match drawings.entry(*id) {
-            Entry::Occupied(value) => draw(graphics, value.get(), frame),
+        let entry = drawings.entry(*id);
+        let index = match entry {
+            Entry::Occupied(ref value) => value.get(),
             Entry::Vacant(cell) => {
-                if let Ok(index) = graphics.create_quads() {
-                    draw(graphics, &index, frame);
-                    cell.insert(index);
-                }
+                let Ok(index) = graphics.create_quads() else {
+                    continue;
+                };
+                &*cell.insert(index)
             }
         };
+
+        match frame {
+            Some(frame) => draw(graphics, index, frame),
+            None => graphics.draw_quads(index, &[]).unwrap(),
+        }
     }
 }
