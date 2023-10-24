@@ -70,12 +70,26 @@ impl System {
 
             let meters = elasped_seconds * carousel.velocity;
 
+            let mut revolve_result = revolve(lift, &current_cars, meters);
+
+            // check for blocked pickup
+
+            if reserved[lift.drop_off.position] {
+                if let Some(first_drop_off) = revolve_result
+                    .events
+                    .iter()
+                    .find(|event| event.action == RevolveAction::DropOff)
+                {
+                    revolve_result = revolve(lift, &current_cars, first_drop_off.revolve_meters);
+                }
+            }
+
+            // process events
+
             let RevolveResult {
                 cars: new_cars,
                 events,
-            } = revolve(lift, &current_cars, meters);
-
-            // process events
+            } = revolve_result;
 
             for RevolveEvent {
                 car_index, action, ..
