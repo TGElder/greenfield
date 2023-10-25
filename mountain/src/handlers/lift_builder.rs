@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::f32::consts::PI;
 
 use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
@@ -13,6 +14,8 @@ use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
+pub const CURVE_INCREMENTS: u8 = 8;
+pub const CURVE_RADIUS: f32 = 2.0;
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -86,8 +89,17 @@ impl Handler {
 
         let vector = xy(to_3d.x - from_3d.x, to_3d.y - from_3d.y);
         let direction = Direction::snap_to_direction(vector.angle());
+
+        let mut points = Vec::with_capacity(2 + CURVE_INCREMENTS as usize * 2);
+        points.push(from_3d);
+        points.push(to_3d);
+        for point in curve(from_3d, to_3d, CURVE_INCREMENTS) {
+            points.push(point);
+        }
+        points.push(from_3d);
+
         let lift = Lift {
-            segments: Segment::segments(&[from_3d, to_3d, from_3d]),
+            segments: Segment::segments(&points),
             pick_up: lift::Portal {
                 segment: 0,
                 position: from,
@@ -136,4 +148,22 @@ impl Handler {
 
         self.from = None;
     }
+}
+
+fn curve(from: XYZ<f32>, to: XYZ<f32>, segments: u8) -> Vec<XYZ<f32>> {
+    let right_angle_vector = xy(to.y - from.y, from.x - to.x).normalize();
+    let curve_center = xy(to.x, to.y) + right_angle_vector * CURVE_RADIUS;
+    let mut current_angle = curve_center.angle();
+    let increment = PI / segments as f32;
+
+    let mut out = Vec::with_capacity(segments as usize);
+
+    for i in 0..segments {
+        current_angle += increment;
+        let vector = xy(current_angle.cos(), current_angle.sin()) * CURVE_RADIUS;
+        let XY { x, y } = curve_center + vector;
+        out.push(xyz(x, y, to.z));
+    }
+
+    out
 }
