@@ -132,6 +132,7 @@ mod tests {
     use commons::almost_eq::assert_almost_eq;
     use commons::geometry::{xy, xyz};
 
+    use crate::model::direction::Direction;
     use crate::model::lift;
 
     use super::*;
@@ -206,10 +207,12 @@ mod tests {
             pick_up: lift::Portal {
                 segment: 0,
                 position: xy(0, 0),
+                direction: Direction::North,
             },
             drop_off: lift::Portal {
                 segment: 1,
                 position: xy(1, 0),
+                direction: Direction::North,
             },
             segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),
@@ -280,10 +283,12 @@ mod tests {
             pick_up: lift::Portal {
                 segment: 0,
                 position: xy(0, 0),
+                direction: Direction::North,
             },
             drop_off: lift::Portal {
                 segment: 1,
                 position: xy(1, 0),
+                direction: Direction::North,
             },
             segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),

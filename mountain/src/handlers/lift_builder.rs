@@ -5,6 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::model::carousel::{Car, Carousel};
+use crate::model::direction::Direction;
 use crate::model::lift::{self, Lift, Segment};
 use crate::services::id_allocator;
 use crate::systems::overlay;
@@ -82,15 +83,20 @@ impl Handler {
         let from_3d = xyz(from.x as f32, from.y as f32, terrain[from]);
         let to_3d = xyz(to.x as f32, to.y as f32, terrain[to]);
         let lift_id = id_allocator.next_id();
+
+        let vector = xy(to_3d.x - from_3d.x, to_3d.y - from_3d.y);
+        let direction = Direction::snap_to_direction(vector.angle());
         let lift = Lift {
             segments: Segment::segments(&[from_3d, to_3d, from_3d]),
             pick_up: lift::Portal {
                 segment: 0,
                 position: from,
+                direction,
             },
             drop_off: lift::Portal {
                 segment: 1,
                 position: to,
+                direction,
             },
         };
 

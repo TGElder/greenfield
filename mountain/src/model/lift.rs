@@ -1,6 +1,8 @@
 use commons::geometry::{XY, XYZ};
 use nalgebra::Point3;
 
+use crate::model::direction::Direction;
+
 pub struct Lift {
     pub segments: Vec<Segment>,
     pub pick_up: Portal,
@@ -16,6 +18,7 @@ pub struct Segment {
 pub struct Portal {
     pub segment: usize,
     pub position: XY<u32>,
+    pub direction: Direction,
 }
 
 impl Segment {

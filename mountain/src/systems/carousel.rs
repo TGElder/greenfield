@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use commons::grid::Grid;
 
 use crate::model::carousel::{Car, Carousel};
-use crate::model::direction::Direction;
 use crate::model::lift::Lift;
 use crate::model::skiing::{Mode, Plan, State};
+use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
 
 pub struct System {
@@ -122,8 +122,11 @@ impl System {
                                 *location_id,
                                 Plan::Stationary(State {
                                     position: lift.drop_off.position,
-                                    mode: Mode::Skiing { velocity: 0 },
-                                    travel_direction: Direction::NorthEast,
+                                    mode: Mode::Skiing {
+                                        velocity: encode_velocity(&carousel.velocity)
+                                            .unwrap_or(VELOCITY_LEVELS - 1),
+                                    },
+                                    travel_direction: lift.drop_off.direction,
                                 }),
                             );
                             reserved[lift.drop_off.position] = true;
