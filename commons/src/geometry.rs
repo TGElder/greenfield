@@ -26,11 +26,12 @@ where
 
     pub fn angle(&self) -> T {
         let XY { x, y } = self.normalize();
-        let mut angle = y.atan2(x);
+        let angle = y.atan2(x);
         if angle < T::zero() {
-            angle = angle.add((2.0 * PI).into());
+            angle.add((2.0 * PI).into())
+        } else {
+            angle
         }
-        angle
     }
 }
 
