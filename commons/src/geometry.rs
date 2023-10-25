@@ -1,13 +1,38 @@
 use std::borrow::Borrow;
+use std::f32::consts::PI;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
 
-use num::One;
+use num::{Float, One};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 pub struct XY<T> {
     pub x: T,
     pub y: T,
+}
+
+impl<T> XY<T>
+where
+    T: Float + From<f32>,
+{
+    pub fn magnitude(&self) -> T {
+        (self.x.powf(2.0.into()) + self.y.powf(2.0.into())).sqrt()
+    }
+
+    pub fn normalize(&self) -> Self {
+        let magnitude = self.magnitude();
+        xy(self.x.div(magnitude), self.y.div(magnitude))
+    }
+
+    pub fn angle(&self) -> T {
+        let XY { x, y } = self.normalize();
+        let angle = y.atan2(x);
+        if angle < T::zero() {
+            angle.add((2.0 * PI).into())
+        } else {
+            angle
+        }
+    }
 }
 
 pub const fn xy<T>(x: T, y: T) -> XY<T> {
@@ -78,6 +103,24 @@ pub struct XYZ<T> {
     pub x: T,
     pub y: T,
     pub z: T,
+}
+
+impl<T> XYZ<T>
+where
+    T: Float + From<f32>,
+{
+    pub fn magnitude(&self) -> T {
+        (self.x.powf(2.0.into()) + self.y.powf(2.0.into()) + self.z.powf(2.0.into())).sqrt()
+    }
+
+    pub fn normalize(&self) -> Self {
+        let magnitude = self.magnitude();
+        xyz(
+            self.x.div(magnitude),
+            self.y.div(magnitude),
+            self.z.div(magnitude),
+        )
+    }
 }
 
 pub const fn xyz<T>(x: T, y: T, z: T) -> XYZ<T> {
@@ -186,7 +229,46 @@ where
 
 #[cfg(test)]
 mod tests {
+    use crate::almost_eq::assert_almost_eq;
+
     use super::*;
+
+    #[test]
+    fn test_xy_magnitude() {
+        // given
+        let a = xy(3.0, 4.0);
+
+        // when
+        let result = a.magnitude();
+
+        // then
+        assert_almost_eq(result, 5.0);
+    }
+
+    #[test]
+    fn test_xy_normalize() {
+        // given
+        let a = xy(3.0, 4.0);
+
+        // when
+        let result = a.normalize();
+
+        // then
+        assert_almost_eq(result.x, 3.0 / 5.0);
+        assert_almost_eq(result.y, 4.0 / 5.0);
+    }
+
+    #[test]
+    fn test_angle() {
+        assert_almost_eq(xy(1.0, 0.0).angle(), 0.0);
+        assert_almost_eq(xy(1.0, 1.0).angle(), 1.0 * PI / 4.0);
+        assert_almost_eq(xy(0.0, 1.0).angle(), 2.0 * PI / 4.0);
+        assert_almost_eq(xy(-1.0, 1.0).angle(), 3.0 * PI / 4.0);
+        assert_almost_eq(xy(-1.0, 0.0).angle(), 4.0 * PI / 4.0);
+        assert_almost_eq(xy(-1.0, -1.0).angle(), 5.0 * PI / 4.0);
+        assert_almost_eq(xy(0.0, -1.0).angle(), 6.0 * PI / 4.0);
+        assert_almost_eq(xy(1.0, -1.0).angle(), 7.0 * PI / 4.0);
+    }
 
     #[test]
     fn test_xy_add() {
@@ -236,6 +318,32 @@ mod tests {
 
         // then
         assert_eq!(result, xy(1, 2));
+    }
+
+    #[test]
+    fn test_xyz_magnitude() {
+        // given
+        let a = xyz(3.0, 4.0, 5.0);
+
+        // when
+        let result = a.magnitude();
+
+        // then
+        assert_almost_eq(result, 50.0.sqrt());
+    }
+
+    #[test]
+    fn test_xyz_normalize() {
+        // given
+        let a = xyz(3.0, 4.0, 5.0);
+
+        // when
+        let result = a.normalize();
+
+        // then
+        assert_almost_eq(result.x, 3.0 / 50.0.sqrt());
+        assert_almost_eq(result.y, 4.0 / 50.0.sqrt());
+        assert_almost_eq(result.z, 5.0 / 50.0.sqrt());
     }
 
     #[test]
