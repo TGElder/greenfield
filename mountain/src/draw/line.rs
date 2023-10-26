@@ -6,17 +6,13 @@ use engine::graphics::Graphics;
 
 const BLACK: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 
-pub fn draw(
-    graphics: &mut dyn Graphics,
-    index: &usize,
-    from: &XYZ<f32>,
-    to: &XYZ<f32>,
-    height: f32,
-) {
-    graphics
-        .draw_quads(
-            index,
-            &[
+pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 2]], height: f32) {
+    let quads = segments
+        .iter()
+        .flat_map(|segment| {
+            let from = segment[0];
+            let to = segment[1];
+            [
                 Quad {
                     color: BLACK,
                     corners: [
@@ -35,7 +31,9 @@ pub fn draw(
                         xyz(from.x, from.y, from.z + height),
                     ],
                 },
-            ],
-        )
-        .unwrap();
+            ]
+        })
+        .collect::<Vec<_>>();
+
+    graphics.draw_quads(index, &quads).unwrap();
 }
