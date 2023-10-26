@@ -377,7 +377,6 @@ impl EventHandler for Game {
         lift_artist::run(
             graphics,
             &self.components.lifts,
-            &self.components.terrain,
             &mut self.components.drawings,
         );
         self.systems.overlay.run(
