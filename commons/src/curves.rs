@@ -1,6 +1,6 @@
 use crate::geometry::{xy, XY};
 
-pub fn curve(
+pub fn approximate_curve(
     position_initial: &XY<f32>,
     angle_initial: f32,
     angle_increment: f32,
@@ -30,9 +30,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_curve() {
+    fn test_approximate_curve() {
         // when
-        let points = curve(&xy(4.0, 3.0), 0.714_449_64, (2.0 * PI) / 8.0, 2.0, 4);
+        let points = approximate_curve(&xy(4.0, 3.0), 0.714_449_64, (2.0 * PI) / 8.0, 2.0, 4);
 
         // then
         assert_eq!(points.len(), 4);
