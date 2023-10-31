@@ -1,25 +1,22 @@
 use crate::geometry::{xy, XY};
 
-pub fn flat_curve_left(
-    approach: &[XY<f32>; 2],
-    turn_angle: f32,
+pub fn curve(
+    position_initial: &XY<f32>,
+    angle_initial: f32,
+    angle_increment: f32,
     radius: f32,
-    segments: u8,
+    points: u8,
 ) -> Vec<XY<f32>> {
-    let approach_vector = approach[1] - approach[0];
-    let right_angle_vector = xy(approach_vector.y, -approach_vector.x).normalize();
-    let start = approach[1];
-    let curve_center = start - right_angle_vector * radius;
+    let segment_length = ((angle_increment / 2.0).sin() * radius).abs() * 2.0;
+    let mut position_current = *position_initial;
+    let mut angle_current = angle_initial;
 
-    let mut out = Vec::with_capacity(segments as usize);
-    let mut current_angle = (start - curve_center).angle();
-    let increment = turn_angle / segments as f32;
-
-    for _ in 0..segments {
-        current_angle += increment;
-        let current_vector = xy(current_angle.cos(), current_angle.sin()) * radius;
-        let XY { x, y } = curve_center + current_vector;
-        out.push(xy(x, y));
+    let mut out = Vec::with_capacity(points as usize);
+    for _ in 0..points {
+        position_current =
+            position_current + (xy(angle_current.cos(), angle_current.sin()) * segment_length);
+        out.push(position_current);
+        angle_current += angle_increment;
     }
     out
 }
@@ -33,11 +30,13 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_flat_curve_left() {
+    fn test_curve() {
         // when
-        let points = flat_curve_left(&[xy(1.0, 2.0), xy(4.0, 3.0)], PI, 2.0, 4);
+        let points = curve(&xy(4.0, 3.0), 0.714_449_64, (2.0 * PI) / 8.0, 2.0, 4);
 
         // then
+        assert_eq!(points.len(), 4);
+
         assert_almost_eq(points[0].x, 5.156_399);
         assert_almost_eq(points[0].y, 4.002_939);
 
