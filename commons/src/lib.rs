@@ -2,6 +2,7 @@ extern crate maplit;
 
 pub mod almost_eq;
 pub mod color;
+pub mod curves;
 pub mod float_grid;
 pub mod geometry;
 pub mod grid;
