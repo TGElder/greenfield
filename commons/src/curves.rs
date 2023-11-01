@@ -8,7 +8,7 @@ pub fn approximate_curve(
     points: u8,
 ) -> Vec<XY<f32>> {
     let segment_length = ((angle_increment / 2.0).sin() * radius).abs() * 2.0;
-    
+
     let mut position_current = *position_initial;
     let mut angle_current = angle_initial;
 
