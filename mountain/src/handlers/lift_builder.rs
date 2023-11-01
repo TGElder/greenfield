@@ -152,8 +152,8 @@ fn get_direction(from: &XY<u32>, to: &XY<u32>) -> Direction {
 fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>> {
     let from_3d = xyz(from.x as f32, from.y as f32, terrain[from] + WIRE_HEIGHT);
     let to_3d = xyz(to.x as f32, to.y as f32, terrain[to] + WIRE_HEIGHT);
-    let from_2d = xy(from_3d.x, from_3d.y);
-    let to_2d = xy(to_3d.x, to_3d.y);
+    let from_2d = from_3d.xy();
+    let to_2d = to_3d.xy();
 
     let angle = (to_2d - from_2d).angle();
 
