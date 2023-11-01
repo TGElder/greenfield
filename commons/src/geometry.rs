@@ -105,13 +105,16 @@ pub struct XYZ<T> {
     pub z: T,
 }
 
-impl <T> XYZ<T> where T: Copy {
+impl<T> XYZ<T>
+where
+    T: Copy,
+{
     pub fn xy(&self) -> XY<T> {
-        XY{
+        XY {
             x: self.x,
-            y: self.y
+            y: self.y,
         }
-    }    
+    }
 }
 
 impl<T> XYZ<T>
@@ -331,15 +334,14 @@ mod tests {
 
     #[test]
     fn test_xyz_xy() {
-         // given
-         let a = xyz(3, 4, 5);
+        // given
+        let a = xyz(3, 4, 5);
 
-         // when
-         let result = a.xy();
+        // when
+        let result = a.xy();
 
-         // then
-         assert_eq!(result, xy(3, 4));
-  
+        // then
+        assert_eq!(result, xy(3, 4));
     }
 
     #[test]
