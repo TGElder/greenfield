@@ -105,6 +105,15 @@ pub struct XYZ<T> {
     pub z: T,
 }
 
+impl <T> XYZ<T> where T: Copy {
+    pub fn xy(&self) -> XY<T> {
+        XY{
+            x: self.x,
+            y: self.y
+        }
+    }    
+}
+
 impl<T> XYZ<T>
 where
     T: Float + From<f32>,
@@ -318,6 +327,19 @@ mod tests {
 
         // then
         assert_eq!(result, xy(1, 2));
+    }
+
+    #[test]
+    fn test_xyz_xy() {
+         // given
+         let a = xyz(3, 4, 5);
+
+         // when
+         let result = a.xy();
+
+         // then
+         assert_eq!(result, xy(3, 4));
+  
     }
 
     #[test]
