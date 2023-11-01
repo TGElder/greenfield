@@ -1,5 +1,8 @@
 use std::collections::HashMap;
+use std::f32::consts::PI;
+use std::iter::once;
 
+use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -13,6 +16,10 @@ use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
+pub const CIRCLE_SEGMENTS: u8 = 16;
+pub const CURVE_INCREMENT: f32 = (2.0 * PI) / CIRCLE_SEGMENTS as f32;
+pub const CURVE_RADIUS: f32 = 2.0;
+pub const WIRE_HEIGHT: f32 = 3.0;
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -80,14 +87,13 @@ impl Handler {
         // create lift
 
         let to = position;
-        let from_3d = xyz(from.x as f32, from.y as f32, terrain[from]);
-        let to_3d = xyz(to.x as f32, to.y as f32, terrain[to]);
         let lift_id = id_allocator.next_id();
 
-        let vector = xy(to_3d.x - from_3d.x, to_3d.y - from_3d.y);
-        let direction = Direction::snap_to_direction(vector.angle());
+        let points = get_points(terrain, &from, &to);
+        let direction = get_direction(&from, &to);
+
         let lift = Lift {
-            segments: Segment::segments(&[from_3d, to_3d, from_3d]),
+            segments: Segment::segments(&points),
             pick_up: lift::Portal {
                 segment: 0,
                 position: from,
@@ -136,4 +142,44 @@ impl Handler {
 
         self.from = None;
     }
+}
+
+fn get_direction(from: &XY<u32>, to: &XY<u32>) -> Direction {
+    let vector = xy(to.x as f32 - from.x as f32, to.y as f32 - from.y as f32);
+    Direction::snap_to_direction(vector.angle())
+}
+
+fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>> {
+    let from_3d = xyz(from.x as f32, from.y as f32, terrain[from] + WIRE_HEIGHT);
+    let to_3d = xyz(to.x as f32, to.y as f32, terrain[to] + WIRE_HEIGHT);
+    let from_2d = xy(from_3d.x, from_3d.y);
+    let to_2d = xy(to_3d.x, to_3d.y);
+
+    let angle = (to_2d - from_2d).angle();
+
+    let top_curve = approximate_curve(
+        &to_2d,
+        angle,
+        CURVE_INCREMENT,
+        CURVE_RADIUS,
+        CIRCLE_SEGMENTS / 2 + 1,
+    );
+    let top_curve_last = top_curve.last().unwrap();
+    let buttom_curve_first = *top_curve_last - (to_2d - from_2d);
+    let bottom_curve = approximate_curve(
+        &buttom_curve_first,
+        angle + PI,
+        CURVE_INCREMENT,
+        CURVE_RADIUS,
+        CIRCLE_SEGMENTS / 2 + 1,
+    );
+
+    once(from_3d)
+        .chain(top_curve.into_iter().map(|XY { x, y }| xyz(x, y, to_3d.z)))
+        .chain(
+            bottom_curve
+                .into_iter()
+                .map(|XY { x, y }| xyz(x, y, from_3d.z)),
+        )
+        .collect()
 }
