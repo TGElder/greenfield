@@ -1,5 +1,6 @@
 pub mod avatar_artist;
 pub mod carousel;
+pub mod chair_artist;
 pub mod distance_cost_computer;
 pub mod framer;
 pub mod lift_artist;

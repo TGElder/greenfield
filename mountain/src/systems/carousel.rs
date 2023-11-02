@@ -72,7 +72,7 @@ impl System {
 
             let mut revolve_result = revolve(lift, &current_cars, meters);
 
-            // check for blocked pickup
+            // check for blocked drop off
 
             if reserved[lift.drop_off.position] {
                 if let Some(first_drop_off) = revolve_result
