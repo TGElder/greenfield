@@ -19,7 +19,7 @@ pub const CAR_INTERVAL_METERS: f32 = 10.0;
 pub const CIRCLE_SEGMENTS: u8 = 16;
 pub const CURVE_INCREMENT: f32 = (2.0 * PI) / CIRCLE_SEGMENTS as f32;
 pub const CURVE_RADIUS: f32 = 2.0;
-pub const WIRE_HEIGHT: f32 = 3.0;
+pub const WIRE_HEIGHT: f32 = 2.5;
 
 pub struct Handler {
     pub bindings: Bindings,
