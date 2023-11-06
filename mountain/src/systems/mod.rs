@@ -1,13 +1,12 @@
-pub mod avatar_artist;
 pub mod carousel;
-pub mod chair_artist;
+pub mod chair_framer;
 pub mod distance_cost_computer;
 pub mod frame_wiper;
 pub mod lift_artist;
+pub mod model_artist;
 pub mod overlay;
 pub mod piste_adopter;
 pub mod planner;
-pub mod sitting_framer;
 pub mod skiing_cost_computer;
 pub mod skiing_framer;
 pub mod target_setter;

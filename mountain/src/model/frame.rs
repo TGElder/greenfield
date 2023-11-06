@@ -5,12 +5,12 @@ pub struct Frame {
     pub position: XYZ<f32>,
     pub angle: f32,
     pub model_offset: Option<XYZ<f32>>,
-    pub mode: Mode,
+    pub model: Model,
 }
 
 #[derive(Clone, Copy, Debug)]
-pub enum Mode {
-    Walking,
-    Skiing,
+pub enum Model {
+    Standing { skis: bool },
     Sitting,
+    Chair,
 }

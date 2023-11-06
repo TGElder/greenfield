@@ -39,7 +39,7 @@ fn frame_from_skiing_state(
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         angle: travel_direction.angle(),
         model_offset: None,
-        mode: mode.into(),
+        model: mode.into(),
     }
 }
 
@@ -62,16 +62,16 @@ fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame 
     Frame {
         position: from.position * (1.0 - p) + to.position * p,
         angle: to.angle,
-        mode: from.mode,
+        model: from.model,
         model_offset: None,
     }
 }
 
-impl From<&skiing::Mode> for frame::Mode {
+impl From<&skiing::Mode> for frame::Model {
     fn from(value: &skiing::Mode) -> Self {
         match value {
-            skiing::Mode::Walking => frame::Mode::Walking,
-            skiing::Mode::Skiing { .. } => frame::Mode::Skiing,
+            skiing::Mode::Walking => frame::Model::Standing { skis: false },
+            skiing::Mode::Skiing { .. } => frame::Model::Standing { skis: true },
         }
     }
 }
