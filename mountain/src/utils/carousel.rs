@@ -3,7 +3,11 @@ use commons::unsafe_ordering::unsafe_ordering;
 use crate::model::carousel::Car;
 use crate::model::lift::{Lift, Segment};
 
-pub fn create_cars(segments: &[Segment], min_lift_interval_meters: &f32) -> Vec<Car> {
+pub fn create_cars(
+    carousel_id: usize,
+    segments: &[Segment],
+    min_lift_interval_meters: &f32,
+) -> Vec<Car> {
     let lift_interval_meters = lift_interval_meters(min_lift_interval_meters, segments);
 
     let mut result = vec![];
@@ -12,6 +16,7 @@ pub fn create_cars(segments: &[Segment], min_lift_interval_meters: &f32) -> Vec<
     for (segment_id, segment) in segments.iter().enumerate() {
         while distance_from_segment_start_meters < *segment.length_meters() {
             result.push(Car {
+                carousel_id,
                 segment: segment_id,
                 distance_from_start_meters: distance_from_segment_start_meters,
             });
@@ -120,6 +125,7 @@ fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -
 
     RevolveCarResult {
         car: Car {
+            carousel_id: car.carousel_id,
             segment,
             distance_from_start_meters: distance_from_segment_start_meters + residual_meters,
         },
@@ -171,27 +177,32 @@ mod tests {
             Segment::segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
 
         // when
-        let result = create_cars(&segments, &0.19);
+        let result = create_cars(7, &segments, &0.19);
 
         // then
         let expected = vec![
             Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 0.0,
             },
             Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 0.2,
             },
             Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 0.4,
             },
             Car {
+                carousel_id: 7,
                 segment: 1,
                 distance_from_start_meters: 0.1,
             },
             Car {
+                carousel_id: 7,
                 segment: 1,
                 distance_from_start_meters: 0.3,
             },
@@ -222,14 +233,17 @@ mod tests {
         };
         let cars = vec![
             &Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 0.0,
             },
             &Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 0.67,
             },
             &Car {
+                carousel_id: 7,
                 segment: 1,
                 distance_from_start_meters: 0.33,
             },
@@ -242,14 +256,17 @@ mod tests {
         let expected = RevolveResult {
             cars: vec![
                 Car {
+                    carousel_id: 7,
                     segment: 0,
                     distance_from_start_meters: 1.0,
                 },
                 Car {
+                    carousel_id: 7,
                     segment: 1,
                     distance_from_start_meters: 0.67,
                 },
                 Car {
+                    carousel_id: 7,
                     segment: 0,
                     distance_from_start_meters: 0.33,
                 },
@@ -297,6 +314,7 @@ mod tests {
             ]),
         };
         let cars = vec![&Car {
+            carousel_id: 7,
             segment: 0,
             distance_from_start_meters: 0.5,
         }];
@@ -307,6 +325,7 @@ mod tests {
         // then
         let expected = RevolveResult {
             cars: vec![Car {
+                carousel_id: 7,
                 segment: 0,
                 distance_from_start_meters: 1.0,
             }],
@@ -324,6 +343,7 @@ mod tests {
         // then
         let expected = RevolveResult {
             cars: vec![Car {
+                carousel_id: 7,
                 segment: 1,
                 distance_from_start_meters: 0.5,
             }],
