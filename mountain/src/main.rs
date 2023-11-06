@@ -34,9 +34,9 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    avatar_artist, carousel, chair_artist, distance_cost_computer, frame_wiper, lift_artist,
-    overlay, piste_adopter, planner, sitting_framer, skiing_cost_computer, skiing_framer,
-    target_setter, teleporter, teleporter_entry,
+    carousel, chair_framer, distance_cost_computer, frame_wiper, lift_artist, model_artist,
+    overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer, target_setter,
+    teleporter, teleporter_entry,
 };
 
 fn main() {
@@ -371,14 +371,14 @@ impl EventHandler for Game {
             &self.components.plans,
             &mut self.components.frames,
         );
-        sitting_framer::run(
-            &self.components.locations,
-            &self.components.lifts,
+        chair_framer::run(
             &self.components.carousels,
+            &self.components.lifts,
             &self.components.cars,
+            &self.components.locations,
             &mut self.components.frames,
         );
-        avatar_artist::run(
+        model_artist::run(
             graphics,
             &self.components.frames,
             &mut self.components.drawings,
@@ -388,13 +388,7 @@ impl EventHandler for Game {
             &self.components.lifts,
             &mut self.components.drawings,
         );
-        chair_artist::run(
-            graphics,
-            &self.components.carousels,
-            &self.components.lifts,
-            &self.components.cars,
-            &mut self.components.drawings,
-        );
+
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),

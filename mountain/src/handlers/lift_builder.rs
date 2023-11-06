@@ -110,6 +110,7 @@ impl Handler {
 
         if self.bindings.carousel.binds_event(event) {
             let carousel_id = id_allocator.next_id();
+
             let new_cars =
                 utils::carousel::create_cars(carousel_id, &lift.segments, &CAR_INTERVAL_METERS);
 

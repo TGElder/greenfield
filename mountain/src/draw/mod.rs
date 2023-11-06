@@ -1,4 +1,3 @@
-pub mod avatar;
-pub mod chair;
 pub mod line;
+pub mod model;
 pub mod terrain;

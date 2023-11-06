@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use engine::graphics::Graphics;
 
-use crate::draw::avatar::draw;
+use crate::draw::model::draw;
 use crate::model::frame::Frame;
 
 pub fn run(
