@@ -105,7 +105,6 @@ impl System {
                             if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.pick_up.position) {
                                 return true;
                             }
-                            println!("{} was picked up by {}", plan_id, car_id);
                             targets.remove(plan_id);
                             locations.insert(*plan_id, *car_id);
                             reserved[lift.pick_up.position] = false;
@@ -117,7 +116,6 @@ impl System {
                             if *location != *car_id {
                                 return true;
                             }
-                            println!("{} was dropped off from {}", location_id, car_id);
                             plans.insert(
                                 *location_id,
                                 Plan::Stationary(State {

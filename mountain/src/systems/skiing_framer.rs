@@ -13,8 +13,6 @@ pub fn run(
     plans: &HashMap<usize, Plan>,
     frames: &mut HashMap<usize, Option<Frame>>,
 ) {
-    frames.iter_mut().for_each(|(_, frame)| *frame = None);
-
     for (id, plan) in plans {
         if let Some(frame) = frame_from_plan(terrain, micros, plan) {
             frames.insert(*id, Some(frame));
@@ -40,6 +38,7 @@ fn frame_from_skiing_state(
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         angle: travel_direction.angle(),
+        model_offset: None,
         mode: mode.into(),
     }
 }
@@ -62,8 +61,9 @@ fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame 
     let to = frame_from_skiing_state(terrain, &to.state);
     Frame {
         position: from.position * (1.0 - p) + to.position * p,
-        mode: from.mode,
         angle: to.angle,
+        mode: from.mode,
+        model_offset: None,
     }
 }
 
