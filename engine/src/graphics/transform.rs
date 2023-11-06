@@ -41,3 +41,11 @@ impl Transform for Quad {
         }
     }
 }
+
+impl Transform for Vec<Quad> {
+    fn transform(&self, transformation: &Matrix4<f32>) -> Self {
+        self.iter()
+            .map(|quad| quad.transform(transformation))
+            .collect()
+    }
+}
