@@ -24,12 +24,13 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::{add_skier, piste_builder};
+use crate::handlers::{add_skier, link_builder, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
+use crate::model::link::Link;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
@@ -50,6 +51,7 @@ fn main() {
                 frames: HashMap::default(),
                 drawings: HashMap::default(),
                 pistes: HashMap::default(),
+                links: HashMap::default(),
                 distance_costs: HashMap::default(),
                 skiing_costs: HashMap::default(),
                 lifts: HashMap::default(),
@@ -89,6 +91,12 @@ fn main() {
                         },
                     },
                 },
+                link_builder: link_builder::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::K),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 lift_builder: lift_builder::Handler::new(lift_builder::Bindings {
                     teleporter: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::T),
@@ -108,6 +116,7 @@ fn main() {
                 overlay: overlay::System::new(overlay::Colors {
                     selection: Rgba::new(255, 255, 0, 128),
                     piste: Rgba::new(0, 0, 255, 128),
+                    link: Rgba::new(0, 0, 255, 64),
                 }),
                 planner: planner::System::new(),
                 carousel: carousel::System::new(),
@@ -218,6 +227,7 @@ struct Components {
     frames: HashMap<usize, Option<Frame>>,
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
+    links: HashMap<usize, Link>,
     distance_costs: HashMap<usize, PisteCosts>,
     skiing_costs: HashMap<usize, PisteCosts>,
     lifts: HashMap<usize, Lift>,
@@ -236,6 +246,7 @@ struct Handlers {
     add_skier: add_skier::Handler,
     clock: handlers::clock::Handler,
     piste_builder: piste_builder::Handler,
+    link_builder: link_builder::Handler,
     lift_builder: lift_builder::Handler,
     selection: selection::Handler,
 }
@@ -294,6 +305,14 @@ impl EventHandler for Game {
             event,
             &mut self.components.pistes,
             &mut self.components.piste_map,
+            &mut self.handlers.selection,
+            &mut self.systems.overlay,
+            &mut self.services.id_allocator,
+        );
+        self.handlers.link_builder.handle(
+            event,
+            &self.components.piste_map,
+            &mut self.components.links,
             &mut self.handlers.selection,
             &mut self.systems.overlay,
             &mut self.services.id_allocator,
@@ -393,6 +412,7 @@ impl EventHandler for Game {
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.pistes,
+            &self.components.links,
             &self.handlers.selection,
         );
 
