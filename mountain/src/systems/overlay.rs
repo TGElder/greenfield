@@ -8,6 +8,7 @@ use engine::graphics::Graphics;
 
 use crate::draw::terrain;
 use crate::handlers::selection;
+use crate::model::link::Link;
 use crate::model::piste::Piste;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
@@ -20,6 +21,7 @@ pub struct System {
 pub struct Colors {
     pub selection: Rgba<u8>,
     pub piste: Rgba<u8>,
+    pub link: Rgba<u8>,
 }
 
 impl System {
@@ -39,6 +41,7 @@ impl System {
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
         pistes: &HashMap<usize, Piste>,
+        links: &HashMap<usize, Link>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else { return };
@@ -52,6 +55,7 @@ impl System {
                     let position = xy(x, y);
                     image[position] = selection_color(self.colors.selection, &position, selection)
                         .or_else(|| piste_color(self.colors.piste, &position, pistes))
+                        .or_else(|| link_color(self.colors.link, &position, links))
                         .unwrap_or(CLEAR);
                 }
             }
@@ -89,6 +93,26 @@ fn piste_color(
             .grid
             .offsets(position, &CORNERS)
             .filter(|corner| piste.grid.in_bounds(corner) && piste.grid[corner])
+            .count()
+            == 4
+        {
+            return Some(color);
+        }
+    }
+
+    None
+}
+
+fn link_color(
+    color: Rgba<u8>,
+    position: &XY<u32>,
+    links: &HashMap<usize, Link>,
+) -> Option<Rgba<u8>> {
+    for link in links.values() {
+        if link
+            .grid
+            .offsets(position, &CORNERS)
+            .filter(|corner| link.grid.in_bounds(corner) && link.grid[corner])
             .count()
             == 4
         {
