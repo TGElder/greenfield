@@ -229,7 +229,7 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
-        reserved,
+        is_reserved_fn: &|position| reserved[position],
         is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
             (Some(to), Some(from)) => to < from,
             _ => false,

@@ -44,31 +44,34 @@ fn compute_costs_for_piste(
         .values()
         .map(|lift| lift.pick_up.position)
         .collect::<HashSet<_>>();
-    let mut reserved = terrain.map(|position, _| lift_positions.contains(&position));
 
     for (
         lift,
         Lift {
-            pick_up: lift::Portal { position, .. },
+            pick_up:
+                lift::Portal {
+                    position: pick_up_position,
+                    ..
+                },
             ..
         },
     ) in lifts
     {
         let grid = &piste.grid;
-        if grid.in_bounds(position) && grid[position] {
+        if grid.in_bounds(pick_up_position) && grid[pick_up_position] {
             let distance_costs = distance_costs.costs(lift).unwrap();
 
-            reserved[position] = false;
             let network = SkiingNetwork {
                 terrain,
-                reserved: &reserved,
+                is_reserved_fn: &|position| {
+                    position != pick_up_position && lift_positions.contains(position)
+                },
                 is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
                     (Some(to), Some(from)) => to < from,
                     _ => false,
                 },
             };
-            let costs = compute_costs_for_target(position, piste, &network);
-            reserved[position] = true;
+            let costs = compute_costs_for_target(pick_up_position, piste, &network);
 
             let coverage = costs.len() as f32
                 / (piste_positions(piste).count()

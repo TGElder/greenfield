@@ -24,7 +24,7 @@ const STOP_MAX_VELOCITY: f32 = 1.5;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
-    pub reserved: &'a Grid<bool>,
+    pub is_reserved_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_skiable_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
 
@@ -75,7 +75,7 @@ impl<'a> SkiingNetwork<'a> {
     ) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &travel_direction)?;
 
-        if self.reserved[to_position] {
+        if (self.is_reserved_fn)(&to_position) {
             return None;
         }
 
@@ -189,7 +189,7 @@ impl<'a> SkiingNetwork<'a> {
     fn get_poling_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
         let to_position = self.get_to_position(&from.position, &from.travel_direction)?;
 
-        if self.reserved[to_position] {
+        if (self.is_reserved_fn)(&to_position) {
             return None;
         }
 
