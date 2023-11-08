@@ -62,7 +62,10 @@ fn compute_costs_for_piste(
             let network = SkiingNetwork {
                 terrain,
                 reserved: &reserved,
-                distance_costs,
+                is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
+                    (Some(to), Some(from)) => to < from,
+                    _ => false,
+                },
             };
             let costs = compute_costs_for_target(position, piste, &network);
             reserved[position] = true;

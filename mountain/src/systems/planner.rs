@@ -230,7 +230,10 @@ fn find_path(
     let network = SkiingNetwork {
         terrain,
         reserved,
-        distance_costs,
+        is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
+            (Some(to), Some(from)) => to < from,
+            _ => false,
+        },
     };
 
     let mut rng = rand::thread_rng();
