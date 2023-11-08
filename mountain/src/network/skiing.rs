@@ -1,4 +1,3 @@
-use std::collections::HashMap;
 use std::iter::once;
 use std::time::Duration;
 
@@ -26,7 +25,7 @@ const STOP_MAX_VELOCITY: f32 = 1.5;
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub reserved: &'a Grid<bool>,
-    pub distance_costs: &'a HashMap<State, u64>,
+    pub skiable_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -38,15 +37,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.poling_edges(from)
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| {
-                    match (
-                        self.distance_costs.get(&edge.to),
-                        self.distance_costs.get(&edge.from),
-                    ) {
-                        (Some(to), Some(from)) => to < from,
-                        _ => false,
-                    }
-                })
+                .filter(|edge| (self.skiable_edge_fn)(&edge.to, &edge.from))
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from))
                 .chain(self.skis_off(from))
