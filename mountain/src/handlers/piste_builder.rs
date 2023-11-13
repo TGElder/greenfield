@@ -39,39 +39,43 @@ impl Handler {
         let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
             return;
         };
-        let mut grid = OriginGrid::from_rectangle(
+        let cell_grid = OriginGrid::from_rectangle(rectangle, false);
+
+        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+
+        if add {
+            for cell in cell_grid.iter() {
+                if piste_map[cell].is_none() {
+                    piste_map[cell] = Some(id);
+                }
+            }
+        } else {
+            for cell in cell_grid.iter() {
+                if piste_map[cell] == Some(id) {
+                    piste_map[cell] = None;
+                }
+            }
+        }
+
+        let point_grid = OriginGrid::from_rectangle(
             XYRectangle {
                 from: rectangle.from,
                 to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
             },
             false,
         );
-
-        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
-
-        if add {
-            for position in grid.iter() {
-                if piste_map[position].is_none() {
-                    grid[position] = true;
-                    piste_map[position] = Some(id)
-                } else if piste_map[position] == Some(id) {
-                    grid[position] = true;
-                }
-            }
-        } else {
-            for position in grid.iter() {
-                if piste_map[position] == Some(id) {
-                    piste_map[position] = None
-                }
-            }
-        }
+        let point_grid = point_grid.map(|point, _| {
+            piste_map
+                .offsets(point, &[xy(-1, -1), xy(0, -1), xy(-1, 0), xy(0, 0)])
+                .any(|cell| piste_map[cell] == Some(id))
+        });
 
         match pistes.entry(id) {
             Entry::Occupied(mut entry) => {
-                entry.get_mut().grid = entry.get().grid.paste(&grid);
+                entry.get_mut().grid = entry.get().grid.paste(&point_grid);
             }
             Entry::Vacant(entry) => {
-                entry.insert(Piste { grid });
+                entry.insert(Piste { grid: point_grid });
             }
         }
 
