@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
@@ -39,23 +39,23 @@ impl Handler {
         let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
             return;
         };
-        let cell_grid = OriginGrid::from_rectangle(rectangle, false);
 
         let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
 
-        if add {
-            for cell in cell_grid.iter() {
-                if piste_map[cell].is_none() {
-                    piste_map[cell] = Some(id);
-                }
-            }
-        } else {
-            for cell in cell_grid.iter() {
-                if piste_map[cell] == Some(id) {
-                    piste_map[cell] = None;
+        // updating piste map
+
+        for x in rectangle.from.x..=rectangle.to.x {
+            for y in rectangle.from.y..=rectangle.to.y {
+                let cell = xy(x, y);
+                if add && piste_map[cell].is_none() {
+                    piste_map[cell] = Some(id)
+                } else if subtract && piste_map[cell] == Some(id) {
+                    piste_map[cell] = None
                 }
             }
         }
+
+        // updating piste
 
         let point_grid = OriginGrid::from_rectangle(
             XYRectangle {
@@ -66,7 +66,7 @@ impl Handler {
         );
         let point_grid = point_grid.map(|point, _| {
             piste_map
-                .offsets(point, &[xy(-1, -1), xy(0, -1), xy(-1, 0), xy(0, 0)])
+                .offsets(point, &CORNERS_INVERSE)
                 .any(|cell| piste_map[cell] == Some(id))
         });
 
@@ -79,6 +79,8 @@ impl Handler {
             }
         }
 
+        // updating overlay
+
         overlay.update(XYRectangle {
             from: xy(
                 rectangle.from.x.saturating_sub(1),
@@ -86,6 +88,9 @@ impl Handler {
             ),
             to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
         });
+
+        // clearing selection
+
         selection.clear_selection();
     }
 }
