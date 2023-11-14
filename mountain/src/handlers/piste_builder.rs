@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
@@ -39,41 +39,47 @@ impl Handler {
         let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
             return;
         };
-        let mut grid = OriginGrid::from_rectangle(
+
+        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+
+        // updating piste map
+
+        for x in rectangle.from.x..=rectangle.to.x {
+            for y in rectangle.from.y..=rectangle.to.y {
+                let cell = xy(x, y);
+                if add && piste_map[cell].is_none() {
+                    piste_map[cell] = Some(id)
+                } else if subtract && piste_map[cell] == Some(id) {
+                    piste_map[cell] = None
+                }
+            }
+        }
+
+        // updating piste
+
+        let point_grid = OriginGrid::from_rectangle(
             XYRectangle {
                 from: rectangle.from,
                 to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
             },
             false,
         );
-
-        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
-
-        if add {
-            for position in grid.iter() {
-                if piste_map[position].is_none() {
-                    grid[position] = true;
-                    piste_map[position] = Some(id)
-                } else if piste_map[position] == Some(id) {
-                    grid[position] = true;
-                }
-            }
-        } else {
-            for position in grid.iter() {
-                if piste_map[position] == Some(id) {
-                    piste_map[position] = None
-                }
-            }
-        }
+        let point_grid = point_grid.map(|point, _| {
+            piste_map
+                .offsets(point, &CORNERS_INVERSE)
+                .any(|cell| piste_map[cell] == Some(id))
+        });
 
         match pistes.entry(id) {
             Entry::Occupied(mut entry) => {
-                entry.get_mut().grid = entry.get().grid.paste(&grid);
+                entry.get_mut().grid = entry.get().grid.paste(&point_grid);
             }
             Entry::Vacant(entry) => {
-                entry.insert(Piste { grid });
+                entry.insert(Piste { grid: point_grid });
             }
         }
+
+        // updating overlay
 
         overlay.update(XYRectangle {
             from: xy(
@@ -82,6 +88,9 @@ impl Handler {
             ),
             to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
         });
+
+        // clearing selection
+
         selection.clear_selection();
     }
 }

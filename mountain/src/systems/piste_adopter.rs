@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS_INVERSE};
 
 use crate::model::skiing::{Plan, State};
 
@@ -17,7 +17,12 @@ pub fn run(
             continue;
         };
 
-        if let Some(piste) = piste_map[position] {
+        let piste = piste_map
+            .offsets(position, &CORNERS_INVERSE)
+            .flat_map(|cell| piste_map[cell])
+            .next();
+
+        if let Some(piste) = piste {
             locations.insert(*id, piste);
         }
     }

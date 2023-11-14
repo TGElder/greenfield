@@ -392,7 +392,7 @@ impl EventHandler for Game {
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            &self.components.pistes,
+            &self.components.piste_map,
             &self.handlers.selection,
         );
 

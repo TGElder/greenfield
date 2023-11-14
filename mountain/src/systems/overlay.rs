@@ -1,14 +1,11 @@
-use std::collections::HashMap;
-
 use commons::color::Rgba;
 use commons::geometry::{xy, XYRectangle, XY};
-use commons::grid::CORNERS;
+use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
 use crate::draw::terrain;
 use crate::handlers::selection;
-use crate::model::piste::Piste;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
@@ -38,7 +35,7 @@ impl System {
         &mut self,
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
-        pistes: &HashMap<usize, Piste>,
+        piste_map: &Grid<Option<usize>>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else { return };
@@ -51,7 +48,7 @@ impl System {
                 for y in from.y..=to.y {
                     let position = xy(x, y);
                     image[position] = selection_color(self.colors.selection, &position, selection)
-                        .or_else(|| piste_color(self.colors.piste, &position, pistes))
+                        .or_else(|| piste_color(self.colors.piste, &position, piste_map))
                         .unwrap_or(CLEAR);
                 }
             }
@@ -82,18 +79,10 @@ fn selection_color(
 fn piste_color(
     color: Rgba<u8>,
     position: &XY<u32>,
-    pistes: &HashMap<usize, Piste>,
+    piste_map: &Grid<Option<usize>>,
 ) -> Option<Rgba<u8>> {
-    for piste in pistes.values() {
-        if piste
-            .grid
-            .offsets(position, &CORNERS)
-            .filter(|corner| piste.grid.in_bounds(corner) && piste.grid[corner])
-            .count()
-            == 4
-        {
-            return Some(color);
-        }
+    if piste_map[position].is_some() {
+        return Some(color);
     }
 
     None
