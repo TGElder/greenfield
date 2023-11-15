@@ -12,3 +12,4 @@ nalgebra = { workspace = true }
 network = { path = "../network" }
 rand = { workspace = true }
 terrain_gen = { path = "../terrain_gen" }
+thiserror = { workspace = true }

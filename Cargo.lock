@@ -387,6 +387,7 @@ dependencies = [
  "network",
  "rand",
  "terrain_gen",
+ "thiserror",
 ]
 
 [[package]]
