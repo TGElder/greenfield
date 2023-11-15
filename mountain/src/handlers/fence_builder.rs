@@ -43,7 +43,7 @@ impl Handler {
         };
         let position = xy(x.floor() as u32, y.floor() as u32);
 
-        // handle case where from position is not set
+        // handle case where from is not set
 
         let Some(from) = self.from else {
             self.from = Some(position);
@@ -52,27 +52,14 @@ impl Handler {
 
         // create fence
 
-        self.from = None;
         let to = position;
-
-        if !((from.x == to.x && from.y.abs_diff(to.y) == 1)
-            || (from.y == to.y && from.x.abs_diff(to.x) == 1))
-        {
-            return;
+        let delta = xy(to.x as i32 - from.x as i32, to.y as i32 - from.y as i32);
+        let fence_position = xy(from.x.max(to.x), from.y.max(to.y));
+        match fences[fence_position].toggle_fence(&delta) {
+            Ok(is_fence) => println!("Fence from {} to {} = {}", from, to, is_fence),
+            Err(error) => println!("{}", error),
         }
 
-        let delta = xy(to.x as i32 - from.x as i32, to.y as i32 - from.y as i32);
-        let fence_index = match delta {
-            XY { x: 1, y: 0 } => 0,
-            XY { x: 0, y: 1 } => 1,
-            XY { x: -1, y: 0 } => 2,
-            XY { x: 0, y: -1 } => 3,
-            _ => panic!("Unexpected delta {}", delta),
-        };
-        let fence_position = xy(from.x.max(to.x), from.y.max(to.y));
-        let present = &mut fences[fence_position].present[fence_index];
-        *present = !*present;
-
-        println!("Fence from {} to {} = {}", from, to, present);
+        self.from = None;
     }
 }
