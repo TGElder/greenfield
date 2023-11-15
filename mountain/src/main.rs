@@ -28,7 +28,7 @@ use crate::handlers::{add_skier, fence_builder, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
-use crate::model::fences::Fences;
+use crate::model::fence::FencePost;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
@@ -231,7 +231,7 @@ struct Components {
     carousels: HashMap<usize, Carousel>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
-    fences: Grid<Fences>,
+    fences: Grid<FencePost>,
     piste_map: Grid<Option<usize>>,
 }
 

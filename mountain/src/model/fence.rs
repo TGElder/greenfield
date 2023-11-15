@@ -2,7 +2,7 @@ use commons::geometry::XY;
 use thiserror::Error;
 
 #[derive(Default)]
-pub struct Fences {
+pub struct FencePost {
     data: [bool; 4],
 }
 
@@ -12,7 +12,7 @@ pub struct InvalidDelta<'a> {
     delta: &'a XY<i32>,
 }
 
-impl Fences {
+impl FencePost {
     pub fn _is_fence<'a>(&self, delta: &'a XY<i32>) -> Result<bool, InvalidDelta<'a>> {
         Ok(self.data[Self::index(delta)?])
     }

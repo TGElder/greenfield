@@ -2,7 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 
-use crate::model::fences::Fences;
+use crate::model::fence::FencePost;
 
 pub struct Handler {
     pub binding: Binding,
@@ -12,7 +12,7 @@ pub struct Handler {
 pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
-    pub fences: &'a mut Grid<Fences>,
+    pub fences: &'a mut Grid<FencePost>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -37,13 +37,15 @@ impl Handler {
             return;
         }
 
+        // get position
+
         let Some(mouse_xy) = mouse_xy else { return };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
             return;
         };
         let position = xy(x.floor() as u32, y.floor() as u32);
 
-        // handle case where from is not set
+        // handle case where from position is not set
 
         let Some(from) = self.from else {
             self.from = Some(position);
@@ -59,6 +61,8 @@ impl Handler {
             Ok(is_fence) => println!("Fence from {} to {} = {}", from, to, is_fence),
             Err(error) => println!("{}", error),
         }
+
+        // clearing from position
 
         self.from = None;
     }
