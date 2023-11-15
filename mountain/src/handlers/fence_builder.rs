@@ -2,7 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 
-use crate::model::fence::FencePost;
+use crate::model::fence::Fencepost;
 
 pub struct Handler {
     pub binding: Binding,
@@ -12,7 +12,7 @@ pub struct Handler {
 pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
-    pub fences: &'a mut Grid<FencePost>,
+    pub fences: &'a mut Grid<Fencepost>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
