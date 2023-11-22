@@ -24,10 +24,11 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::{add_skier, piste_builder};
+use crate::handlers::{add_skier, entrance_builder, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
+use crate::model::entrance::Entrance;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
@@ -55,6 +56,7 @@ fn main() {
                 lifts: HashMap::default(),
                 carousels: HashMap::default(),
                 cars: HashMap::default(),
+                entrances: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
                 terrain,
@@ -98,6 +100,10 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::L),
                         state: ButtonState::Pressed,
                     },
+                }),
+                entrance_builder: entrance_builder::Handler::new(Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::N),
+                    state: ButtonState::Pressed,
                 }),
                 selection: selection::Handler::new(Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
@@ -223,6 +229,7 @@ struct Components {
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
+    entrances: HashMap<usize, Entrance>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -235,6 +242,7 @@ struct Drawings {
 struct Handlers {
     add_skier: add_skier::Handler,
     clock: handlers::clock::Handler,
+    entrance_builder: entrance_builder::Handler,
     piste_builder: piste_builder::Handler,
     lift_builder: lift_builder::Handler,
     selection: selection::Handler,
@@ -310,6 +318,16 @@ impl EventHandler for Game {
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
                 graphics,
+            });
+        self.handlers
+            .entrance_builder
+            .handle(handlers::entrance_builder::Parameters {
+                event,
+                piste_map: &self.components.piste_map,
+                selection: &mut self.handlers.selection,
+                overlay: &mut self.systems.overlay,
+                id_allocator: &mut self.services.id_allocator,
+                entrances: &mut self.components.entrances,
             });
         self.handlers
             .selection
