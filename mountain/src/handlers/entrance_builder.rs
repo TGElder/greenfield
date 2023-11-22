@@ -41,9 +41,6 @@ impl Handler {
         if !self.binding.binds_event(event) {
             return;
         }
-
-        // get position
-
         let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
             return;
         };
@@ -53,14 +50,14 @@ impl Handler {
         selection.clear_selection();
         overlay.update(rectangle);
 
-        // create fence
+        // create entrance
 
         if rectangle.width() == 0 || rectangle.height() == 0 {
             println!("WARN: Entrance must not be zero length");
             return;
         }
 
-        if let Some([a, b]) = is_valid_vertical_entrance(rectangle, piste_map) {
+        if let Some([a, b]) = get_pistes_if_valid_vertical_entrance(rectangle, piste_map) {
             let piste = (a + b) - piste_map[origin].unwrap();
 
             entrances.insert(
@@ -73,7 +70,7 @@ impl Handler {
             );
 
             dbg!(entrances);
-        } else if let Some([a, b]) = is_valid_horizontal_entrance(rectangle, piste_map) {
+        } else if let Some([a, b]) = get_pites_if_valid_horizontal_entrance(rectangle, piste_map) {
             let piste = (a + b) - piste_map[origin].unwrap();
 
             entrances.insert(
@@ -90,11 +87,12 @@ impl Handler {
     }
 }
 
-fn is_valid_vertical_entrance(
+fn get_pistes_if_valid_vertical_entrance(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
 ) -> Option<[usize; 2]> {
     if rectangle.width() != 2 {
+        println!("INFO: Not vertical entrance - selection must be 2 wide");
         return None;
     }
 
@@ -103,7 +101,8 @@ fn is_valid_vertical_entrance(
     for (index, x) in (rectangle.from.x..=rectangle.to.x).enumerate() {
         let value = piste_map[xy(x, rectangle.from.y)]?;
         for y in rectangle.from.y..=rectangle.to.y {
-            if piste_map[xy(x, y)] != Some(value) {
+            if piste_map[xy(x, y)]? != value {
+                println!("INFO: Not vertical entrance - column does not contain piste");
                 return None;
             }
         }
@@ -111,17 +110,19 @@ fn is_valid_vertical_entrance(
     }
 
     if out[0] == out[1] {
+        println!("INFO: Not vertical entrance - same piste on both sides");
         return None;
     }
 
     Some(out)
 }
 
-fn is_valid_horizontal_entrance(
+fn get_pites_if_valid_horizontal_entrance(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
 ) -> Option<[usize; 2]> {
     if rectangle.height() != 2 {
+        println!("INFO: Not horizontal entrance - selection must be 2 high");
         return None;
     }
 
@@ -130,7 +131,8 @@ fn is_valid_horizontal_entrance(
     for (index, y) in (rectangle.from.y..=rectangle.to.y).enumerate() {
         let value = piste_map[xy(rectangle.from.x, y)]?;
         for x in rectangle.from.x..=rectangle.to.x {
-            if piste_map[xy(x, y)] != Some(value) {
+            if piste_map[xy(x, y)]? != value {
+                println!("INFO: Not horizontal entrance - row does not contain piste");
                 return None;
             }
         }
@@ -138,6 +140,7 @@ fn is_valid_horizontal_entrance(
     }
 
     if out[0] == out[1] {
+        println!("INFO: Not horizontal entrance - same piste on both sides");
         return None;
     }
 
