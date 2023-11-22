@@ -1,7 +1,8 @@
 use commons::geometry::XY;
 
+#[derive(Debug)]
 pub struct Entrance {
-    from: XY<u32>,
-    to: XY<u32>,
-    piste: usize,
+    pub from: XY<u32>,
+    pub to: XY<u32>,
+    pub piste: usize,
 }

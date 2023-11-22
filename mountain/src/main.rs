@@ -323,10 +323,11 @@ impl EventHandler for Game {
             .entrance_builder
             .handle(handlers::entrance_builder::Parameters {
                 event,
-                mouse_xy: &self.mouse_xy,
                 piste_map: &self.components.piste_map,
+                selection: &mut self.handlers.selection,
+                overlay: &mut self.systems.overlay,
+                id_allocator: &mut self.services.id_allocator,
                 entrances: &mut self.components.entrances,
-                graphics,
             });
         self.handlers
             .selection
