@@ -24,11 +24,10 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 
-use crate::handlers::{add_skier, fence_builder, piste_builder};
+use crate::handlers::{add_skier, piste_builder};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
-use crate::model::fence::Fencepost;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
@@ -58,14 +57,13 @@ fn main() {
                 cars: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
-                fences: Grid::default(terrain.width(), terrain.height()),
                 terrain,
             },
             drawings: None,
             handlers: Handlers {
                 add_skier: add_skier::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::S),
+                        button: Button::Keyboard(KeyboardKey::F),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -100,10 +98,6 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::L),
                         state: ButtonState::Pressed,
                     },
-                }),
-                fence_builder: fence_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::F),
-                    state: ButtonState::Pressed,
                 }),
                 selection: selection::Handler::new(Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
@@ -231,7 +225,6 @@ struct Components {
     carousels: HashMap<usize, Carousel>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
-    fences: Grid<Fencepost>,
     piste_map: Grid<Option<usize>>,
 }
 
@@ -244,7 +237,6 @@ struct Handlers {
     clock: handlers::clock::Handler,
     piste_builder: piste_builder::Handler,
     lift_builder: lift_builder::Handler,
-    fence_builder: fence_builder::Handler,
     selection: selection::Handler,
 }
 
@@ -317,14 +309,6 @@ impl EventHandler for Game {
                 id_allocator: &mut self.services.id_allocator,
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
-                graphics,
-            });
-        self.handlers
-            .fence_builder
-            .handle(handlers::fence_builder::Parameters {
-                event,
-                mouse_xy: &self.mouse_xy,
-                fences: &mut self.components.fences,
                 graphics,
             });
         self.handlers
