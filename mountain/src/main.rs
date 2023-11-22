@@ -102,7 +102,7 @@ fn main() {
                     },
                 }),
                 entrance_builder: entrance_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::P),
+                    button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
                 selection: selection::Handler::new(Binding::Single {
