@@ -35,9 +35,9 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, distance_cost_computer, frame_wiper, lift_artist, model_artist,
-    overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer, target_setter,
-    teleporter, teleporter_entry,
+    carousel, chair_framer, distance_cost_computer, entrance, frame_wiper, lift_artist,
+    model_artist, overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer,
+    target_setter,
 };
 
 fn main() {
@@ -355,6 +355,7 @@ impl EventHandler for Game {
             &self.components.locations,
             &self.components.pistes,
             &self.components.lifts,
+            &self.components.entrances,
             &mut self.components.targets,
         );
 
@@ -369,18 +370,11 @@ impl EventHandler for Game {
             skiing_costs: &self.components.skiing_costs,
             reserved: &mut self.components.reserved,
         });
-        teleporter_entry::run(
+        entrance::run(
             &self.components.plans,
-            &self.components.lifts,
-            &self.components.carousels,
+            &self.components.entrances,
             &mut self.components.targets,
             &mut self.components.locations,
-        );
-        teleporter::run(
-            &self.components.lifts,
-            &mut self.components.locations,
-            &mut self.components.reserved,
-            &mut self.components.plans,
         );
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(
@@ -425,6 +419,7 @@ impl EventHandler for Game {
                 &self.components.pistes,
                 &mut self.components.distance_costs,
                 &self.components.lifts,
+                &self.components.entrances,
             );
             skiing_cost_computer::run(
                 &self.components.terrain,
@@ -432,6 +427,7 @@ impl EventHandler for Game {
                 &self.components.distance_costs,
                 &mut self.components.skiing_costs,
                 &self.components.lifts,
+                &self.components.entrances,
             );
         }
     }
