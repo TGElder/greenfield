@@ -59,13 +59,9 @@ impl System {
                 return false;
             };
 
-            dbg!(&current_plan);
-
             let Some(location) = locations.get(id) else {
                 return false;
             };
-
-            dbg!(location);
 
             let Some(piste) = pistes.get(location) else {
                 return false;
