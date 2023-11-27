@@ -12,3 +12,4 @@ pub mod skiing_framer;
 pub mod target_setter;
 pub mod teleporter;
 pub mod teleporter_entry;
+pub mod valid_targets;

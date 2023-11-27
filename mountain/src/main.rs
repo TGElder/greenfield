@@ -33,11 +33,12 @@ use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
+use crate::model::target::Target;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, distance_cost_computer, frame_wiper, lift_artist, model_artist,
     overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer, target_setter,
-    teleporter, teleporter_entry,
+    teleporter, teleporter_entry, valid_targets,
 };
 
 fn main() {
@@ -59,6 +60,7 @@ fn main() {
                 entrances: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
+                valid_targets: HashMap::default(),
                 terrain,
             },
             drawings: None,
@@ -230,6 +232,7 @@ struct Components {
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
+    valid_targets: HashMap<usize, Vec<Target>>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -420,6 +423,12 @@ impl EventHandler for Game {
         };
 
         if COMPUTE_COSTS_BINDING.binds_event(event) {
+            valid_targets::run(
+                &self.components.pistes,
+                &self.components.lifts,
+                &self.components.entrances,
+                &mut self.components.valid_targets,
+            );
             distance_cost_computer::run(
                 &self.components.terrain,
                 &self.components.pistes,

@@ -21,6 +21,7 @@ pub fn run(
     skiing_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
+    skiing_costs.clear();
     for (piste_index, piste) in pistes.iter() {
         let costs = compute_costs_for_piste(
             terrain,
