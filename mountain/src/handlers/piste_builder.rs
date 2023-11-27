@@ -44,14 +44,11 @@ impl Handler {
 
         // updating piste map
 
-        for x in rectangle.from.x..=rectangle.to.x {
-            for y in rectangle.from.y..=rectangle.to.y {
-                let cell = xy(x, y);
-                if add && piste_map[cell].is_none() {
-                    piste_map[cell] = Some(id)
-                } else if subtract && piste_map[cell] == Some(id) {
-                    piste_map[cell] = None
-                }
+        for cell in rectangle.iter() {
+            if add && piste_map[cell].is_none() {
+                piste_map[cell] = Some(id)
+            } else if subtract && piste_map[cell] == Some(id) {
+                piste_map[cell] = None
             }
         }
 

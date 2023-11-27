@@ -1,5 +1,5 @@
 use commons::color::Rgba;
-use commons::geometry::{xy, XYRectangle, XY};
+use commons::geometry::{XYRectangle, XY};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
@@ -43,14 +43,10 @@ impl System {
         for update in self.updates.drain(..) {
             let mut image = OriginGrid::from_rectangle(update, CLEAR);
 
-            let XYRectangle { from, to } = update;
-            for x in from.x..=to.x {
-                for y in from.y..=to.y {
-                    let position = xy(x, y);
-                    image[position] = selection_color(self.colors.selection, &position, selection)
-                        .or_else(|| piste_color(self.colors.piste, &position, piste_map))
-                        .unwrap_or(CLEAR);
-                }
+            for position in update.iter() {
+                image[position] = selection_color(self.colors.selection, &position, selection)
+                    .or_else(|| piste_color(self.colors.piste, &position, piste_map))
+                    .unwrap_or(CLEAR);
             }
 
             drawing
