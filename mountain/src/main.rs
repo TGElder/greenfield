@@ -29,16 +29,16 @@ use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
-use crate::model::target::Target;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, distance_cost_computer, frame_wiper, lift_artist, model_artist,
-    overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer, target_setter,
-    teleporter, teleporter_entry, valid_targets,
+    carousel, chair_framer, distance_cost_computer, exit_computer, frame_wiper, lift_artist,
+    model_artist, overlay, piste_adopter, planner, skiing_cost_computer, skiing_framer,
+    target_setter, teleporter, teleporter_entry,
 };
 
 fn main() {
@@ -60,7 +60,7 @@ fn main() {
                 entrances: HashMap::default(),
                 reserved: Grid::default(terrain.width(), terrain.height()),
                 piste_map: Grid::default(terrain.width(), terrain.height()),
-                valid_targets: HashMap::default(),
+                exits: HashMap::default(),
                 terrain,
             },
             drawings: None,
@@ -232,7 +232,7 @@ struct Components {
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
-    valid_targets: HashMap<usize, Vec<Target>>,
+    exits: HashMap<usize, Vec<Exit>>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -423,11 +423,11 @@ impl EventHandler for Game {
         };
 
         if COMPUTE_COSTS_BINDING.binds_event(event) {
-            valid_targets::run(
+            exit_computer::run(
                 &self.components.pistes,
                 &self.components.lifts,
                 &self.components.entrances,
-                &mut self.components.valid_targets,
+                &mut self.components.exits,
             );
             distance_cost_computer::run(
                 &self.components.terrain,

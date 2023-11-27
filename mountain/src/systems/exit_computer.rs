@@ -1,29 +1,29 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
-use crate::model::target::Target;
 
 pub fn run(
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
-    valid_targets: &mut HashMap<usize, Vec<Target>>,
+    valid_targets: &mut HashMap<usize, Vec<Exit>>,
 ) {
     valid_targets.clear();
     for (piste_id, piste) in pistes.iter() {
-        let targets = valid_targets_for_piste(piste_id, piste, lifts, entrances);
+        let targets = exits_for_piste(piste_id, piste, lifts, entrances);
         valid_targets.insert(*piste_id, targets);
     }
 }
 
-fn valid_targets_for_piste(
+fn exits_for_piste(
     piste_id: &usize,
     piste: &Piste,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
-) -> Vec<Target> {
+) -> Vec<Exit> {
     let grid = &piste.grid;
 
     let lifts_iter = lifts
@@ -56,6 +56,6 @@ fn valid_targets_for_piste(
             )
         })
         .filter(|(_, positions)| !positions.is_empty())
-        .map(|(id, positions)| Target { id: *id, positions })
+        .map(|(id, positions)| Exit { id: *id, positions })
         .collect()
 }
