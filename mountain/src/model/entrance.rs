@@ -1,8 +1,7 @@
-use commons::geometry::XY;
+use commons::geometry::XYRectangle;
 
 #[derive(Debug)]
 pub struct Entrance {
-    pub from: XY<u32>,
-    pub to: XY<u32>,
+    pub footprint: XYRectangle<u32>,
     pub piste: usize,
 }
