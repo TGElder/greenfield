@@ -555,7 +555,7 @@ mod tests {
     fn test_xy_rectangle_iter_usize() {
         // given
         let rectangle = XYRectangle {
-            from: xy(1u64, 2),
+            from: xy(1usize, 2),
             to: xy(3, 5),
         };
 
