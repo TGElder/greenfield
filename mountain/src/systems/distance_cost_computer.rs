@@ -17,9 +17,10 @@ pub fn run(
     distance_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
-    for (piste_index, piste) in pistes.iter() {
+    distance_costs.clear();
+    for (piste_id, piste) in pistes.iter() {
         let costs = compute_costs(terrain, piste, lifts);
-        distance_costs.insert(*piste_index, costs);
+        distance_costs.insert(*piste_id, costs);
     }
 }
 

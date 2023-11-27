@@ -21,14 +21,11 @@ pub fn run(
     skiing_costs: &mut HashMap<usize, PisteCosts>,
     lifts: &HashMap<usize, Lift>,
 ) {
-    for (piste_index, piste) in pistes.iter() {
-        let costs = compute_costs_for_piste(
-            terrain,
-            piste,
-            lifts,
-            distance_costs.get(piste_index).unwrap(),
-        );
-        skiing_costs.insert(*piste_index, costs);
+    skiing_costs.clear();
+    for (piste_id, piste) in pistes.iter() {
+        let costs =
+            compute_costs_for_piste(terrain, piste, lifts, distance_costs.get(piste_id).unwrap());
+        skiing_costs.insert(*piste_id, costs);
     }
 }
 
