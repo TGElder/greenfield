@@ -223,6 +223,27 @@ where
     }
 }
 
+impl XYRectangle<u32> {
+    pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
+        (self.from.x..=self.to.x)
+            .flat_map(move |x| (self.from.y..=self.to.y).map(move |y| XY { x, y }))
+    }
+}
+
+impl XYRectangle<u64> {
+    pub fn iter(&self) -> impl Iterator<Item = XY<u64>> + '_ {
+        (self.from.x..=self.to.x)
+            .flat_map(move |x| (self.from.y..=self.to.y).map(move |y| XY { x, y }))
+    }
+}
+
+impl XYRectangle<usize> {
+    pub fn iter(&self) -> impl Iterator<Item = XY<usize>> + '_ {
+        (self.from.x..=self.to.x)
+            .flat_map(move |x| (self.from.y..=self.to.y).map(move |y| XY { x, y }))
+    }
+}
+
 impl<T> XYRectangle<T>
 where
     T: PartialOrd,
@@ -241,6 +262,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
+
     use crate::almost_eq::assert_almost_eq;
 
     use super::*;
@@ -464,5 +487,98 @@ mod tests {
         assert!(!rectangle.contains(xy(4, 3)));
         assert!(!rectangle.contains(xy(2, 1)));
         assert!(!rectangle.contains(xy(2, 6)));
+    }
+
+    #[test]
+    fn test_xy_rectangle_iter_u32() {
+        // given
+        let rectangle = XYRectangle {
+            from: xy(1u32, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.iter().collect::<HashSet<_>>();
+
+        // then
+        assert_eq!(
+            result,
+            HashSet::from([
+                xy(1, 2),
+                xy(1, 3),
+                xy(1, 4),
+                xy(1, 5),
+                xy(2, 2),
+                xy(2, 3),
+                xy(2, 4),
+                xy(2, 5),
+                xy(3, 2),
+                xy(3, 3),
+                xy(3, 4),
+                xy(3, 5),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_xy_rectangle_iter_u64() {
+        // given
+        let rectangle = XYRectangle {
+            from: xy(1u64, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.iter().collect::<HashSet<_>>();
+
+        // then
+        assert_eq!(
+            result,
+            HashSet::from([
+                xy(1, 2),
+                xy(1, 3),
+                xy(1, 4),
+                xy(1, 5),
+                xy(2, 2),
+                xy(2, 3),
+                xy(2, 4),
+                xy(2, 5),
+                xy(3, 2),
+                xy(3, 3),
+                xy(3, 4),
+                xy(3, 5),
+            ])
+        );
+    }
+
+    #[test]
+    fn test_xy_rectangle_iter_usize() {
+        // given
+        let rectangle = XYRectangle {
+            from: xy(1usize, 2),
+            to: xy(3, 5),
+        };
+
+        // when
+        let result = rectangle.iter().collect::<HashSet<_>>();
+
+        // then
+        assert_eq!(
+            result,
+            HashSet::from([
+                xy(1, 2),
+                xy(1, 3),
+                xy(1, 4),
+                xy(1, 5),
+                xy(2, 2),
+                xy(2, 3),
+                xy(2, 4),
+                xy(2, 5),
+                xy(3, 2),
+                xy(3, 3),
+                xy(3, 4),
+                xy(3, 5),
+            ])
+        );
     }
 }
