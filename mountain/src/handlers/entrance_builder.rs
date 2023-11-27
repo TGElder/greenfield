@@ -63,7 +63,7 @@ impl Handler {
             entrances.insert(
                 id_allocator.next_id(),
                 Entrance {
-                    footprint: XYRectangle{
+                    footprint: XYRectangle {
                         from: xy(rectangle.to.x, rectangle.from.y),
                         to: xy(rectangle.to.x, rectangle.to.y + 1),
                     },
@@ -78,7 +78,7 @@ impl Handler {
             entrances.insert(
                 id_allocator.next_id(),
                 Entrance {
-                    footprint: XYRectangle{
+                    footprint: XYRectangle {
                         from: xy(rectangle.from.x, rectangle.to.y),
                         to: xy(rectangle.to.x + 1, rectangle.to.y),
                     },
