@@ -9,12 +9,12 @@ pub fn run(
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
-    valid_targets: &mut HashMap<usize, Vec<Exit>>,
+    exits: &mut HashMap<usize, Vec<Exit>>,
 ) {
-    valid_targets.clear();
+    exits.clear();
     for (piste_id, piste) in pistes.iter() {
-        let targets = exits_for_piste(piste_id, piste, lifts, entrances);
-        valid_targets.insert(*piste_id, targets);
+        let exits_for_piste = exits_for_piste(piste_id, piste, lifts, entrances);
+        exits.insert(*piste_id, exits_for_piste);
     }
 }
 
