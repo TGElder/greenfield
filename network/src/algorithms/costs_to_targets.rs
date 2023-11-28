@@ -15,7 +15,9 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<T>) -> Ordering {
-        self.cost_from_targets.cmp(&other.cost_from_targets).reverse()
+        self.cost_from_targets
+            .cmp(&other.cost_from_targets)
+            .reverse()
     }
 }
 

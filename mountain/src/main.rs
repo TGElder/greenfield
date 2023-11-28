@@ -38,7 +38,7 @@ use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, distance_cost_computer, entrance, exit_computer, frame_wiper,
     lift_artist, model_artist, overlay, piste_adopter, planner, skiing_cost_computer,
-    skiing_framer, target_setter, teleporter, teleporter_entry,
+    skiing_framer, target_setter,
 };
 
 fn main() {
@@ -93,15 +93,9 @@ fn main() {
                         },
                     },
                 },
-                lift_builder: lift_builder::Handler::new(lift_builder::Bindings {
-                    teleporter: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::T),
-                        state: ButtonState::Pressed,
-                    },
-                    carousel: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::L),
-                        state: ButtonState::Pressed,
-                    },
+                lift_builder: lift_builder::Handler::new(Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::L),
+                    state: ButtonState::Pressed,
                 }),
                 entrance_builder: entrance_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::N),
@@ -377,19 +371,6 @@ impl EventHandler for Game {
             skiing_costs: &self.components.skiing_costs,
             reserved: &mut self.components.reserved,
         });
-        teleporter_entry::run(
-            &self.components.plans,
-            &self.components.lifts,
-            &self.components.carousels,
-            &mut self.components.targets,
-            &mut self.components.locations,
-        );
-        teleporter::run(
-            &self.components.lifts,
-            &mut self.components.locations,
-            &mut self.components.reserved,
-            &mut self.components.plans,
-        );
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(
             &self.components.terrain,

@@ -22,13 +22,8 @@ pub const CURVE_RADIUS: f32 = 2.0;
 pub const WIRE_HEIGHT: f32 = 2.5;
 
 pub struct Handler {
-    pub bindings: Bindings,
+    binding: Binding,
     from: Option<XY<u32>>,
-}
-
-pub struct Bindings {
-    pub teleporter: Binding,
-    pub carousel: Binding,
 }
 
 pub struct Parameters<'a> {
@@ -44,9 +39,9 @@ pub struct Parameters<'a> {
 }
 
 impl Handler {
-    pub fn new(bindings: Bindings) -> Handler {
+    pub fn new(binding: Binding) -> Handler {
         Handler {
-            bindings,
+            binding,
             from: None,
         }
     }
@@ -65,9 +60,7 @@ impl Handler {
             graphics,
         }: Parameters<'_>,
     ) {
-        if !(self.bindings.carousel.binds_event(event)
-            || self.bindings.teleporter.binds_event(event))
-        {
+        if !self.binding.binds_event(event) {
             return;
         }
 
@@ -108,29 +101,27 @@ impl Handler {
 
         // setup carousel
 
-        if self.bindings.carousel.binds_event(event) {
-            let carousel_id = id_allocator.next_id();
+        let carousel_id = id_allocator.next_id();
 
-            let new_cars =
-                utils::carousel::create_cars(carousel_id, &lift.segments, &CAR_INTERVAL_METERS);
+        let new_cars =
+            utils::carousel::create_cars(carousel_id, &lift.segments, &CAR_INTERVAL_METERS);
 
-            let car_ids = (0..new_cars.len())
-                .map(|_| id_allocator.next_id())
-                .collect::<Vec<_>>();
+        let car_ids = (0..new_cars.len())
+            .map(|_| id_allocator.next_id())
+            .collect::<Vec<_>>();
 
-            car_ids.iter().zip(new_cars).for_each(|(id, car)| {
-                cars.insert(*id, car);
-            });
+        car_ids.iter().zip(new_cars).for_each(|(id, car)| {
+            cars.insert(*id, car);
+        });
 
-            carousels.insert(
-                carousel_id,
-                Carousel {
-                    lift_id,
-                    velocity: LIFT_VELOCITY,
-                    car_ids,
-                },
-            );
-        }
+        carousels.insert(
+            carousel_id,
+            Carousel {
+                lift_id,
+                velocity: LIFT_VELOCITY,
+                car_ids,
+            },
+        );
 
         // register lift
 
