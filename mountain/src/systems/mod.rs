@@ -12,5 +12,3 @@ pub mod planner;
 pub mod skiing_cost_computer;
 pub mod skiing_framer;
 pub mod target_setter;
-pub mod teleporter;
-pub mod teleporter_entry;
