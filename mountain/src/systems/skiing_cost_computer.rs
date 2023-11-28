@@ -6,7 +6,7 @@ use network::algorithms::find_best_within_steps::{self, FindBestWithinSteps};
 use network::model::Edge;
 
 use crate::model::direction::DIRECTIONS;
-use crate::model::lift::{self, Lift};
+use crate::model::exit::Exit;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
 use crate::network::skiing::SkiingNetwork;
@@ -17,66 +17,67 @@ pub const MAX_STEPS: u64 = 4;
 pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
+    exits: &HashMap<usize, Vec<Exit>>,
     distance_costs: &HashMap<usize, PisteCosts>,
     skiing_costs: &mut HashMap<usize, PisteCosts>,
-    lifts: &HashMap<usize, Lift>,
 ) {
     skiing_costs.clear();
     for (piste_id, piste) in pistes.iter() {
-        let costs =
-            compute_costs_for_piste(terrain, piste, lifts, distance_costs.get(piste_id).unwrap());
+        let Some(exits) = exits.get(piste_id) else {
+            continue;
+        };
+        let costs = compute_costs_for_piste(
+            terrain,
+            piste_id,
+            piste,
+            exits,
+            distance_costs.get(piste_id).unwrap(),
+        );
         skiing_costs.insert(*piste_id, costs);
     }
 }
 
 fn compute_costs_for_piste(
     terrain: &Grid<f32>,
+    piste_id: &usize,
     piste: &Piste,
-    lifts: &HashMap<usize, Lift>,
+    exits: &[Exit],
     distance_costs: &PisteCosts,
 ) -> PisteCosts {
     let mut out = PisteCosts::new();
 
-    let lift_positions = lifts
-        .values()
-        .map(|lift| lift.pick_up.position)
+    let exit_positions = exits
+        .iter()
+        .filter(|Exit { id, .. }| id != piste_id)
+        .flat_map(|Exit { positions, .. }| positions)
+        .filter(|position| piste.grid.in_bounds(*position))
+        .filter(|position| piste.grid[*position])
         .collect::<HashSet<_>>();
 
-    for (
-        lift,
-        Lift {
-            pick_up:
-                lift::Portal {
-                    position: pick_up_position,
-                    ..
-                },
-            ..
-        },
-    ) in lifts
+    for Exit {
+        id: exit_id,
+        positions,
+    } in exits
     {
-        let grid = &piste.grid;
-        if grid.in_bounds(pick_up_position) && grid[pick_up_position] {
-            let distance_costs = distance_costs.costs(lift).unwrap();
+        let distance_costs = distance_costs.costs(exit_id).unwrap();
 
-            let network = SkiingNetwork {
-                terrain,
-                is_reserved_fn: &|position| {
-                    position != pick_up_position && lift_positions.contains(position)
-                },
-                is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
-                    (Some(to), Some(from)) => to < from,
-                    _ => false,
-                },
-            };
-            let costs = compute_costs_for_target(pick_up_position, piste, &network);
+        let network = SkiingNetwork {
+            terrain,
+            is_reserved_fn: &|position| {
+                !positions.contains(position) && exit_positions.contains(position)
+            },
+            is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
+                (Some(to), Some(from)) => to < from,
+                _ => false,
+            },
+        };
+        let costs = compute_costs_for_targets(positions, piste, &network);
 
-            let coverage = costs.len() as f32
-                / (piste_positions(piste).count()
-                    * DIRECTIONS.len()
-                    * (VELOCITY_LEVELS as usize + 1)) as f32;
-            println!("INFO: Coverage for lift {} = {}", lift, coverage);
-            out.set_costs(*lift, costs);
-        }
+        let coverage = costs.len() as f32
+            / (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
+                as f32;
+        println!("INFO: Coverage for id {} = {}", exit_id, coverage);
+        out.set_costs(*exit_id, costs);
     }
 
     out
@@ -86,8 +87,8 @@ fn piste_positions(piste: &Piste) -> impl Iterator<Item = XY<u32>> + '_ {
     piste.grid.iter().filter(|position| piste.grid[position])
 }
 
-fn compute_costs_for_target(
-    target: &XY<u32>,
+fn compute_costs_for_targets(
+    targets: &HashSet<XY<u32>>,
     piste: &Piste,
     network: &SkiingNetwork,
 ) -> HashMap<State, u64> {
@@ -95,7 +96,7 @@ fn compute_costs_for_target(
     let mut cache = HashMap::with_capacity(piste_positions(piste).count());
     for position in piste_positions(piste) {
         for state in skiing_states_for_position(position) {
-            let cost = compute_cost_from_state(&state, network, target, piste, &mut cache);
+            let cost = compute_cost_from_state(&state, network, targets, piste, &mut cache);
             if let Some(cost) = cost {
                 out.insert(state, cost);
             }
@@ -120,11 +121,11 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
 fn compute_cost_from_state(
     from: &State,
     network: &SkiingNetwork,
-    target: &XY<u32>,
+    targets: &HashSet<XY<u32>>,
     piste: &Piste,
     cache: &mut HashMap<State, Option<u64>>,
 ) -> Option<u64> {
-    if from.position == *target {
+    if targets.contains(&from.position) {
         return Some(0);
     }
 
@@ -141,7 +142,7 @@ fn compute_cost_from_state(
             mode: Mode::Skiing { velocity: 0 },
             ..*from
         };
-        compute_cost_from_state(&zero_state, network, target, piste, cache)?;
+        compute_cost_from_state(&zero_state, network, targets, piste, cache)?;
     }
 
     let result = network.find_best_within_steps(
@@ -151,7 +152,7 @@ fn compute_cost_from_state(
                 return None;
             }
 
-            compute_cost_from_state(state, network, target, piste, cache)
+            compute_cost_from_state(state, network, targets, piste, cache)
         },
         &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
         MAX_STEPS,

@@ -1,6 +1,7 @@
 pub mod carousel;
 pub mod chair_framer;
 pub mod distance_cost_computer;
+pub mod entrance;
 pub mod exit_computer;
 pub mod frame_wiper;
 pub mod lift_artist;
