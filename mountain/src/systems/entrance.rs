@@ -9,7 +9,7 @@ pub fn run(
     targets: &mut HashMap<usize, usize>,
     locations: &mut HashMap<usize, usize>,
 ) {
-    for (id, plan) in plans {
+    for (plan_id, plan) in plans {
         let Plan::Stationary(State {
             position: plan_position,
             ..
@@ -17,11 +17,12 @@ pub fn run(
         else {
             continue;
         };
-        let Some(target) = targets.get(id).copied() else {
+
+        let Some(target_id) = targets.get(plan_id).copied() else {
             continue;
         };
 
-        let Some(entrance) = entrances.get(&target) else {
+        let Some(entrance) = entrances.get(&target_id) else {
             continue;
         };
 
@@ -30,8 +31,8 @@ pub fn run(
             .iter()
             .any(|position| position == *plan_position)
         {
-            targets.remove(id);
-            locations.insert(*id, entrance.piste);
+            targets.remove(plan_id);
+            locations.insert(*plan_id, entrance.piste);
         }
     }
 }

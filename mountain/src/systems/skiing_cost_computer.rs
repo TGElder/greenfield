@@ -71,7 +71,7 @@ fn compute_costs_for_piste(
                 _ => false,
             },
         };
-        let costs = compute_costs_for_targets(positions, piste, &network);
+        let costs = compute_costs_for_targets(&network, piste, positions);
 
         let coverage = costs.len() as f32
             / (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
@@ -88,15 +88,15 @@ fn piste_positions(piste: &Piste) -> impl Iterator<Item = XY<u32>> + '_ {
 }
 
 fn compute_costs_for_targets(
-    targets: &HashSet<XY<u32>>,
-    piste: &Piste,
     network: &SkiingNetwork,
+    piste: &Piste,
+    targets: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
     let mut out = HashMap::new();
     let mut cache = HashMap::with_capacity(piste_positions(piste).count());
     for position in piste_positions(piste) {
         for state in skiing_states_for_position(position) {
-            let cost = compute_cost_from_state(&state, network, targets, piste, &mut cache);
+            let cost = compute_cost_from_state(&state, network, piste, targets, &mut cache);
             if let Some(cost) = cost {
                 out.insert(state, cost);
             }
@@ -121,8 +121,8 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
 fn compute_cost_from_state(
     from: &State,
     network: &SkiingNetwork,
-    targets: &HashSet<XY<u32>>,
     piste: &Piste,
+    targets: &HashSet<XY<u32>>,
     cache: &mut HashMap<State, Option<u64>>,
 ) -> Option<u64> {
     if targets.contains(&from.position) {
@@ -142,7 +142,7 @@ fn compute_cost_from_state(
             mode: Mode::Skiing { velocity: 0 },
             ..*from
         };
-        compute_cost_from_state(&zero_state, network, targets, piste, cache)?;
+        compute_cost_from_state(&zero_state, network, piste, targets, cache)?;
     }
 
     let result = network.find_best_within_steps(
@@ -152,7 +152,7 @@ fn compute_cost_from_state(
                 return None;
             }
 
-            compute_cost_from_state(state, network, targets, piste, cache)
+            compute_cost_from_state(state, network, piste, targets, cache)
         },
         &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
         MAX_STEPS,

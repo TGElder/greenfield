@@ -13,21 +13,21 @@ pub fn run(
     exits: &HashMap<usize, Vec<Exit>>,
     targets: &mut HashMap<usize, usize>,
 ) {
-    for (id, plan) in plans {
+    for (plan_id, plan) in plans {
         let Plan::Stationary(state) = plan else {
             continue;
         };
-        if targets.contains_key(id) {
+        if targets.contains_key(plan_id) {
             continue;
         }
-        let Some(location) = locations.get(id) else {
+        let Some(location_id) = locations.get(plan_id) else {
             continue;
         };
 
         let elevation = terrain[state.position];
 
         let candidates = exits
-            .get(location)
+            .get(location_id)
             .into_iter()
             .flatten()
             .filter(|Exit { positions, .. }| {
@@ -40,7 +40,7 @@ pub fn run(
         let choice = candidates.choose(&mut rand::thread_rng());
 
         if let Some(choice) = choice {
-            targets.insert(*id, *choice);
+            targets.insert(*plan_id, *choice);
         }
     }
 }
