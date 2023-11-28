@@ -9,7 +9,7 @@ use crate::network::distance::DistanceNetwork;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
 use commons::grid::Grid;
-use network::algorithms::costs_to_target::CostsToTarget;
+use network::algorithms::costs_to_targets::CostsToTargets;
 
 pub fn run(
     terrain: &Grid<f32>,
@@ -77,7 +77,7 @@ fn compute_costs_for_targets(
     network: &DistanceNetwork,
     targets: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
-    let distances = network.costs_to_target(targets);
+    let distances = network.costs_to_targets(targets);
     to_costs(distances)
 }
 
