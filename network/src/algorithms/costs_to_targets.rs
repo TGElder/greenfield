@@ -7,7 +7,7 @@ use crate::model::InNetwork;
 #[derive(Eq, PartialEq)]
 struct Node<T> {
     location: T,
-    cost_from_target: u64,
+    cost_from_targets: u64,
 }
 
 impl<T> Ord for Node<T>
@@ -15,7 +15,7 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<T>) -> Ordering {
-        self.cost_from_target.cmp(&other.cost_from_target).reverse()
+        self.cost_from_targets.cmp(&other.cost_from_targets).reverse()
     }
 }
 
@@ -28,16 +28,16 @@ where
     }
 }
 
-pub trait CostsToTarget<T> {
-    fn costs_to_target(&self, target: &HashSet<T>) -> HashMap<T, u64>;
+pub trait CostsToTargets<T> {
+    fn costs_to_targets(&self, target: &HashSet<T>) -> HashMap<T, u64>;
 }
 
-impl<T, N> CostsToTarget<T> for N
+impl<T, N> CostsToTargets<T> for N
 where
     T: Copy + Eq + Hash,
     N: InNetwork<T>,
 {
-    fn costs_to_target(&self, target: &HashSet<T>) -> HashMap<T, u64> {
+    fn costs_to_targets(&self, target: &HashSet<T>) -> HashMap<T, u64> {
         let mut heap = BinaryHeap::new();
         let mut closed = HashSet::new();
         let mut out = HashMap::new();
@@ -45,13 +45,13 @@ where
         for location in target.iter() {
             heap.push(Node {
                 location: *location,
-                cost_from_target: 0,
+                cost_from_targets: 0,
             });
         }
 
         while let Some(Node {
             location,
-            cost_from_target,
+            cost_from_targets: cost_from_target,
         }) = heap.pop()
         {
             if closed.contains(&location) {
@@ -69,7 +69,7 @@ where
 
                 heap.push(Node {
                     location: from,
-                    cost_from_target: cost_from_target + edge.cost as u64,
+                    cost_from_targets: cost_from_target + edge.cost as u64,
                 });
             }
         }
@@ -83,7 +83,7 @@ mod tests {
     use maplit::{hashmap, hashset};
     use std::iter;
 
-    use crate::algorithms::costs_to_target::CostsToTarget;
+    use crate::algorithms::costs_to_targets::CostsToTargets;
     use crate::model::{Edge, InNetwork};
 
     #[test]
@@ -153,7 +153,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.costs_to_target(&hashset! {0});
+        let result = network.costs_to_targets(&hashset! {0});
 
         // then
         assert_eq!(
@@ -207,7 +207,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.costs_to_target(&hashset! {0, 2});
+        let result = network.costs_to_targets(&hashset! {0, 2});
 
         // then
         assert_eq!(
@@ -250,7 +250,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.costs_to_target(&hashset! {});
+        let result = network.costs_to_targets(&hashset! {});
 
         // then
         assert_eq!(result, hashmap! {},);
@@ -271,7 +271,7 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.costs_to_target(&hashset! {0});
+        let result = network.costs_to_targets(&hashset! {0});
 
         // then
         assert_eq!(
