@@ -3,53 +3,29 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
+use nalgebra::Matrix4;
 
 use crate::binding::Binding;
 use crate::engine::Engine;
 use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::{OverlayQuads, Quad};
+use crate::graphics::models::cube;
 use crate::graphics::projections::isometric;
+use crate::graphics::transform::Transform;
 use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;
 
-fn cube_quads() -> Vec<Quad> {
-    let la = xyz(-0.5, -0.5, -0.5);
-    let lb = xyz(0.5, -0.5, -0.5);
-    let lc = xyz(0.5, 0.5, -0.5);
-    let ld = xyz(-0.5, 0.5, -0.5);
-    let ua = xyz(-0.5, -0.5, 0.5);
-    let ub = xyz(0.5, -0.5, 0.5);
-    let uc = xyz(0.5, 0.5, 0.5);
-    let ud = xyz(-0.5, 0.5, 0.5);
-
-    vec![
-        Quad {
-            corners: [ld, lc, lb, la],
-            color: Rgb::new(1.0, 0.0, 0.0),
-        },
-        Quad {
-            corners: [ua, ub, uc, ud],
-            color: Rgb::new(1.0, 0.0, 0.0),
-        },
-        Quad {
-            corners: [ua, la, lb, ub],
-            color: Rgb::new(0.0, 1.0, 0.0),
-        },
-        Quad {
-            corners: [uc, lc, ld, ud],
-            color: Rgb::new(0.0, 1.0, 0.0),
-        },
-        Quad {
-            corners: [ub, lb, lc, uc],
-            color: Rgb::new(0.0, 0.0, 1.0),
-        },
-        Quad {
-            corners: [ud, ld, la, ua],
-            color: Rgb::new(0.0, 0.0, 1.0),
-        },
-    ]
+fn cube_quads() -> [Quad; 6] {
+    cube::model(&|side| match side {
+        cube::Side::Right => Rgb::new(1.0, 1.0, 0.0),
+        cube::Side::Left => Rgb::new(0.0, 0.0, 1.0),
+        cube::Side::Back => Rgb::new(1.0, 0.0, 1.0),
+        cube::Side::Front => Rgb::new(0.0, 1.0, 0.0),
+        cube::Side::Bottom => Rgb::new(0.0, 1.0, 1.0),
+        cube::Side::Top => Rgb::new(1.0, 0.0, 0.0),
+    })
 }
 
 #[test]
@@ -88,6 +64,41 @@ fn render_cube() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_cube.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    let roll: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, -1.0, 0.0, 0.0],
+        [0.0, 0.0, -1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+
+    let yaw: Matrix4<f32> = [
+        [0.0, -1.0, 0.0, 0.0],
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+
+    let transformation = yaw * roll;
+
+    let rear_facing_quads = cube_quads()
+        .iter()
+        .map(|quad| quad.transform(&transformation))
+        .collect::<Vec<_>>();
+    graphics.draw_quads(&index, &rear_facing_quads).unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
     assert_eq!(actual, expected);
 }
 
