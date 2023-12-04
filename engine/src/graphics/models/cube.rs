@@ -4,10 +4,10 @@ use commons::geometry::{xyz, XYZ};
 use crate::graphics::elements::Quad;
 
 const BASE: [XYZ<f32>; 4] = [
-    xyz(-0.5, -0.5, -0.5), //LA
-    xyz(-0.5, 0.5, -0.5),  //LD
-    xyz(0.5, 0.5, -0.5),   //LC
-    xyz(0.5, -0.5, -0.5),  //LB
+    xyz(-0.5, -0.5, -0.5),
+    xyz(-0.5, 0.5, -0.5),
+    xyz(0.5, 0.5, -0.5),
+    xyz(0.5, -0.5, -0.5),
 ];
 
 const TOP: [XYZ<f32>; 4] = [
