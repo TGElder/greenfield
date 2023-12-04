@@ -70,8 +70,6 @@ impl Handler {
                     piste,
                 },
             );
-
-            dbg!(entrances);
         } else if let Some([a, b]) = get_pites_if_valid_horizontal_entrance(rectangle, piste_map) {
             let piste = (a + b) - piste_map[origin].unwrap();
 
@@ -85,8 +83,6 @@ impl Handler {
                     piste,
                 },
             );
-
-            dbg!(entrances);
         }
     }
 }
