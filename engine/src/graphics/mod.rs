@@ -1,6 +1,7 @@
 pub mod elements;
 pub mod errors;
 pub mod matrices;
+pub mod models;
 pub mod projection;
 pub mod projections;
 pub mod transform;
