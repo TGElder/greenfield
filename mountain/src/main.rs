@@ -36,8 +36,8 @@ use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, distance_cost_computer, entrance, exit_computer, frame_wiper,
-    lift_artist, model_artist, overlay, piste_adopter, planner, skiing_cost_computer,
+    carousel, chair_framer, distance_cost_computer, entrance, entrance_artist, exit_computer,
+    frame_wiper, lift_artist, model_artist, overlay, piste_adopter, planner, skiing_cost_computer,
     skiing_framer, target_setter,
 };
 
@@ -393,6 +393,12 @@ impl EventHandler for Game {
         lift_artist::run(
             graphics,
             &self.components.lifts,
+            &mut self.components.drawings,
+        );
+        entrance_artist::run(
+            graphics,
+            &self.components.entrances,
+            &self.components.terrain,
             &mut self.components.drawings,
         );
 
