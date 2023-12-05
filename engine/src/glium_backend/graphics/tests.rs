@@ -19,8 +19,8 @@ use super::*;
 
 fn cube_quads() -> [Quad; 6] {
     cube::model(&|side| match side {
-        cube::Side::Right => Rgb::new(1.0, 1.0, 0.0),
-        cube::Side::Left => Rgb::new(0.0, 0.0, 1.0),
+        cube::Side::Left => Rgb::new(1.0, 1.0, 0.0),
+        cube::Side::Right => Rgb::new(0.0, 0.0, 1.0),
         cube::Side::Back => Rgb::new(1.0, 0.0, 1.0),
         cube::Side::Front => Rgb::new(0.0, 1.0, 0.0),
         cube::Side::Bottom => Rgb::new(0.0, 1.0, 1.0),
@@ -54,7 +54,8 @@ fn render_cube() {
 
     // when
     let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let quads = cube_quads();
+    graphics.draw_quads(&index, &quads).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -74,7 +75,6 @@ fn render_cube() {
         [0.0, 0.0, 0.0, 1.0],
     ]
     .into();
-
     let yaw: Matrix4<f32> = [
         [0.0, -1.0, 0.0, 0.0],
         [1.0, 0.0, 0.0, 0.0],
@@ -85,7 +85,7 @@ fn render_cube() {
 
     let transformation = yaw * roll;
 
-    let rear_facing_quads = cube_quads()
+    let rear_facing_quads = quads
         .iter()
         .map(|quad| quad.transform(&transformation))
         .collect::<Vec<_>>();

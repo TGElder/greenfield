@@ -21,11 +21,11 @@ pub fn model(coloring: &dyn Fn(Side) -> Rgb<f32>) -> [Quad; 6] {
     [
         Quad {
             corners: [TOP[3], BASE[1], BASE[0], TOP[0]],
-            color: coloring(Side::Right),
+            color: coloring(Side::Left),
         },
         Quad {
             corners: [TOP[1], BASE[3], BASE[2], TOP[2]],
-            color: coloring(Side::Left),
+            color: coloring(Side::Right),
         },
         Quad {
             corners: [TOP[0], BASE[0], BASE[3], TOP[1]],
