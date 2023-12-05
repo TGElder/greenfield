@@ -87,7 +87,7 @@ fn scaled_and_translated_cube(
 
     let transformation = translation * scale;
 
-    let cube = cube::model(BLACK);
+    let cube = cube::model(&|_| BLACK);
 
     once(cube)
         .flatten()
