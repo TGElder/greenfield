@@ -15,8 +15,8 @@ use crate::model::entrance::Entrance;
 
 const GROUND_TO_BAR_METERS: f32 = 2.0;
 const BAR_HEIGHT: f32 = 0.5;
+const STRUCTURE_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 const ENTRANCE_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
-const BLACK: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 
 pub fn draw(
     graphics: &mut dyn Graphics,
@@ -45,12 +45,12 @@ pub fn draw(
     let from_pole = scaled_and_translated_cube(
         xyz(0.1, 0.1, from_pole_height),
         xyz(from.x, from.y, from.z + from_pole_height / 2.0),
-        &|_| BLACK,
+        &|_| STRUCTURE_COLOR,
     );
     let to_pole = scaled_and_translated_cube(
         xyz(0.1, 0.1, to_pole_height),
         xyz(to.x, to.y, to.z + to_pole_height / 2.0),
-        &|_| BLACK,
+        &|_| STRUCTURE_COLOR,
     );
 
     let entrance_side = entrance_side(entrance, piste_map);
@@ -58,7 +58,7 @@ pub fn draw(
         if side == entrance_side {
             ENTRANCE_COLOR
         } else {
-            BLACK
+            STRUCTURE_COLOR
         }
     };
     let banner = scaled_and_translated_cube(
