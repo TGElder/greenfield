@@ -399,6 +399,7 @@ impl EventHandler for Game {
             graphics,
             &self.components.entrances,
             &self.components.terrain,
+            &self.components.piste_map,
             &mut self.components.drawings,
         );
 
