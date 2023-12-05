@@ -16,7 +16,7 @@ use crate::model::entrance::Entrance;
 const GROUND_TO_BAR_METERS: f32 = 2.0;
 const BAR_HEIGHT: f32 = 0.5;
 const STRUCTURE_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
-const ENTRANCE_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
+const ENTRANCE_BANNER_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
 
 pub fn draw(
     graphics: &mut dyn Graphics,
@@ -56,7 +56,7 @@ pub fn draw(
     let entrance_side = entrance_side(entrance, piste_map);
     let coloring = |side| {
         if side == entrance_side {
-            ENTRANCE_COLOR
+            ENTRANCE_BANNER_COLOR
         } else {
             STRUCTURE_COLOR
         }
