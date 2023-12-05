@@ -46,6 +46,7 @@ pub fn model(coloring: &dyn Fn(Side) -> Rgb<f32>) -> [Quad; 6] {
     ]
 }
 
+#[derive(PartialEq)]
 pub enum Side {
     Right,
     Left,
