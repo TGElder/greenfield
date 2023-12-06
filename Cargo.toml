@@ -16,6 +16,7 @@ maplit = "1"
 nalgebra = "0"
 num = "0"
 rand = "0"
+serde = { version = "1", features = ["derive"] }
 simdnoise = "3"
 tempfile = "3"
 thiserror = "1"

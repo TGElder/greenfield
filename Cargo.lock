@@ -198,6 +198,7 @@ dependencies = [
  "image",
  "maplit",
  "num",
+ "serde",
  "simdnoise",
  "tempfile",
  "thiserror",
@@ -386,6 +387,7 @@ dependencies = [
  "nalgebra",
  "network",
  "rand",
+ "serde",
  "terrain_gen",
 ]
 
