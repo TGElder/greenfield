@@ -1,10 +1,12 @@
 use std::borrow::Borrow;
 use std::ops::{Index, IndexMut};
 
+use serde::{Deserialize, Serialize};
+
 use crate::geometry::{xy, XYRectangle, XY};
 use crate::grid::Grid;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct OriginGrid<T> {
     origin: XY<u32>,
     grid: Grid<T>,

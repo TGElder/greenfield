@@ -4,8 +4,9 @@ use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
 
 use num::{Float, One};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct XY<T> {
     pub x: T,
     pub y: T,
@@ -98,7 +99,7 @@ where
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct XYZ<T> {
     pub x: T,
     pub y: T,
@@ -198,13 +199,13 @@ where
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rectangle<T> {
     pub width: T,
     pub height: T,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct XYRectangle<T> {
     pub from: XY<T>,
     pub to: XY<T>,
