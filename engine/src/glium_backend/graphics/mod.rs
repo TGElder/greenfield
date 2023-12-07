@@ -324,6 +324,7 @@ impl GliumGraphics {
                 data[y as usize].push((r, g, b, a));
             }
         }
+        dbg!(rect);
         texture.write(rect, data);
         Ok(())
     }

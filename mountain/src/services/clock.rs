@@ -1,6 +1,10 @@
 use std::time::Instant;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct Service {
+    #[serde(skip, default = "Instant::now")]
     baseline: Instant,
     real_to_game: f32,
     offset_micros: u128,
@@ -15,6 +19,10 @@ impl Service {
         }
     }
 
+    pub fn real_to_game(&self) -> f32 {
+        self.real_to_game
+    }
+
     pub fn get_micros(&self) -> u128 {
         self.get_micros_at(&Instant::now())
     }
@@ -27,7 +35,7 @@ impl Service {
             + self.offset_micros
     }
 
-    pub fn set_speed(&mut self, real_to_game: f32) {
+    pub fn set_real_to_game(&mut self, real_to_game: f32) {
         let new_baseline = Instant::now();
         self.offset_micros = self.get_micros_at(&new_baseline);
         self.baseline = new_baseline;

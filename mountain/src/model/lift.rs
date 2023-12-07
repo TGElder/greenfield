@@ -1,20 +1,24 @@
 use commons::geometry::{XY, XYZ};
 use nalgebra::Point3;
+use serde::{Deserialize, Serialize};
 
 use crate::model::direction::Direction;
 
+#[derive(Serialize, Deserialize)]
 pub struct Lift {
     pub segments: Vec<Segment>,
     pub pick_up: Portal,
     pub drop_off: Portal,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Segment {
     pub from: XYZ<f32>,
     pub to: XYZ<f32>,
     length_meters: f32,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct Portal {
     pub segment: usize,
     pub position: XY<u32>,

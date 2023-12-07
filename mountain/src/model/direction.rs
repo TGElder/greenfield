@@ -1,8 +1,9 @@
 use std::f32::consts::PI;
 
 use commons::geometry::{xy, XY};
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub enum Direction {
     East,
     NorthEast,

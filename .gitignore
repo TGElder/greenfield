@@ -2,3 +2,4 @@
 **/*.rs.bk
 .vscode
 screenshot.png
+*.save

@@ -9,10 +9,12 @@ mod utils;
 
 use std::collections::HashMap;
 use std::f32::consts::PI;
+use std::fs::File;
+use std::io::BufReader;
 use std::time::Duration;
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XY};
+use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -23,8 +25,9 @@ use engine::glium_backend;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
+use serde::{Deserialize, Serialize};
 
-use crate::handlers::{add_skier, entrance_builder, piste_builder};
+use crate::handlers::{add_skier, entrance_builder, piste_builder, save};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
@@ -42,27 +45,10 @@ use crate::systems::{
 };
 
 fn main() {
-    let terrain = generate_heightmap();
+    let components = get_components();
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
-            components: Components {
-                plans: HashMap::default(),
-                locations: HashMap::default(),
-                targets: HashMap::default(),
-                frames: HashMap::default(),
-                drawings: HashMap::default(),
-                pistes: HashMap::default(),
-                distance_costs: HashMap::default(),
-                skiing_costs: HashMap::default(),
-                lifts: HashMap::default(),
-                carousels: HashMap::default(),
-                cars: HashMap::default(),
-                entrances: HashMap::default(),
-                reserved: Grid::default(terrain.width(), terrain.height()),
-                piste_map: Grid::default(terrain.width(), terrain.height()),
-                exits: HashMap::default(),
-                terrain,
-            },
             drawings: None,
             handlers: Handlers {
                 add_skier: add_skier::Handler {
@@ -101,22 +87,33 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
+                save: save::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::P),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 selection: selection::Handler::new(Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
                     state: ButtonState::Pressed,
                 }),
             },
             systems: Systems {
-                overlay: overlay::System::new(overlay::Colors {
-                    selection: Rgba::new(255, 255, 0, 128),
-                    piste: Rgba::new(0, 0, 255, 128),
-                }),
+                overlay: overlay::System {
+                    updates: vec![XYRectangle {
+                        from: xy(0, 0),
+                        to: xy(
+                            components.terrain.width() - 2,
+                            components.terrain.height() - 2,
+                        ), // -2 because bottom right corner is width - 1, height - 1 and the overlay is on cells which also reduce each dimension by one
+                    }],
+                    colors: overlay::Colors {
+                        selection: Rgba::new(255, 255, 0, 128),
+                        piste: Rgba::new(0, 0, 255, 128),
+                    },
+                },
                 planner: planner::System::new(),
                 carousel: carousel::System::new(),
-            },
-            services: Services {
-                clock: services::clock::Service::new(),
-                id_allocator: id_allocator::Service::new(),
             },
             mouse_xy: None,
             drag_handler: drag::Handler::new(drag::Bindings {
@@ -171,6 +168,7 @@ fn main() {
                     ]),
                 },
             }),
+            components,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -200,12 +198,49 @@ fn main() {
     engine.run();
 }
 
+fn get_components() -> Components {
+    if let Some(components) = load_components("default") {
+        return components;
+    }
+    new_components()
+}
+
+fn load_components(path: &str) -> Option<Components> {
+    let file = File::open(path).ok()?;
+    bincode::deserialize_from(BufReader::new(file)).ok()?
+}
+
+fn new_components() -> Components {
+    let terrain = generate_heightmap();
+    Components {
+        plans: HashMap::default(),
+        locations: HashMap::default(),
+        targets: HashMap::default(),
+        frames: HashMap::default(),
+        drawings: HashMap::default(),
+        pistes: HashMap::default(),
+        distance_costs: HashMap::default(),
+        skiing_costs: HashMap::default(),
+        lifts: HashMap::default(),
+        carousels: HashMap::default(),
+        cars: HashMap::default(),
+        entrances: HashMap::default(),
+        reserved: Grid::default(terrain.width(), terrain.height()),
+        piste_map: Grid::default(terrain.width(), terrain.height()),
+        exits: HashMap::default(),
+        terrain,
+        services: Services {
+            clock: services::clock::Service::new(),
+            id_allocator: id_allocator::Service::new(),
+        },
+    }
+}
+
 struct Game {
     components: Components,
     drawings: Option<Drawings>,
     handlers: Handlers,
     systems: Systems,
-    services: Services,
     mouse_xy: Option<XY<u32>>,
     drag_handler: drag::Handler,
     resize_handler: resize::Handler,
@@ -213,11 +248,14 @@ struct Game {
     zoom_handler: zoom::Handler,
 }
 
-struct Components {
+#[derive(Serialize, Deserialize)]
+pub struct Components {
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
+    #[serde(skip)]
     frames: HashMap<usize, Option<Frame>>,
+    #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     distance_costs: HashMap<usize, PisteCosts>,
@@ -230,6 +268,7 @@ struct Components {
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
+    services: Services,
 }
 
 struct Drawings {
@@ -242,6 +281,7 @@ struct Handlers {
     entrance_builder: entrance_builder::Handler,
     piste_builder: piste_builder::Handler,
     lift_builder: lift_builder::Handler,
+    save: save::Handler,
     selection: selection::Handler,
 }
 
@@ -251,7 +291,8 @@ struct Systems {
     carousel: carousel::System,
 }
 
-struct Services {
+#[derive(Serialize, Deserialize)]
+pub struct Services {
     clock: services::clock::Service,
     id_allocator: id_allocator::Service,
 }
@@ -291,17 +332,19 @@ impl EventHandler for Game {
             event,
             &self.mouse_xy,
             &mut self.components.plans,
-            &mut self.services.id_allocator,
+            &mut self.components.services.id_allocator,
             graphics,
         );
-        self.handlers.clock.handle(event, &mut self.services.clock);
+        self.handlers
+            .clock
+            .handle(event, &mut self.components.services.clock);
         self.handlers.piste_builder.handle(
             event,
             &mut self.components.pistes,
             &mut self.components.piste_map,
             &mut self.handlers.selection,
             &mut self.systems.overlay,
-            &mut self.services.id_allocator,
+            &mut self.components.services.id_allocator,
         );
         self.handlers
             .lift_builder
@@ -311,7 +354,7 @@ impl EventHandler for Game {
                 terrain: &self.components.terrain,
                 lifts: &mut self.components.lifts,
                 overlay: &mut self.systems.overlay,
-                id_allocator: &mut self.services.id_allocator,
+                id_allocator: &mut self.components.services.id_allocator,
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
                 graphics,
@@ -323,15 +366,16 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 selection: &mut self.handlers.selection,
                 overlay: &mut self.systems.overlay,
-                id_allocator: &mut self.services.id_allocator,
+                id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
             });
+        self.handlers.save.handle(event, &self.components);
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
 
         self.systems.carousel.run(systems::carousel::Parameters {
-            micros: &self.services.clock.get_micros(),
+            micros: &self.components.services.clock.get_micros(),
             lifts: &self.components.lifts,
             carousels: &self.components.carousels,
             reserved: &mut self.components.reserved,
@@ -362,7 +406,7 @@ impl EventHandler for Game {
         );
         self.systems.planner.run(systems::planner::Parameters {
             terrain: &self.components.terrain,
-            micros: &self.services.clock.get_micros(),
+            micros: &self.components.services.clock.get_micros(),
             plans: &mut self.components.plans,
             locations: &self.components.locations,
             targets: &self.components.targets,
@@ -374,7 +418,7 @@ impl EventHandler for Game {
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(
             &self.components.terrain,
-            &self.services.clock.get_micros(),
+            &self.components.services.clock.get_micros(),
             &self.components.plans,
             &mut self.components.frames,
         );

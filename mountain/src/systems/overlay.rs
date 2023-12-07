@@ -10,8 +10,8 @@ use crate::handlers::selection;
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
 pub struct System {
-    updates: Vec<XYRectangle<u32>>,
-    colors: Colors,
+    pub updates: Vec<XYRectangle<u32>>,
+    pub colors: Colors,
 }
 
 pub struct Colors {
@@ -20,13 +20,6 @@ pub struct Colors {
 }
 
 impl System {
-    pub fn new(colors: Colors) -> System {
-        System {
-            updates: vec![],
-            colors,
-        }
-    }
-
     pub fn update(&mut self, update: XYRectangle<u32>) {
         self.updates.push(update);
     }
