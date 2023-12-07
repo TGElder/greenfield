@@ -1,13 +1,16 @@
 use std::collections::HashMap;
 
 use commons::origin_grid::OriginGrid;
+use serde::{Deserialize, Serialize};
 
 use crate::model::skiing::State;
 
+#[derive(Serialize, Deserialize)]
 pub struct Piste {
     pub grid: OriginGrid<bool>,
 }
 
+#[derive(Serialize, Deserialize)]
 pub struct PisteCosts {
     lift_to_costs: HashMap<usize, HashMap<State, u64>>,
 }

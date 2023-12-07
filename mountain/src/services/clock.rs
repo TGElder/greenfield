@@ -1,6 +1,10 @@
 use std::time::Instant;
 
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
 pub struct Service {
+    #[serde(skip, default = "Instant::now")]
     baseline: Instant,
     real_to_game: f32,
     offset_micros: u128,

@@ -10,6 +10,7 @@ members = [
 ]
 
 [workspace.dependencies]
+bincode = "1"
 image = "0"
 glium = "0"
 maplit = "1"
