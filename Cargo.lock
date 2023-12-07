@@ -397,6 +397,7 @@ dependencies = [
  "nalgebra",
  "network",
  "rand",
+ "serde",
  "terrain_gen",
 ]
 

@@ -67,6 +67,16 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
+                drag: drag::Handler::new(drag::Bindings {
+                    start_dragging: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
+                    },
+                    stop_dragging: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Released,
+                    },
+                }),
                 piste_builder: piste_builder::Handler {
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
@@ -87,6 +97,7 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
+                resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::P),
@@ -96,6 +107,47 @@ fn main() {
                 selection: selection::Handler::new(Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
                     state: ButtonState::Pressed,
+                }),
+                yaw: yaw::Handler::new(yaw::Parameters {
+                    initial_angle: 5,
+                    angles: 16,
+                    bindings: yaw::Bindings {
+                        plus: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::E),
+                            state: ButtonState::Pressed,
+                        },
+                        minus: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Q),
+                            state: ButtonState::Pressed,
+                        },
+                    },
+                }),
+                zoom: zoom::Handler::new(zoom::Parameters {
+                    initial_level: 1,
+                    min_level: 1,
+                    max_level: 8,
+                    bindings: zoom::Bindings {
+                        plus: Binding::Multi(vec![
+                            Binding::Single {
+                                button: Button::Keyboard(KeyboardKey::Plus),
+                                state: ButtonState::Pressed,
+                            },
+                            Binding::Single {
+                                button: Button::Mouse(MouseButton::WheelUp),
+                                state: ButtonState::Pressed,
+                            },
+                        ]),
+                        minus: Binding::Multi(vec![
+                            Binding::Single {
+                                button: Button::Keyboard(KeyboardKey::Minus),
+                                state: ButtonState::Pressed,
+                            },
+                            Binding::Single {
+                                button: Button::Mouse(MouseButton::WheelDown),
+                                state: ButtonState::Pressed,
+                            },
+                        ]),
+                    },
                 }),
             },
             systems: Systems {
@@ -116,58 +168,6 @@ fn main() {
                 carousel: carousel::System::new(),
             },
             mouse_xy: None,
-            drag_handler: drag::Handler::new(drag::Bindings {
-                start_dragging: Binding::Single {
-                    button: Button::Mouse(MouseButton::Left),
-                    state: ButtonState::Pressed,
-                },
-                stop_dragging: Binding::Single {
-                    button: Button::Mouse(MouseButton::Left),
-                    state: ButtonState::Released,
-                },
-            }),
-            resize_handler: resize::Handler::new(),
-            yaw_handler: yaw::Handler::new(yaw::Parameters {
-                initial_angle: 5,
-                angles: 16,
-                bindings: yaw::Bindings {
-                    plus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::E),
-                        state: ButtonState::Pressed,
-                    },
-                    minus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Q),
-                        state: ButtonState::Pressed,
-                    },
-                },
-            }),
-            zoom_handler: zoom::Handler::new(zoom::Parameters {
-                initial_level: 1,
-                min_level: 1,
-                max_level: 8,
-                bindings: zoom::Bindings {
-                    plus: Binding::Multi(vec![
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::Plus),
-                            state: ButtonState::Pressed,
-                        },
-                        Binding::Single {
-                            button: Button::Mouse(MouseButton::WheelUp),
-                            state: ButtonState::Pressed,
-                        },
-                    ]),
-                    minus: Binding::Multi(vec![
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::Minus),
-                            state: ButtonState::Pressed,
-                        },
-                        Binding::Single {
-                            button: Button::Mouse(MouseButton::WheelDown),
-                            state: ButtonState::Pressed,
-                        },
-                    ]),
-                },
-            }),
             components,
         },
         glium_backend::engine::Parameters {
@@ -243,10 +243,6 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     mouse_xy: Option<XY<u32>>,
-    drag_handler: drag::Handler,
-    resize_handler: resize::Handler,
-    yaw_handler: yaw::Handler,
-    zoom_handler: zoom::Handler,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -279,11 +275,15 @@ struct Drawings {
 struct Handlers {
     add_skier: add_skier::Handler,
     clock: handlers::clock::Handler,
+    drag: drag::Handler,
     entrance_builder: entrance_builder::Handler,
     piste_builder: piste_builder::Handler,
+    resize: resize::Handler,
     lift_builder: lift_builder::Handler,
     save: save::Handler,
     selection: selection::Handler,
+    yaw: yaw::Handler,
+    zoom: zoom::Handler,
 }
 
 struct Systems {
@@ -324,10 +324,10 @@ impl EventHandler for Game {
             _ => (),
         }
 
-        self.drag_handler.handle(event, engine, graphics);
-        self.resize_handler.handle(event, engine, graphics);
-        self.yaw_handler.handle(event, engine, graphics);
-        self.zoom_handler.handle(event, engine, graphics);
+        self.handlers.drag.handle(event, engine, graphics);
+        self.handlers.resize.handle(event, engine, graphics);
+        self.handlers.yaw.handle(event, engine, graphics);
+        self.handlers.zoom.handle(event, engine, graphics);
 
         self.handlers.add_skier.handle(
             event,
