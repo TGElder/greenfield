@@ -199,7 +199,7 @@ fn main() {
 }
 
 fn get_components() -> Components {
-    if let Some(loaded_components) = load_components("default") {
+    if let Some(loaded_components) = load_components("default.save") {
         loaded_components
     } else {
         new_components()
@@ -208,7 +208,7 @@ fn get_components() -> Components {
 
 fn load_components(path: &str) -> Option<Components> {
     let file = File::open(path).ok()?;
-    bincode::deserialize_from(BufReader::new(file)).ok()?
+    bincode::deserialize_from(BufReader::new(file)).ok()
 }
 
 fn new_components() -> Components {
