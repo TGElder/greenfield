@@ -19,11 +19,11 @@ impl Handler {
     pub fn handle(&mut self, event: &engine::events::Event, clock: &mut clock::Service) {
         if self.bindings.slow_down.binds_event(event) {
             self.power -= 1;
-            clock.set_real_to_game(self.multiplier());
+            clock.set_speed(self.multiplier());
         }
         if self.bindings.speed_up.binds_event(event) {
             self.power += 1;
-            clock.set_real_to_game(self.multiplier());
+            clock.set_speed(self.multiplier());
         }
     }
 

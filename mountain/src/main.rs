@@ -199,10 +199,11 @@ fn main() {
 }
 
 fn get_components() -> Components {
-    if let Some(components) = load_components("default") {
-        return components;
+    if let Some(loaded_components) = load_components("default") {
+        loaded_components
+    } else {
+        new_components()
     }
-    new_components()
 }
 
 fn load_components(path: &str) -> Option<Components> {
