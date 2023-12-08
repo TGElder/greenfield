@@ -370,7 +370,7 @@ impl EventHandler for Game {
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
             });
-        self.handlers.save.handle(event, &self.components);
+        self.handlers.save.handle(event, &mut self.components);
         self.handlers
             .selection
             .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
