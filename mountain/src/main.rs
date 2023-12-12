@@ -43,7 +43,7 @@ use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, distance_cost_computer, entrance, entrance_artist, exit_computer,
     frame_wiper, lift_artist, model_artist, overlay, piste_adopter, planner, skiing_cost_computer,
-    skiing_framer, target_setter,
+    skiing_framer, target_scrubber, target_setter,
 };
 
 fn main() {
@@ -422,6 +422,7 @@ impl EventHandler for Game {
             cars: &mut self.components.cars,
         });
 
+        target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(
             &self.components.plans,
             &self.components.piste_map,

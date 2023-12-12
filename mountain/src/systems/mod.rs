@@ -12,4 +12,5 @@ pub mod piste_adopter;
 pub mod planner;
 pub mod skiing_cost_computer;
 pub mod skiing_framer;
+pub mod target_scrubber;
 pub mod target_setter;
