@@ -4,6 +4,7 @@ use engine::graphics::Graphics;
 pub mod add_skier;
 pub mod clock;
 pub mod entrance_builder;
+pub mod entrance_opener;
 pub mod lift_builder;
 pub mod lift_opener;
 pub mod piste_builder;

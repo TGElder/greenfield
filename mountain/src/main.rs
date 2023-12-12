@@ -27,7 +27,9 @@ use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
-use crate::handlers::{add_skier, entrance_builder, lift_opener, piste_builder, save};
+use crate::handlers::{
+    add_skier, entrance_builder, entrance_opener, lift_opener, piste_builder, save,
+};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
@@ -103,6 +105,12 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
+                entrance_opener: entrance_opener::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::O),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
@@ -285,6 +293,7 @@ struct Handlers {
     clock: handlers::clock::Handler,
     drag: drag::Handler,
     entrance_builder: entrance_builder::Handler,
+    entrance_opener: entrance_opener::Handler,
     piste_builder: piste_builder::Handler,
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
@@ -370,13 +379,7 @@ impl EventHandler for Game {
                 cars: &mut self.components.cars,
                 graphics,
             });
-        self.handlers.lift_opener.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.lifts,
-            &mut self.components.open,
-            graphics,
-        );
+
         self.handlers
             .entrance_builder
             .handle(handlers::entrance_builder::Parameters {
@@ -386,7 +389,22 @@ impl EventHandler for Game {
                 overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
+                open: &mut self.components.open,
             });
+        self.handlers.lift_opener.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.lifts,
+            &mut self.components.open,
+            graphics,
+        );
+        self.handlers.entrance_opener.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.entrances,
+            &mut self.components.open,
+            graphics,
+        );
         self.handlers.save.handle(event, &mut self.components);
         self.handlers
             .selection
@@ -420,6 +438,7 @@ impl EventHandler for Game {
         entrance::run(
             &self.components.plans,
             &self.components.entrances,
+            &self.components.open,
             &mut self.components.targets,
             &mut self.components.locations,
         );

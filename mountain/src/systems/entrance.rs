@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::model::entrance::Entrance;
 use crate::model::skiing::{Plan, State};
@@ -6,6 +6,7 @@ use crate::model::skiing::{Plan, State};
 pub fn run(
     plans: &HashMap<usize, Plan>,
     entrances: &HashMap<usize, Entrance>,
+    open: &HashSet<usize>,
     targets: &mut HashMap<usize, usize>,
     locations: &mut HashMap<usize, usize>,
 ) {
@@ -25,6 +26,10 @@ pub fn run(
         let Some(entrance) = entrances.get(&target_id) else {
             continue;
         };
+
+        if !open.contains(&target_id) {
+            continue;
+        }
 
         if entrance
             .footprint

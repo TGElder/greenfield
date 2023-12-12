@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
@@ -20,6 +20,7 @@ pub struct Parameters<'a> {
     pub overlay: &'a mut overlay::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub open: &'a mut HashSet<usize>,
 }
 
 impl Handler {
@@ -36,6 +37,7 @@ impl Handler {
             piste_map,
             id_allocator,
             entrances,
+            open,
         }: Parameters<'_>,
     ) {
         if !self.binding.binds_event(event) {
@@ -57,33 +59,36 @@ impl Handler {
             return;
         }
 
-        if let Some([a, b]) = get_pistes_if_valid_vertical_entrance(rectangle, piste_map) {
-            let piste = (a + b) - piste_map[origin].unwrap();
-
-            entrances.insert(
-                id_allocator.next_id(),
-                Entrance {
-                    footprint: XYRectangle {
-                        from: xy(rectangle.to.x, rectangle.from.y),
-                        to: xy(rectangle.to.x, rectangle.to.y + 1),
-                    },
-                    piste,
+        let maybe_entrance = get_pistes_if_valid_vertical_entrance(rectangle, piste_map)
+            .map(|[a, b]| Entrance {
+                footprint: XYRectangle {
+                    from: xy(rectangle.to.x, rectangle.from.y),
+                    to: xy(rectangle.to.x, rectangle.to.y + 1),
                 },
-            );
-        } else if let Some([a, b]) = get_pites_if_valid_horizontal_entrance(rectangle, piste_map) {
-            let piste = (a + b) - piste_map[origin].unwrap();
+                piste: (a + b) - piste_map[origin].unwrap(),
+            })
+            .or_else(|| {
+                get_pites_if_valid_horizontal_entrance(rectangle, piste_map).map(|[a, b]| {
+                    Entrance {
+                        footprint: XYRectangle {
+                            from: xy(rectangle.from.x, rectangle.to.y),
+                            to: xy(rectangle.to.x + 1, rectangle.to.y),
+                        },
+                        piste: (a + b) - piste_map[origin].unwrap(),
+                    }
+                })
+            });
 
-            entrances.insert(
-                id_allocator.next_id(),
-                Entrance {
-                    footprint: XYRectangle {
-                        from: xy(rectangle.from.x, rectangle.to.y),
-                        to: xy(rectangle.to.x + 1, rectangle.to.y),
-                    },
-                    piste,
-                },
-            );
-        }
+        let Some(entrance) = maybe_entrance else {
+            return;
+        };
+
+        let entrance_id = id_allocator.next_id();
+        entrances.insert(entrance_id, entrance);
+
+        // opening entrance
+
+        open.insert(entrance_id);
     }
 }
 
