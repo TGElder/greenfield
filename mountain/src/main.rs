@@ -7,7 +7,7 @@ mod services;
 mod systems;
 mod utils;
 
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::BufReader;
@@ -27,7 +27,7 @@ use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
-use crate::handlers::{add_skier, entrance_builder, piste_builder, save};
+use crate::handlers::{add_skier, entrance_builder, lift_opener, piste_builder, save};
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
 use crate::model::carousel::{Car, Carousel};
@@ -93,6 +93,12 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::L),
                     state: ButtonState::Pressed,
                 }),
+                lift_opener: lift_opener::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::O),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 entrance_builder: entrance_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
@@ -229,6 +235,7 @@ fn new_components() -> Components {
         reserved: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
+        open: HashSet::default(),
         terrain,
         services: Services {
             clock: services::clock::Service::new(),
@@ -262,6 +269,7 @@ pub struct Components {
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
+    open: HashSet<usize>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -280,6 +288,7 @@ struct Handlers {
     piste_builder: piste_builder::Handler,
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
+    lift_opener: lift_opener::Handler,
     save: save::Handler,
     selection: selection::Handler,
     yaw: yaw::Handler,
@@ -354,12 +363,20 @@ impl EventHandler for Game {
                 mouse_xy: &self.mouse_xy,
                 terrain: &self.components.terrain,
                 lifts: &mut self.components.lifts,
+                open: &mut self.components.open,
                 overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.components.services.id_allocator,
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
                 graphics,
             });
+        self.handlers.lift_opener.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.lifts,
+            &mut self.components.open,
+            graphics,
+        );
         self.handlers
             .entrance_builder
             .handle(handlers::entrance_builder::Parameters {
@@ -369,6 +386,7 @@ impl EventHandler for Game {
                 overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
+                open: &mut self.components.open,
             });
         self.handlers.save.handle(event, &mut self.components);
         self.handlers
@@ -378,6 +396,7 @@ impl EventHandler for Game {
         self.systems.carousel.run(systems::carousel::Parameters {
             micros: &self.components.services.clock.get_micros(),
             lifts: &self.components.lifts,
+            open: &self.components.open,
             carousels: &self.components.carousels,
             reserved: &mut self.components.reserved,
             plans: &mut self.components.plans,

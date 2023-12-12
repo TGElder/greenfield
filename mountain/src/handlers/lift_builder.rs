@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::iter::once;
 
@@ -31,6 +31,7 @@ pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub lifts: &'a mut HashMap<usize, Lift>,
+    pub open: &'a mut HashSet<usize>,
     pub overlay: &'a mut overlay::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
@@ -53,6 +54,7 @@ impl Handler {
             mouse_xy,
             terrain,
             lifts,
+            open,
             overlay,
             id_allocator,
             carousels,
@@ -98,6 +100,10 @@ impl Handler {
                 direction,
             },
         };
+
+        // opening lift
+
+        open.insert(lift_id);
 
         // setup carousel
 

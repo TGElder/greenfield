@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
 
@@ -15,6 +15,7 @@ pub struct System {
 pub struct Parameters<'a> {
     pub micros: &'a u128,
     pub lifts: &'a HashMap<usize, Lift>,
+    pub open: &'a HashSet<usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub reserved: &'a mut Grid<bool>,
     pub plans: &'a mut HashMap<usize, Plan>,
@@ -33,6 +34,7 @@ impl System {
         Parameters {
             micros,
             lifts,
+            open,
             carousels,
             reserved,
             plans,
@@ -98,6 +100,9 @@ impl System {
                 let car_id = car_ids[car_index];
                 match action {
                     RevolveAction::PickUp => {
+                        if !open.contains(&carousel.lift_id) {
+                            continue;
+                        }
                         plans.retain(|plan_id, plan| {
                             if !matches!(targets.get(plan_id), Some(&target) if target == carousel.lift_id) {
                                 return true;
