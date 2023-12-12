@@ -35,7 +35,7 @@ pub fn run(
             .filter(|Exit { positions, .. }| {
                 positions
                     .iter()
-                    .any(|position| terrain[position] < elevation)
+                    .any(|position| terrain[position] <= elevation)
             })
             .map(|Exit { id, .. }| *id)
             .collect::<Vec<_>>();
