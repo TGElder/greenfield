@@ -386,7 +386,6 @@ impl EventHandler for Game {
                 overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
-                open: &mut self.components.open,
             });
         self.handlers.save.handle(event, &mut self.components);
         self.handlers
