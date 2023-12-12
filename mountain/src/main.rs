@@ -432,6 +432,7 @@ impl EventHandler for Game {
             &self.components.plans,
             &self.components.locations,
             &self.components.exits,
+            &self.components.open,
             &mut self.components.targets,
         );
 

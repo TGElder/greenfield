@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
 use rand::seq::SliceRandom;
@@ -11,6 +11,7 @@ pub fn run(
     plans: &HashMap<usize, Plan>,
     locations: &HashMap<usize, usize>,
     exits: &HashMap<usize, Vec<Exit>>,
+    open: &HashSet<usize>,
     targets: &mut HashMap<usize, usize>,
 ) {
     for (plan_id, plan) in plans {
@@ -30,6 +31,7 @@ pub fn run(
             .get(location_id)
             .into_iter()
             .flatten()
+            .filter(|Exit { id, .. }| open.contains(id))
             .filter(|Exit { positions, .. }| {
                 positions
                     .iter()
