@@ -29,4 +29,8 @@ impl PisteCosts {
     pub fn set_costs(&mut self, target: usize, costs: HashMap<State, u64>) {
         self.target_to_costs.insert(target, costs);
     }
+
+    pub fn remove_costs(&mut self, target: usize) {
+        self.target_to_costs.remove(&target);
+    }
 }

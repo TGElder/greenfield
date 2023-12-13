@@ -28,7 +28,7 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, entrance_builder, entrance_opener, lift_opener, piste_builder, save,
+    add_skier, entrance_builder, entrance_opener, lift_opener, lift_remover, piste_builder, save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
@@ -98,6 +98,12 @@ fn main() {
                 lift_opener: lift_opener::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::O),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                lift_remover: lift_remover::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::X),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -298,6 +304,7 @@ struct Handlers {
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
+    lift_remover: lift_remover::Handler,
     save: save::Handler,
     selection: selection::Handler,
     yaw: yaw::Handler,
@@ -379,6 +386,22 @@ impl EventHandler for Game {
                 cars: &mut self.components.cars,
                 graphics,
             });
+        self.handlers.lift_remover.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.open,
+            &self.components.locations,
+            &self.components.targets,
+            &mut self.components.lifts,
+            &mut self.components.carousels,
+            &mut self.components.cars,
+            &mut self.components.distance_costs,
+            &mut self.components.skiing_costs,
+            &mut self.components.frames,
+            &mut self.components.drawings,
+            &mut self.components.exits,
+            graphics,
+        );
 
         self.handlers
             .entrance_builder
