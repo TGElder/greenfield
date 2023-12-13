@@ -1,3 +1,5 @@
+use std::iter::empty;
+
 use commons::geometry::XY;
 use commons::grid::Grid;
 use commons::grid::OFFSETS_8;
@@ -16,12 +18,15 @@ impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
         &'b self,
         to: &'b XY<u32>,
     ) -> Box<dyn Iterator<Item = network::model::Edge<XY<u32>>> + 'b> {
+        if !(self.can_visit)(to) {
+            return Box::new(empty());
+        }
+
         let iter = OFFSETS_8
             .iter()
             .flat_map(move |offset| self.piste.grid.offset(to, offset))
             .filter(|from| self.piste.grid.in_bounds(from))
             .filter(|from| self.piste.grid[from])
-            .filter(|from| (self.can_visit)(from))
             .map(move |from| Edge {
                 from,
                 to: *to,
