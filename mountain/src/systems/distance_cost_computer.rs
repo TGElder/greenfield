@@ -43,17 +43,19 @@ fn compute_costs(
         .filter(|position| piste.grid[*position])
         .collect::<HashSet<_>>();
 
-    let network = DistanceNetwork {
-        terrain,
-        piste,
-        can_visit: &|position| !exit_positions.contains(position),
-    };
-
     for Exit {
         id: exit_id,
         positions,
     } in exits
     {
+        let network = DistanceNetwork {
+            terrain,
+            piste,
+            can_visit: &|position| {
+                positions.contains(position) || !exit_positions.contains(position)
+            },
+        };
+
         let costs = compute_costs_for_targets(&network, positions);
         let coverage = costs.len() as f32
             / (piste_positions(piste).len() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
