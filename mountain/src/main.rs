@@ -386,22 +386,9 @@ impl EventHandler for Game {
                 cars: &mut self.components.cars,
                 graphics,
             });
-        self.handlers.lift_remover.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.open,
-            &self.components.locations,
-            &self.components.targets,
-            &mut self.components.lifts,
-            &mut self.components.carousels,
-            &mut self.components.cars,
-            &mut self.components.distance_costs,
-            &mut self.components.skiing_costs,
-            &mut self.components.frames,
-            &mut self.components.drawings,
-            &mut self.components.exits,
-            graphics,
-        );
+        self.handlers
+            .lift_remover
+            .handle(event, &self.mouse_xy, graphics, &mut self.components);
 
         self.handlers
             .entrance_builder

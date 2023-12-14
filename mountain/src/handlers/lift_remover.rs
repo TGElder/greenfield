@@ -1,13 +1,8 @@
-use std::collections::{HashMap, HashSet};
-
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
+use engine::graphics::Graphics;
 
-use crate::model::carousel::{Car, Carousel};
-use crate::model::exit::Exit;
-use crate::model::frame::Frame;
-use crate::model::lift::Lift;
-use crate::model::piste::PisteCosts;
+use crate::Components;
 
 pub struct Handler {
     pub binding: Binding,
@@ -18,18 +13,8 @@ impl Handler {
         &self,
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
-        open: &HashSet<usize>,
-        locations: &HashMap<usize, usize>,
-        targets: &HashMap<usize, usize>,
-        lifts: &mut HashMap<usize, Lift>,
-        carousels: &mut HashMap<usize, Carousel>,
-        cars: &mut HashMap<usize, Car>,
-        distance_costs: &mut HashMap<usize, PisteCosts>,
-        skiing_costs: &mut HashMap<usize, PisteCosts>,
-        frames: &mut HashMap<usize, Option<Frame>>,
-        drawings: &mut HashMap<usize, usize>,
-        exits: &mut HashMap<usize, Vec<Exit>>,
         graphics: &mut dyn engine::graphics::Graphics,
+        components: &mut Components,
     ) {
         if !self.binding.binds_event(event) {
             return;
@@ -41,7 +26,8 @@ impl Handler {
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
-        let to_remove = lifts
+        let lift_ids = components
+            .lifts
             .iter()
             .filter(|(_, lift)| {
                 lift.pick_up.position == position || lift.drop_off.position == position
@@ -49,69 +35,100 @@ impl Handler {
             .map(|(lift_id, _)| *lift_id)
             .collect::<Vec<_>>();
 
-        for lift_id in to_remove {
-            let carousel_ids = carousels
-                .iter()
-                .filter(|(_, carousel)| carousel.lift_id == lift_id)
-                .map(|(carousel_id, _)| *carousel_id)
-                .collect::<Vec<_>>();
-
-            let car_ids = carousels
-                .iter()
-                .filter(|(_, carousel)| carousel.lift_id == lift_id)
-                .flat_map(|(_, carousel)| carousel.car_ids.iter().copied())
-                .collect::<Vec<_>>();
-
-            if open.contains(&lift_id) {
-                println!("Close lift {} before removing it!", lift_id);
-                continue;
-            }
-
-            if locations
-                .values()
-                .any(|location_id| car_ids.contains(location_id))
-            {
-                println!("Cannot remove lift {} while people are riding it!", lift_id);
-                continue;
-            }
-
-            if targets.values().any(|target_id| *target_id == lift_id) {
-                println!(
-                    "Cannot remove lift {} while people are targeting it!",
-                    lift_id
-                );
-                continue;
-            }
-
-            lifts.remove(&lift_id);
-
-            if let Some(drawing_id) = drawings.get(&lift_id) {
-                let _ = graphics.draw_quads(drawing_id, &[]);
-            }
-
-            for carousel_id in carousel_ids {
-                carousels.remove(&carousel_id);
-            }
-
-            for car_id in car_ids {
-                cars.remove(&car_id);
-                frames.remove(&car_id);
-                if let Some(drawing_id) = drawings.get(&car_id) {
-                    let _ = graphics.draw_quads(drawing_id, &[]);
-                }
-            }
-
-            for (_, exits) in exits.iter_mut() {
-                exits.retain(|exit| exit.id != lift_id);
-            }
-
-            for (_, costs) in distance_costs.iter_mut() {
-                costs.remove_costs(lift_id);
-            }
-
-            for (_, costs) in skiing_costs.iter_mut() {
-                costs.remove_costs(lift_id);
-            }
+        for lift_id in lift_ids {
+            remove_lift(graphics, components, &lift_id);
         }
+    }
+}
+
+pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lift_id: &usize) {
+    // Fetch entities
+
+    let carousel_ids = components
+        .carousels
+        .iter()
+        .filter(|(_, carousel)| carousel.lift_id == *lift_id)
+        .map(|(carousel_id, _)| *carousel_id)
+        .collect::<Vec<_>>();
+
+    let car_ids = components
+        .carousels
+        .iter()
+        .filter(|(_, carousel)| carousel.lift_id == *lift_id)
+        .flat_map(|(_, carousel)| carousel.car_ids.iter().copied())
+        .collect::<Vec<_>>();
+
+    // Validate
+
+    if components.open.contains(lift_id) {
+        println!("Close lift {} before removing it!", lift_id);
+        return;
+    }
+
+    if components
+        .locations
+        .values()
+        .any(|location_id| car_ids.contains(location_id))
+    {
+        println!("Cannot remove lift {} while people are riding it!", lift_id);
+        return;
+    }
+
+    if components
+        .targets
+        .values()
+        .any(|target_id| *target_id == *lift_id)
+    {
+        println!(
+            "Cannot remove lift {} while people are targeting it!",
+            lift_id
+        );
+        return;
+    }
+
+    // Remove
+
+    components.lifts.remove(lift_id);
+    for carousel_id in carousel_ids {
+        remove_carousel(graphics, components, &carousel_id);
+    }
+    remove_drawing(graphics, components, lift_id);
+
+    for (_, exits) in components.exits.iter_mut() {
+        exits.retain(|exit| exit.id != *lift_id);
+    }
+
+    for (_, costs) in components.distance_costs.iter_mut() {
+        costs.remove_costs(lift_id);
+    }
+
+    for (_, costs) in components.skiing_costs.iter_mut() {
+        costs.remove_costs(lift_id);
+    }
+}
+
+fn remove_carousel(graphics: &mut dyn Graphics, components: &mut Components, carousel_id: &usize) {
+    let car_ids = components
+        .carousels
+        .get(carousel_id)
+        .iter()
+        .flat_map(|carousel| carousel.car_ids.iter().copied())
+        .collect::<Vec<_>>();
+
+    components.carousels.remove(carousel_id);
+    for car_id in car_ids {
+        remove_car(graphics, components, &car_id);
+    }
+}
+
+fn remove_car(graphics: &mut dyn Graphics, components: &mut Components, car_id: &usize) {
+    components.cars.remove(car_id);
+    components.frames.remove(car_id);
+    remove_drawing(graphics, components, car_id);
+}
+
+fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, drawing_id: &usize) {
+    if let Some(drawing_id) = components.drawings.get(drawing_id) {
+        let _ = graphics.draw_quads(drawing_id, &[]);
     }
 }
