@@ -10,12 +10,18 @@ pub fn run(
     locations: &mut HashMap<usize, usize>,
 ) {
     for (id, plan) in plans.iter() {
-        if locations.contains_key(id) {
-            continue;
-        }
         let Plan::Stationary(State { position, .. }) = plan else {
             continue;
         };
+
+        if let Some(location) = locations.get(id) {
+            if piste_map
+                .offsets(position, &CORNERS_INVERSE)
+                .any(|cell| piste_map[cell] == Some(*location))
+            {
+                continue;
+            }
+        }
 
         let piste = piste_map
             .offsets(position, &CORNERS_INVERSE)
