@@ -76,12 +76,13 @@ impl System {
 
             // check for blocked drop off
 
+            let occupied_locations = locations.values().collect::<HashSet<_>>();
+
             if reserved[lift.drop_off.position] {
-                if let Some(first_drop_off) = revolve_result
-                    .events
-                    .iter()
-                    .find(|event| event.action == RevolveAction::DropOff)
-                {
+                if let Some(first_drop_off) = revolve_result.events.iter().find(|event| {
+                    let car_id = car_ids[event.car_index];
+                    event.action == RevolveAction::DropOff && occupied_locations.contains(car_id)
+                }) {
                     revolve_result = revolve(lift, &current_cars, first_drop_off.revolve_meters);
                 }
             }
