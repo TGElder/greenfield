@@ -165,9 +165,9 @@ fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>
         CIRCLE_SEGMENTS / 2 + 1,
     );
     let top_curve_last = top_curve.last().unwrap();
-    let buttom_curve_first = *top_curve_last - (to_2d - from_2d);
+    let bottom_curve_first = *top_curve_last - (to_2d - from_2d);
     let bottom_curve = approximate_curve(
-        &buttom_curve_first,
+        &bottom_curve_first,
         angle + PI,
         CURVE_INCREMENT,
         CURVE_RADIUS,
@@ -175,10 +175,11 @@ fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>
     );
 
     once(from_3d)
+        .chain(once(to_3d))
         .chain(top_curve.into_iter().map(|XY { x, y }| xyz(x, y, to_3d.z)))
         .chain(
-            bottom_curve
-                .into_iter()
+            once(bottom_curve_first)
+                .chain(bottom_curve)
                 .map(|XY { x, y }| xyz(x, y, from_3d.z)),
         )
         .collect()
