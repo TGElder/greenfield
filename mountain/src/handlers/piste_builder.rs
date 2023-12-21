@@ -79,10 +79,7 @@ impl Handler {
         // updating overlay
 
         overlay.update(XYRectangle {
-            from: xy(
-                rectangle.from.x.saturating_sub(1),
-                rectangle.from.y.saturating_sub(1),
-            ),
+            from: xy(rectangle.from.x, rectangle.from.y),
             to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
         });
 

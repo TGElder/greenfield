@@ -49,7 +49,6 @@ impl Handler {
             if let Some(selected_piste) = self.selected_piste {
                 highlights.remove(&selected_piste);
             }
-
             if let Some(selected_piste) = selected_piste {
                 highlights.insert(selected_piste);
             }

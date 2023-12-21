@@ -288,6 +288,7 @@ pub struct Components {
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
     open: HashSet<usize>,
+    #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
