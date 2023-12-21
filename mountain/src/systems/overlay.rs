@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 use commons::color::Rgba;
 use commons::geometry::{XYRectangle, XY};
@@ -8,6 +8,7 @@ use engine::graphics::Graphics;
 
 use crate::draw::terrain;
 use crate::handlers::selection;
+use crate::model::reservation::Reservation;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
@@ -51,6 +52,22 @@ impl Colors {
 
         None
     }
+
+    fn reserved_color(
+        &self,
+        position: &XY<u32>,
+        micros: &u128,
+        reserved: &Grid<HashMap<usize, Reservation>>,
+    ) -> Option<Rgba<u8>> {
+        if reserved[position]
+            .values()
+            .any(|reservation| reservation.is_reserved(micros))
+        {
+            Some(Rgba::new(255, 0, 0, 128))
+        } else {
+            None
+        }
+    }
 }
 
 impl System {
@@ -65,6 +82,8 @@ impl System {
         piste_map: &Grid<Option<usize>>,
         highlights: &HashSet<usize>,
         selection: &selection::Handler,
+        micros: &u128,
+        reserved: &Grid<HashMap<usize, Reservation>>,
     ) {
         let Some(drawing) = drawing else { return };
 
@@ -75,6 +94,7 @@ impl System {
                 image[position] = self
                     .colors
                     .selection_color(&position, selection)
+                    // .or_else(|| self.colors.reserved_color(&position, micros, reserved))
                     .or_else(|| self.colors.piste_color(&position, piste_map, highlights))
                     .unwrap_or(CLEAR);
             }

@@ -4,6 +4,7 @@ use commons::grid::Grid;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
+use crate::model::reservation::Reservation;
 use crate::model::skiing::{Mode, Plan, State};
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
@@ -17,7 +18,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub open: &'a HashSet<usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
-    pub reserved: &'a mut Grid<bool>,
+    pub reserved: &'a mut Grid<HashMap<usize, Reservation>>,
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
@@ -78,7 +79,10 @@ impl System {
 
             let occupied_locations = locations.values().collect::<HashSet<_>>();
 
-            if reserved[lift.drop_off.position] {
+            if reserved[lift.drop_off.position]
+                .values()
+                .any(|reservation| reservation.is_reserved(micros))
+            {
                 if let Some(first_drop_off) = revolve_result.events.iter().find(|event| {
                     let car_id = car_ids[event.car_index];
                     event.action == RevolveAction::DropOff && occupied_locations.contains(car_id)
@@ -113,7 +117,7 @@ impl System {
                             }
                             targets.remove(plan_id);
                             locations.insert(*plan_id, *car_id);
-                            reserved[lift.pick_up.position] = false;
+                            reserved[lift.pick_up.position].remove(plan_id);
                             false
                         });
                     }
@@ -133,7 +137,8 @@ impl System {
                                     travel_direction: lift.drop_off.direction,
                                 }),
                             );
-                            reserved[lift.drop_off.position] = true;
+                            reserved[lift.drop_off.position]
+                                .insert(*location_id, Reservation::Eternal);
                             false
                         });
                     }

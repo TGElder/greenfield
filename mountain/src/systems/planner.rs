@@ -7,6 +7,7 @@ use network::model::Edge;
 use rand::Rng;
 
 use crate::model::piste::{Piste, PisteCosts};
+use crate::model::reservation::Reservation;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -28,7 +29,7 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub distance_costs: &'a HashMap<usize, PisteCosts>,
     pub skiing_costs: &'a HashMap<usize, PisteCosts>,
-    pub reserved: &'a mut Grid<bool>,
+    pub reserved: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
 impl System {
@@ -67,7 +68,7 @@ impl System {
                 return false;
             };
 
-            free(current_plan, reserved);
+            free(id, current_plan, reserved);
 
             let from = last_state(current_plan);
             *current_plan = match (
@@ -85,7 +86,7 @@ impl System {
                 ),
                 _ => brake(*from),
             };
-            reserve(current_plan, reserved);
+            reserve(id, current_plan, reserved);
 
             match current_plan {
                 Plan::Stationary(_) => true,
@@ -155,15 +156,25 @@ fn finished(current_plan: &Plan, micros: &u128) -> bool {
     true
 }
 
-fn free(plan: &Plan, reserved: &mut Grid<bool>) {
+fn free(id: &usize, plan: &Plan, reserved: &mut Grid<HashMap<usize, Reservation>>) {
     for position in iter_positions(plan) {
-        reserved[position] = false
+        reserved[position].remove(id);
     }
 }
 
-fn reserve(plan: &Plan, reserved: &mut Grid<bool>) {
-    for position in iter_positions(plan) {
-        reserved[position] = true
+fn reserve(id: &usize, plan: &Plan, reserved: &mut Grid<HashMap<usize, Reservation>>) {
+    match plan {
+        Plan::Stationary(state) => {
+            reserved[state.position].insert(*id, Reservation::Eternal);
+        }
+        Plan::Moving(events) => {
+            for pair in events.windows(2) {
+                reserved[pair[0].state.position].insert(*id, Reservation::Until(pair[1].micros));
+            }
+            if let Some(event) = events.last() {
+                reserved[event.state.position].insert(*id, Reservation::Eternal);
+            }
+        }
     }
 }
 
@@ -203,11 +214,19 @@ fn new_plan(
     micros: &u128,
     from: &State,
     piste: &Piste,
-    reserved: &Grid<bool>,
+    reserved: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, from, piste, reserved, distance_costs, skiing_costs) {
+    match find_path(
+        terrain,
+        micros,
+        from,
+        piste,
+        reserved,
+        distance_costs,
+        skiing_costs,
+    ) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -221,15 +240,20 @@ fn new_plan(
 
 fn find_path(
     terrain: &Grid<f32>,
+    micros: &u128,
     from: &State,
     piste: &Piste,
-    reserved: &Grid<bool>,
+    reserved: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
-        is_reserved_fn: &|position| reserved[position],
+        is_reserved_fn: &|position| {
+            reserved[position]
+                .values()
+                .any(|reservation| reservation.is_reserved(micros))
+        },
         is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
             (Some(to), Some(from)) => to < from,
             _ => false,

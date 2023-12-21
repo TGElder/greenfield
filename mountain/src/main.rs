@@ -39,6 +39,7 @@ use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
+use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
@@ -291,7 +292,7 @@ pub struct Components {
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
-    reserved: Grid<bool>,
+    reserved: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     services: Services,
 }
@@ -515,12 +516,22 @@ impl EventHandler for Game {
                 graphics,
             });
 
+        self.systems.overlay.update(XYRectangle {
+            from: xy(0, 0),
+            to: xy(
+                self.components.terrain.width() - 2,
+                self.components.terrain.height() - 2,
+            ),
+        });
+
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.piste_map,
             &self.components.highlights,
             &self.handlers.selection,
+            &self.components.services.clock.get_micros(),
+            &self.components.reserved,
         );
 
         const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
