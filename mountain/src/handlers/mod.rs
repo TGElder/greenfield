@@ -9,5 +9,6 @@ pub mod lift_builder;
 pub mod lift_opener;
 pub mod lift_remover;
 pub mod piste_builder;
+pub mod piste_highlighter;
 pub mod save;
 pub mod selection;

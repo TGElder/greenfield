@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use commons::color::Rgba;
 use commons::geometry::{XYRectangle, XY};
 use commons::grid::Grid;
@@ -17,6 +19,7 @@ pub struct System {
 pub struct Colors {
     pub selection: Rgba<u8>,
     pub piste: Rgba<u8>,
+    pub piste_highlight: Rgba<u8>,
 }
 
 impl System {
@@ -29,6 +32,7 @@ impl System {
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
         piste_map: &Grid<Option<usize>>,
+        highlights: &HashSet<usize>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else { return };
@@ -38,7 +42,15 @@ impl System {
 
             for position in update.iter() {
                 image[position] = selection_color(self.colors.selection, &position, selection)
-                    .or_else(|| piste_color(self.colors.piste, &position, piste_map))
+                    .or_else(|| {
+                        piste_color(
+                            self.colors.piste,
+                            self.colors.piste_highlight,
+                            &position,
+                            piste_map,
+                            highlights,
+                        )
+                    })
                     .unwrap_or(CLEAR);
             }
 
@@ -67,11 +79,17 @@ fn selection_color(
 
 fn piste_color(
     color: Rgba<u8>,
+    highlight: Rgba<u8>,
     position: &XY<u32>,
     piste_map: &Grid<Option<usize>>,
+    highlights: &HashSet<usize>,
 ) -> Option<Rgba<u8>> {
-    if piste_map[position].is_some() {
-        return Some(color);
+    if let Some(piste_id) = piste_map[position] {
+        if highlights.contains(&piste_id) {
+            return Some(highlight);
+        } else {
+            return Some(color);
+        }
     }
 
     None
