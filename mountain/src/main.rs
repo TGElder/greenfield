@@ -28,7 +28,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, entrance_builder, entrance_opener, lift_opener, lift_remover, piste_builder, save,
+    add_skier, entrance_builder, entrance_opener, lift_opener, lift_remover, piste_builder,
+    piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
@@ -91,6 +92,7 @@ fn main() {
                         },
                     },
                 },
+                piste_highlighter: piste_highlighter::Handler::default(),
                 lift_builder: lift_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::L),
                     state: ButtonState::Pressed,
@@ -182,6 +184,7 @@ fn main() {
                     colors: overlay::Colors {
                         selection: Rgba::new(255, 255, 0, 128),
                         piste: Rgba::new(0, 0, 255, 128),
+                        piste_highlight: Rgba::new(0, 0, 255, 192),
                     },
                 },
                 planner: planner::System::new(),
@@ -250,6 +253,7 @@ fn new_components() -> Components {
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
         open: HashSet::default(),
+        highlights: HashSet::default(),
         terrain,
         services: Services {
             clock: services::clock::Service::new(),
@@ -284,6 +288,8 @@ pub struct Components {
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
     open: HashSet<usize>,
+    #[serde(skip)]
+    highlights: HashSet<usize>,
     terrain: Grid<f32>,
     reserved: Grid<bool>,
     piste_map: Grid<Option<usize>>,
@@ -301,6 +307,7 @@ struct Handlers {
     entrance_builder: entrance_builder::Handler,
     entrance_opener: entrance_opener::Handler,
     piste_builder: piste_builder::Handler,
+    piste_highlighter: piste_highlighter::Handler,
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
@@ -496,11 +503,23 @@ impl EventHandler for Game {
             &self.components.piste_map,
             &mut self.components.drawings,
         );
+        self.handlers
+            .piste_highlighter
+            .run(handlers::piste_highlighter::Parameters {
+                event,
+                mouse_xy: &self.mouse_xy,
+                pistes: &self.components.pistes,
+                piste_map: &self.components.piste_map,
+                highlights: &mut self.components.highlights,
+                overlay: &mut self.systems.overlay,
+                graphics,
+            });
 
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.piste_map,
+            &self.components.highlights,
             &self.handlers.selection,
         );
 

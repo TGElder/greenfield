@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use commons::color::Rgba;
 use commons::geometry::{XYRectangle, XY};
 use commons::grid::Grid;
@@ -17,6 +19,38 @@ pub struct System {
 pub struct Colors {
     pub selection: Rgba<u8>,
     pub piste: Rgba<u8>,
+    pub piste_highlight: Rgba<u8>,
+}
+
+impl Colors {
+    fn selection_color(&self, xy: &XY<u32>, selection: &selection::Handler) -> Option<Rgba<u8>> {
+        let Some(rectangle) = selection.rectangle else {
+            return None;
+        };
+
+        if rectangle.contains(xy) {
+            Some(self.selection)
+        } else {
+            None
+        }
+    }
+
+    fn piste_color(
+        &self,
+        position: &XY<u32>,
+        piste_map: &Grid<Option<usize>>,
+        highlights: &HashSet<usize>,
+    ) -> Option<Rgba<u8>> {
+        if let Some(piste_id) = piste_map[position] {
+            if highlights.contains(&piste_id) {
+                return Some(self.piste_highlight);
+            } else {
+                return Some(self.piste);
+            }
+        }
+
+        None
+    }
 }
 
 impl System {
@@ -29,6 +63,7 @@ impl System {
         graphics: &mut dyn Graphics,
         drawing: Option<&terrain::Drawing>,
         piste_map: &Grid<Option<usize>>,
+        highlights: &HashSet<usize>,
         selection: &selection::Handler,
     ) {
         let Some(drawing) = drawing else { return };
@@ -37,8 +72,10 @@ impl System {
             let mut image = OriginGrid::from_rectangle(update, CLEAR);
 
             for position in update.iter() {
-                image[position] = selection_color(self.colors.selection, &position, selection)
-                    .or_else(|| piste_color(self.colors.piste, &position, piste_map))
+                image[position] = self
+                    .colors
+                    .selection_color(&position, selection)
+                    .or_else(|| self.colors.piste_color(&position, piste_map, highlights))
                     .unwrap_or(CLEAR);
             }
 
@@ -47,32 +84,4 @@ impl System {
                 .unwrap_or_else(|_| println!("WARN: Could not draw overlay"));
         }
     }
-}
-
-fn selection_color(
-    color: Rgba<u8>,
-    xy: &XY<u32>,
-    selection: &selection::Handler,
-) -> Option<Rgba<u8>> {
-    let Some(rectangle) = selection.rectangle else {
-        return None;
-    };
-
-    if rectangle.contains(xy) {
-        Some(color)
-    } else {
-        None
-    }
-}
-
-fn piste_color(
-    color: Rgba<u8>,
-    position: &XY<u32>,
-    piste_map: &Grid<Option<usize>>,
-) -> Option<Rgba<u8>> {
-    if piste_map[position].is_some() {
-        return Some(color);
-    }
-
-    None
 }
