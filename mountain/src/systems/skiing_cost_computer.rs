@@ -197,7 +197,7 @@ fn compute_reachability_from_costs(
     let in_network = SkiingInNetwork::for_states(network, &positions);
     let targets = costs.keys().copied().collect();
     in_network
-        .costs_to_targets(&targets) // TODO this needs to limit the steps
+        .costs_to_targets(&targets, Some(MAX_STEPS))
         .keys()
         .copied()
         .collect()
