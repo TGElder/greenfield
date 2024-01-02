@@ -79,7 +79,7 @@ fn compute_costs_for_targets(
     network: &DistanceNetwork,
     targets: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
-    let distances = network.costs_to_targets(targets);
+    let distances = network.costs_to_targets(targets, None);
     to_costs(distances)
 }
 
