@@ -29,7 +29,7 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub distance_costs: &'a HashMap<usize, PisteCosts>,
     pub skiing_costs: &'a HashMap<usize, PisteCosts>,
-    pub reserved: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
 impl System {
@@ -50,7 +50,7 @@ impl System {
             pistes,
             distance_costs,
             skiing_costs,
-            reserved,
+            reservations,
         }: Parameters<'_>,
     ) {
         self.add_new_finished(plans, micros);
@@ -68,7 +68,7 @@ impl System {
                 return false;
             };
 
-            free(id, current_plan, reserved);
+            free(id, current_plan, reservations);
 
             let from = last_state(current_plan);
             *current_plan = match (
@@ -80,13 +80,13 @@ impl System {
                     micros,
                     from,
                     piste,
-                    reserved,
+                    reservations,
                     distance_costs,
                     skiing_costs,
                 ),
                 _ => brake(*from),
             };
-            reserve(id, current_plan, reserved);
+            reserve(id, current_plan, reservations);
 
             match current_plan {
                 Plan::Stationary(_) => true,
@@ -156,25 +156,9 @@ fn finished(current_plan: &Plan, micros: &u128) -> bool {
     true
 }
 
-fn free(id: &usize, plan: &Plan, reserved: &mut Grid<HashMap<usize, Reservation>>) {
+fn free(id: &usize, plan: &Plan, reservations: &mut Grid<HashMap<usize, Reservation>>) {
     for position in iter_positions(plan) {
-        reserved[position].remove(id);
-    }
-}
-
-fn reserve(id: &usize, plan: &Plan, reserved: &mut Grid<HashMap<usize, Reservation>>) {
-    match plan {
-        Plan::Stationary(state) => {
-            reserved[state.position].insert(*id, Reservation::Eternal);
-        }
-        Plan::Moving(events) => {
-            for pair in events.windows(2) {
-                reserved[pair[0].state.position].insert(*id, Reservation::Until(pair[1].micros));
-            }
-            if let Some(event) = events.last() {
-                reserved[event.state.position].insert(*id, Reservation::Eternal);
-            }
-        }
+        reservations[position].remove(id);
     }
 }
 
@@ -187,6 +171,23 @@ fn iter_positions<'a>(plan: &'a Plan) -> Box<dyn Iterator<Item = XY<u32>> + 'a> 
                 .map(|event| event.state)
                 .map(|state| state.position),
         ),
+    }
+}
+
+fn reserve(id: &usize, plan: &Plan, reservations: &mut Grid<HashMap<usize, Reservation>>) {
+    match plan {
+        Plan::Stationary(state) => {
+            reservations[state.position].insert(*id, Reservation::Permanent);
+        }
+        Plan::Moving(events) => {
+            for pair in events.windows(2) {
+                reservations[pair[0].state.position]
+                    .insert(*id, Reservation::Until(pair[1].micros));
+            }
+            if let Some(event) = events.last() {
+                reservations[event.state.position].insert(*id, Reservation::Permanent);
+            }
+        }
     }
 }
 
@@ -214,7 +215,7 @@ fn new_plan(
     micros: &u128,
     from: &State,
     piste: &Piste,
-    reserved: &Grid<HashMap<usize, Reservation>>,
+    reservations: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Plan {
@@ -223,7 +224,7 @@ fn new_plan(
         micros,
         from,
         piste,
-        reserved,
+        reservations,
         distance_costs,
         skiing_costs,
     ) {
@@ -243,16 +244,16 @@ fn find_path(
     micros: &u128,
     from: &State,
     piste: &Piste,
-    reserved: &Grid<HashMap<usize, Reservation>>,
+    reservations: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
         is_reserved_fn: &|position| {
-            reserved[position]
+            reservations[position]
                 .values()
-                .any(|reservation| reservation.is_reserved(micros))
+                .any(|reservation| reservation.is_valid_at(micros))
         },
         is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
             (Some(to), Some(from)) => to < from,

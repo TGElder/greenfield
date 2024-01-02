@@ -18,7 +18,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub open: &'a HashSet<usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
-    pub reserved: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
@@ -37,7 +37,7 @@ impl System {
             lifts,
             open,
             carousels,
-            reserved,
+            reservations,
             plans,
             locations,
             targets,
@@ -79,9 +79,9 @@ impl System {
 
             let occupied_locations = locations.values().collect::<HashSet<_>>();
 
-            if reserved[lift.drop_off.position]
+            if reservations[lift.drop_off.position]
                 .values()
-                .any(|reservation| reservation.is_reserved(micros))
+                .any(|reservation| reservation.is_valid_at(micros))
             {
                 if let Some(first_drop_off) = revolve_result.events.iter().find(|event| {
                     let car_id = car_ids[event.car_index];
@@ -117,7 +117,7 @@ impl System {
                             }
                             targets.remove(plan_id);
                             locations.insert(*plan_id, *car_id);
-                            reserved[lift.pick_up.position].remove(plan_id);
+                            reservations[lift.pick_up.position].remove(plan_id);
                             false
                         });
                     }
@@ -137,8 +137,8 @@ impl System {
                                     travel_direction: lift.drop_off.direction,
                                 }),
                             );
-                            reserved[lift.drop_off.position]
-                                .insert(*location_id, Reservation::Eternal);
+                            reservations[lift.drop_off.position]
+                                .insert(*location_id, Reservation::Permanent);
                             false
                         });
                     }
