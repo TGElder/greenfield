@@ -39,6 +39,7 @@ use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
+use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
@@ -249,7 +250,7 @@ fn new_components() -> Components {
         carousels: HashMap::default(),
         cars: HashMap::default(),
         entrances: HashMap::default(),
-        reserved: Grid::default(terrain.width(), terrain.height()),
+        reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
         open: HashSet::default(),
@@ -291,7 +292,7 @@ pub struct Components {
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
-    reserved: Grid<bool>,
+    reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     services: Services,
 }
@@ -432,7 +433,7 @@ impl EventHandler for Game {
             lifts: &self.components.lifts,
             open: &self.components.open,
             carousels: &self.components.carousels,
-            reserved: &mut self.components.reserved,
+            reservations: &mut self.components.reservations,
             plans: &mut self.components.plans,
             locations: &mut self.components.locations,
             targets: &mut self.components.targets,
@@ -470,7 +471,7 @@ impl EventHandler for Game {
             pistes: &self.components.pistes,
             distance_costs: &self.components.distance_costs,
             skiing_costs: &self.components.skiing_costs,
-            reserved: &mut self.components.reserved,
+            reservations: &mut self.components.reservations,
         });
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(
