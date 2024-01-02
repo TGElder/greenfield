@@ -38,7 +38,7 @@ use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
-use crate::model::piste::{Piste, PisteCosts};
+use crate::model::piste::{Piste, PisteCosts, Reachability};
 use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
@@ -246,6 +246,7 @@ fn new_components() -> Components {
         pistes: HashMap::default(),
         distance_costs: HashMap::default(),
         skiing_costs: HashMap::default(),
+        reachability: HashMap::default(),
         lifts: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
@@ -283,6 +284,7 @@ pub struct Components {
     pistes: HashMap<usize, Piste>,
     distance_costs: HashMap<usize, PisteCosts>,
     skiing_costs: HashMap<usize, PisteCosts>,
+    reachability: HashMap<usize, Reachability>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,

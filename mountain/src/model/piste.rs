@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::origin_grid::OriginGrid;
 use serde::{Deserialize, Serialize};
@@ -32,5 +32,22 @@ impl PisteCosts {
 
     pub fn remove_costs(&mut self, target: &usize) {
         self.target_to_costs.remove(target);
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Reachability {
+    target_to_reachable: HashMap<usize, HashSet<State>>,
+}
+
+pub fn new() -> PisteCosts {
+    PisteCosts {
+        target_to_costs: HashMap::new(),
+    }
+}
+
+impl Reachability {
+    pub fn set_reachable(&mut self, target: usize, reachable: HashSet<State>) {
+        self.target_to_reachable.insert(target, reachable);
     }
 }

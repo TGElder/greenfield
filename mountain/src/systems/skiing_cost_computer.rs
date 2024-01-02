@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::XY;
 use commons::grid::Grid;
+use network::algorithms::costs_to_targets::CostsToTargets;
 use network::algorithms::find_best_within_steps::{self, FindBestWithinSteps};
 use network::model::Edge;
 
@@ -9,7 +10,7 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
-use crate::network::skiing::SkiingNetwork;
+use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 
 pub const MAX_STEPS: u64 = 4;
@@ -71,12 +72,28 @@ fn compute_costs_for_piste(
                 _ => false,
             },
         };
+        println!("INFO: Computing costs id {} in {}", exit_id, piste_id);
         let costs = compute_costs_for_targets(&network, piste, positions);
+        println!(
+            "INFO: Computing reachability id {} in {}",
+            exit_id, piste_id
+        );
+        let reachability = compute_reachability_from_costs(&network, piste, &costs);
 
-        let coverage = costs.len() as f32
-            / (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
-                as f32;
-        println!("INFO: Coverage for id {} = {}", exit_id, coverage);
+        let piste_states =
+            (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize)) as f32;
+        println!(
+            "INFO: Costs for id {} in {} = {}",
+            exit_id,
+            piste_id,
+            costs.len() as f32 / piste_states
+        );
+        println!(
+            "INFO: Reachability for id {} in {} = {}",
+            exit_id,
+            piste_id,
+            reachability.len() as f32 / piste_states
+        );
         out.set_costs(*exit_id, costs);
     }
 
@@ -169,4 +186,19 @@ fn is_white_tile(position: &XY<u32>) -> bool {
 
 fn path_cost(edges: &[Edge<State>]) -> u64 {
     edges.iter().map(|edge| edge.cost as u64).sum()
+}
+
+fn compute_reachability_from_costs(
+    network: &SkiingNetwork,
+    piste: &Piste,
+    costs: &HashMap<State, u64>,
+) -> HashSet<State> {
+    let positions = piste_positions(piste).collect();
+    let in_network = SkiingInNetwork::for_states(network, &positions);
+    let targets = costs.keys().copied().collect();
+    in_network
+        .costs_to_targets(&targets) // TODO this needs to limit the steps
+        .keys()
+        .copied()
+        .collect()
 }
