@@ -12,7 +12,7 @@ pub struct Piste {
 
 #[derive(Serialize, Deserialize)]
 pub struct PisteCosts {
-    target_to_costs: HashMap<usize, HashMap<State, u64>>,
+    pub target_to_costs: HashMap<usize, HashMap<State, u64>>,
 }
 
 impl PisteCosts {

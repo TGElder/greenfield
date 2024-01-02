@@ -447,10 +447,9 @@ impl EventHandler for Game {
             &mut self.components.locations,
         );
         target_setter::run(
-            &self.components.terrain,
             &self.components.plans,
             &self.components.locations,
-            &self.components.exits,
+            &self.components.skiing_costs,
             &self.components.open,
             &mut self.components.targets,
         );
@@ -546,6 +545,8 @@ impl EventHandler for Game {
                 &self.components.terrain,
                 &self.components.pistes,
                 &self.components.exits,
+                &self.components.lifts,
+                &self.components.entrances,
                 &self.components.distance_costs,
                 &mut self.components.skiing_costs,
             );

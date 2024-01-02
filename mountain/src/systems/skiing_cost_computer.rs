@@ -6,7 +6,9 @@ use network::algorithms::find_best_within_steps::{self, FindBestWithinSteps};
 use network::model::Edge;
 
 use crate::model::direction::DIRECTIONS;
+use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
+use crate::model::lift::Lift;
 use crate::model::piste::{Piste, PisteCosts};
 use crate::model::skiing::{Mode, State};
 use crate::network::skiing::SkiingNetwork;
@@ -18,10 +20,23 @@ pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
     exits: &HashMap<usize, Vec<Exit>>,
+    lifts: &HashMap<usize, Lift>,
+    entrances: &HashMap<usize, Entrance>,
     distance_costs: &HashMap<usize, PisteCosts>,
     skiing_costs: &mut HashMap<usize, PisteCosts>,
 ) {
     skiing_costs.clear();
+
+    let entrances = lifts
+        .values()
+        .map(|lift| lift.drop_off.position)
+        .chain(
+            entrances
+                .values()
+                .flat_map(|entrance| entrance.footprint.iter()),
+        )
+        .collect::<HashSet<_>>();
+
     for (piste_id, piste) in pistes.iter() {
         let Some(exits) = exits.get(piste_id) else {
             continue;
@@ -31,6 +46,7 @@ pub fn run(
             piste_id,
             piste,
             exits,
+            &entrances,
             distance_costs.get(piste_id).unwrap(),
         );
         skiing_costs.insert(*piste_id, costs);
@@ -42,6 +58,7 @@ fn compute_costs_for_piste(
     piste_id: &usize,
     piste: &Piste,
     exits: &[Exit],
+    entrances: &HashSet<XY<u32>>,
     distance_costs: &PisteCosts,
 ) -> PisteCosts {
     let mut out = PisteCosts::new();
@@ -71,7 +88,7 @@ fn compute_costs_for_piste(
                 _ => false,
             },
         };
-        let costs = compute_costs_for_targets(&network, piste, positions);
+        let costs = compute_costs_for_targets(&network, piste, positions, entrances);
 
         let coverage = costs.len() as f32
             / (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
@@ -91,12 +108,14 @@ fn compute_costs_for_targets(
     network: &SkiingNetwork,
     piste: &Piste,
     targets: &HashSet<XY<u32>>,
+    entrances: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
     let mut out = HashMap::new();
     let mut cache = HashMap::with_capacity(piste_positions(piste).count());
     for position in piste_positions(piste) {
         for state in skiing_states_for_position(position) {
-            let cost = compute_cost_from_state(&state, network, piste, targets, &mut cache);
+            let cost =
+                compute_cost_from_state(&state, network, piste, targets, entrances, &mut cache);
             if let Some(cost) = cost {
                 out.insert(state, cost);
             }
@@ -123,13 +142,14 @@ fn compute_cost_from_state(
     network: &SkiingNetwork,
     piste: &Piste,
     targets: &HashSet<XY<u32>>,
+    entrances: &HashSet<XY<u32>>,
     cache: &mut HashMap<State, Option<u64>>,
 ) -> Option<u64> {
     if targets.contains(&from.position) {
         return Some(0);
     }
 
-    if is_white_tile(&from.position) {
+    if is_white_tile(&from.position) && !entrances.contains(&from.position) {
         return None;
     }
 
@@ -142,7 +162,7 @@ fn compute_cost_from_state(
             mode: Mode::Skiing { velocity: 0 },
             ..*from
         };
-        compute_cost_from_state(&zero_state, network, piste, targets, cache)?;
+        compute_cost_from_state(&zero_state, network, piste, targets, entrances, cache)?;
     }
 
     let result = network.find_best_within_steps(
@@ -152,7 +172,7 @@ fn compute_cost_from_state(
                 return None;
             }
 
-            compute_cost_from_state(state, network, piste, targets, cache)
+            compute_cost_from_state(state, network, piste, targets, entrances, cache)
         },
         &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
         MAX_STEPS,
@@ -163,7 +183,7 @@ fn compute_cost_from_state(
     out
 }
 
-fn is_white_tile(position: &XY<u32>) -> bool {
+pub fn is_white_tile(position: &XY<u32>) -> bool {
     position.x % 2 == position.y % 2
 }
 
