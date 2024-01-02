@@ -530,8 +530,6 @@ impl EventHandler for Game {
             &self.components.piste_map,
             &self.components.highlights,
             &self.handlers.selection,
-            &self.components.services.clock.get_micros(),
-            &self.components.reserved,
         );
 
         const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
