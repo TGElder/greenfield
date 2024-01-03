@@ -101,19 +101,19 @@ fn compute_costs_and_basin_for_exit(
     let costs = compute_costs_for_targets(&network, piste, targets);
     let basin = compute_basin(&network, piste, &costs);
 
-    let piste_states =
+    let piste_state_count =
         (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize)) as f32;
     println!(
         "INFO: Costs for id {} in {} = {}",
         exit_id,
         piste_id,
-        costs.len() as f32 / piste_states
+        costs.len() as f32 / piste_state_count
     );
     println!(
         "INFO: Basin for id {} in {} = {}",
         exit_id,
         piste_id,
-        basin.len() as f32 / piste_states
+        basin.len() as f32 / piste_state_count
     );
     (costs, basin)
 }
@@ -212,7 +212,7 @@ fn compute_basin(
     costs: &HashMap<State, u64>,
 ) -> HashSet<State> {
     let positions = piste_positions(piste).collect();
-    let in_network = SkiingInNetwork::for_states(network, &positions);
+    let in_network = SkiingInNetwork::for_positions(network, &positions);
     let targets = costs.keys().copied().collect();
     in_network
         .costs_to_targets(&targets, Some(MAX_STEPS))

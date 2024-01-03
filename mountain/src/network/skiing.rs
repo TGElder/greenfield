@@ -268,7 +268,7 @@ pub struct SkiingInNetwork {
 }
 
 impl SkiingInNetwork {
-    pub fn for_states(
+    pub fn for_positions(
         network: &dyn OutNetwork<State>,
         positions: &HashSet<XY<u32>>,
     ) -> SkiingInNetwork {
