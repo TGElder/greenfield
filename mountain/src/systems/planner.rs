@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 use rand::Rng;
 
-use crate::model::piste::{Piste, PisteCosts};
+use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::{Event, Mode, Plan, State};
 use crate::network::skiing::SkiingNetwork;
@@ -27,8 +27,8 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
-    pub distance_costs: &'a HashMap<usize, PisteCosts>,
-    pub skiing_costs: &'a HashMap<usize, PisteCosts>,
+    pub distance_costs: &'a HashMap<usize, Costs>,
+    pub skiing_costs: &'a HashMap<usize, Costs>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
@@ -202,7 +202,7 @@ fn get_costs<'a>(
     id: &usize,
     locations: &HashMap<usize, usize>,
     targets: &HashMap<usize, usize>,
-    costs: &'a HashMap<usize, PisteCosts>,
+    costs: &'a HashMap<usize, Costs>,
 ) -> Option<&'a HashMap<State, u64>> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;

@@ -11,13 +11,13 @@ pub struct Piste {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct PisteCosts {
+pub struct Costs {
     target_to_costs: HashMap<usize, HashMap<State, u64>>,
 }
 
-impl PisteCosts {
-    pub fn new() -> PisteCosts {
-        PisteCosts {
+impl Costs {
+    pub fn new() -> Costs {
+        Costs {
             target_to_costs: HashMap::new(),
         }
     }
@@ -36,18 +36,18 @@ impl PisteCosts {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct Reachability {
-    target_to_reachable: HashMap<usize, HashSet<State>>,
+pub struct Basins {
+    target_to_basin: HashMap<usize, HashSet<State>>,
 }
 
-pub fn new() -> PisteCosts {
-    PisteCosts {
-        target_to_costs: HashMap::new(),
+impl Basins {
+    pub fn new() -> Basins {
+        Basins {
+            target_to_basin: HashMap::new(),
+        }
     }
-}
 
-impl Reachability {
-    pub fn set_reachable(&mut self, target: usize, reachable: HashSet<State>) {
-        self.target_to_reachable.insert(target, reachable);
+    pub fn set_basin(&mut self, target: usize, basin: HashSet<State>) {
+        self.target_to_basin.insert(target, basin);
     }
 }

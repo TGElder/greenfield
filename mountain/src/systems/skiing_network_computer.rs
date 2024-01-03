@@ -8,7 +8,7 @@ use network::model::Edge;
 
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
-use crate::model::piste::{Piste, PisteCosts};
+use crate::model::piste::{Basins, Costs, Piste};
 use crate::model::skiing::{Mode, State};
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
@@ -19,35 +19,38 @@ pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
     exits: &HashMap<usize, Vec<Exit>>,
-    distance_costs: &HashMap<usize, PisteCosts>,
-    skiing_costs: &mut HashMap<usize, PisteCosts>,
+    distance_costs: &HashMap<usize, Costs>,
+    skiing_costs: &mut HashMap<usize, Costs>,
+    basins: &mut HashMap<usize, Basins>,
 ) {
     skiing_costs.clear();
     for (piste_id, piste) in pistes.iter() {
         let Some(exits) = exits.get(piste_id) else {
             continue;
         };
-        let costs = compute_costs_for_piste(
+        let (piste_costs, piste_basins) = compute_costs_and_basins_for_piste(
             terrain,
             piste_id,
             piste,
             exits,
             distance_costs.get(piste_id).unwrap(),
         );
-        skiing_costs.insert(*piste_id, costs);
+        skiing_costs.insert(*piste_id, piste_costs);
+        basins.insert(*piste_id, piste_basins);
     }
 }
 
-fn compute_costs_for_piste(
+fn compute_costs_and_basins_for_piste(
     terrain: &Grid<f32>,
     piste_id: &usize,
     piste: &Piste,
     exits: &[Exit],
-    distance_costs: &PisteCosts,
-) -> PisteCosts {
-    let mut out = PisteCosts::new();
+    distance_costs: &Costs,
+) -> (Costs, Basins) {
+    let mut costs = Costs::new();
+    let mut basins = Basins::new();
 
-    let exit_positions = exits
+    let inaccessible = exits
         .iter()
         .filter(|Exit { id, .. }| id != piste_id)
         .flat_map(|Exit { positions, .. }| positions)
@@ -62,46 +65,57 @@ fn compute_costs_for_piste(
     {
         let distance_costs = distance_costs.costs(exit_id).unwrap();
 
-        let network = SkiingNetwork {
+        let (exit_costs, exit_basin) = compute_costs_and_basin_for_exit(
             terrain,
-            is_reserved_fn: &|position| {
-                !positions.contains(position) && exit_positions.contains(position)
-            },
-            is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
-                (Some(to), Some(from)) => to < from,
-                _ => false,
-            },
-        };
-        println!("INFO: Computing costs id {} in {}", exit_id, piste_id);
-        let costs = compute_costs_for_targets(&network, piste, positions);
-        println!(
-            "INFO: Computing reachability id {} in {}",
-            exit_id, piste_id
-        );
-        let reachability = compute_reachability_from_costs(&network, piste, &costs);
-
-        let piste_states =
-            (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize)) as f32;
-        println!(
-            "INFO: Costs for id {} in {} = {}",
-            exit_id,
             piste_id,
-            costs.len() as f32 / piste_states
-        );
-        println!(
-            "INFO: Reachability for id {} in {} = {}",
+            piste,
             exit_id,
-            piste_id,
-            reachability.len() as f32 / piste_states
+            distance_costs,
+            positions,
+            &inaccessible,
         );
-        out.set_costs(*exit_id, costs);
+        costs.set_costs(*exit_id, exit_costs);
+        basins.set_basin(*exit_id, exit_basin);
     }
 
-    out
+    (costs, basins)
 }
 
-fn piste_positions(piste: &Piste) -> impl Iterator<Item = XY<u32>> + '_ {
-    piste.grid.iter().filter(|position| piste.grid[position])
+fn compute_costs_and_basin_for_exit(
+    terrain: &Grid<f32>,
+    piste_id: &usize,
+    piste: &Piste,
+    exit_id: &usize,
+    distance_costs: &HashMap<State, u64>,
+    targets: &HashSet<XY<u32>>,
+    inaccessible: &HashSet<&XY<u32>>,
+) -> (HashMap<State, u64>, HashSet<State>) {
+    let network = SkiingNetwork {
+        terrain,
+        is_reserved_fn: &|position| !targets.contains(position) && inaccessible.contains(position),
+        is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
+            (Some(to), Some(from)) => to < from,
+            _ => false,
+        },
+    };
+    let costs = compute_costs_for_targets(&network, piste, targets);
+    let basin = compute_basin(&network, piste, &costs);
+
+    let piste_states =
+        (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize)) as f32;
+    println!(
+        "INFO: Costs for id {} in {} = {}",
+        exit_id,
+        piste_id,
+        costs.len() as f32 / piste_states
+    );
+    println!(
+        "INFO: Basin for id {} in {} = {}",
+        exit_id,
+        piste_id,
+        basin.len() as f32 / piste_states
+    );
+    (costs, basin)
 }
 
 fn compute_costs_for_targets(
@@ -120,6 +134,10 @@ fn compute_costs_for_targets(
         }
     }
     out
+}
+
+fn piste_positions(piste: &Piste) -> impl Iterator<Item = XY<u32>> + '_ {
+    piste.grid.iter().filter(|position| piste.grid[position])
 }
 
 fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
@@ -188,7 +206,7 @@ fn path_cost(edges: &[Edge<State>]) -> u64 {
     edges.iter().map(|edge| edge.cost as u64).sum()
 }
 
-fn compute_reachability_from_costs(
+fn compute_basin(
     network: &SkiingNetwork,
     piste: &Piste,
     costs: &HashMap<State, u64>,
