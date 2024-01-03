@@ -38,14 +38,14 @@ use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::lift::Lift;
-use crate::model::piste::{Piste, PisteCosts};
+use crate::model::piste::{Basins, Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, distance_cost_computer, entrance, entrance_artist, exit_computer,
-    frame_wiper, lift_artist, model_artist, overlay, piste_adopter, planner, skiing_cost_computer,
-    skiing_framer, target_scrubber, target_setter,
+    carousel, chair_framer, distance_network_computer, entrance, entrance_artist, exit_computer,
+    frame_wiper, lift_artist, model_artist, overlay, piste_adopter, planner, skiing_framer,
+    skiing_network_computer, target_scrubber, target_setter,
 };
 
 fn main() {
@@ -246,6 +246,7 @@ fn new_components() -> Components {
         pistes: HashMap::default(),
         distance_costs: HashMap::default(),
         skiing_costs: HashMap::default(),
+        basins: HashMap::default(),
         lifts: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
@@ -281,8 +282,9 @@ pub struct Components {
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    distance_costs: HashMap<usize, PisteCosts>,
-    skiing_costs: HashMap<usize, PisteCosts>,
+    distance_costs: HashMap<usize, Costs>,
+    skiing_costs: HashMap<usize, Costs>,
+    basins: HashMap<usize, Basins>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
@@ -536,18 +538,19 @@ impl EventHandler for Game {
                 &self.components.entrances,
                 &mut self.components.exits,
             );
-            distance_cost_computer::run(
+            distance_network_computer::run(
                 &self.components.terrain,
                 &self.components.pistes,
                 &self.components.exits,
                 &mut self.components.distance_costs,
             );
-            skiing_cost_computer::run(
+            skiing_network_computer::run(
                 &self.components.terrain,
                 &self.components.pistes,
                 &self.components.exits,
                 &self.components.distance_costs,
                 &mut self.components.skiing_costs,
+                &mut self.components.basins,
             );
         }
     }

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::origin_grid::OriginGrid;
 use serde::{Deserialize, Serialize};
@@ -11,13 +11,13 @@ pub struct Piste {
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct PisteCosts {
+pub struct Costs {
     target_to_costs: HashMap<usize, HashMap<State, u64>>,
 }
 
-impl PisteCosts {
-    pub fn new() -> PisteCosts {
-        PisteCosts {
+impl Costs {
+    pub fn new() -> Costs {
+        Costs {
             target_to_costs: HashMap::new(),
         }
     }
@@ -32,5 +32,22 @@ impl PisteCosts {
 
     pub fn remove_costs(&mut self, target: &usize) {
         self.target_to_costs.remove(target);
+    }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct Basins {
+    target_to_basin: HashMap<usize, HashSet<State>>,
+}
+
+impl Basins {
+    pub fn new() -> Basins {
+        Basins {
+            target_to_basin: HashMap::new(),
+        }
+    }
+
+    pub fn set_basin(&mut self, target: usize, basin: HashSet<State>) {
+        self.target_to_basin.insert(target, basin);
     }
 }

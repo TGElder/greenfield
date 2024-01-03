@@ -3,7 +3,7 @@ use std::iter::once;
 
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
-use crate::model::piste::{Piste, PisteCosts};
+use crate::model::piste::{Costs, Piste};
 use crate::model::skiing::{Mode, State};
 use crate::network::distance::DistanceNetwork;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
@@ -15,7 +15,7 @@ pub fn run(
     terrain: &Grid<f32>,
     pistes: &HashMap<usize, Piste>,
     exits: &HashMap<usize, Vec<Exit>>,
-    distance_costs: &mut HashMap<usize, PisteCosts>,
+    distance_costs: &mut HashMap<usize, Costs>,
 ) {
     distance_costs.clear();
     for (piste_id, piste) in pistes.iter() {
@@ -27,13 +27,8 @@ pub fn run(
     }
 }
 
-fn compute_costs(
-    terrain: &Grid<f32>,
-    piste_id: &usize,
-    piste: &Piste,
-    exits: &[Exit],
-) -> PisteCosts {
-    let mut out = PisteCosts::new();
+fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[Exit]) -> Costs {
+    let mut out = Costs::new();
 
     let exit_positions = exits
         .iter()
