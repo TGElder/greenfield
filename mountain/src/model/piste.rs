@@ -50,4 +50,14 @@ impl Basins {
     pub fn set_basin(&mut self, target: usize, basin: HashSet<State>) {
         self.target_to_basin.insert(target, basin);
     }
+
+    pub fn targets_reachable_from_state<'a>(
+        &'a self,
+        state: &'a State,
+    ) -> impl Iterator<Item = &usize> + 'a {
+        self.target_to_basin
+            .iter()
+            .filter(move |(_, basin)| basin.contains(state))
+            .map(|(target, _)| target)
+    }
 }
