@@ -531,6 +531,8 @@ impl EventHandler for Game {
         };
 
         if COMPUTE_COSTS_BINDING.binds_event(event) {
+            let current_speed = self.components.services.clock.speed();
+            self.components.services.clock.set_speed(0.0);
             exit_computer::run(
                 &self.components.pistes,
                 &self.components.lifts,
@@ -551,6 +553,7 @@ impl EventHandler for Game {
                 &mut self.components.skiing_costs,
                 &mut self.components.basins,
             );
+            self.components.services.clock.set_speed(current_speed);
         }
     }
 }
