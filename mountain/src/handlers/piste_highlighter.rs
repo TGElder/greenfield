@@ -42,8 +42,10 @@ impl Handler {
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
             return;
         };
-        let position = xy(x.floor() as u32, y.floor() as u32);
-
+        let position = xy(
+            (x.floor() as u32).min(piste_map.width() - 2),
+            (y.floor() as u32).min(piste_map.height() - 2),
+        );
         let selected_piste = piste_map[position];
         if self.selected_piste != selected_piste {
             if let Some(selected_piste) = self.selected_piste {
@@ -71,7 +73,7 @@ fn update_overlay(
             let grid = &piste.grid;
             overlay.update(XYRectangle {
                 from: *grid.origin(),
-                to: *grid.origin() + xy(grid.width(), grid.height()),
+                to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
             });
         }
     }

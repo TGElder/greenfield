@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use std::iter::once;
 
 use commons::curves::approximate_curve;
-use commons::geometry::{xy, xyz, XYRectangle, XY, XYZ};
+use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 
@@ -11,7 +11,6 @@ use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::{self, Lift, Segment};
 use crate::services::id_allocator;
-use crate::systems::overlay;
 use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
@@ -32,7 +31,6 @@ pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub lifts: &'a mut HashMap<usize, Lift>,
     pub open: &'a mut HashSet<usize>,
-    pub overlay: &'a mut overlay::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
@@ -55,7 +53,6 @@ impl Handler {
             terrain,
             lifts,
             open,
-            overlay,
             id_allocator,
             carousels,
             cars,
@@ -71,6 +68,9 @@ impl Handler {
             return;
         };
         let position = xy(x.round() as u32, y.round() as u32);
+        if !terrain.in_bounds(position) {
+            return;
+        }
 
         // handle case where from position is not set
 
@@ -132,11 +132,6 @@ impl Handler {
         // register lift
 
         lifts.insert(lift_id, lift);
-
-        // update overlay
-
-        overlay.update(XYRectangle { from, to: from });
-        overlay.update(XYRectangle { from: to, to });
 
         // clear from position
 
