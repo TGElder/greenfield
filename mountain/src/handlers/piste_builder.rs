@@ -78,10 +78,7 @@ impl Handler {
 
         // updating overlay
 
-        overlay.update(XYRectangle {
-            from: xy(rectangle.from.x, rectangle.from.y),
-            to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
-        });
+        overlay.update(rectangle);
 
         // clearing selection
 

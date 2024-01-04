@@ -390,7 +390,6 @@ impl EventHandler for Game {
                 terrain: &self.components.terrain,
                 lifts: &mut self.components.lifts,
                 open: &mut self.components.open,
-                overlay: &mut self.systems.overlay,
                 id_allocator: &mut self.components.services.id_allocator,
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
@@ -426,9 +425,13 @@ impl EventHandler for Game {
             graphics,
         );
         self.handlers.save.handle(event, &mut self.components);
-        self.handlers
-            .selection
-            .handle(event, &self.mouse_xy, graphics, &mut self.systems.overlay);
+        self.handlers.selection.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.terrain,
+            graphics,
+            &mut self.systems.overlay,
+        );
 
         self.systems.carousel.run(systems::carousel::Parameters {
             micros: &self.components.services.clock.get_micros(),
