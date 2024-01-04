@@ -92,7 +92,9 @@ fn compute_costs_and_basin_for_exit(
 ) -> (HashMap<State, u64>, HashSet<State>) {
     let network = SkiingNetwork {
         terrain,
-        is_reserved_fn: &|position| !targets.contains(position) && inaccessible.contains(position),
+        is_accessible_fn: &|position| {
+            targets.contains(position) || !inaccessible.contains(position)
+        },
         is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
             (Some(to), Some(from)) => to < from,
             _ => false,

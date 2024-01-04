@@ -250,8 +250,8 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
-        is_reserved_fn: &|position| {
-            reservations[position]
+        is_accessible_fn: &|position| {
+            !reservations[position]
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
         },
