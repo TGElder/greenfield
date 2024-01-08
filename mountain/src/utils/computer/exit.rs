@@ -5,17 +5,22 @@ use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 
-pub fn run(
+pub fn compute_piste(
+    piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
     exits: &mut HashMap<usize, Vec<Exit>>,
 ) {
-    exits.clear();
-    for (piste_id, piste) in pistes.iter() {
-        let exits_for_piste = exits_for_piste(piste_id, piste, lifts, entrances);
-        exits.insert(*piste_id, exits_for_piste);
-    }
+    exits.remove(piste_id);
+
+    let Some(piste) = pistes.get(piste_id) else {
+        return;
+    };
+
+    let exits_for_piste = exits_for_piste(piste_id, piste, lifts, entrances);
+
+    exits.insert(*piste_id, exits_for_piste);
 }
 
 fn exits_for_piste(

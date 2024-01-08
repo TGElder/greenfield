@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
-    piste_builder, piste_highlighter, save,
+    piste_builder, piste_computer, piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
@@ -43,9 +43,8 @@ use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, distance_network_computer, entrance, entrance_artist, exit_computer,
-    frame_wiper, lift_artist, model_artist, overlay, piste_adopter, planner, skiing_framer,
-    skiing_network_computer, target_scrubber, target_setter,
+    carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
+    overlay, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
 };
 
 fn main() {
@@ -107,6 +106,12 @@ fn main() {
                             button: Button::Keyboard(KeyboardKey::X),
                             state: ButtonState::Pressed,
                         },
+                    },
+                },
+                piste_computer: piste_computer::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::C),
+                        state: ButtonState::Pressed,
                     },
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
@@ -318,6 +323,7 @@ struct Handlers {
     entrance_opener: entrance_opener::Handler,
     entrance_remover: entrance_remover::Handler,
     piste_builder: piste_builder::Handler,
+    piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
@@ -446,6 +452,23 @@ impl EventHandler for Game {
             graphics,
             &mut self.systems.overlay,
         );
+        self.handlers
+            .piste_computer
+            .handle(handlers::piste_computer::Parameters {
+                event,
+                mouse_xy: &self.mouse_xy,
+                terrain: &self.components.terrain,
+                pistes: &self.components.pistes,
+                piste_map: &self.components.piste_map,
+                lifts: &self.components.lifts,
+                entrances: &self.components.entrances,
+                exits: &mut self.components.exits,
+                distance_costs: &mut self.components.distance_costs,
+                skiing_costs: &mut self.components.skiing_costs,
+                basins: &mut self.components.basins,
+                clock: &mut self.components.services.clock,
+                graphics,
+            });
 
         self.systems.carousel.run(systems::carousel::Parameters {
             micros: &self.components.services.clock.get_micros(),
@@ -524,7 +547,7 @@ impl EventHandler for Game {
         );
         self.handlers
             .piste_highlighter
-            .run(handlers::piste_highlighter::Parameters {
+            .handle(handlers::piste_highlighter::Parameters {
                 event,
                 mouse_xy: &self.mouse_xy,
                 pistes: &self.components.pistes,
@@ -541,36 +564,5 @@ impl EventHandler for Game {
             &self.components.highlights,
             &self.handlers.selection,
         );
-
-        const COMPUTE_COSTS_BINDING: Binding = Binding::Single {
-            button: Button::Keyboard(KeyboardKey::C),
-            state: ButtonState::Pressed,
-        };
-
-        if COMPUTE_COSTS_BINDING.binds_event(event) {
-            let current_speed = self.components.services.clock.speed();
-            self.components.services.clock.set_speed(0.0);
-            exit_computer::run(
-                &self.components.pistes,
-                &self.components.lifts,
-                &self.components.entrances,
-                &mut self.components.exits,
-            );
-            distance_network_computer::run(
-                &self.components.terrain,
-                &self.components.pistes,
-                &self.components.exits,
-                &mut self.components.distance_costs,
-            );
-            skiing_network_computer::run(
-                &self.components.terrain,
-                &self.components.pistes,
-                &self.components.exits,
-                &self.components.distance_costs,
-                &mut self.components.skiing_costs,
-                &mut self.components.basins,
-            );
-            self.components.services.clock.set_speed(current_speed);
-        }
     }
 }

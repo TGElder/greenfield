@@ -11,20 +11,25 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
 
-pub fn run(
-    terrain: &Grid<f32>,
+pub fn compute_piste(
+    piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
+    terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
     distance_costs: &mut HashMap<usize, Costs>,
 ) {
-    distance_costs.clear();
-    for (piste_id, piste) in pistes.iter() {
-        let Some(exits) = exits.get(piste_id) else {
-            continue;
-        };
-        let costs = compute_costs(terrain, piste_id, piste, exits);
-        distance_costs.insert(*piste_id, costs);
-    }
+    distance_costs.remove(piste_id);
+
+    let Some(piste) = pistes.get(piste_id) else {
+        return;
+    };
+    let Some(exits) = exits.get(piste_id) else {
+        return;
+    };
+
+    let costs = compute_costs(terrain, piste_id, piste, exits);
+
+    distance_costs.insert(*piste_id, costs);
 }
 
 fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[Exit]) -> Costs {
