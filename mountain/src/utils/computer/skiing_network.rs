@@ -9,7 +9,7 @@ use network::model::Edge;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Basins, Costs, Piste};
-use crate::model::skiing::{Mode, State};
+use crate::model::skiing::State;
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 
@@ -155,7 +155,7 @@ fn skiing_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> 
         .flat_map(move |travel_direction| {
             (0..VELOCITY_LEVELS).map(move |velocity| State {
                 position,
-                mode: Mode::Skiing { velocity },
+                velocity,
                 travel_direction,
             })
         })
@@ -180,9 +180,9 @@ fn compute_cost_from_state(
         return *cost;
     }
 
-    if !matches!(from.mode, Mode::Skiing { velocity: 0 }) {
+    if from.velocity != 0 {
         let zero_state = State {
-            mode: Mode::Skiing { velocity: 0 },
+            velocity: 0,
             ..*from
         };
         compute_cost_from_state(&zero_state, network, piste, targets, cache)?;

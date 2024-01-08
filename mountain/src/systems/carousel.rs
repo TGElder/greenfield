@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
 use crate::model::reservation::Reservation;
-use crate::model::skiing::{Mode, Plan, State};
+use crate::model::skiing::{Plan, State};
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
 
@@ -130,10 +130,8 @@ impl System {
                                 *location_id,
                                 Plan::Stationary(State {
                                     position: lift.drop_off.position,
-                                    mode: Mode::Skiing {
-                                        velocity: encode_velocity(&carousel.velocity)
-                                            .unwrap_or(VELOCITY_LEVELS - 1),
-                                    },
+                                    velocity: encode_velocity(&carousel.velocity)
+                                        .unwrap_or(VELOCITY_LEVELS - 1),
                                     travel_direction: lift.drop_off.direction,
                                 }),
                             );
