@@ -6,7 +6,7 @@ use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::direction::{Direction, DIRECTIONS};
-use crate::model::skiing::{Mode, State};
+use crate::model::skiing::State;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
@@ -14,8 +14,6 @@ use crate::{
 };
 
 const TURNING_DURATION: Duration = Duration::from_secs(1);
-const SKIS_ON_DURATION: Duration = Duration::from_secs(10);
-const SKIS_OFF_DURATION: Duration = Duration::from_secs(10);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
@@ -41,9 +39,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_skiable_edge_fn)(&edge.to, &edge.from))
                 .chain(self.turning_edges(from))
-                .chain(self.stop_edge(from))
-                .chain(self.skis_off(from))
-                .chain(self.skis_on(from)),
+                .chain(self.stop_edge(from)),
         )
     }
 }
@@ -53,19 +49,17 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        once(from)
-            .flat_map(get_skiing_velocity)
-            .flat_map(|velocity| {
-                [
-                    from.travel_direction.next_anticlockwise(),
-                    from.travel_direction,
-                    from.travel_direction.next_clockwise(),
-                ]
-                .into_iter()
-                .flat_map(|travel_direction| {
-                    self.get_skiing_edge(from, travel_direction, *velocity, 0.0)
-                })
+        once(from).flat_map(|state| {
+            [
+                from.travel_direction.next_anticlockwise(),
+                from.travel_direction,
+                from.travel_direction.next_clockwise(),
+            ]
+            .into_iter()
+            .flat_map(|travel_direction| {
+                self.get_skiing_edge(from, travel_direction, state.velocity, 0.0)
             })
+        })
     }
 
     fn get_skiing_edge(
@@ -92,9 +86,8 @@ impl<'a> SkiingNetwork<'a> {
             from: *from,
             to: State {
                 position: to_position,
-                mode: Mode::Skiing {
-                    velocity: encode_velocity(&velocity)?,
-                },
+
+                velocity: encode_velocity(&velocity)?,
                 travel_direction,
             },
             cost: (duration * 1_000_000.0).round() as u32,
@@ -105,26 +98,29 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        once(from)
-            .flat_map(get_skiing_velocity)
-            .flat_map(move |velocity| {
-                self.get_skiing_edge(from, from.travel_direction, *velocity, BRAKING_FRICTION)
-                    .into_iter()
-                    .flat_map(move |edge| {
-                        [
-                            from.travel_direction.next_anticlockwise(),
-                            from.travel_direction.next_clockwise(),
-                        ]
-                        .into_iter()
-                        .map(move |to_direction| Edge {
-                            to: State {
-                                travel_direction: to_direction,
-                                ..edge.to
-                            },
-                            ..edge
-                        })
-                    })
+        once(from).flat_map(move |state| {
+            self.get_skiing_edge(
+                from,
+                from.travel_direction,
+                state.velocity,
+                BRAKING_FRICTION,
+            )
+            .into_iter()
+            .flat_map(move |edge| {
+                [
+                    from.travel_direction.next_anticlockwise(),
+                    from.travel_direction.next_clockwise(),
+                ]
+                .into_iter()
+                .map(move |to_direction| Edge {
+                    to: State {
+                        travel_direction: to_direction,
+                        ..edge.to
+                    },
+                    ..edge
+                })
             })
+        })
     }
 
     fn turning_edges(
@@ -132,7 +128,7 @@ impl<'a> SkiingNetwork<'a> {
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
         once(from)
-            .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
+            .filter(|from| from.velocity == 0)
             .flat_map(|from| {
                 let turning_micros = TURNING_DURATION.as_micros().try_into().unwrap();
                 [
@@ -164,12 +160,11 @@ impl<'a> SkiingNetwork<'a> {
         let max_velocity_encoded = encode_velocity(&STOP_MAX_VELOCITY).unwrap();
 
         once(from)
-            .flat_map(get_skiing_velocity)
-            .filter(move |velocity| **velocity <= max_velocity_encoded)
+            .filter(move |state| state.velocity <= max_velocity_encoded)
             .map(|_| Edge {
                 from: *from,
                 to: State {
-                    mode: Mode::Skiing { velocity: 0 },
+                    velocity: 0,
                     ..*from
                 },
                 cost: 0,
@@ -183,9 +178,8 @@ impl<'a> SkiingNetwork<'a> {
         let max_velocity_encoded = encode_velocity(&POLING_MAX_VELOCITY).unwrap();
 
         once(from)
-            .flat_map(get_skiing_velocity)
-            .filter(move |velocity| **velocity <= max_velocity_encoded)
-            .flat_map(move |velocity| self.get_poling_edge(from, velocity))
+            .filter(move |state| state.velocity <= max_velocity_encoded)
+            .flat_map(|state| self.get_poling_edge(from, &state.velocity))
     }
 
     fn get_poling_edge(&self, from: &State, velocity: &u8) -> Option<Edge<State>> {
@@ -206,60 +200,16 @@ impl<'a> SkiingNetwork<'a> {
             from: *from,
             to: State {
                 position: to_position,
-                mode: Mode::Skiing {
-                    velocity: encode_velocity(&velocity)?,
-                },
+                velocity: encode_velocity(&velocity)?,
                 travel_direction: from.travel_direction,
             },
             cost: (duration * 1_000_000.0).round() as u32,
         })
     }
 
-    fn skis_off(
-        &'a self,
-        from: &'a State,
-    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        once(from)
-            .filter(|from| from.mode == Mode::Skiing { velocity: 0 })
-            .map(|from| Edge {
-                from: *from,
-                to: State {
-                    mode: Mode::Walking,
-                    ..*from
-                },
-                cost: SKIS_OFF_DURATION.as_micros().try_into().unwrap(),
-            })
-    }
-
-    fn skis_on(
-        &'a self,
-        from: &'a State,
-    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        once(from)
-            .filter(|from| from.mode == Mode::Walking)
-            .map(|from| Edge {
-                from: *from,
-                to: State {
-                    mode: Mode::Skiing { velocity: 0 },
-                    ..*from
-                },
-                cost: SKIS_ON_DURATION.as_micros().try_into().unwrap(),
-            })
-    }
-
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
-    }
-}
-
-fn get_skiing_velocity(state: &State) -> Option<&u8> {
-    match state {
-        State {
-            mode: Mode::Skiing { velocity },
-            ..
-        } => Some(velocity),
-        _ => None,
     }
 }
 
@@ -279,7 +229,7 @@ impl SkiingInNetwork {
                 for velocity in 0..VELOCITY_LEVELS {
                     let state = State {
                         position: *position,
-                        mode: Mode::Skiing { velocity },
+                        velocity,
                         travel_direction,
                     };
 

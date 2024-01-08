@@ -6,14 +6,8 @@ use crate::model::direction::Direction;
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct State {
     pub position: XY<u32>,
-    pub mode: Mode,
+    pub velocity: u8,
     pub travel_direction: Direction,
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub enum Mode {
-    Walking,
-    Skiing { velocity: u8 },
 }
 
 #[derive(Debug, Serialize, Deserialize)]

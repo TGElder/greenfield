@@ -8,7 +8,7 @@ use rand::Rng;
 
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
-use crate::model::skiing::{Event, Mode, Plan, State};
+use crate::model::skiing::{Event, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
@@ -291,11 +291,10 @@ where
 }
 
 fn brake(state: State) -> Plan {
-    let mode = match state.mode {
-        Mode::Walking => Mode::Walking,
-        Mode::Skiing { .. } => Mode::Skiing { velocity: 0 },
-    };
-    Plan::Stationary(State { mode, ..state })
+    Plan::Stationary(State {
+        velocity: 0,
+        ..state
+    })
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {

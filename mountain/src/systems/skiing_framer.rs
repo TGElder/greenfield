@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use commons::scale::Scale;
 
 use crate::model::frame::{self, Frame};
-use crate::model::skiing::{self, Event, Plan, State};
+use crate::model::skiing::{Event, Plan, State};
 
 pub fn run(
     terrain: &Grid<f32>,
@@ -31,15 +31,15 @@ fn frame_from_skiing_state(
     terrain: &Grid<f32>,
     State {
         position,
-        mode,
         travel_direction,
+        ..
     }: &State,
 ) -> Frame {
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         angle: travel_direction.angle(),
         model_offset: None,
-        model: mode.into(),
+        model: frame::Model::Standing { skis: true },
     }
 }
 
@@ -64,14 +64,5 @@ fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame 
         angle: to.angle,
         model: from.model,
         model_offset: None,
-    }
-}
-
-impl From<&skiing::Mode> for frame::Model {
-    fn from(value: &skiing::Mode) -> Self {
-        match value {
-            skiing::Mode::Walking => frame::Model::Standing { skis: false },
-            skiing::Mode::Skiing { .. } => frame::Model::Standing { skis: true },
-        }
     }
 }

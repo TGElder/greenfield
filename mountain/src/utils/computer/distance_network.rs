@@ -1,10 +1,9 @@
 use std::collections::{HashMap, HashSet};
-use std::iter::once;
 
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
-use crate::model::skiing::{Mode, State};
+use crate::model::skiing::State;
 use crate::network::distance::DistanceNetwork;
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
@@ -94,16 +93,10 @@ fn to_costs(mut distances: HashMap<XY<u32>, u64>) -> HashMap<State, u64> {
 
 fn states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
     DIRECTIONS.into_iter().flat_map(move |travel_direction| {
-        modes().map(move |mode| State {
+        (0..VELOCITY_LEVELS).map(move |velocity| State {
             position,
-            mode,
+            velocity,
             travel_direction,
         })
     })
-}
-
-fn modes() -> impl Iterator<Item = Mode> {
-    (0..VELOCITY_LEVELS)
-        .map(|velocity| Mode::Skiing { velocity })
-        .chain(once(Mode::Walking))
 }
