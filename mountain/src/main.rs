@@ -28,8 +28,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, entrance_builder, entrance_opener, lift_opener, lift_remover, piste_builder,
-    piste_highlighter, save,
+    add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
+    piste_builder, piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
@@ -81,6 +81,22 @@ fn main() {
                         state: ButtonState::Released,
                     },
                 }),
+                entrance_builder: entrance_builder::Handler::new(Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::N),
+                    state: ButtonState::Pressed,
+                }),
+                entrance_opener: entrance_opener::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::O),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                entrance_remover: entrance_remover::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::X),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 piste_builder: piste_builder::Handler {
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
@@ -110,16 +126,7 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                entrance_builder: entrance_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::N),
-                    state: ButtonState::Pressed,
-                }),
-                entrance_opener: entrance_opener::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::O),
-                        state: ButtonState::Pressed,
-                    },
-                },
+
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
@@ -309,6 +316,7 @@ struct Handlers {
     drag: drag::Handler,
     entrance_builder: entrance_builder::Handler,
     entrance_opener: entrance_opener::Handler,
+    entrance_remover: entrance_remover::Handler,
     piste_builder: piste_builder::Handler,
     piste_highlighter: piste_highlighter::Handler,
     resize: resize::Handler,
@@ -395,6 +403,12 @@ impl EventHandler for Game {
                 cars: &mut self.components.cars,
                 graphics,
             });
+        self.handlers.entrance_remover.handle(
+            event,
+            &self.mouse_xy,
+            graphics,
+            &mut self.components,
+        );
         self.handlers
             .lift_remover
             .handle(event, &self.mouse_xy, graphics, &mut self.components);
