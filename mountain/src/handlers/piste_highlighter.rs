@@ -22,7 +22,7 @@ pub struct Parameters<'a> {
 }
 
 impl Handler {
-    pub fn run(
+    pub fn handle(
         &mut self,
         Parameters {
             event,

@@ -15,29 +15,35 @@ use crate::network::velocity_encoding::VELOCITY_LEVELS;
 
 pub const MAX_STEPS: u64 = 4;
 
-pub fn run(
-    terrain: &Grid<f32>,
+pub fn compute_piste(
+    piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
+    terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
     distance_costs: &HashMap<usize, Costs>,
     skiing_costs: &mut HashMap<usize, Costs>,
     basins: &mut HashMap<usize, Basins>,
 ) {
-    skiing_costs.clear();
-    for (piste_id, piste) in pistes.iter() {
-        let Some(exits) = exits.get(piste_id) else {
-            continue;
-        };
-        let (piste_costs, piste_basins) = compute_costs_and_basins_for_piste(
-            terrain,
-            piste_id,
-            piste,
-            exits,
-            distance_costs.get(piste_id).unwrap(),
-        );
-        skiing_costs.insert(*piste_id, piste_costs);
-        basins.insert(*piste_id, piste_basins);
-    }
+    skiing_costs.remove(piste_id);
+    basins.remove(piste_id);
+
+    let Some(piste) = pistes.get(piste_id) else {
+        return;
+    };
+    let Some(exits) = exits.get(piste_id) else {
+        return;
+    };
+
+    let (piste_costs, piste_basins) = compute_costs_and_basins_for_piste(
+        terrain,
+        piste_id,
+        piste,
+        exits,
+        distance_costs.get(piste_id).unwrap(),
+    );
+
+    skiing_costs.insert(*piste_id, piste_costs);
+    basins.insert(*piste_id, piste_basins);
 }
 
 fn compute_costs_and_basins_for_piste(
