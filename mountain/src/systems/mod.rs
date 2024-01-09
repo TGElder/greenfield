@@ -1,3 +1,4 @@
+pub mod ability_computer;
 pub mod carousel;
 pub mod chair_framer;
 pub mod entrance;

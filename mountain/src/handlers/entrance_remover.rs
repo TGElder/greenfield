@@ -3,6 +3,7 @@ use engine::binding::Binding;
 use engine::graphics::Graphics;
 
 use crate::model::entrance::Entrance;
+use crate::model::skiing::ABILITIES;
 use crate::Components;
 
 pub struct Handler {
@@ -79,7 +80,11 @@ pub fn remove_entrance(
     }
 
     for (_, costs) in components.skiing_costs.iter_mut() {
-        costs.remove_costs(entrance_id);
+        for ability in ABILITIES {
+            if let Some(costs) = costs.get_mut(&ability) {
+                costs.remove_costs(entrance_id);
+            }
+        }
     }
 }
 

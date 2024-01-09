@@ -8,7 +8,7 @@ use rand::Rng;
 
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
-use crate::model::skiing::{Event, Plan, State};
+use crate::model::skiing::{Ability, Event, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
@@ -28,7 +28,7 @@ pub struct Parameters<'a> {
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
     pub distance_costs: &'a HashMap<usize, Costs>,
-    pub skiing_costs: &'a HashMap<usize, Costs>,
+    pub skiing_costs: &'a HashMap<usize, HashMap<Ability, Costs>>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
@@ -73,7 +73,7 @@ impl System {
             let from = last_state(current_plan);
             *current_plan = match (
                 get_costs(id, locations, targets, distance_costs),
-                get_costs(id, locations, targets, skiing_costs),
+                get_skiing_costs(id, locations, targets, skiing_costs),
             ) {
                 (Some(distance_costs), Some(skiing_costs)) => new_plan(
                     terrain,
@@ -210,6 +210,18 @@ fn get_costs<'a>(
     costs.costs(target)
 }
 
+fn get_skiing_costs<'a>(
+    id: &usize,
+    locations: &HashMap<usize, usize>,
+    targets: &HashMap<usize, usize>,
+    costs: &'a HashMap<usize, HashMap<Ability, Costs>>,
+) -> Option<&'a HashMap<State, u64>> {
+    let location = locations.get(id)?;
+    let target = targets.get(id)?;
+    let costs = costs.get(location)?.get(&Ability::Beginner)?;
+    costs.costs(target)
+}
+
 fn new_plan(
     terrain: &Grid<f32>,
     micros: &u128,
@@ -259,6 +271,7 @@ fn find_path(
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
+        ability: &Ability::Beginner,
     };
 
     let mut rng = rand::thread_rng();

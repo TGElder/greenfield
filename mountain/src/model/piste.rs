@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use commons::origin_grid::OriginGrid;
 use serde::{Deserialize, Serialize};
 
-use crate::model::skiing::State;
+use crate::model::skiing::{Ability, State};
 
 #[derive(Serialize, Deserialize)]
 pub struct Piste {

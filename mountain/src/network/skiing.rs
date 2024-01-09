@@ -6,7 +6,7 @@ use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::direction::{Direction, DIRECTIONS};
-use crate::model::skiing::State;
+use crate::model::skiing::{Ability, State};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
@@ -22,10 +22,20 @@ const POLING_MAX_VELOCITY: f32 = 2.0;
 
 const STOP_MAX_VELOCITY: f32 = 1.5;
 
+fn max_velocity(ability: &Ability) -> u8 {
+    match ability {
+        Ability::Beginner => 1,
+        Ability::Intermediate => 3,
+        Ability::Advanced => 5,
+        Ability::Expert => 7,
+    }
+}
+
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_skiable_edge_fn: &'a dyn Fn(&State, &State) -> bool,
+    pub ability: &'a Ability,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -39,7 +49,8 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_skiable_edge_fn)(&edge.to, &edge.from))
                 .chain(self.turning_edges(from))
-                .chain(self.stop_edge(from)),
+                .chain(self.stop_edge(from))
+                .filter(|edge| edge.from.velocity <= max_velocity(self.ability)),
         )
     }
 }

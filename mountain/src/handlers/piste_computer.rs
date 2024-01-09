@@ -8,6 +8,7 @@ use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::{Basins, Costs, Piste};
+use crate::model::skiing::Ability;
 use crate::services::clock;
 use crate::utils::computer;
 
@@ -25,8 +26,8 @@ pub struct Parameters<'a> {
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub distance_costs: &'a mut HashMap<usize, Costs>,
-    pub skiing_costs: &'a mut HashMap<usize, Costs>,
-    pub basins: &'a mut HashMap<usize, Basins>,
+    pub skiing_costs: &'a mut HashMap<usize, HashMap<Ability, Costs>>,
+    pub basins: &'a mut HashMap<usize, HashMap<Ability, Basins>>,
     pub clock: &'a mut clock::Service,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }

@@ -9,7 +9,7 @@ use network::model::Edge;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Basins, Costs, Piste};
-use crate::model::skiing::State;
+use crate::model::skiing::{Ability, State, ABILITIES};
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 
@@ -21,8 +21,8 @@ pub fn compute_piste(
     terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
     distance_costs: &HashMap<usize, Costs>,
-    skiing_costs: &mut HashMap<usize, Costs>,
-    basins: &mut HashMap<usize, Basins>,
+    skiing_costs: &mut HashMap<usize, HashMap<Ability, Costs>>,
+    basins: &mut HashMap<usize, HashMap<Ability, Basins>>,
 ) {
     skiing_costs.remove(piste_id);
     basins.remove(piste_id);
@@ -34,22 +34,31 @@ pub fn compute_piste(
         return;
     };
 
-    let (piste_costs, piste_basins) = compute_costs_and_basins_for_piste(
-        terrain,
-        piste_id,
-        piste,
-        exits,
-        distance_costs.get(piste_id).unwrap(),
-    );
+    let mut ability_to_costs = HashMap::with_capacity(ABILITIES.len());
+    let mut ability_to_basins = HashMap::with_capacity(ABILITIES.len());
 
-    skiing_costs.insert(*piste_id, piste_costs);
-    basins.insert(*piste_id, piste_basins);
+    for ability in ABILITIES {
+        let (piste_costs, piste_basins) = compute_costs_and_basins_for_piste(
+            terrain,
+            piste_id,
+            piste,
+            &ability,
+            exits,
+            distance_costs.get(piste_id).unwrap(),
+        );
+
+        ability_to_costs.insert(ability, piste_costs);
+        ability_to_basins.insert(ability, piste_basins);
+    }
+    skiing_costs.insert(*piste_id, ability_to_costs);
+    basins.insert(*piste_id, ability_to_basins);
 }
 
 fn compute_costs_and_basins_for_piste(
     terrain: &Grid<f32>,
     piste_id: &usize,
     piste: &Piste,
+    ability: &Ability,
     exits: &[Exit],
     distance_costs: &Costs,
 ) -> (Costs, Basins) {
@@ -76,6 +85,7 @@ fn compute_costs_and_basins_for_piste(
             piste_id,
             piste,
             exit_id,
+            ability,
             distance_costs,
             positions,
             &inaccessible,
@@ -92,6 +102,7 @@ fn compute_costs_and_basin_for_exit(
     piste_id: &usize,
     piste: &Piste,
     exit_id: &usize,
+    ability: &Ability,
     distance_costs: &HashMap<State, u64>,
     targets: &HashSet<XY<u32>>,
     inaccessible: &HashSet<&XY<u32>>,
@@ -105,6 +116,7 @@ fn compute_costs_and_basin_for_exit(
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
+        ability,
     };
     let costs = compute_costs_for_targets(&network, piste, targets);
     let basin = compute_basin(&network, piste, &costs);
@@ -112,15 +124,17 @@ fn compute_costs_and_basin_for_exit(
     let piste_state_count =
         (piste_positions(piste).count() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize)) as f32;
     println!(
-        "INFO: Costs for id {} in {} = {}",
+        "INFO: Costs for id {} in {} ({:?}) = {}",
         exit_id,
         piste_id,
+        ability,
         costs.len() as f32 / piste_state_count
     );
     println!(
-        "INFO: Basin for id {} in {} = {}",
+        "INFO: Basin for id {} in {} ({:?}) = {}",
         exit_id,
         piste_id,
+        ability,
         basin.len() as f32 / piste_state_count
     );
     (costs, basin)

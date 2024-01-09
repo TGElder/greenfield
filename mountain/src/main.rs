@@ -40,11 +40,11 @@ use crate::model::frame::Frame;
 use crate::model::lift::Lift;
 use crate::model::piste::{Basins, Costs, Piste};
 use crate::model::reservation::Reservation;
-use crate::model::skiing;
+use crate::model::skiing::{self, Ability};
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
-    overlay, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
+    ability_computer, carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist,
+    model_artist, overlay, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
 };
 
 fn main() {
@@ -295,8 +295,8 @@ pub struct Components {
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
     distance_costs: HashMap<usize, Costs>,
-    skiing_costs: HashMap<usize, Costs>,
-    basins: HashMap<usize, Basins>,
+    skiing_costs: HashMap<usize, HashMap<Ability, Costs>>,
+    basins: HashMap<usize, HashMap<Ability, Basins>>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
@@ -556,6 +556,20 @@ impl EventHandler for Game {
                 overlay: &mut self.systems.overlay,
                 graphics,
             });
+
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::B),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            ability_computer::run(
+                &self.components.pistes,
+                &self.components.entrances,
+                &self.components.lifts,
+                &self.components.basins,
+            );
+        }
 
         self.systems.overlay.run(
             graphics,

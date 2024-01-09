@@ -2,6 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::graphics::Graphics;
 
+use crate::model::skiing::ABILITIES;
 use crate::Components;
 
 pub struct Handler {
@@ -103,7 +104,11 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     }
 
     for (_, costs) in components.skiing_costs.iter_mut() {
-        costs.remove_costs(lift_id);
+        for ability in ABILITIES {
+            if let Some(costs) = costs.get_mut(&ability) {
+                costs.remove_costs(lift_id);
+            }
+        }
     }
 }
 
