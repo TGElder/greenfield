@@ -62,7 +62,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .filter(|edge| edge.from.velocity <= max_velocity(self.ability))
                 .filter(|edge| {
                     self.edge_grade(edge)
-                        .map(|grade| grade <= 2.0 * max_grade(self.ability))
+                        .map(|grade| grade <= 3.0 * max_grade(self.ability))
                         .unwrap_or(true)
                 }),
         )

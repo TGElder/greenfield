@@ -55,9 +55,23 @@ fn main() {
             drawings: None,
             handlers: Handlers {
                 add_skier: add_skier::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::F),
-                        state: ButtonState::Pressed,
+                    bindings: add_skier::Bindings {
+                        beginner: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Key1),
+                            state: ButtonState::Pressed,
+                        },
+                        intermediate: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Key2),
+                            state: ButtonState::Pressed,
+                        },
+                        advanced: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Key3),
+                            state: ButtonState::Pressed,
+                        },
+                        expert: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Key4),
+                            state: ButtonState::Pressed,
+                        },
                     },
                 },
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
@@ -266,6 +280,7 @@ fn new_components() -> Components {
         reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
+        ability: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -305,6 +320,7 @@ pub struct Components {
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
+    ability: HashMap<usize, Ability>,
     terrain: Grid<f32>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
@@ -382,6 +398,7 @@ impl EventHandler for Game {
             event,
             &self.mouse_xy,
             &mut self.components.plans,
+            &mut self.components.ability,
             &mut self.components.services.id_allocator,
             graphics,
         );
@@ -510,6 +527,7 @@ impl EventHandler for Game {
             locations: &self.components.locations,
             targets: &self.components.targets,
             pistes: &self.components.pistes,
+            abilities: &self.components.ability,
             distance_costs: &self.components.distance_costs,
             skiing_costs: &self.components.skiing_costs,
             reservations: &mut self.components.reservations,

@@ -27,6 +27,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
+    pub abilities: &'a HashMap<usize, Ability>,
     pub distance_costs: &'a HashMap<usize, Costs>,
     pub skiing_costs: &'a HashMap<usize, HashMap<Ability, Costs>>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
@@ -48,6 +49,7 @@ impl System {
             locations,
             targets,
             pistes,
+            abilities,
             distance_costs,
             skiing_costs,
             reservations,
@@ -68,12 +70,16 @@ impl System {
                 return false;
             };
 
+            let Some(ability) = abilities.get(id) else {
+                return false;
+            };
+
             free(id, current_plan, reservations);
 
             let from = last_state(current_plan);
             *current_plan = match (
                 get_costs(id, locations, targets, distance_costs),
-                get_skiing_costs(id, locations, targets, skiing_costs),
+                get_skiing_costs(id, locations, targets, skiing_costs, ability),
             ) {
                 (Some(distance_costs), Some(skiing_costs)) => new_plan(
                     terrain,
@@ -83,6 +89,7 @@ impl System {
                     reservations,
                     distance_costs,
                     skiing_costs,
+                    ability,
                 ),
                 _ => brake(*from),
             };
@@ -215,10 +222,11 @@ fn get_skiing_costs<'a>(
     locations: &HashMap<usize, usize>,
     targets: &HashMap<usize, usize>,
     costs: &'a HashMap<usize, HashMap<Ability, Costs>>,
+    ability: &Ability,
 ) -> Option<&'a HashMap<State, u64>> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
-    let costs = costs.get(location)?.get(&Ability::Intermediate)?;
+    let costs = costs.get(location)?.get(ability)?;
     costs.costs(target)
 }
 
@@ -230,6 +238,7 @@ fn new_plan(
     reservations: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
+    ability: &Ability,
 ) -> Plan {
     match find_path(
         terrain,
@@ -239,6 +248,7 @@ fn new_plan(
         reservations,
         distance_costs,
         skiing_costs,
+        ability,
     ) {
         Some(edges) => {
             if edges.is_empty() {
@@ -259,6 +269,7 @@ fn find_path(
     reservations: &Grid<HashMap<usize, Reservation>>,
     distance_costs: &HashMap<State, u64>,
     skiing_costs: &HashMap<State, u64>,
+    ability: &Ability,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
@@ -271,7 +282,7 @@ fn find_path(
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
-        ability: &Ability::Intermediate,
+        ability,
     };
 
     let mut rng = rand::thread_rng();
