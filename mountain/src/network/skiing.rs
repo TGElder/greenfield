@@ -24,10 +24,19 @@ const STOP_MAX_VELOCITY: f32 = 1.5;
 
 fn max_velocity(ability: &Ability) -> u8 {
     match ability {
-        Ability::Beginner => 1,
+        Ability::Beginner => 2,
         Ability::Intermediate => 3,
         Ability::Advanced => 5,
         Ability::Expert => 7,
+    }
+}
+
+fn max_grade(ability: &Ability) -> f32 {
+    match ability {
+        Ability::Beginner => 0.15,
+        Ability::Intermediate => 0.25,
+        Ability::Advanced => 0.40,
+        Ability::Expert => 0.60,
     }
 }
 
@@ -50,7 +59,12 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .filter(|edge| (self.is_skiable_edge_fn)(&edge.to, &edge.from))
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from))
-                .filter(|edge| edge.from.velocity <= max_velocity(self.ability)),
+                .filter(|edge| edge.from.velocity <= max_velocity(self.ability))
+                .filter(|edge| {
+                    self.edge_grade(edge)
+                        .map(|grade| grade <= 2.0 * max_grade(self.ability))
+                        .unwrap_or(true)
+                }),
         )
     }
 }
@@ -221,6 +235,18 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+
+    fn edge_grade(&self, edge: &Edge<State>) -> Option<f32> {
+        if edge.from.position == edge.to.position {
+            return None;
+        }
+        let fall = self.terrain[edge.from.position] - self.terrain[edge.to.position];
+        let run = ((edge.from.position.x as f32 - edge.to.position.x as f32).powf(2.0)
+            + (edge.from.position.y as f32 - edge.to.position.y as f32).powf(2.0))
+        .sqrt();
+        let out = fall / run;
+        Some(out)
     }
 }
 

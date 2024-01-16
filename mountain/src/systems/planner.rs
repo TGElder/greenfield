@@ -218,7 +218,7 @@ fn get_skiing_costs<'a>(
 ) -> Option<&'a HashMap<State, u64>> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
-    let costs = costs.get(location)?.get(&Ability::Beginner)?;
+    let costs = costs.get(location)?.get(&Ability::Intermediate)?;
     costs.costs(target)
 }
 
@@ -271,7 +271,7 @@ fn find_path(
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
-        ability: &Ability::Beginner,
+        ability: &Ability::Intermediate,
     };
 
     let mut rng = rand::thread_rng();
