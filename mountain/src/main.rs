@@ -220,7 +220,7 @@ fn main() {
                 },
                 scale: isometric::ScaleParameters {
                     zoom: 2.0,
-                    z_max: 1.0 / 128.0,
+                    z_max: 1.0 / 1024.0,
                     viewport: Rectangle {
                         width: 512,
                         height: 512,
@@ -560,6 +560,7 @@ impl EventHandler for Game {
         self.systems.overlay.run(
             graphics,
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
+            &self.components.terrain,
             &self.components.piste_map,
             &self.components.highlights,
             &self.handlers.selection,

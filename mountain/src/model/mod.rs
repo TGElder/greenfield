@@ -1,3 +1,4 @@
+pub mod ability;
 pub mod carousel;
 pub mod direction;
 pub mod entrance;
