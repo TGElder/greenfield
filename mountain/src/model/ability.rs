@@ -9,7 +9,7 @@ pub enum Ability {
 impl Ability {
     pub fn max_grade(&self) -> f32 {
         match self {
-            Ability::Beginner => 0.15,
+            Ability::Beginner => 0.10,
             Ability::Intermediate => 0.25,
             Ability::Advanced => 0.40,
             Ability::Expert => 0.60,

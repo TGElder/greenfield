@@ -52,7 +52,8 @@ where
         }
     }
 
-    out.normalize()
+    // out.normalize()
+    out
 }
 
 struct HeapElement {

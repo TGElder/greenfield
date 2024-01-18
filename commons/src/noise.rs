@@ -18,15 +18,39 @@ pub fn simplex_noise(power: u32, seed: i32, octave_weights: &[f32]) -> Grid<f32>
     Grid::from_vec(size_u32, size_u32, noise_vector)
 }
 
-fn usize_to_f32(value: usize) -> f32 {
-    u16::try_from(value).unwrap().into()
-}
-
 fn sum_vectors(a: Vec<f32>, b: Vec<f32>) -> Vec<f32> {
     a.into_iter()
         .enumerate()
         .map(|(i, value)| value + b[i])
         .collect()
+}
+
+pub fn super_noise(power: u32, seed: i32, octave_weights: &[Grid<f32>]) -> Grid<f32> {
+    let size_u32 = 2u32.pow(power);
+    let size_usize = size_u32.try_into().unwrap();
+    octave_weights
+        .iter()
+        .enumerate()
+        .map(|(i, weights)| {
+            Grid::from_vec(
+                size_u32,
+                size_u32,
+                NoiseBuilder::gradient_2d(size_usize, size_usize)
+                    .with_seed(seed + i32::try_from(i).unwrap())
+                    .with_freq(1.0 / 2.0f32.powf(usize_to_f32(i)))
+                    .generate_scaled(0.0, 1.0),
+            )
+            .map(|xy, value| value * weights[xy])
+        })
+        .fold(Grid::default(size_u32, size_u32), sum_grids)
+}
+
+fn usize_to_f32(value: usize) -> f32 {
+    u16::try_from(value).unwrap().into()
+}
+
+fn sum_grids(a: Grid<f32>, b: Grid<f32>) -> Grid<f32> {
+    a.map(|xy, value| value + b[xy])
 }
 
 #[cfg(test)]
