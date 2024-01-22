@@ -52,7 +52,7 @@ where
         }
     }
 
-    out.normalize()
+    out
 }
 
 struct HeapElement {
@@ -101,6 +101,7 @@ mod tests {
 
         // when
         let heightmap = heightmap_from_rises(&rises, |xy| rises.is_border(xy));
+        let heightmap = heightmap.normalize();
 
         // then
         let temp_path = temp_dir().join("test.png");

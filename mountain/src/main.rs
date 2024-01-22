@@ -49,6 +49,7 @@ use crate::systems::{
 
 fn main() {
     let components = get_components();
+    let max_z = components.terrain.max();
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -220,7 +221,7 @@ fn main() {
                 },
                 scale: isometric::ScaleParameters {
                     zoom: 2.0,
-                    z_max: 1.0 / 128.0,
+                    z_max: 1.0 / max_z,
                     viewport: Rectangle {
                         width: 512,
                         height: 512,
