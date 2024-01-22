@@ -37,6 +37,7 @@ use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
+use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
 use crate::model::piste::{Basins, Costs, Piste};
 use crate::model::reservation::Reservation;
@@ -201,7 +202,6 @@ fn main() {
                         piste_highlight: Rgba::new(0, 0, 255, 192),
                     },
                 },
-                planner: planner::System::new(),
                 carousel: carousel::System::new(),
             },
             mouse_xy: None,
@@ -270,6 +270,7 @@ fn new_components() -> Components {
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
+        planning_queue: HashVec::new(),
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -309,6 +310,7 @@ pub struct Components {
     terrain: Grid<f32>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
+    planning_queue: HashVec<usize>,
     services: Services,
 }
 
@@ -338,7 +340,6 @@ struct Handlers {
 
 struct Systems {
     overlay: overlay::System,
-    planner: planner::System,
     carousel: carousel::System,
 }
 
@@ -504,7 +505,7 @@ impl EventHandler for Game {
             &mut self.components.targets,
             &mut self.components.locations,
         );
-        self.systems.planner.run(systems::planner::Parameters {
+        planner::run(systems::planner::Parameters {
             terrain: &self.components.terrain,
             micros: &self.components.services.clock.get_micros(),
             plans: &mut self.components.plans,
@@ -514,6 +515,7 @@ impl EventHandler for Game {
             distance_costs: &self.components.distance_costs,
             skiing_costs: &self.components.skiing_costs,
             reservations: &mut self.components.reservations,
+            planning_queue: &mut self.components.planning_queue,
         });
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(
