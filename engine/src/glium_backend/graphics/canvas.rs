@@ -82,7 +82,7 @@ impl Canvas {
     }
 
     pub fn read_pixel(&self, XY { x, y }: XY<u32>) -> Result<Rgba<f32>, ReadPixelError> {
-        if x > self.texture.width() || y > self.texture.height() {
+        if x >= self.texture.width() || y >= self.texture.height() {
             return Err(ReadPixelError::OutOfBounds {
                 xy: (x, y),
                 dimensions: (self.texture.width(), self.texture.height()),
