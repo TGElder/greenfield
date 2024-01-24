@@ -4,7 +4,6 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
 use crate::model::skiing::State;
-use crate::network::distance::DistanceNetwork;
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
@@ -55,12 +54,11 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
             },
             is_skiable_edge_fn: &|_, _| true,
         };
-        let network = SkiingInNetwork::for_positions(&network, positions);
+        let network = SkiingInNetwork::for_positions(&network, &piste_positions(piste));
 
         let costs = compute_costs_for_targets(&network, positions);
-        let coverage = costs.len() as f32
-            / (piste_positions(piste).len() * DIRECTIONS.len() * (VELOCITY_LEVELS as usize + 1))
-                as f32;
+        let coverage =
+            costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
         println!("INFO: Coverage for id {} = {}", exit_id, coverage);
         out.set_costs(*exit_id, costs)
     }

@@ -101,10 +101,6 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     for (_, costs) in components.distance_costs.iter_mut() {
         costs.remove_costs(lift_id);
     }
-
-    for (_, costs) in components.skiing_costs.iter_mut() {
-        costs.remove_costs(lift_id);
-    }
 }
 
 fn remove_carousel(graphics: &mut dyn Graphics, components: &mut Components, carousel_id: &usize) {

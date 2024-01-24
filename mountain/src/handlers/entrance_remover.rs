@@ -77,10 +77,6 @@ pub fn remove_entrance(
     for (_, costs) in components.distance_costs.iter_mut() {
         costs.remove_costs(entrance_id);
     }
-
-    for (_, costs) in components.skiing_costs.iter_mut() {
-        costs.remove_costs(entrance_id);
-    }
 }
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, drawing_id: &usize) {

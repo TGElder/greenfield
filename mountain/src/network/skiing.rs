@@ -7,7 +7,6 @@ use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::State;
-use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
     utils::physics,

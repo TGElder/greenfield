@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use commons::origin_grid::OriginGrid;
 use serde::{Deserialize, Serialize};
@@ -33,31 +33,14 @@ impl Costs {
     pub fn remove_costs(&mut self, target: &usize) {
         self.target_to_costs.remove(target);
     }
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct Basins {
-    target_to_basin: HashMap<usize, HashSet<State>>,
-}
-
-impl Basins {
-    pub fn new() -> Basins {
-        Basins {
-            target_to_basin: HashMap::new(),
-        }
-    }
-
-    pub fn set_basin(&mut self, target: usize, basin: HashSet<State>) {
-        self.target_to_basin.insert(target, basin);
-    }
 
     pub fn targets_reachable_from_state<'a>(
         &'a self,
         state: &'a State,
     ) -> impl Iterator<Item = &usize> + 'a {
-        self.target_to_basin
+        self.target_to_costs
             .iter()
-            .filter(move |(_, basin)| basin.contains(state))
+            .filter(move |(_, basin)| basin.contains_key(state))
             .map(|(target, _)| target)
     }
 }

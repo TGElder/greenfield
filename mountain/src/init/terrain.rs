@@ -4,7 +4,7 @@ use commons::noise::simplex_noise;
 use terrain_gen::heightmap_from_rises;
 
 pub fn generate_heightmap() -> Grid<f32> {
-    let power = 9;
+    let power = 10;
     let weights = (0..power + 1)
         .map(|i| 1.0f32 / 1.4f32.powf((power - i) as f32))
         .collect::<Vec<_>>();
