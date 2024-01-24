@@ -226,19 +226,24 @@ impl SkiingInNetwork {
 
         for position in positions {
             for travel_direction in DIRECTIONS {
-                for velocity in 0..VELOCITY_LEVELS {
-                    let state = State {
-                        position: *position,
-                        velocity,
-                        travel_direction,
-                    };
+                let state = State {
+                    position: *position,
+                    velocity: 0,
+                    travel_direction,
+                };
 
-                    for edge in network
-                        .edges_out(&state)
-                        .filter(|Edge { to, .. }| positions.contains(&to.position))
-                    {
-                        edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
-                    }
+                for edge in network
+                    .edges_out(&state)
+                    .filter(|Edge { to, .. }| positions.contains(&to.position))
+                {
+                    let edge = Edge {
+                        to: State {
+                            velocity: 0,
+                            ..edge.to
+                        },
+                        ..edge
+                    };
+                    edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
                 }
             }
         }

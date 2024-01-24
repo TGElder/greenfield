@@ -5,6 +5,7 @@ use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
 use crate::model::skiing::State;
 use crate::network::distance::DistanceNetwork;
+use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
 use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
 use commons::grid::Grid;
@@ -47,13 +48,14 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
         positions,
     } in exits
     {
-        let network = DistanceNetwork {
+        let network = SkiingNetwork {
             terrain,
-            piste,
-            can_visit: &|position| {
+            is_accessible_fn: &|position| {
                 positions.contains(position) || !exit_positions.contains(position)
             },
+            is_skiable_edge_fn: &|_, _| true,
         };
+        let network = SkiingInNetwork::for_positions(&network, positions);
 
         let costs = compute_costs_for_targets(&network, positions);
         let coverage = costs.len() as f32
@@ -75,28 +77,22 @@ fn piste_positions(piste: &Piste) -> HashSet<XY<u32>> {
 }
 
 fn compute_costs_for_targets(
-    network: &DistanceNetwork,
+    network: &SkiingInNetwork,
     targets: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
-    let distances = network.costs_to_targets(targets, None);
-    to_costs(distances)
-}
-
-fn to_costs(mut distances: HashMap<XY<u32>, u64>) -> HashMap<State, u64> {
-    distances
-        .drain()
-        .flat_map(|(position, distance)| {
-            states_for_position(position).map(move |state| (state, distance))
-        })
-        .collect()
+    network.costs_to_targets(
+        &targets
+            .iter()
+            .flat_map(|target| states_for_position(*target))
+            .collect(),
+        None,
+    )
 }
 
 fn states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
-    DIRECTIONS.into_iter().flat_map(move |travel_direction| {
-        (0..VELOCITY_LEVELS).map(move |velocity| State {
-            position,
-            velocity,
-            travel_direction,
-        })
+    DIRECTIONS.into_iter().map(move |travel_direction| State {
+        position,
+        velocity: 0,
+        travel_direction,
     })
 }
