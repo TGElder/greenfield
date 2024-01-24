@@ -188,6 +188,7 @@ fn find_path(
     let network = SkiingNetwork {
         terrain,
         is_accessible_fn: &|position| {
+            // TODO remove exits
             !reservations[position]
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
@@ -213,14 +214,31 @@ fn find_path(
                     return None;
                 }
 
-                distance_costs
-                    .get(&zero(state))
-                    .map(|cost| score(&mut rng, cost))
+                let Some(from_cost) = distance_costs.get(&zero(from)) else {
+                    return None;
+                };
+                let Some(cost) = distance_costs.get(&zero(state)) else {
+                    return None;
+                };
+
+                if cost >= from_cost {
+                    return None;
+                }
+
+                if *cost != 0 && is_white_tile(&state.position) {
+                    return None;
+                }
+
+                Some(score(&mut rng, cost))
             },
             &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
             steps,
         )
         .map(|result| result.path)
+}
+
+fn is_white_tile(position: &XY<u32>) -> bool {
+    position.x % 2 == position.y % 2
 }
 
 fn zero(state: &State) -> State {
