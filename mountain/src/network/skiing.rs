@@ -16,15 +16,15 @@ const TURNING_DURATION: Duration = Duration::from_secs(1);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
-const POLING_ACCELERATION: f32 = 2.5;
-const POLING_MAX_VELOCITY: f32 = 2.0;
+const POLING_ACCELERATION: f32 = 1.0;
+const POLING_MAX_VELOCITY: f32 = 1.0;
 
 const STOP_MAX_VELOCITY: f32 = 1.5;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
-    pub is_skiable_edge_fn: &'a dyn Fn(&State, &State) -> bool,
+    pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -36,9 +36,9 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.poling_edges(from)
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| (self.is_skiable_edge_fn)(&edge.to, &edge.from))
                 .chain(self.turning_edges(from))
-                .chain(self.stop_edge(from)),
+                .chain(self.stop_edge(from))
+                .filter(|edge| (self.is_valid_edge_fn)(&edge.to, &edge.from)),
         )
     }
 }

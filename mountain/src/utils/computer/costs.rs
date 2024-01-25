@@ -51,7 +51,7 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
             is_accessible_fn: &|position| {
                 targets.contains(position) || !exit_positions.contains(position)
             },
-            is_skiable_edge_fn: &|_, _| true,
+            is_valid_edge_fn: &|_, _| true,
         };
         let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
 

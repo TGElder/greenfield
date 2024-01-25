@@ -190,7 +190,7 @@ fn find_path(
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
         },
-        is_skiable_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {
+        is_valid_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
@@ -204,20 +204,9 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
-                if state.position == from.position {
-                    return None;
-                }
-
-                let Some(from_cost) = costs.get(&from.stationary()) else {
-                    return None;
-                };
                 let Some(cost) = costs.get(&state.stationary()) else {
                     return None;
                 };
-
-                if cost >= from_cost {
-                    return None;
-                }
 
                 if *cost != 0 && is_white_tile(&state.position) {
                     return None;
