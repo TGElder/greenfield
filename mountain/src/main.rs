@@ -257,7 +257,7 @@ fn new_components() -> Components {
         frames: HashMap::default(),
         drawings: HashMap::default(),
         pistes: HashMap::default(),
-        distance_costs: HashMap::default(),
+        costs: HashMap::default(),
         lifts: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
@@ -294,7 +294,7 @@ pub struct Components {
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    distance_costs: HashMap<usize, Costs>,
+    costs: HashMap<usize, Costs>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
@@ -461,7 +461,7 @@ impl EventHandler for Game {
                 lifts: &self.components.lifts,
                 entrances: &self.components.entrances,
                 exits: &mut self.components.exits,
-                distance_costs: &mut self.components.distance_costs,
+                costs: &mut self.components.costs,
                 clock: &mut self.components.services.clock,
                 graphics,
             });
@@ -487,7 +487,7 @@ impl EventHandler for Game {
         target_setter::run(
             &self.components.plans,
             &self.components.locations,
-            &self.components.distance_costs,
+            &self.components.costs,
             &self.components.open,
             &mut self.components.targets,
         );
@@ -506,7 +506,7 @@ impl EventHandler for Game {
             locations: &self.components.locations,
             targets: &self.components.targets,
             pistes: &self.components.pistes,
-            distance_costs: &self.components.distance_costs,
+            costs: &self.components.costs,
             reservations: &mut self.components.reservations,
             planning_queue: &mut self.components.planning_queue,
         });

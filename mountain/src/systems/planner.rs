@@ -24,7 +24,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
-    pub distance_costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub planning_queue: &'a mut HashVec<usize>,
 }
@@ -37,7 +37,7 @@ pub fn run(
         locations,
         targets,
         pistes,
-        distance_costs,
+        costs,
         reservations,
         planning_queue,
     }: Parameters<'_>,
@@ -60,10 +60,8 @@ pub fn run(
         free(id, current_plan, reservations);
 
         let from = last_state(current_plan);
-        *current_plan = match get_costs(id, locations, targets, distance_costs) {
-            Some(distance_costs) => {
-                new_plan(terrain, micros, from, piste, reservations, distance_costs)
-            }
+        *current_plan = match get_costs(id, locations, targets, costs) {
+            Some(costs) => new_plan(terrain, micros, from, piste, reservations, costs),
             _ => brake(*from),
         };
         reserve(id, current_plan, reservations);
@@ -163,9 +161,9 @@ fn new_plan(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
-    distance_costs: &HashMap<State, u64>,
+    costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, micros, from, piste, reservations, distance_costs) {
+    match find_path(terrain, micros, from, piste, reservations, costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -183,7 +181,7 @@ fn find_path(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
-    distance_costs: &HashMap<State, u64>,
+    costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
@@ -192,10 +190,7 @@ fn find_path(
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
         },
-        is_skiable_edge_fn: &|a, b| match (
-            distance_costs.get(&a.stationary()),
-            distance_costs.get(&b.stationary()),
-        ) {
+        is_skiable_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
@@ -213,10 +208,10 @@ fn find_path(
                     return None;
                 }
 
-                let Some(from_cost) = distance_costs.get(&from.stationary()) else {
+                let Some(from_cost) = costs.get(&from.stationary()) else {
                     return None;
                 };
-                let Some(cost) = distance_costs.get(&state.stationary()) else {
+                let Some(cost) = costs.get(&state.stationary()) else {
                     return None;
                 };
 

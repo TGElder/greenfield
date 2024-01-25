@@ -98,7 +98,7 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
         exits.retain(|exit| exit.id != *lift_id);
     }
 
-    for (_, costs) in components.distance_costs.iter_mut() {
+    for (_, costs) in components.costs.iter_mut() {
         costs.remove_costs(lift_id);
     }
 }

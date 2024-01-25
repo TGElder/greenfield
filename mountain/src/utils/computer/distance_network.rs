@@ -14,9 +14,9 @@ pub fn compute_piste(
     pistes: &HashMap<usize, Piste>,
     terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
-    distance_costs: &mut HashMap<usize, Costs>,
+    costs: &mut HashMap<usize, Costs>,
 ) {
-    distance_costs.remove(piste_id);
+    costs.remove(piste_id);
 
     let Some(piste) = pistes.get(piste_id) else {
         return;
@@ -25,9 +25,9 @@ pub fn compute_piste(
         return;
     };
 
-    let costs = compute_costs(terrain, piste_id, piste, exits);
+    let piste_costs = compute_costs(terrain, piste_id, piste, exits);
 
-    distance_costs.insert(*piste_id, costs);
+    costs.insert(*piste_id, piste_costs);
 }
 
 fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[Exit]) -> Costs {

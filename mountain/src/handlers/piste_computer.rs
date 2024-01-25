@@ -24,7 +24,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
-    pub distance_costs: &'a mut HashMap<usize, Costs>,
+    pub costs: &'a mut HashMap<usize, Costs>,
     pub clock: &'a mut clock::Service,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -41,7 +41,7 @@ impl Handler {
             lifts,
             entrances,
             exits,
-            distance_costs,
+            costs,
             clock,
             graphics,
         }: Parameters<'_>,
@@ -66,13 +66,7 @@ impl Handler {
         clock.set_speed(0.0);
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
-        computer::distance_network::compute_piste(
-            &piste_id,
-            pistes,
-            terrain,
-            exits,
-            distance_costs,
-        );
+        computer::distance_network::compute_piste(&piste_id, pistes, terrain, exits, costs);
 
         clock.set_speed(current_speed);
     }
