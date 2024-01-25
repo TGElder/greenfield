@@ -5,7 +5,6 @@ use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
 use crate::model::skiing::State;
 use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
-use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
