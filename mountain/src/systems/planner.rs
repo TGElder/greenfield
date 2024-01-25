@@ -188,14 +188,13 @@ fn find_path(
     let network = SkiingNetwork {
         terrain,
         is_accessible_fn: &|position| {
-            // TODO remove exits
             !reservations[position]
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
         },
         is_skiable_edge_fn: &|a, b| match (
-            distance_costs.get(&zero(a)),
-            distance_costs.get(&zero(b)),
+            distance_costs.get(&a.stationary()),
+            distance_costs.get(&b.stationary()),
         ) {
             (Some(to), Some(from)) => to < from,
             _ => false,
@@ -214,10 +213,10 @@ fn find_path(
                     return None;
                 }
 
-                let Some(from_cost) = distance_costs.get(&zero(from)) else {
+                let Some(from_cost) = distance_costs.get(&from.stationary()) else {
                     return None;
                 };
-                let Some(cost) = distance_costs.get(&zero(state)) else {
+                let Some(cost) = distance_costs.get(&state.stationary()) else {
                     return None;
                 };
 
@@ -241,13 +240,6 @@ fn is_white_tile(position: &XY<u32>) -> bool {
     position.x % 2 == position.y % 2
 }
 
-fn zero(state: &State) -> State {
-    State {
-        velocity: 0,
-        ..*state
-    }
-}
-
 fn score<R>(rng: &mut R, cost: &u64) -> Score
 where
     R: Rng,
@@ -258,10 +250,7 @@ where
 }
 
 fn brake(state: State) -> Plan {
-    Plan::Stationary(State {
-        velocity: 0,
-        ..state
-    })
+    Plan::Stationary(state.stationary())
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {

@@ -162,10 +162,7 @@ impl<'a> SkiingNetwork<'a> {
             .filter(move |state| state.velocity <= max_velocity_encoded)
             .map(|_| Edge {
                 from: *from,
-                to: State {
-                    velocity: 0,
-                    ..*from
-                },
+                to: from.stationary(),
                 cost: 0,
             })
     }
@@ -212,15 +209,15 @@ impl<'a> SkiingNetwork<'a> {
     }
 }
 
-pub struct SkiingInNetwork {
+pub struct StationaryNetwork {
     pub edges: HashMap<State, Vec<Edge<State>>>,
 }
 
-impl SkiingInNetwork {
+impl StationaryNetwork {
     pub fn for_positions(
         network: &dyn OutNetwork<State>,
         positions: &HashSet<XY<u32>>,
-    ) -> SkiingInNetwork {
+    ) -> StationaryNetwork {
         let mut edges = HashMap::with_capacity(positions.len());
 
         for position in positions {
@@ -236,10 +233,7 @@ impl SkiingInNetwork {
                     .filter(|Edge { to, .. }| positions.contains(&to.position))
                 {
                     let edge = Edge {
-                        to: State {
-                            velocity: 0,
-                            ..edge.to
-                        },
+                        to: edge.to.stationary(),
                         ..edge
                     };
                     edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
@@ -247,11 +241,11 @@ impl SkiingInNetwork {
             }
         }
 
-        SkiingInNetwork { edges }
+        StationaryNetwork { edges }
     }
 }
 
-impl InNetwork<State> for SkiingInNetwork {
+impl InNetwork<State> for StationaryNetwork {
     fn edges_in<'a>(&'a self, to: &'a State) -> Box<dyn Iterator<Item = Edge<State>> + 'a> {
         match self.edges.get(to) {
             Some(edges) => Box::new(edges.iter().copied()),

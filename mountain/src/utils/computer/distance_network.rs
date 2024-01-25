@@ -4,7 +4,7 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
 use crate::model::skiing::State;
-use crate::network::skiing::{SkiingInNetwork, SkiingNetwork};
+use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
@@ -53,7 +53,7 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
             },
             is_skiable_edge_fn: &|_, _| true,
         };
-        let network = SkiingInNetwork::for_positions(&network, &piste_positions(piste));
+        let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
 
         let costs = compute_costs_for_targets(&network, positions);
         let coverage =
@@ -74,7 +74,7 @@ fn piste_positions(piste: &Piste) -> HashSet<XY<u32>> {
 }
 
 fn compute_costs_for_targets(
-    network: &SkiingInNetwork,
+    network: &StationaryNetwork,
     targets: &HashSet<XY<u32>>,
 ) -> HashMap<State, u64> {
     network.costs_to_targets(

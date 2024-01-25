@@ -40,7 +40,7 @@ impl Costs {
     ) -> impl Iterator<Item = &usize> + 'a {
         self.target_to_costs
             .iter()
-            .filter(move |(_, basin)| basin.contains_key(state))
+            .filter(move |(_, costs)| costs.contains_key(state))
             .map(|(target, _)| target)
     }
 }
