@@ -43,19 +43,19 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
 
     for Exit {
         id: exit_id,
-        positions,
+        positions: targets,
     } in exits
     {
         let network = SkiingNetwork {
             terrain,
             is_accessible_fn: &|position| {
-                positions.contains(position) || !exit_positions.contains(position)
+                targets.contains(position) || !exit_positions.contains(position)
             },
             is_skiable_edge_fn: &|_, _| true,
         };
         let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
 
-        let costs = compute_costs_for_targets(&network, positions);
+        let costs = compute_costs_for_targets(&network, targets);
         let coverage =
             costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
         println!("INFO: Coverage for id {} = {}", exit_id, coverage);

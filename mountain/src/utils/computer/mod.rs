@@ -1,2 +1,2 @@
-pub mod distance_network;
+pub mod costs;
 pub mod exit;

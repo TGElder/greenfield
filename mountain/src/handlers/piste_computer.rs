@@ -66,7 +66,7 @@ impl Handler {
         clock.set_speed(0.0);
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
-        computer::distance_network::compute_piste(&piste_id, pistes, terrain, exits, costs);
+        computer::costs::compute_piste(&piste_id, pistes, terrain, exits, costs);
 
         clock.set_speed(current_speed);
     }

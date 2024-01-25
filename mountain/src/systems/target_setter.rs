@@ -8,7 +8,7 @@ use crate::model::skiing::Plan;
 pub fn run(
     plans: &HashMap<usize, Plan>,
     locations: &HashMap<usize, usize>,
-    basins: &HashMap<usize, Costs>,
+    costs: &HashMap<usize, Costs>,
     open: &HashSet<usize>,
     targets: &mut HashMap<usize, usize>,
 ) {
@@ -21,7 +21,7 @@ pub fn run(
             continue;
         };
 
-        let Some(basins) = basins.get(location_id) else {
+        let Some(basins) = costs.get(location_id) else {
             continue;
         };
 
