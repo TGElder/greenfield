@@ -2,13 +2,13 @@ use std::collections::{HashMap, HashSet};
 
 use rand::seq::SliceRandom;
 
-use crate::model::piste::Basins;
+use crate::model::piste::Costs;
 use crate::model::skiing::Plan;
 
 pub fn run(
     plans: &HashMap<usize, Plan>,
     locations: &HashMap<usize, usize>,
-    basins: &HashMap<usize, Basins>,
+    costs: &HashMap<usize, Costs>,
     open: &HashSet<usize>,
     targets: &mut HashMap<usize, usize>,
 ) {
@@ -21,7 +21,7 @@ pub fn run(
             continue;
         };
 
-        let Some(basins) = basins.get(location_id) else {
+        let Some(basins) = costs.get(location_id) else {
             continue;
         };
 

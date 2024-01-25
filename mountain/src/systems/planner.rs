@@ -24,8 +24,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
-    pub distance_costs: &'a HashMap<usize, Costs>,
-    pub skiing_costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub planning_queue: &'a mut HashVec<usize>,
 }
@@ -38,8 +37,7 @@ pub fn run(
         locations,
         targets,
         pistes,
-        distance_costs,
-        skiing_costs,
+        costs,
         reservations,
         planning_queue,
     }: Parameters<'_>,
@@ -62,19 +60,8 @@ pub fn run(
         free(id, current_plan, reservations);
 
         let from = last_state(current_plan);
-        *current_plan = match (
-            get_costs(id, locations, targets, distance_costs),
-            get_costs(id, locations, targets, skiing_costs),
-        ) {
-            (Some(distance_costs), Some(skiing_costs)) => new_plan(
-                terrain,
-                micros,
-                from,
-                piste,
-                reservations,
-                distance_costs,
-                skiing_costs,
-            ),
+        *current_plan = match get_costs(id, locations, targets, costs) {
+            Some(costs) => new_plan(terrain, micros, from, piste, reservations, costs),
             _ => brake(*from),
         };
         reserve(id, current_plan, reservations);
@@ -174,18 +161,9 @@ fn new_plan(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
-    distance_costs: &HashMap<State, u64>,
-    skiing_costs: &HashMap<State, u64>,
+    costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(
-        terrain,
-        micros,
-        from,
-        piste,
-        reservations,
-        distance_costs,
-        skiing_costs,
-    ) {
+    match find_path(terrain, micros, from, piste, reservations, costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -203,8 +181,7 @@ fn find_path(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
-    distance_costs: &HashMap<State, u64>,
-    skiing_costs: &HashMap<State, u64>,
+    costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
@@ -213,7 +190,7 @@ fn find_path(
                 .values()
                 .any(|reservation| reservation.is_valid_at(micros))
         },
-        is_skiable_edge_fn: &|a, b| match (distance_costs.get(a), distance_costs.get(b)) {
+        is_valid_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {
             (Some(to), Some(from)) => to < from,
             _ => false,
         },
@@ -227,16 +204,24 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
-                if state.position == from.position {
+                let Some(cost) = costs.get(&state.stationary()) else {
+                    return None;
+                };
+
+                if *cost != 0 && is_white_tile(&state.position) {
                     return None;
                 }
 
-                skiing_costs.get(state).map(|cost| score(&mut rng, cost))
+                Some(score(&mut rng, cost))
             },
             &mut |state| piste.grid.in_bounds(state.position) && piste.grid[state.position],
             steps,
         )
         .map(|result| result.path)
+}
+
+fn is_white_tile(position: &XY<u32>) -> bool {
+    position.x % 2 == position.y % 2
 }
 
 fn score<R>(rng: &mut R, cost: &u64) -> Score
@@ -249,10 +234,7 @@ where
 }
 
 fn brake(state: State) -> Plan {
-    Plan::Stationary(State {
-        velocity: 0,
-        ..state
-    })
+    Plan::Stationary(state.stationary())
 }
 
 fn events(start: &u128, edges: Vec<Edge<State>>) -> Vec<Event> {

@@ -7,7 +7,7 @@ use engine::binding::Binding;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
-use crate::model::piste::{Basins, Costs, Piste};
+use crate::model::piste::{Costs, Piste};
 use crate::services::clock;
 use crate::utils::computer;
 
@@ -24,9 +24,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
-    pub distance_costs: &'a mut HashMap<usize, Costs>,
-    pub skiing_costs: &'a mut HashMap<usize, Costs>,
-    pub basins: &'a mut HashMap<usize, Basins>,
+    pub costs: &'a mut HashMap<usize, Costs>,
     pub clock: &'a mut clock::Service,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -43,9 +41,7 @@ impl Handler {
             lifts,
             entrances,
             exits,
-            distance_costs,
-            skiing_costs,
-            basins,
+            costs,
             clock,
             graphics,
         }: Parameters<'_>,
@@ -70,22 +66,7 @@ impl Handler {
         clock.set_speed(0.0);
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
-        computer::distance_network::compute_piste(
-            &piste_id,
-            pistes,
-            terrain,
-            exits,
-            distance_costs,
-        );
-        computer::skiing_network::compute_piste(
-            &piste_id,
-            pistes,
-            terrain,
-            exits,
-            distance_costs,
-            skiing_costs,
-            basins,
-        );
+        computer::costs::compute_piste(&piste_id, pistes, terrain, exits, costs);
 
         clock.set_speed(current_speed);
     }
