@@ -191,7 +191,7 @@ fn find_path(
                 .any(|reservation| reservation.is_valid_at(micros))
         },
         is_valid_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {
-            (Some(to), Some(from)) => to < from,
+            (Some(from), Some(to)) => to < from,
             _ => false,
         },
     };
@@ -204,6 +204,10 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
+                if state.position == from.position {
+                    return None;
+                }
+
                 let Some(cost) = costs.get(&state.stationary()) else {
                     return None;
                 };
