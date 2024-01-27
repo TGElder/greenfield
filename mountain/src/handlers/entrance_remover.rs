@@ -74,11 +74,7 @@ pub fn remove_entrance(
         exits.retain(|exit| exit.id != *entrance_id);
     }
 
-    for (_, costs) in components.distance_costs.iter_mut() {
-        costs.remove_costs(entrance_id);
-    }
-
-    for (_, costs) in components.skiing_costs.iter_mut() {
+    for (_, costs) in components.costs.iter_mut() {
         costs.remove_costs(entrance_id);
     }
 }

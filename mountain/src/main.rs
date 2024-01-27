@@ -37,8 +37,9 @@ use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
+use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
-use crate::model::piste::{Basins, Costs, Piste};
+use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing;
 use crate::services::id_allocator;
@@ -49,6 +50,7 @@ use crate::systems::{
 
 fn main() {
     let components = get_components();
+    let max_z = components.terrain.max();
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -200,7 +202,6 @@ fn main() {
                         piste_highlight: Rgba::new(0, 0, 255, 192),
                     },
                 },
-                planner: planner::System::new(),
                 carousel: carousel::System::new(),
             },
             mouse_xy: None,
@@ -220,7 +221,7 @@ fn main() {
                 },
                 scale: isometric::ScaleParameters {
                     zoom: 2.0,
-                    z_max: 1.0 / 1024.0,
+                    z_max: 1.0 / max_z,
                     viewport: Rectangle {
                         width: 512,
                         height: 512,
@@ -256,9 +257,7 @@ fn new_components() -> Components {
         frames: HashMap::default(),
         drawings: HashMap::default(),
         pistes: HashMap::default(),
-        distance_costs: HashMap::default(),
-        skiing_costs: HashMap::default(),
-        basins: HashMap::default(),
+        costs: HashMap::default(),
         lifts: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
@@ -269,6 +268,7 @@ fn new_components() -> Components {
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
+        planning_queue: HashVec::new(),
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -294,9 +294,7 @@ pub struct Components {
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    distance_costs: HashMap<usize, Costs>,
-    skiing_costs: HashMap<usize, Costs>,
-    basins: HashMap<usize, Basins>,
+    costs: HashMap<usize, Costs>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
@@ -308,6 +306,7 @@ pub struct Components {
     terrain: Grid<f32>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
+    planning_queue: HashVec<usize>,
     services: Services,
 }
 
@@ -337,7 +336,6 @@ struct Handlers {
 
 struct Systems {
     overlay: overlay::System,
-    planner: planner::System,
     carousel: carousel::System,
 }
 
@@ -463,9 +461,7 @@ impl EventHandler for Game {
                 lifts: &self.components.lifts,
                 entrances: &self.components.entrances,
                 exits: &mut self.components.exits,
-                distance_costs: &mut self.components.distance_costs,
-                skiing_costs: &mut self.components.skiing_costs,
-                basins: &mut self.components.basins,
+                costs: &mut self.components.costs,
                 clock: &mut self.components.services.clock,
                 graphics,
             });
@@ -491,7 +487,7 @@ impl EventHandler for Game {
         target_setter::run(
             &self.components.plans,
             &self.components.locations,
-            &self.components.basins,
+            &self.components.costs,
             &self.components.open,
             &mut self.components.targets,
         );
@@ -503,16 +499,16 @@ impl EventHandler for Game {
             &mut self.components.targets,
             &mut self.components.locations,
         );
-        self.systems.planner.run(systems::planner::Parameters {
+        planner::run(systems::planner::Parameters {
             terrain: &self.components.terrain,
             micros: &self.components.services.clock.get_micros(),
             plans: &mut self.components.plans,
             locations: &self.components.locations,
             targets: &self.components.targets,
             pistes: &self.components.pistes,
-            distance_costs: &self.components.distance_costs,
-            skiing_costs: &self.components.skiing_costs,
+            costs: &self.components.costs,
             reservations: &mut self.components.reservations,
+            planning_queue: &mut self.components.planning_queue,
         });
         frame_wiper::run(&mut self.components.frames);
         skiing_framer::run(

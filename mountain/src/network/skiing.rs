@@ -7,7 +7,6 @@ use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::State;
-use crate::network::velocity_encoding::VELOCITY_LEVELS;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
     utils::physics,
@@ -17,15 +16,15 @@ const TURNING_DURATION: Duration = Duration::from_secs(1);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
-const POLING_ACCELERATION: f32 = 2.5;
-const POLING_MAX_VELOCITY: f32 = 2.0;
+const POLING_ACCELERATION: f32 = 1.0;
+const POLING_MAX_VELOCITY: f32 = 1.0;
 
 const STOP_MAX_VELOCITY: f32 = 1.5;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
-    pub is_skiable_edge_fn: &'a dyn Fn(&State, &State) -> bool,
+    pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
 
 impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
@@ -37,7 +36,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.poling_edges(from)
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| (self.is_skiable_edge_fn)(&edge.to, &edge.from))
+                .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from)),
         )
@@ -163,10 +162,7 @@ impl<'a> SkiingNetwork<'a> {
             .filter(move |state| state.velocity <= max_velocity_encoded)
             .map(|_| Edge {
                 from: *from,
-                to: State {
-                    velocity: 0,
-                    ..*from
-                },
+                to: from.stationary(),
                 cost: 0,
             })
     }
@@ -213,41 +209,43 @@ impl<'a> SkiingNetwork<'a> {
     }
 }
 
-pub struct SkiingInNetwork {
+pub struct StationaryNetwork {
     pub edges: HashMap<State, Vec<Edge<State>>>,
 }
 
-impl SkiingInNetwork {
+impl StationaryNetwork {
     pub fn for_positions(
         network: &dyn OutNetwork<State>,
         positions: &HashSet<XY<u32>>,
-    ) -> SkiingInNetwork {
+    ) -> StationaryNetwork {
         let mut edges = HashMap::with_capacity(positions.len());
 
         for position in positions {
             for travel_direction in DIRECTIONS {
-                for velocity in 0..VELOCITY_LEVELS {
-                    let state = State {
-                        position: *position,
-                        velocity,
-                        travel_direction,
-                    };
+                let state = State {
+                    position: *position,
+                    velocity: 0,
+                    travel_direction,
+                };
 
-                    for edge in network
-                        .edges_out(&state)
-                        .filter(|Edge { to, .. }| positions.contains(&to.position))
-                    {
-                        edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
-                    }
+                for edge in network
+                    .edges_out(&state)
+                    .filter(|Edge { to, .. }| positions.contains(&to.position))
+                {
+                    let edge = Edge {
+                        to: edge.to.stationary(),
+                        ..edge
+                    };
+                    edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
                 }
             }
         }
 
-        SkiingInNetwork { edges }
+        StationaryNetwork { edges }
     }
 }
 
-impl InNetwork<State> for SkiingInNetwork {
+impl InNetwork<State> for StationaryNetwork {
     fn edges_in<'a>(&'a self, to: &'a State) -> Box<dyn Iterator<Item = Edge<State>> + 'a> {
         match self.edges.get(to) {
             Some(edges) => Box::new(edges.iter().copied()),

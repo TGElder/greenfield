@@ -12,7 +12,7 @@ impl Ability {
             Ability::Beginner => 0.15,
             Ability::Intermediate => 0.25,
             Ability::Advanced => 0.40,
-            Ability::Expert => 0.60,
+            Ability::Expert => 0.70,
         }
     }
 }

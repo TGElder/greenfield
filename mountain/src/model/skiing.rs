@@ -10,6 +10,15 @@ pub struct State {
     pub travel_direction: Direction,
 }
 
+impl State {
+    pub fn stationary(&self) -> State {
+        State {
+            velocity: 0,
+            ..*self
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Plan {
     Stationary(State),
