@@ -88,7 +88,12 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
 
     // Remove
 
-    components.lifts.remove(lift_id);
+    let lift = components.lifts.remove(lift_id);
+
+    if let Some(lift) = lift {
+        components.reservations[lift.pick_up.position].remove(lift_id);
+    }
+
     for carousel_id in carousel_ids {
         remove_carousel(graphics, components, &carousel_id);
     }

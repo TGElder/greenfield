@@ -66,7 +66,13 @@ pub fn remove_entrance(
 
     // Remove
 
-    components.entrances.remove(entrance_id);
+    let entrance = components.entrances.remove(entrance_id);
+
+    if let Some(entrance) = entrance {
+        entrance.footprint.iter().for_each(|position| {
+            components.reservations[position].remove(entrance_id);
+        });
+    }
 
     remove_drawing(graphics, components, entrance_id);
 

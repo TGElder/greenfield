@@ -10,6 +10,7 @@ use engine::binding::Binding;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::{self, Lift, Segment};
+use crate::model::reservation::Reservation;
 use crate::services::id_allocator;
 use crate::utils;
 
@@ -34,6 +35,7 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
+    pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -56,6 +58,7 @@ impl Handler {
             id_allocator,
             carousels,
             cars,
+            reservations,
             graphics,
         }: Parameters<'_>,
     ) {
@@ -129,13 +132,17 @@ impl Handler {
             },
         );
 
-        // register lift
+        // reserve pick up position
 
-        lifts.insert(lift_id, lift);
+        reservations[lift.pick_up.position].insert(lift_id, Reservation::Structure);
 
         // clear from position
 
         self.from = None;
+
+        // register lift
+
+        lifts.insert(lift_id, lift);
     }
 }
 
