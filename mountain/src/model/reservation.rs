@@ -1,20 +1,23 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Default, Serialize, Deserialize)]
-
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
 pub enum Reservation {
-    #[default]
-    None,
+    Structure,
+    Mobile(ReservationPeriod),
+}
+
+#[derive(Eq, PartialEq, Serialize, Deserialize)]
+pub enum ReservationPeriod {
     Until(u128),
     Permanent,
 }
 
 impl Reservation {
-    pub fn is_valid_at(&self, micros: &u128) -> bool {
+    pub fn includes(&self, micros: &u128) -> bool {
         match self {
-            Reservation::None => false,
-            Reservation::Until(until) => micros <= until,
-            Reservation::Permanent => true,
+            Reservation::Structure => true,
+            Reservation::Mobile(ReservationPeriod::Until(until)) => micros <= until,
+            Reservation::Mobile(ReservationPeriod::Permanent) => true,
         }
     }
 }
