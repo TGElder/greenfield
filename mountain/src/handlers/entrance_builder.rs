@@ -6,6 +6,7 @@ use engine::binding::Binding;
 
 use crate::handlers::selection;
 use crate::model::entrance::Entrance;
+use crate::model::reservation::Reservation;
 use crate::services::id_allocator;
 use crate::systems::overlay;
 
@@ -21,6 +22,7 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub open: &'a mut HashSet<usize>,
+    pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
 impl Handler {
@@ -38,6 +40,7 @@ impl Handler {
             id_allocator,
             entrances,
             open,
+            reservations,
         }: Parameters<'_>,
     ) {
         if !self.binding.binds_event(event) {
@@ -84,11 +87,20 @@ impl Handler {
         };
 
         let entrance_id = id_allocator.next_id();
-        entrances.insert(entrance_id, entrance);
+
+        // reserving footprint
+
+        entrance.footprint.iter().for_each(|position| {
+            reservations[position].insert(entrance_id, Reservation::Structure);
+        });
 
         // opening entrance
 
         open.insert(entrance_id);
+
+        // register entrance
+
+        entrances.insert(entrance_id, entrance);
     }
 }
 

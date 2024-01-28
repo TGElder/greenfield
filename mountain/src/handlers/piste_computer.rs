@@ -8,6 +8,7 @@ use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
+use crate::model::reservation::Reservation;
 use crate::services::clock;
 use crate::utils::computer;
 
@@ -24,6 +25,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
+    pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs>,
     pub clock: &'a mut clock::Service,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
@@ -41,6 +43,7 @@ impl Handler {
             lifts,
             entrances,
             exits,
+            reservations,
             costs,
             clock,
             graphics,
@@ -66,7 +69,7 @@ impl Handler {
         clock.set_speed(0.0);
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
-        computer::costs::compute_piste(&piste_id, pistes, terrain, exits, costs);
+        computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
 
         clock.set_speed(current_speed);
     }

@@ -4,7 +4,7 @@ use commons::grid::Grid;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
-use crate::model::reservation::Reservation;
+use crate::model::reservation::{Reservation, ReservationPeriod};
 use crate::model::skiing::{Plan, State};
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
@@ -81,7 +81,7 @@ impl System {
 
             if reservations[lift.drop_off.position]
                 .values()
-                .any(|reservation| reservation.is_valid_at(micros))
+                .any(|reservation| reservation.includes(micros))
             {
                 if let Some(first_drop_off) = revolve_result.events.iter().find(|event| {
                     let car_id = car_ids[event.car_index];
@@ -135,8 +135,10 @@ impl System {
                                     travel_direction: lift.drop_off.direction,
                                 }),
                             );
-                            reservations[lift.drop_off.position]
-                                .insert(*location_id, Reservation::Permanent);
+                            reservations[lift.drop_off.position].insert(
+                                *location_id,
+                                Reservation::Mobile(ReservationPeriod::Permanent),
+                            );
                             false
                         });
                     }

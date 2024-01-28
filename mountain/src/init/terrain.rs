@@ -11,8 +11,12 @@ pub fn generate_heightmap() -> Grid<f32> {
         .collect::<Vec<_>>();
     let rises = simplex_noise(power, 1989, &weights)
         .normalize()
-        .map(|_, z| (0.5 - z).abs() / 0.5)
-        .map(|_, z| Scale::new((0.0, 1.0), (0.1, 1.0)).scale(z));
+        .map(|_, z| (0.5 - z).abs() / 0.5);
+
+    let minimum_slope = 0.1;
+    let maximum_slope = 1.0;
+    let scale = Scale::new((0.0, 1.0), (minimum_slope, maximum_slope));
+    let rises = rises.map(|_, z| scale.scale(z));
 
     heightmap_from_rises(&rises, |xy| xy.x == 0)
 }
