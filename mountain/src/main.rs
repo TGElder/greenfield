@@ -405,6 +405,7 @@ impl EventHandler for Game {
                 id_allocator: &mut self.components.services.id_allocator,
                 carousels: &mut self.components.carousels,
                 cars: &mut self.components.cars,
+                reservations: &mut self.components.reservations,
                 graphics,
             });
         self.handlers.entrance_remover.handle(
@@ -427,6 +428,7 @@ impl EventHandler for Game {
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
                 open: &mut self.components.open,
+                reservations: &mut self.components.reservations,
             });
         self.handlers.lift_opener.handle(
             event,
