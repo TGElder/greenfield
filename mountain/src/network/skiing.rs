@@ -38,7 +38,12 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
                 .chain(self.turning_edges(from))
-                .chain(self.stop_edge(from)),
+                .chain(self.stop_edge(from))
+                .filter(|edge| {
+                    self.edge_grade(edge)
+                        .map(|grade| grade <= 0.7)
+                        .unwrap_or(true)
+                }),
         )
     }
 }
@@ -207,7 +212,20 @@ impl<'a> SkiingNetwork<'a> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
     }
+
+    fn edge_grade(&self, edge: &Edge<State>) -> Option<f32> {
+        if edge.from.position == edge.to.position {
+            return None;
+        }
+        let fall = self.terrain[edge.from.position] - self.terrain[edge.to.position];
+        let run = ((edge.from.position.x as f32 - edge.to.position.x as f32).powf(2.0)
+            + (edge.from.position.y as f32 - edge.to.position.y as f32).powf(2.0))
+        .sqrt();
+        let out = fall / run;
+        Some(out)
+    }
 }
+
 
 pub struct StationaryNetwork {
     pub edges: HashMap<State, Vec<Edge<State>>>,

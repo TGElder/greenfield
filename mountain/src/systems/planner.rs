@@ -14,8 +14,8 @@ use crate::network::skiing::SkiingNetwork;
 
 use network::algorithms::find_best_within_steps::FindBestWithinSteps;
 
-const MAX_STEPS: u64 = 32;
-const MAX_DETOUR: u64 = 2;
+const MAX_STEPS: u64 = 16;
+const MAX_DETOUR: u64 = 4;
 
 pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
@@ -198,7 +198,7 @@ fn find_path(
 
     let mut rng = rand::thread_rng();
 
-    let steps = rng.gen_range(1..=MAX_STEPS);
+    let steps = MAX_STEPS;
 
     network
         .find_best_within_steps(
