@@ -60,8 +60,10 @@ pub fn run(
         free(id, current_plan, reservations);
 
         let from = last_state(current_plan);
-        *current_plan = match get_costs(id, locations, targets, costs) {
-            Some(costs) => new_plan(terrain, micros, from, piste, reservations, costs),
+        *current_plan = match get_target_and_costs(id, locations, targets, costs) {
+            Some((target, costs)) => {
+                new_plan(terrain, micros, from, piste, reservations, target, costs)
+            }
             _ => brake(*from),
         };
         reserve(id, current_plan, reservations);
@@ -147,16 +149,16 @@ fn last_state(plan: &Plan) -> &State {
     }
 }
 
-fn get_costs<'a>(
+fn get_target_and_costs<'a>(
     id: &usize,
     locations: &HashMap<usize, usize>,
-    targets: &HashMap<usize, usize>,
+    targets: &'a HashMap<usize, usize>,
     costs: &'a HashMap<usize, Costs>,
-) -> Option<&'a HashMap<State, u64>> {
+) -> Option<(&'a usize, &'a HashMap<State, u64>)> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
     let costs = costs.get(location)?;
-    costs.costs(target)
+    Some((target, costs.costs(target)?))
 }
 
 fn new_plan(
@@ -165,9 +167,10 @@ fn new_plan(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
+    target: &usize,
     costs: &HashMap<State, u64>,
 ) -> Plan {
-    match find_path(terrain, micros, from, piste, reservations, costs) {
+    match find_path(terrain, micros, from, piste, reservations, target, costs) {
         Some(edges) => {
             if edges.is_empty() {
                 brake(*from)
@@ -185,13 +188,16 @@ fn find_path(
     from: &State,
     piste: &Piste,
     reservations: &Grid<HashMap<usize, Reservation>>,
+    target: &usize,
     costs: &HashMap<State, u64>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
         is_accessible_fn: &|position| {
             !reservations[position]
-                .values()
+                .iter()
+                .filter(|(id, _)| *id != target)
+                .map(|(_, reservation)| reservation)
                 .any(|reservation| reservation.includes(micros))
         },
         is_valid_edge_fn: &|a, b| match (costs.get(&a.stationary()), costs.get(&b.stationary())) {

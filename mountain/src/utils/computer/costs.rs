@@ -48,10 +48,11 @@ fn compute_costs(
         let network = SkiingNetwork {
             terrain,
             is_accessible_fn: &|position| {
-                targets.contains(position)
-                    && !reservations[position]
-                        .values()
-                        .any(|reservation| *reservation == Reservation::Structure)
+                !reservations[position]
+                    .iter()
+                    .filter(|(id, _)| *id != exit_id)
+                    .map(|(_, reservation)| reservation)
+                    .any(|reservation| *reservation == Reservation::Structure)
             },
             is_valid_edge_fn: &|_, _| true,
         };
