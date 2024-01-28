@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
+use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
@@ -14,6 +15,7 @@ pub fn compute_piste(
     pistes: &HashMap<usize, Piste>,
     terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
+    reservations: &Grid<HashMap<usize, Reservation>>,
     costs: &mut HashMap<usize, Costs>,
 ) {
     costs.remove(piste_id);
@@ -25,21 +27,18 @@ pub fn compute_piste(
         return;
     };
 
-    let piste_costs = compute_costs(terrain, piste_id, piste, exits);
+    let piste_costs = compute_costs(terrain, piste, exits, reservations);
 
     costs.insert(*piste_id, piste_costs);
 }
 
-fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[Exit]) -> Costs {
+fn compute_costs(
+    terrain: &Grid<f32>,
+    piste: &Piste,
+    exits: &[Exit],
+    reservations: &Grid<HashMap<usize, Reservation>>,
+) -> Costs {
     let mut out = Costs::new();
-
-    let exit_positions = exits
-        .iter()
-        .filter(|Exit { id, .. }| id != piste_id)
-        .flat_map(|Exit { positions, .. }| positions)
-        .filter(|position| piste.grid.in_bounds(*position))
-        .filter(|position| piste.grid[*position])
-        .collect::<HashSet<_>>();
 
     for Exit {
         id: exit_id,
@@ -49,7 +48,10 @@ fn compute_costs(terrain: &Grid<f32>, piste_id: &usize, piste: &Piste, exits: &[
         let network = SkiingNetwork {
             terrain,
             is_accessible_fn: &|position| {
-                targets.contains(position) || !exit_positions.contains(position)
+                targets.contains(position)
+                    && !reservations[position]
+                        .values()
+                        .any(|reservation| *reservation == Reservation::Structure)
             },
             is_valid_edge_fn: &|_, _| true,
         };

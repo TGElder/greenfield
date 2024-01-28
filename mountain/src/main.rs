@@ -461,6 +461,7 @@ impl EventHandler for Game {
                 lifts: &self.components.lifts,
                 entrances: &self.components.entrances,
                 exits: &mut self.components.exits,
+                reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
                 clock: &mut self.components.services.clock,
                 graphics,
