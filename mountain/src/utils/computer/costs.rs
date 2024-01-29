@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::model::ability::Ability;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
@@ -62,7 +63,7 @@ fn compute_costs(
         let coverage =
             costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
         println!("INFO: Coverage for id {} = {}", exit_id, coverage);
-        out.set_costs(*exit_id, costs)
+        out.set_costs(*exit_id, Ability::Expert, costs)
     }
 
     out

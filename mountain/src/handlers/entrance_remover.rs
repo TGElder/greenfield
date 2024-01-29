@@ -2,6 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::graphics::Graphics;
 
+use crate::model::ability::ABILITIES;
 use crate::model::entrance::Entrance;
 use crate::Components;
 
@@ -81,7 +82,9 @@ pub fn remove_entrance(
     }
 
     for (_, costs) in components.costs.iter_mut() {
-        costs.remove_costs(entrance_id);
+        for ability in ABILITIES {
+            costs.remove_costs(*entrance_id, ability);
+        }
     }
 }
 
