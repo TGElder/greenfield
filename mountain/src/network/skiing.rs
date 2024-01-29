@@ -5,6 +5,7 @@ use std::time::Duration;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
+use crate::model::ability::Ability;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::State;
 use crate::{
@@ -21,6 +22,7 @@ const POLING_MAX_VELOCITY: f32 = 1.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
+    pub ability: &'a Ability,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
@@ -35,6 +37,11 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
+                .filter(|edge| {
+                    self.edge_grade(edge)
+                        .map(|grade| grade <= self.ability.max_grade())
+                        .unwrap_or(true)
+                })
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from)),
         )
@@ -200,6 +207,18 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+
+    fn edge_grade(&self, edge: &Edge<State>) -> Option<f32> {
+        if edge.from.position == edge.to.position {
+            return None;
+        }
+        let fall = self.terrain[edge.from.position] - self.terrain[edge.to.position];
+        let run = ((edge.from.position.x as f32 - edge.to.position.x as f32).powf(2.0)
+            + (edge.from.position.y as f32 - edge.to.position.y as f32).powf(2.0))
+        .sqrt();
+        let out = fall / run;
+        Some(out)
     }
 }
 

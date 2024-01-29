@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::model::ability::Ability;
+use crate::model::ability::ABILITIES;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
@@ -46,24 +46,30 @@ fn compute_costs(
         positions: targets,
     } in exits
     {
-        let network = SkiingNetwork {
-            terrain,
-            is_accessible_fn: &|position| {
-                !reservations[position]
-                    .iter()
-                    .filter(|(id, _)| *id != exit_id)
-                    .map(|(_, reservation)| reservation)
-                    .any(|reservation| *reservation == Reservation::Structure)
-            },
-            is_valid_edge_fn: &|_, _| true,
-        };
-        let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
+        for ability in ABILITIES {
+            let network = SkiingNetwork {
+                terrain,
+                ability: &ability,
+                is_accessible_fn: &|position| {
+                    !reservations[position]
+                        .iter()
+                        .filter(|(id, _)| *id != exit_id)
+                        .map(|(_, reservation)| reservation)
+                        .any(|reservation| *reservation == Reservation::Structure)
+                },
+                is_valid_edge_fn: &|_, _| true,
+            };
+            let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
 
-        let costs = compute_costs_for_targets(&network, targets);
-        let coverage =
-            costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
-        println!("INFO: Coverage for id {} = {}", exit_id, coverage);
-        out.set_costs(*exit_id, Ability::Expert, costs)
+            let costs = compute_costs_for_targets(&network, targets);
+            let coverage =
+                costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
+            println!(
+                "INFO: Coverage for id {}, {:?} = {}",
+                exit_id, ability, coverage
+            );
+            out.set_costs(*exit_id, ability, costs)
+        }
     }
 
     out

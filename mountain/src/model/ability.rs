@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Eq, Clone, Copy, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Eq, Clone, Copy, Debug, Hash, PartialEq, Serialize, Deserialize)]
 pub enum Ability {
     Beginner,
     Intermediate,
