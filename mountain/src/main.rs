@@ -201,6 +201,13 @@ fn main() {
                         selection: Rgba::new(255, 255, 0, 128),
                         piste: Rgba::new(0, 0, 255, 128),
                         piste_highlight: Rgba::new(0, 0, 255, 192),
+                        ability: overlay::AbilityColors {
+                            beginner: Rgba::new(0, 255, 0, 128),
+                            intermedite: Rgba::new(0, 0, 255, 128),
+                            advanced: Rgba::new(255, 0, 0, 128),
+                            expert: Rgba::new(0, 0, 0, 128),
+                            ungraded: Rgba::new(255, 165, 0, 128),
+                        },
                     },
                 },
                 carousel: carousel::System::new(),
@@ -302,7 +309,7 @@ pub struct Components {
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
-    abilities: HashMap<usize, Option<Ability>>,
+    abilities: HashMap<usize, Ability>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -566,6 +573,7 @@ impl EventHandler for Game {
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.piste_map,
             &self.components.highlights,
+            &self.components.abilities,
             &self.handlers.selection,
         );
     }

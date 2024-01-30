@@ -29,7 +29,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs>,
-    pub abilities: &'a mut HashMap<usize, Option<Ability>>,
+    pub abilities: &'a mut HashMap<usize, Ability>,
     pub clock: &'a mut clock::Service,
     pub overlay: &'a mut overlay::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
