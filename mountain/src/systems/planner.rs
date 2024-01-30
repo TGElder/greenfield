@@ -6,6 +6,7 @@ use commons::grid::Grid;
 use network::model::Edge;
 use rand::Rng;
 
+use crate::model::ability::Ability;
 use crate::model::hash_vec::HashVec;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::{Reservation, ReservationPeriod};
@@ -158,7 +159,7 @@ fn get_target_and_costs<'a>(
     let location = locations.get(id)?;
     let target = targets.get(id)?;
     let costs = costs.get(location)?;
-    Some((target, costs.costs(target)?))
+    Some((target, costs.costs(*target, Ability::Intermediate)?))
 }
 
 fn new_plan(
@@ -193,6 +194,7 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
+        ability: &Ability::Intermediate,
         is_accessible_fn: &|position| {
             !reservations[position]
                 .iter()

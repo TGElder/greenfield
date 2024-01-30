@@ -2,9 +2,12 @@ use std::collections::{HashMap, HashSet};
 use std::iter::{empty, once};
 use std::time::Duration;
 
+use commons::grid::OFFSETS_8;
+use commons::unsafe_ordering::unsafe_ordering;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
+use crate::model::ability::Ability;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::State;
 use crate::{
@@ -19,10 +22,9 @@ const BRAKING_FRICTION: f32 = 1.0;
 const POLING_ACCELERATION: f32 = 1.0;
 const POLING_MAX_VELOCITY: f32 = 1.0;
 
-const STOP_MAX_VELOCITY: f32 = 1.5;
-
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
+    pub ability: &'a Ability,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
@@ -37,13 +39,9 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
+                .filter(|edge| self.exposure(&edge.to.position) <= self.ability.max_grade())
                 .chain(self.turning_edges(from))
-                .chain(self.stop_edge(from))
-                .filter(|edge| {
-                    self.edge_grade(edge)
-                        .map(|grade| grade <= 0.7)
-                        .unwrap_or(true)
-                }),
+                .chain(self.stop_edge(from)),
         )
     }
 }
@@ -161,15 +159,11 @@ impl<'a> SkiingNetwork<'a> {
         &'a self,
         from: &'a State,
     ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'a {
-        let max_velocity_encoded = encode_velocity(&STOP_MAX_VELOCITY).unwrap();
-
-        once(from)
-            .filter(move |state| state.velocity <= max_velocity_encoded)
-            .map(|_| Edge {
-                from: *from,
-                to: from.stationary(),
-                cost: 0,
-            })
+        once(Edge {
+            from: *from,
+            to: from.stationary(),
+            cost: 0,
+        })
     }
 
     fn poling_edges(
@@ -213,19 +207,22 @@ impl<'a> SkiingNetwork<'a> {
         self.terrain.offset(position, offset)
     }
 
-    fn edge_grade(&self, edge: &Edge<State>) -> Option<f32> {
-        if edge.from.position == edge.to.position {
-            return None;
-        }
-        let fall = self.terrain[edge.from.position] - self.terrain[edge.to.position];
-        let run = ((edge.from.position.x as f32 - edge.to.position.x as f32).powf(2.0)
-            + (edge.from.position.y as f32 - edge.to.position.y as f32).powf(2.0))
+    fn grade(&self, from: &XY<u32>, to: &XY<u32>) -> f32 {
+        let fall = self.terrain[from] - self.terrain[to];
+        let run = ((from.x as f32 - to.x as f32).powf(2.0)
+            + (from.y as f32 - to.y as f32).powf(2.0))
         .sqrt();
-        let out = fall / run;
-        Some(out)
+        fall / run
+    }
+
+    fn exposure(&self, from: &XY<u32>) -> f32 {
+        self.terrain
+            .offsets(from, &OFFSETS_8)
+            .map(|to| self.grade(from, &to))
+            .max_by(unsafe_ordering)
+            .unwrap_or_default()
     }
 }
-
 
 pub struct StationaryNetwork {
     pub edges: HashMap<State, Vec<Edge<State>>>,
