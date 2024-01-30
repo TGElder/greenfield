@@ -2,6 +2,8 @@ use std::collections::{HashMap, HashSet};
 use std::iter::{empty, once};
 use std::time::Duration;
 
+use commons::grid::OFFSETS_8;
+use commons::unsafe_ordering::unsafe_ordering;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
@@ -37,11 +39,7 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
-                .filter(|edge| {
-                    self.edge_grade(edge)
-                        .map(|grade| grade <= self.ability.max_grade())
-                        .unwrap_or(true)
-                })
+                .filter(|edge| self.exposure(&edge.to.position) <= self.ability.max_grade())
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from)),
         )
@@ -209,16 +207,20 @@ impl<'a> SkiingNetwork<'a> {
         self.terrain.offset(position, offset)
     }
 
-    fn edge_grade(&self, edge: &Edge<State>) -> Option<f32> {
-        if edge.from.position == edge.to.position {
-            return None;
-        }
-        let fall = self.terrain[edge.from.position] - self.terrain[edge.to.position];
-        let run = ((edge.from.position.x as f32 - edge.to.position.x as f32).powf(2.0)
-            + (edge.from.position.y as f32 - edge.to.position.y as f32).powf(2.0))
+    fn grade(&self, from: &XY<u32>, to: &XY<u32>) -> f32 {
+        let fall = self.terrain[from] - self.terrain[to];
+        let run = ((from.x as f32 - to.x as f32).powf(2.0)
+            + (from.y as f32 - to.y as f32).powf(2.0))
         .sqrt();
-        let out = fall / run;
-        Some(out)
+        fall / run
+    }
+
+    fn exposure(&self, from: &XY<u32>) -> f32 {
+        self.terrain
+            .offsets(from, &OFFSETS_8)
+            .map(|to| self.grade(from, &to))
+            .max_by(unsafe_ordering)
+            .unwrap_or_default()
     }
 }
 
