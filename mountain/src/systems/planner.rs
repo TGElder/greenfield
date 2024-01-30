@@ -194,7 +194,7 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
-        ability: &Ability::Intermediate,
+        ability: &Ability::Expert,
         is_accessible_fn: &|position| {
             !reservations[position]
                 .iter()
