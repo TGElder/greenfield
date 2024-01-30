@@ -13,7 +13,7 @@ pub fn generate_heightmap() -> Grid<f32> {
         .normalize()
         .map(|_, z| (0.5 - z).abs() / 0.5);
 
-    let minimum_slope = 0.05;
+    let minimum_slope = 0.08;
     let maximum_slope = 1.0;
     let scale = Scale::new((0.0, 1.0), (minimum_slope, maximum_slope));
     let rises = rises.map(|_, z| scale.scale(z));
