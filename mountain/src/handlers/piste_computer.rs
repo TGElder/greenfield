@@ -70,6 +70,9 @@ impl Handler {
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
+        dbg!(computer::piste_ability::compute_piste(
+            &piste_id, pistes, costs, exits, lifts, entrances
+        ));
 
         clock.set_speed(current_speed);
     }
