@@ -33,6 +33,7 @@ use crate::handlers::{
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
+use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -265,6 +266,7 @@ fn new_components() -> Components {
         reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
+        abilities: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -300,6 +302,7 @@ pub struct Components {
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
+    abilities: HashMap<usize, Option<Ability>>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -465,7 +468,9 @@ impl EventHandler for Game {
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
+                abilities: &mut self.components.abilities,
                 clock: &mut self.components.services.clock,
+                overlay: &mut self.systems.overlay,
                 graphics,
             });
 

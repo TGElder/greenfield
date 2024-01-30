@@ -15,6 +15,21 @@ pub fn compute_piste(
     exits: &HashMap<usize, Vec<Exit>>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
+    abilities: &mut HashMap<usize, Option<Ability>>,
+) {
+    abilities.insert(
+        *piste_id,
+        compute_ability(piste_id, pistes, costs, exits, lifts, entrances),
+    );
+}
+
+fn compute_ability(
+    piste_id: &usize,
+    pistes: &HashMap<usize, Piste>,
+    costs: &HashMap<usize, Costs>,
+    exits: &HashMap<usize, Vec<Exit>>,
+    lifts: &HashMap<usize, Lift>,
+    entrances: &HashMap<usize, Entrance>,
 ) -> Option<Ability> {
     let Some(piste) = pistes.get(piste_id) else {
         return None;
