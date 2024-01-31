@@ -9,6 +9,7 @@ use engine::graphics::Graphics;
 use crate::draw::terrain;
 use crate::handlers::selection;
 use crate::model::ability::Ability;
+use crate::utils::ability::cell_ability;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
@@ -18,7 +19,6 @@ pub struct System {
 }
 
 pub struct Colors {
-    pub selection: Rgba<u8>,
     pub piste: AbilityColors,
     pub highlight: AbilityColors,
 }
@@ -32,13 +32,25 @@ pub struct AbilityColors {
 }
 
 impl Colors {
-    fn selection_color(&self, xy: &XY<u32>, selection: &selection::Handler) -> Option<Rgba<u8>> {
+    fn selection_color(
+        &self,
+        xy: &XY<u32>,
+        terrain: &Grid<f32>,
+        selection: &selection::Handler,
+    ) -> Option<Rgba<u8>> {
         let Some(rectangle) = selection.rectangle else {
             return None;
         };
 
         if rectangle.contains(xy) {
-            Some(self.selection)
+            let color = match cell_ability(terrain, xy) {
+                Some(Ability::Beginner) => self.piste.beginner,
+                Some(Ability::Intermediate) => self.piste.intermedite,
+                Some(Ability::Advanced) => self.piste.advanced,
+                Some(Ability::Expert) => self.piste.expert,
+                None => self.piste.ungraded,
+            };
+            Some(color)
         } else {
             None
         }
@@ -73,6 +85,16 @@ impl Colors {
     }
 }
 
+pub struct Parameters<'a> {
+    pub graphics: &'a mut dyn Graphics,
+    pub drawing: Option<&'a terrain::Drawing>,
+    pub terrain: &'a Grid<f32>,
+    pub piste_map: &'a Grid<Option<usize>>,
+    pub highlights: &'a HashSet<usize>,
+    pub abilities: &'a HashMap<usize, Ability>,
+    pub selection: &'a selection::Handler,
+}
+
 impl System {
     pub fn update(&mut self, update: XYRectangle<u32>) {
         self.updates.push(update);
@@ -80,12 +102,15 @@ impl System {
 
     pub fn run(
         &mut self,
-        graphics: &mut dyn Graphics,
-        drawing: Option<&terrain::Drawing>,
-        piste_map: &Grid<Option<usize>>,
-        highlights: &HashSet<usize>,
-        abilities: &HashMap<usize, Ability>,
-        selection: &selection::Handler,
+        Parameters {
+            graphics,
+            drawing,
+            terrain,
+            piste_map,
+            highlights,
+            abilities,
+            selection,
+        }: Parameters<'_>,
     ) {
         let Some(drawing) = drawing else { return };
 
@@ -95,7 +120,7 @@ impl System {
             for position in update.iter() {
                 image[position] = self
                     .colors
-                    .selection_color(&position, selection)
+                    .selection_color(&position, terrain, selection)
                     .or_else(|| {
                         self.colors
                             .piste_color(&position, piste_map, highlights, abilities)
