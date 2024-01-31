@@ -18,31 +18,32 @@ pub fn compute_piste(
     abilities: &mut HashMap<usize, Ability>,
 ) {
     abilities.remove(piste_id);
-    if let Some(ability) = compute_ability(piste_id, pistes, costs, exits, lifts, entrances) {
+
+    let Some(piste) = pistes.get(piste_id) else {
+        return;
+    };
+
+    let Some(costs) = costs.get(piste_id) else {
+        return;
+    };
+
+    let Some(exits) = exits.get(piste_id) else {
+        return;
+    };
+
+    if let Some(ability) = compute_ability(piste_id, piste, costs, exits, lifts, entrances) {
         abilities.insert(*piste_id, ability);
     }
 }
 
 fn compute_ability(
     piste_id: &usize,
-    pistes: &HashMap<usize, Piste>,
-    costs: &HashMap<usize, Costs>,
-    exits: &HashMap<usize, Vec<Exit>>,
+    piste: &Piste,
+    costs: &Costs,
+    exits: &[Exit],
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
 ) -> Option<Ability> {
-    let Some(piste) = pistes.get(piste_id) else {
-        return None;
-    };
-
-    let Some(costs) = costs.get(piste_id) else {
-        return None;
-    };
-
-    let Some(exits) = exits.get(piste_id) else {
-        return None;
-    };
-
     let grid = &piste.grid;
 
     let lifts_iter = lifts.values().map(|lift| lift.drop_off.position);

@@ -198,15 +198,20 @@ fn main() {
                         ), // -2 because bottom right corner is width - 1, height - 1 and the overlay is on cells which also reduce each dimension by one
                     }],
                     colors: overlay::Colors {
-                        selection: Rgba::new(255, 255, 0, 128),
-                        piste: Rgba::new(0, 0, 255, 128),
-                        piste_highlight: Rgba::new(0, 0, 255, 192),
-                        ability: overlay::AbilityColors {
-                            beginner: Rgba::new(0, 255, 0, 128),
-                            intermedite: Rgba::new(0, 0, 255, 128),
-                            advanced: Rgba::new(255, 0, 0, 128),
-                            expert: Rgba::new(0, 0, 0, 128),
-                            ungraded: Rgba::new(255, 165, 0, 128),
+                        selection: Rgba::new(236, 219, 7, 128),
+                        piste: overlay::AbilityColors {
+                            beginner: Rgba::new(0, 98, 19, 128),
+                            intermedite: Rgba::new(3, 105, 194, 128),
+                            advanced: Rgba::new(219, 2, 3, 128),
+                            expert: Rgba::new(3, 2, 3, 128),
+                            ungraded: Rgba::new(238, 76, 2, 128),
+                        },
+                        highlight: overlay::AbilityColors {
+                            beginner: Rgba::new(0, 98, 19, 192),
+                            intermedite: Rgba::new(3, 105, 194, 192),
+                            advanced: Rgba::new(219, 2, 3, 192),
+                            expert: Rgba::new(3, 2, 3, 192),
+                            ungraded: Rgba::new(238, 76, 2, 192),
                         },
                     },
                 },

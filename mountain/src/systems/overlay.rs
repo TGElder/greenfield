@@ -19,9 +19,8 @@ pub struct System {
 
 pub struct Colors {
     pub selection: Rgba<u8>,
-    pub piste: Rgba<u8>,
-    pub piste_highlight: Rgba<u8>,
-    pub ability: AbilityColors,
+    pub piste: AbilityColors,
+    pub highlight: AbilityColors,
 }
 
 pub struct AbilityColors {
@@ -52,21 +51,25 @@ impl Colors {
         highlights: &HashSet<usize>,
         abilities: &HashMap<usize, Ability>,
     ) -> Option<Rgba<u8>> {
-        if let Some(piste_id) = piste_map[position] {
-            // if highlights.contains(&piste_id) {
-            //     // return Some(self.piste_highlight);
-            // } else {
-            return Some(match abilities.get(&piste_id) {
-                Some(Ability::Beginner) => self.ability.beginner,
-                Some(Ability::Intermediate) => self.ability.intermedite,
-                Some(Ability::Advanced) => self.ability.advanced,
-                Some(Ability::Expert) => self.ability.expert,
-                None => self.ability.ungraded,
-            });
-            // }
-        }
+        let Some(piste_id) = piste_map[position] else {
+            return None;
+        };
 
-        None
+        let colors = if highlights.contains(&piste_id) {
+            &self.highlight
+        } else {
+            &self.piste
+        };
+
+        let color = match abilities.get(&piste_id) {
+            Some(Ability::Beginner) => colors.beginner,
+            Some(Ability::Intermediate) => colors.intermedite,
+            Some(Ability::Advanced) => colors.advanced,
+            Some(Ability::Expert) => colors.expert,
+            None => colors.ungraded,
+        };
+
+        Some(color)
     }
 }
 
