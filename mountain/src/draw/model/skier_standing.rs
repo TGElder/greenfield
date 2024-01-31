@@ -2,8 +2,10 @@ use commons::color::Rgb;
 use commons::geometry::xyz;
 use engine::graphics::elements::Quad;
 
+const COLOR: Rgb<f32> = Rgb::new(0.86, 0.01, 0.01);
+
 const BODY_FRONT: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.0, -0.25, 0.0),
         xyz(0.0, 0.25, 0.0),
@@ -13,7 +15,7 @@ const BODY_FRONT: Quad = Quad {
 };
 
 const BODY_BACK: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.0, -0.25, 1.0),
         xyz(0.0, 0.25, 1.0),
@@ -23,7 +25,7 @@ const BODY_BACK: Quad = Quad {
 };
 
 const SKIS: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(-0.5, -0.25, 0.0),
         xyz(0.5, -0.25, 0.0),

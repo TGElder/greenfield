@@ -2,8 +2,10 @@ use commons::color::Rgb;
 use commons::geometry::xyz;
 use engine::graphics::elements::Quad;
 
+const COLOR: Rgb<f32> = Rgb::new(0.86, 0.01, 0.01);
+
 const TORSO_FRONT: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.0, -0.25, 0.0),
         xyz(0.0, 0.25, 0.0),
@@ -13,7 +15,7 @@ const TORSO_FRONT: Quad = Quad {
 };
 
 const TORSO_BACK: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.0, -0.25, 0.5),
         xyz(0.0, 0.25, 0.5),
@@ -23,7 +25,7 @@ const TORSO_BACK: Quad = Quad {
 };
 
 const LEGS_TOP: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.25, -0.25, 0.0),
         xyz(0.25, 0.25, 0.0),
@@ -33,7 +35,7 @@ const LEGS_TOP: Quad = Quad {
 };
 
 const LEGS_BOTTOM_FRONT: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.25, -0.25, -0.25),
         xyz(0.25, 0.25, -0.25),
@@ -43,7 +45,7 @@ const LEGS_BOTTOM_FRONT: Quad = Quad {
 };
 
 const LEGS_BOTTOM_BACK: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(0.25, -0.25, 0.0),
         xyz(0.25, 0.25, 0.0),
@@ -53,7 +55,7 @@ const LEGS_BOTTOM_BACK: Quad = Quad {
 };
 
 const SKIS: Quad = Quad {
-    color: Rgb::new(1.0, 0.0, 0.0),
+    color: COLOR,
     corners: [
         xyz(-0.25, -0.25, -0.25),
         xyz(0.75, -0.25, -0.25),

@@ -1,15 +1,17 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XY, XYZ};
+use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 
+use crate::model::ability::Ability;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::services::clock;
+use crate::systems::overlay;
 use crate::utils::computer;
 
 pub struct Handler {
@@ -27,7 +29,9 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs>,
+    pub abilities: &'a mut HashMap<usize, Ability>,
     pub clock: &'a mut clock::Service,
+    pub overlay: &'a mut overlay::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -45,7 +49,9 @@ impl Handler {
             exits,
             reservations,
             costs,
+            abilities,
             clock,
+            overlay,
             graphics,
         }: Parameters<'_>,
     ) {
@@ -70,6 +76,17 @@ impl Handler {
 
         computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
+        computer::piste_ability::compute_piste(
+            &piste_id, pistes, costs, exits, lifts, entrances, abilities,
+        );
+
+        if let Some(piste) = pistes.get(&piste_id) {
+            let grid = &piste.grid;
+            overlay.update(XYRectangle {
+                from: *grid.origin(),
+                to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
+            });
+        }
 
         clock.set_speed(current_speed);
     }

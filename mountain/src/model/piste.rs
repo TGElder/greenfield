@@ -52,4 +52,13 @@ impl Costs {
             .filter(move |(_, costs)| costs.contains_key(state))
             .map(|(Key { target, .. }, _)| target)
     }
+
+    pub fn min_ability(&self, from: &State, target: &usize) -> Option<Ability> {
+        self.target_to_costs
+            .iter()
+            .filter(|(key, _)| key.target == *target)
+            .filter(|(_, costs)| costs.contains_key(from))
+            .map(|(key, _)| key.ability)
+            .min()
+    }
 }

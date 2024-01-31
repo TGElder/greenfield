@@ -33,6 +33,7 @@ use crate::handlers::{
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::generate_heightmap;
+use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -197,9 +198,21 @@ fn main() {
                         ), // -2 because bottom right corner is width - 1, height - 1 and the overlay is on cells which also reduce each dimension by one
                     }],
                     colors: overlay::Colors {
-                        selection: Rgba::new(255, 255, 0, 128),
-                        piste: Rgba::new(0, 0, 255, 128),
-                        piste_highlight: Rgba::new(0, 0, 255, 192),
+                        selection: Rgba::new(236, 219, 7, 128),
+                        piste: overlay::AbilityColors {
+                            beginner: Rgba::new(0, 98, 19, 128),
+                            intermedite: Rgba::new(3, 105, 194, 128),
+                            advanced: Rgba::new(219, 2, 3, 128),
+                            expert: Rgba::new(3, 2, 3, 128),
+                            ungraded: Rgba::new(238, 76, 2, 128),
+                        },
+                        highlight: overlay::AbilityColors {
+                            beginner: Rgba::new(0, 98, 19, 192),
+                            intermedite: Rgba::new(3, 105, 194, 192),
+                            advanced: Rgba::new(219, 2, 3, 192),
+                            expert: Rgba::new(3, 2, 3, 192),
+                            ungraded: Rgba::new(238, 76, 2, 192),
+                        },
                     },
                 },
                 carousel: carousel::System::new(),
@@ -265,6 +278,7 @@ fn new_components() -> Components {
         reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
+        abilities: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -300,6 +314,7 @@ pub struct Components {
     carousels: HashMap<usize, Carousel>,
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
+    abilities: HashMap<usize, Ability>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -465,7 +480,9 @@ impl EventHandler for Game {
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
+                abilities: &mut self.components.abilities,
                 clock: &mut self.components.services.clock,
+                overlay: &mut self.systems.overlay,
                 graphics,
             });
 
@@ -561,6 +578,7 @@ impl EventHandler for Game {
             self.drawings.as_ref().map(|drawings| &drawings.terrain),
             &self.components.piste_map,
             &self.components.highlights,
+            &self.components.abilities,
             &self.handlers.selection,
         );
     }
