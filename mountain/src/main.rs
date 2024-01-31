@@ -198,7 +198,6 @@ fn main() {
                         ), // -2 because bottom right corner is width - 1, height - 1 and the overlay is on cells which also reduce each dimension by one
                     }],
                     colors: overlay::Colors {
-                        selection: Rgba::new(236, 219, 7, 128),
                         piste: overlay::AbilityColors {
                             beginner: Rgba::new(0, 98, 19, 128),
                             intermedite: Rgba::new(3, 105, 194, 128),
@@ -573,13 +572,14 @@ impl EventHandler for Game {
                 graphics,
             });
 
-        self.systems.overlay.run(
+        self.systems.overlay.run(systems::overlay::Parameters {
             graphics,
-            self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            &self.components.piste_map,
-            &self.components.highlights,
-            &self.components.abilities,
-            &self.handlers.selection,
-        );
+            drawing: self.drawings.as_ref().map(|drawings| &drawings.terrain),
+            terrain: &self.components.terrain,
+            piste_map: &self.components.piste_map,
+            highlights: &self.components.highlights,
+            abilities: &self.components.abilities,
+            selection: &self.handlers.selection,
+        });
     }
 }

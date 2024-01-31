@@ -2,14 +2,13 @@ use std::collections::{HashMap, HashSet};
 use std::iter::{empty, once};
 use std::time::Duration;
 
-use commons::grid::OFFSETS_8;
-use commons::unsafe_ordering::unsafe_ordering;
 use commons::{geometry::XY, grid::Grid};
 use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::ability::Ability;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::skiing::State;
+use crate::utils::ability::exposure;
 use crate::{
     network::velocity_encoding::{decode_velocity, encode_velocity},
     utils::physics,
@@ -39,7 +38,9 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
                 .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
-                .filter(|edge| self.exposure(&edge.to.position) <= self.ability.max_grade())
+                .filter(|edge| {
+                    exposure(self.terrain, &edge.to.position) <= self.ability.max_exposure()
+                })
                 .chain(self.turning_edges(from))
                 .chain(self.stop_edge(from)),
         )
@@ -205,22 +206,6 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
-    }
-
-    fn grade(&self, from: &XY<u32>, to: &XY<u32>) -> f32 {
-        let fall = self.terrain[from] - self.terrain[to];
-        let run = ((from.x as f32 - to.x as f32).powf(2.0)
-            + (from.y as f32 - to.y as f32).powf(2.0))
-        .sqrt();
-        fall / run
-    }
-
-    fn exposure(&self, from: &XY<u32>) -> f32 {
-        self.terrain
-            .offsets(from, &OFFSETS_8)
-            .map(|to| self.grade(from, &to))
-            .max_by(unsafe_ordering)
-            .unwrap_or_default()
     }
 }
 
