@@ -7,6 +7,8 @@ use crate::systems::overlay;
 
 use super::*;
 
+const RADIUS: u32 = 5;
+
 pub struct Handler {
     pub origin: Option<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
@@ -30,8 +32,9 @@ impl Handler {
         overlay: &mut overlay::System,
     ) {
         let previous_rectangle = self.grid.clone();
-        if let Event::MouseMoved(mouse_xy) = event {
-            self.modify_selection(terrain, mouse_xy, graphics)
+        if let Event::MouseMoved(_) = event {
+            // self.modify_selection(terrain, mouse_xy, graphics)
+            self.set_origin(terrain, mouse_xy, graphics);
         }
 
         if self.binding.binds_event(event) {
@@ -73,13 +76,23 @@ impl Handler {
         };
         let origin = selected_cell(terrain, xyz);
         self.origin = Some(origin);
-        self.grid = Some(OriginGrid::from_rectangle(
+        let grid = OriginGrid::from_rectangle(
             XYRectangle {
-                from: origin,
-                to: origin,
+                from: xy(
+                    origin.x.saturating_sub(RADIUS),
+                    origin.y.saturating_sub(RADIUS),
+                ),
+                to: xy(
+                    (origin.x + RADIUS).min(terrain.width() - 2),
+                    (origin.y + RADIUS).min(terrain.height() - 2),
+                ),
             },
             true,
-        ));
+        );
+        let radius_squared = RADIUS * RADIUS;
+        let grid =
+            grid.map(|xy, _| (xy.x - origin.x).pow(2) + (xy.y - origin.y).pow(2) < radius_squared);
+        self.grid = Some(grid)
     }
 
     fn modify_selection(

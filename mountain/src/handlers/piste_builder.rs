@@ -1,5 +1,5 @@
 use std::collections::hash_map::Entry;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
@@ -40,7 +40,19 @@ impl Handler {
             return;
         };
 
-        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+        let selected = grid
+            .iter()
+            .filter(|xy| grid[xy])
+            .flat_map(|xy| piste_map[xy])
+            .collect::<HashSet<_>>();
+        if selected.len() > 1 {
+            return;
+        }
+        let id = if selected.len() == 1 {
+            selected.iter().next().copied().unwrap()
+        } else {
+            id_allocator.next_id()
+        };
 
         // updating piste map
 
