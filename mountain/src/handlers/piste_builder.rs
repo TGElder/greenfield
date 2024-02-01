@@ -36,7 +36,7 @@ impl Handler {
             return;
         }
 
-        let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
+        let (Some(origin), Some(grid)) = (selection.origin, &selection.grid) else {
             return;
         };
 
@@ -44,7 +44,7 @@ impl Handler {
 
         // updating piste map
 
-        for cell in rectangle.iter() {
+        for cell in grid.iter().filter(|cell| grid[cell]) {
             if add && piste_map[cell].is_none() {
                 piste_map[cell] = Some(id)
             } else if subtract && piste_map[cell] == Some(id) {
@@ -56,8 +56,8 @@ impl Handler {
 
         let point_grid = OriginGrid::from_rectangle(
             XYRectangle {
-                from: rectangle.from,
-                to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
+                from: *grid.origin(),
+                to: *grid.origin() + xy(grid.width(), grid.height()),
             },
             false,
         );
@@ -78,7 +78,10 @@ impl Handler {
 
         // updating overlay
 
-        overlay.update(rectangle);
+        overlay.update(XYRectangle {
+            from: *grid.origin(),
+            to: *grid.origin() + xy(grid.width(), grid.height()),
+        });
 
         // clearing selection
 
