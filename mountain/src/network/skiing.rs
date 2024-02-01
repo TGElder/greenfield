@@ -37,11 +37,11 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
             self.poling_edges(from)
                 .chain(self.skiing_edges(from))
                 .chain(self.braking_edges(from))
-                .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
                 .filter(|edge| {
                     exposure(self.terrain, &edge.to.position) <= self.ability.max_exposure()
                 })
                 .chain(self.turning_edges(from))
+                .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
                 .chain(self.stop_edge(from)),
         )
     }
