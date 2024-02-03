@@ -9,6 +9,7 @@ use crate::model::skiing::State;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
 use commons::grid::Grid;
+use commons::unsafe_ordering::unsafe_ordering;
 use network::algorithms::costs_to_targets::CostsToTargets;
 
 pub fn compute_piste(
@@ -46,16 +47,22 @@ fn compute_costs(
         positions: targets,
     } in exits
     {
+        let min_z = targets
+            .iter()
+            .map(|target| terrain[target])
+            .min_by(unsafe_ordering)
+            .unwrap();
         for ability in ABILITIES {
             let network = SkiingNetwork {
                 terrain,
                 ability: &ability,
                 is_accessible_fn: &|position| {
-                    !reservations[position]
-                        .iter()
-                        .filter(|(id, _)| *id != exit_id)
-                        .map(|(_, reservation)| reservation)
-                        .any(|reservation| *reservation == Reservation::Structure)
+                    terrain[position] >= min_z
+                        && !reservations[position]
+                            .iter()
+                            .filter(|(id, _)| *id != exit_id)
+                            .map(|(_, reservation)| reservation)
+                            .any(|reservation| *reservation == Reservation::Structure)
                 },
                 is_valid_edge_fn: &|_, _| true,
             };
