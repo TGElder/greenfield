@@ -70,8 +70,6 @@ fn compute_ability(
         for target in targets.iter() {
             if let Some(ability) = costs.min_ability(entrance, target) {
                 abilities.push(ability);
-            } else {
-                return None;
             }
         }
     }
