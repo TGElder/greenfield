@@ -142,9 +142,19 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                selection: selection::Handler::new(Binding::Single {
-                    button: Button::Mouse(MouseButton::Right),
-                    state: ButtonState::Pressed,
+                selection: selection::Handler::new(selection::Bindings {
+                    circle_start: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Pressed,
+                    },
+                    circle_end: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Released,
+                    },
+                    clear: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Pressed,
+                    },
                 }),
                 yaw: yaw::Handler::new(yaw::Parameters {
                     initial_angle: 5,

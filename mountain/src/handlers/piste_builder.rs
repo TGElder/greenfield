@@ -36,7 +36,7 @@ impl Handler {
             return;
         }
 
-        let (Some(origin), Some(grid)) = (selection.origin, &selection.grid) else {
+        let Some(grid) = &selection.grid else {
             return;
         };
 

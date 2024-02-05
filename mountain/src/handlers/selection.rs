@@ -2,25 +2,34 @@ use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
+use engine::events::Event;
 
 use crate::systems::overlay;
 
 use super::*;
 
-const RADIUS: u32 = 5;
-
 pub struct Handler {
-    pub origin: Option<XY<u32>>,
+    pub circle_start: Option<XY<u32>>,
+    pub circle_end: Option<XY<u32>>,
+    pub target: Option<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
-    pub binding: Binding,
+    pub bindings: Bindings,
+}
+
+pub struct Bindings {
+    pub circle_start: Binding,
+    pub circle_end: Binding,
+    pub clear: Binding,
 }
 
 impl Handler {
-    pub fn new(binding: Binding) -> Handler {
+    pub fn new(bindings: Bindings) -> Handler {
         Handler {
-            origin: None,
+            circle_start: None,
+            circle_end: None,
+            target: None,
             grid: None,
-            binding,
+            bindings,
         }
     }
     pub fn handle(
@@ -33,17 +42,28 @@ impl Handler {
     ) {
         let previous_rectangle = self.grid.clone();
         if let Event::MouseMoved(_) = event {
-            // self.modify_selection(terrain, mouse_xy, graphics)
-            self.set_origin(terrain, mouse_xy, graphics);
+            if self.circle_start.is_some() {
+                if self.target.is_none() {
+                    self.set_circle_end(terrain, mouse_xy, graphics);
+                } else {
+                    self.set_target(terrain, mouse_xy, graphics);
+                }
+            }
         }
 
-        if self.binding.binds_event(event) {
-            if self.origin.is_none() {
-                self.set_origin(terrain, mouse_xy, graphics);
+        if self.bindings.circle_start.binds_event(event) {
+            if self.circle_start.is_none() {
+                self.set_circle_start(terrain, mouse_xy, graphics);
             } else {
                 self.clear_selection();
             }
         }
+
+        if self.bindings.circle_end.binds_event(event) && self.circle_end.is_some() {
+            self.set_target(terrain, mouse_xy, graphics);
+        }
+
+        self.rasterize();
 
         let new_rectangle = &self.grid;
         if previous_rectangle != *new_rectangle {
@@ -60,11 +80,13 @@ impl Handler {
     }
 
     pub fn clear_selection(&mut self) {
+        self.circle_start = None;
+        self.circle_end = None;
+        self.target = None;
         self.grid = None;
-        self.origin = None;
     }
 
-    fn set_origin(
+    fn set_circle_start(
         &mut self,
         terrain: &Grid<f32>,
         mouse_xy: &Option<XY<u32>>,
@@ -74,46 +96,66 @@ impl Handler {
         let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
             return;
         };
-        let origin = selected_cell(terrain, xyz);
-        self.origin = Some(origin);
+        self.circle_start = Some(selected_cell(terrain, xyz));
+    }
+
+    fn set_circle_end(
+        &mut self,
+        terrain: &Grid<f32>,
+        mouse_xy: &Option<XY<u32>>,
+        graphics: &mut dyn Graphics,
+    ) {
+        let Some(mouse_xy) = mouse_xy else { return };
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
+        self.circle_end = Some(selected_cell(terrain, xyz));
+    }
+
+    fn set_target(
+        &mut self,
+        terrain: &Grid<f32>,
+        mouse_xy: &Option<XY<u32>>,
+        graphics: &mut dyn Graphics,
+    ) {
+        let Some(mouse_xy) = mouse_xy else { return };
+        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+            return;
+        };
+        self.target = Some(selected_cell(terrain, xyz));
+    }
+
+    fn rasterize(&mut self) {
+        let Some(circle_start) = self.circle_start else {
+            return;
+        };
+        let Some(circle_end) = self.circle_end else {
+            return;
+        };
+        let circle_start = xy(circle_start.x as f32 + 0.5, circle_start.y as f32 + 0.5);
+        let circle_end = xy(circle_end.x as f32 + 0.5, circle_end.y as f32 + 0.5);
+        let center = (circle_start + circle_end) / 2.0;
+        let radius = (circle_start - circle_end).magnitude() / 2.0;
         let grid = OriginGrid::from_rectangle(
             XYRectangle {
                 from: xy(
-                    origin.x.saturating_sub(RADIUS),
-                    origin.y.saturating_sub(RADIUS),
+                    (center.x - radius).floor() as u32,
+                    (center.y - radius).floor() as u32,
                 ),
                 to: xy(
-                    (origin.x + RADIUS).min(terrain.width() - 2),
-                    (origin.y + RADIUS).min(terrain.height() - 2),
+                    (center.x + radius).ceil() as u32,
+                    (center.y + radius).ceil() as u32,
                 ),
             },
             true,
         );
-        let radius_squared = RADIUS * RADIUS;
-        let grid =
-            grid.map(|xy, _| (xy.x - origin.x).pow(2) + (xy.y - origin.y).pow(2) < radius_squared);
+        let radius_squared = radius.powf(2.0) + 0.25;
+        let grid = grid.map(|position, _| {
+            ((position.x as f32 + 0.5) - center.x).powf(2.0)
+                + ((position.y as f32 + 0.5) - center.y).powf(2.0)
+                <= radius_squared
+        });
         self.grid = Some(grid)
-    }
-
-    fn modify_selection(
-        &mut self,
-        terrain: &Grid<f32>,
-        mouse_xy: &XY<u32>,
-        graphics: &mut dyn Graphics,
-    ) {
-        let Some(origin) = self.origin else { return };
-        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
-            return;
-        };
-        let focus = selected_cell(terrain, xyz);
-
-        self.grid = Some(OriginGrid::from_rectangle(
-            XYRectangle {
-                from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
-                to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
-            },
-            true,
-        ));
     }
 }
 
