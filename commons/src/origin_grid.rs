@@ -80,6 +80,14 @@ impl<T> OriginGrid<T> {
         self.grid.in_bounds(*position - self.origin)
     }
 
+    pub fn is_border<B>(&self, position: B) -> bool
+    where
+        B: Borrow<XY<u32>>,
+    {
+        let position = position.borrow();
+        self.grid.is_border(*position - self.origin)
+    }
+
     pub fn offset<B, C>(&self, position: B, offset: C) -> Option<XY<u32>>
     where
         B: Borrow<XY<u32>>,
@@ -288,6 +296,21 @@ mod tests {
         assert!(!grid.in_bounds(xy(1, 5)));
         assert!(!grid.in_bounds(xy(2, 5)));
         assert!(!grid.in_bounds(xy(3, 5)));
+    }
+
+    #[test]
+    fn test_is_border() {
+        let grid = OriginGrid::new(xy(1, 2), Grid::from_element(3, 3, false));
+
+        assert!(grid.is_border(xy(1, 2)));
+        assert!(grid.is_border(xy(2, 2)));
+        assert!(grid.is_border(xy(3, 2)));
+        assert!(grid.is_border(xy(1, 3)));
+        assert!(!grid.is_border(xy(2, 3)));
+        assert!(grid.is_border(xy(3, 3)));
+        assert!(grid.is_border(xy(1, 4)));
+        assert!(grid.is_border(xy(2, 4)));
+        assert!(grid.is_border(xy(3, 4)));
     }
 
     #[test]
