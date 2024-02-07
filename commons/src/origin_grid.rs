@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
 
-use crate::geometry::{xy, XYRectangle, XY};
+use crate::geometry::{xy, Rectangle, XYRectangle, XY};
 use crate::grid::Grid;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -39,6 +39,20 @@ impl<T> OriginGrid<T> {
             origin: rectangle.from,
             grid: Grid::from_element(rectangle.width(), rectangle.height(), element),
         }
+    }
+
+    pub fn rectangle(&self) -> Result<XYRectangle<u32>, String> {
+        if self.width() == 0 || self.height() == 0 {
+            return Err(format!(
+                "XYRectangle cannot be computed for an OriginGrid with width ({}) == 0 or height ({}) == 0",
+                self.width(),
+                self.height()
+            ));
+        }
+        Ok(XYRectangle {
+            from: self.origin,
+            to: self.origin + xy(self.width() - 1, self.height() - 1),
+        })
     }
 
     pub fn index<B>(&self, position: B) -> usize
@@ -428,6 +442,53 @@ mod tests {
         assert_eq!(
             result,
             OriginGrid::new(xy(1, 2), Grid::from_element(3, 4, true))
+        );
+    }
+
+    #[test]
+    fn test_rectangle() {
+        // given
+        let rectangle = XYRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        let grid = OriginGrid::from_rectangle(rectangle, true);
+
+        // when
+        let result = grid.rectangle();
+
+        // then
+        assert_eq!(result, Ok(rectangle));
+    }
+
+    #[test]
+    fn test_rectangle_zero_width_grid() {
+        // given
+        let grid = OriginGrid::new(xy(0, 0), Grid::from_element(0, 1, true));
+
+        // when
+        let result = grid.rectangle();
+
+        // then
+        assert_eq!(
+            result,
+            Err("XYRectangle cannot be computed for an OriginGrid with width (0) == 0 or height (1) == 0".to_string()),
+        );
+    }
+
+    #[test]
+    fn test_rectangle_zero_height_grid() {
+        // given
+        let grid = OriginGrid::new(xy(0, 0), Grid::from_element(1, 0, true));
+
+        // when
+        let result = grid.rectangle();
+
+        // then
+        assert_eq!(
+            result,
+            Err("XYRectangle cannot be computed for an OriginGrid with width (1) == 0 or height (0) == 0".to_string()),
         );
     }
 }
