@@ -3,7 +3,7 @@ use std::ops::{Index, IndexMut};
 
 use serde::{Deserialize, Serialize};
 
-use crate::geometry::{xy, Rectangle, XYRectangle, XY};
+use crate::geometry::{xy, XYRectangle, XY};
 use crate::grid::Grid;
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
