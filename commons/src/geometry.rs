@@ -36,6 +36,15 @@ where
     }
 }
 
+impl<T> XY<T>
+where
+    T: Copy + Add<Output = T> + Mul<Output = T>,
+{
+    pub fn dot(&self, rhs: &XY<T>) -> T {
+        self.x * rhs.x + self.y * rhs.y
+    }
+}
+
 pub const fn xy<T>(x: T, y: T) -> XY<T> {
     XY { x, y }
 }
@@ -133,6 +142,15 @@ where
             self.y.div(magnitude),
             self.z.div(magnitude),
         )
+    }
+}
+
+impl<T> XYZ<T>
+where
+    T: Copy + Add<Output = T> + Mul<Output = T>,
+{
+    pub fn dot(&self, rhs: &XYZ<T>) -> T {
+        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
     }
 }
 
@@ -357,6 +375,19 @@ mod tests {
     }
 
     #[test]
+    fn test_xy_dot() {
+        // given
+        let a = xy(2, 4);
+        let b = xy(3, 5);
+
+        // when
+        let result = a.dot(&b);
+
+        // then
+        assert_eq!(result, 26);
+    }
+
+    #[test]
     fn test_xyz_xy() {
         // given
         let a = xyz(3, 4, 5);
@@ -442,6 +473,19 @@ mod tests {
 
         // then
         assert_eq!(result, xyz(1, 2, 3));
+    }
+
+    #[test]
+    fn test_xyz_dot() {
+        // given
+        let a = xyz(2, 4, 6);
+        let b = xyz(3, 5, 7);
+
+        // when
+        let result = a.dot(&b);
+
+        // then
+        assert_eq!(result, 68);
     }
 
     #[test]
