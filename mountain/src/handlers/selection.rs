@@ -177,7 +177,10 @@ impl Handler {
                 let position = xy(x as u32, y as u32);
                 grid[position] = true;
             }
-            let border = grid.iter().filter(|xy| grid.is_border(xy) && !grid[xy]).collect::<Vec<_>>();
+            let border = grid
+                .iter()
+                .filter(|xy| grid.is_border(xy) && !grid[xy])
+                .collect::<Vec<_>>();
             self.grid = Some(flood_fill(&border, &grid));
         } else {
             let mut grid = OriginGrid::from_rectangle(
