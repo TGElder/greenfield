@@ -38,11 +38,11 @@ impl Colors {
         terrain: &Grid<f32>,
         selection: &selection::Handler,
     ) -> Option<Rgba<u8>> {
-        let Some(rectangle) = selection.rectangle else {
+        let Some(grid) = &selection.grid else {
             return None;
         };
 
-        if rectangle.contains(xy) {
+        if grid.in_bounds(xy) && grid[xy] {
             let color = match cell_ability(terrain, xy) {
                 Some(Ability::Beginner) => self.piste.beginner,
                 Some(Ability::Intermediate) => self.piste.intermedite,

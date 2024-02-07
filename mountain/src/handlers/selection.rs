@@ -1,5 +1,6 @@
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
+use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
 use crate::systems::overlay;
@@ -8,7 +9,7 @@ use super::*;
 
 pub struct Handler {
     pub origin: Option<XY<u32>>,
-    pub rectangle: Option<XYRectangle<u32>>,
+    pub grid: Option<OriginGrid<bool>>,
     pub binding: Binding,
 }
 
@@ -16,7 +17,7 @@ impl Handler {
     pub fn new(binding: Binding) -> Handler {
         Handler {
             origin: None,
-            rectangle: None,
+            grid: None,
             binding,
         }
     }
@@ -28,8 +29,7 @@ impl Handler {
         graphics: &mut dyn engine::graphics::Graphics,
         overlay: &mut overlay::System,
     ) {
-        let previous_rectangle = self.rectangle;
-
+        let previous_grid = self.grid.clone();
         if let Event::MouseMoved(mouse_xy) = event {
             self.modify_selection(terrain, mouse_xy, graphics)
         }
@@ -42,19 +42,18 @@ impl Handler {
             }
         }
 
-        let new_rectangle = self.rectangle;
-        if previous_rectangle != new_rectangle {
-            previous_rectangle
+        let new_grid = &self.grid;
+        if previous_grid != *new_grid {
+            previous_grid
                 .iter()
-                .for_each(|update| overlay.update(*update));
-            new_rectangle
-                .iter()
-                .for_each(|update| overlay.update(*update));
+                .chain(new_grid.iter())
+                .flat_map(|grid| grid.rectangle())
+                .for_each(|rectangle| overlay.update(rectangle));
         }
     }
 
     pub fn clear_selection(&mut self) {
-        self.rectangle = None;
+        self.grid = None;
         self.origin = None;
     }
 
@@ -70,10 +69,13 @@ impl Handler {
         };
         let origin = selected_cell(terrain, xyz);
         self.origin = Some(origin);
-        self.rectangle = Some(XYRectangle {
-            from: origin,
-            to: origin,
-        });
+        self.grid = Some(OriginGrid::from_rectangle(
+            XYRectangle {
+                from: origin,
+                to: origin,
+            },
+            true,
+        ));
     }
 
     fn modify_selection(
@@ -88,10 +90,13 @@ impl Handler {
         };
         let focus = selected_cell(terrain, xyz);
 
-        self.rectangle = Some(XYRectangle {
-            from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
-            to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
-        });
+        self.grid = Some(OriginGrid::from_rectangle(
+            XYRectangle {
+                from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
+                to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
+            },
+            true,
+        ));
     }
 }
 

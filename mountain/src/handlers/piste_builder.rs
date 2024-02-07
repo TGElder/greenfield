@@ -36,7 +36,11 @@ impl Handler {
             return;
         }
 
-        let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
+        let (Some(origin), Some(grid)) = (selection.origin, &selection.grid) else {
+            return;
+        };
+
+        let Ok(rectangle) = grid.rectangle() else {
             return;
         };
 
@@ -44,7 +48,7 @@ impl Handler {
 
         // updating piste map
 
-        for cell in rectangle.iter() {
+        for cell in grid.iter().filter(|cell| grid[cell]) {
             if add && piste_map[cell].is_none() {
                 piste_map[cell] = Some(id)
             } else if subtract && piste_map[cell] == Some(id) {

@@ -46,7 +46,11 @@ impl Handler {
         if !self.binding.binds_event(event) {
             return;
         }
-        let (Some(origin), Some(rectangle)) = (selection.origin, selection.rectangle) else {
+        let (Some(origin), Some(grid)) = (selection.origin, &selection.grid) else {
+            return;
+        };
+
+        let Ok(rectangle) = grid.rectangle() else {
             return;
         };
 
