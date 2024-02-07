@@ -1,5 +1,5 @@
 use commons::geometry::{xy, XYRectangle, XY, XYZ};
-use commons::grid::{Grid, CORNERS, OFFSETS_4};
+use commons::grid::{Grid, OFFSETS_4};
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 use engine::events::Event;
@@ -177,9 +177,8 @@ impl Handler {
                 let position = xy(x as u32, y as u32);
                 grid[position] = true;
             }
-            let center = (circle_start + target) / 2;
-            flood_fill(center, &mut grid);
-            self.grid = Some(grid)
+            let border = grid.iter().filter(|xy| grid.is_border(xy) && !grid[xy]).collect::<Vec<_>>();
+            self.grid = Some(flood_fill(&border, &grid));
         } else {
             let mut grid = OriginGrid::from_rectangle(
                 XYRectangle {
@@ -227,16 +226,21 @@ fn project_point_onto_line(point: &XY<u32>, (from, to): (&XY<u32>, &XY<u32>)) ->
     xy(out.x.round() as u32, out.y.round() as u32)
 }
 
-fn flood_fill(position: XY<u32>, grid: &mut OriginGrid<bool>) {
+fn flood_fill(positions: &[XY<u32>], grid: &OriginGrid<bool>) -> OriginGrid<bool> {
+    let mut out = grid.map(|_, _| true);
     let mut queue = Vec::with_capacity((grid.width() * grid.height()) as usize);
-    grid[position] = true;
-    queue.push(position);
+    for position in positions {
+        out[position] = false;
+        queue.push(*position);
+    }
     while let Some(position) = queue.pop() {
         for corner in grid.offsets(position, &OFFSETS_4).collect::<Vec<_>>() {
-            if !grid[corner] {
-                grid[corner] = true;
+            if !grid[corner] && out[corner] {
+                out[corner] = false;
                 queue.push(corner);
             }
         }
     }
+
+    out
 }

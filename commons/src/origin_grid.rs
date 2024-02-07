@@ -101,6 +101,10 @@ impl<T> OriginGrid<T> {
             grid: self.grid.map(|xy, value| function(xy + self.origin, value)),
         }
     }
+
+    pub fn is_border(&self, position: &XY<u32>) -> bool {
+        self.grid.is_border(*position - self.origin)
+    }
 }
 
 impl<T> PartialEq for OriginGrid<T>

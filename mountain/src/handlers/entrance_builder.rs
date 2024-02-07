@@ -52,8 +52,10 @@ impl Handler {
 
         let rectangle = XYRectangle {
             from: *grid.origin(),
-            to: *grid.origin() + xy(grid.width(), grid.height()),
+            to: *grid.origin() + xy(grid.width() - 1, grid.height() - 1),
         };
+
+        dbg!(rectangle);
 
         // clearing selection
 
