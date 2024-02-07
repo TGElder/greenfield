@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::geometry::{xy, Rectangle, XYRectangle, XY};
 use crate::grid::Grid;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct OriginGrid<T> {
     origin: XY<u32>,
     grid: Grid<T>,
