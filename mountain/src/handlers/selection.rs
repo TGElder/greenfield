@@ -76,7 +76,7 @@ impl Handler {
         };
         if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
             self.cells.push(cell);
-            self.rasterize()
+            self.rasterize(terrain)
         }
     }
 
@@ -89,12 +89,14 @@ impl Handler {
         if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
             if let Some(last) = self.cells.last_mut() {
                 *last = cell;
-                self.rasterize()
+                self.rasterize(terrain)
             }
         }
     }
 
     fn rasterize(&mut self, terrain: &Grid<f32>) {
+        self.grid = None;
+
         let cells = &self.cells;
         if cells.len() < 2 {
             return;
@@ -106,18 +108,30 @@ impl Handler {
             border.push(cells[0]);
             border.push(cells[1]);
         } else if cells.len() == 3 {
-            if cells[0] == cells[2] {
-                border.push(cells[0]);
-                border.push(cells[1]);
-            } else {
-                border.push(cells[0]);
-                border.push(self.get_second_rectangle_point());
-                border.push(cells[2]);
-                border.push(to_xy_u32(
-                    &(to_xy_i32(&border[2]) - (to_xy_i32(&border[1]) - to_xy_i32(&border[0]))),
-                ));
-                border.push(cells[0]);
+            border.push(cells[0]);
+
+            let Some(border_1) = self.compute_border_1() else {
+                return;
+            };
+            if border_1.x > terrain.width() - 2 || border_1.y > terrain.height() {
+                return;
             }
+            border.push(border_1);
+
+            border.push(cells[2]);
+
+            let border_3 = to_xy_i32(&border[2]) - (to_xy_i32(&border[1]) - to_xy_i32(&border[0]));
+            if border_3.x < 0
+                || border_3.x > terrain.width() as i32 - 2
+                || border_3.y < 0
+                || border_3.y > terrain.height() as i32 - 2
+            {
+                return;
+            }
+            border.push(to_xy_u32(&border_3));
+
+            // Adding fifth cell so final line is picked up by windows(2) below
+            border.push(cells[0]);
         }
 
         let mut grid = OriginGrid::from_rectangle(
@@ -143,11 +157,11 @@ impl Handler {
         self.grid = Some(filled)
     }
 
-    fn get_second_rectangle_point(&self) -> XY<u32> {
+    fn compute_border_1(&self) -> Option<XY<u32>> {
         let cells = &self.cells;
 
         if cells[0] == cells[2] {
-            return cells[1];
+            return Some(cells[1]);
         }
 
         let to = if cells[0] == cells[1] {
@@ -163,7 +177,11 @@ impl Handler {
             },
         );
         let out = out.unwrap();
-        xy(out.x.round() as u32, out.y.round() as u32)
+        let out = xy(out.x.round(), out.y.round());
+        if out.x < 0.0 || out.y < 0.0 {
+            return None;
+        }
+        Some(xy(out.x as u32, out.y as u32))
     }
 }
 
@@ -212,6 +230,7 @@ fn fill_cells_inaccessible_from_border(grid: &OriginGrid<bool>) -> OriginGrid<bo
         out[cell] = false;
         queue.push(cell);
     }
+
     while let Some(cell) = queue.pop() {
         for neighbour in grid.offsets(cell, &OFFSETS_4).collect::<Vec<_>>() {
             if !grid[neighbour] && out[neighbour] {
