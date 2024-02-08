@@ -36,7 +36,6 @@ impl Handler {
         graphics: &mut dyn engine::graphics::Graphics,
         overlay: &mut overlay::System,
     ) {
-        let previous_grid = self.grid.clone();
         if let Event::MouseMoved(mouse_xy) = event {
             self.update_last_cell(terrain, mouse_xy, graphics)
         }
@@ -50,6 +49,10 @@ impl Handler {
             self.add_cell(terrain, mouse_xy, graphics);
         }
 
+        let previous_grid = self.grid.clone();
+
+        self.rasterize(terrain);
+
         let new_grid = &self.grid;
         if previous_grid != *new_grid {
             previous_grid
@@ -61,7 +64,6 @@ impl Handler {
     }
 
     pub fn clear_selection(&mut self) {
-        self.grid = None;
         self.cells.clear();
     }
 
@@ -74,9 +76,8 @@ impl Handler {
         let Some(mouse_xy) = mouse_xy else {
             return;
         };
-        if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
-            self.cells.push(cell);
-            self.rasterize(terrain)
+        if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
+            self.cells.push(selected_cell);
         }
     }
 
@@ -86,10 +87,9 @@ impl Handler {
         mouse_xy: &XY<u32>,
         graphics: &mut dyn Graphics,
     ) {
-        if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
-            if let Some(last) = self.cells.last_mut() {
-                *last = cell;
-                self.rasterize(terrain)
+        if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
+            if let Some(last_cell) = self.cells.last_mut() {
+                *last_cell = selected_cell;
             }
         }
     }
@@ -101,6 +101,8 @@ impl Handler {
         if cells.len() < 2 {
             return;
         }
+
+        // Computing border
 
         let mut border = Vec::with_capacity(5);
 
@@ -121,18 +123,20 @@ impl Handler {
             border.push(cells[2]);
 
             let border_3 = to_xy_i32(&border[2]) - (to_xy_i32(&border[1]) - to_xy_i32(&border[0]));
-            if border_3.x < 0
-                || border_3.x > terrain.width() as i32 - 2
-                || border_3.y < 0
-                || border_3.y > terrain.height() as i32 - 2
-            {
+            if border_3.x < 0 || border_3.y < 0 {
                 return;
             }
-            border.push(to_xy_u32(&border_3));
+            let border_3 = xy(border_3.x as u32, border_3.y as u32);
+            if border_3.x > terrain.width() - 2 || border_3.y > terrain.height() {
+                return;
+            }
+            border.push(border_3);
 
             // Adding fifth cell so final line is picked up by windows(2) below
             border.push(cells[0]);
         }
+
+        // Creating grid
 
         let mut grid = OriginGrid::from_rectangle(
             XYRectangle {
@@ -148,10 +152,11 @@ impl Handler {
             false,
         );
 
+        // Rasterizing
+
         for pair in border.windows(2) {
             rasterize_line(&mut grid, &pair[0], &pair[1]);
         }
-
         let filled = fill_cells_inaccessible_from_border(&grid);
 
         self.grid = Some(filled)
@@ -164,11 +169,14 @@ impl Handler {
             return Some(cells[1]);
         }
 
+        // Case where user did not drag
         let to = if cells[0] == cells[1] {
+            // Default is a grid aligned to the x-axis
             cells[0] + xy(1, 0)
         } else {
             cells[1]
         };
+
         let out = project_point_onto_line(
             to_xy_f32(&cells[2]),
             Line {
@@ -176,7 +184,10 @@ impl Handler {
                 to: to_xy_f32(&to),
             },
         );
-        let out = out.unwrap();
+
+        let Ok(out) = out else {
+            return None;
+        };
         let out = xy(out.x.round(), out.y.round());
         if out.x < 0.0 || out.y < 0.0 {
             return None;
@@ -206,10 +217,6 @@ fn to_xy_f32(XY { x, y }: &XY<u32>) -> XY<f32> {
 
 fn to_xy_i32(XY { x, y }: &XY<u32>) -> XY<i32> {
     xy(*x as i32, *y as i32)
-}
-
-fn to_xy_u32(XY { x, y }: &XY<i32>) -> XY<u32> {
-    xy(*x as u32, *y as u32)
 }
 
 fn rasterize_line(grid: &mut OriginGrid<bool>, from: &XY<u32>, to: &XY<u32>) {
