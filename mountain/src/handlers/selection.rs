@@ -10,11 +10,17 @@ use super::*;
 pub struct Handler {
     pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
-    pub binding: Binding,
+    pub binding: Bindings,
+}
+
+pub struct Bindings {
+    pub first_cell: Binding,
+    pub second_cell: Binding,
+    pub clear: Binding,
 }
 
 impl Handler {
-    pub fn new(binding: Binding) -> Handler {
+    pub fn new(binding: Bindings) -> Handler {
         Handler {
             cells: Vec::with_capacity(3),
             grid: None,
@@ -34,13 +40,13 @@ impl Handler {
             self.update_last_cell(terrain, mouse_xy, graphics)
         }
 
-        if self.binding.binds_event(event) {
-            if self.cells.is_empty() {
-                self.add_cell(terrain, mouse_xy, graphics);
-                self.add_cell(terrain, mouse_xy, graphics);
-            } else {
-                self.clear_selection();
-            }
+        if self.binding.clear.binds_event(event) && !self.cells.is_empty() {
+            self.clear_selection();
+        } else if self.binding.first_cell.binds_event(event) && self.cells.is_empty() {
+            self.add_cell(terrain, mouse_xy, graphics);
+            self.add_cell(terrain, mouse_xy, graphics);
+        } else if self.binding.second_cell.binds_event(event) && self.cells.len() == 2 {
+            self.add_cell(terrain, mouse_xy, graphics);
         }
 
         let new_grid = &self.grid;
