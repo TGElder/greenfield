@@ -9,6 +9,7 @@ edition = "2021"
 bincode = { workspace = true }
 commons = { path = "../commons" }
 engine = { path = "../engine" }
+line_drawing = { workspace = true }
 nalgebra = { workspace = true }
 network = { path = "../network" }
 rand = { workspace = true }
