@@ -217,6 +217,28 @@ where
     }
 }
 
+#[derive(Debug)]
+pub struct Line<T> {
+    pub from: XY<T>,
+    pub to: XY<T>,
+}
+
+pub fn project_point_onto_line<T>(point: XY<T>, line: Line<T>) -> Result<XY<T>, &'static str>
+where
+    T: Float + From<f32>,
+{
+    if line.from == line.to {
+        return Err("Cannot project point onto zero length line");
+    }
+    let from2to = line.to - line.from;
+    let from2point = point - line.from;
+    let dot_product = from2to.dot(&from2point);
+    let cos = dot_product / (from2to.magnitude() * from2point.magnitude());
+    let from2target_magnitude = cos * from2point.magnitude();
+    let from2to_ratio = from2target_magnitude / from2to.magnitude();
+    Ok(line.from + from2to * from2to_ratio)
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Rectangle<T> {
     pub width: T,
@@ -486,6 +508,39 @@ mod tests {
 
         // then
         assert_eq!(result, 68);
+    }
+
+    #[test]
+    fn test_project_point_onto_line() {
+        // given
+        let point = xy(3.0, 1.0);
+        let line = Line {
+            from: xy(2.0, 1.0),
+            to: xy(6.0, 2.0),
+        };
+
+        // when
+        let result = project_point_onto_line(point, line).unwrap();
+
+        // then
+        assert_almost_eq(result.x, 2.9411764705882355);
+        assert_almost_eq(result.y, 1.2352941176470589);
+    }
+
+    #[test]
+    fn test_project_point_onto_line_from_equals_to() {
+        // given
+        let point = xy(3.0, 1.0);
+        let line = Line {
+            from: xy(2.0, 1.0),
+            to: xy(2.0, 1.0),
+        };
+
+        // when
+        let result = project_point_onto_line(point, line);
+
+        // then
+        assert_eq!(result, Err("Cannot project point onto zero length line"));
     }
 
     #[test]
