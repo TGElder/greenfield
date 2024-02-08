@@ -8,7 +8,7 @@ use crate::systems::overlay;
 use super::*;
 
 pub struct Handler {
-    pub origin: Option<XY<u32>>,
+    pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
     pub binding: Binding,
 }
@@ -16,7 +16,7 @@ pub struct Handler {
 impl Handler {
     pub fn new(binding: Binding) -> Handler {
         Handler {
-            origin: None,
+            cells: Vec::with_capacity(3),
             grid: None,
             binding,
         }
@@ -31,12 +31,13 @@ impl Handler {
     ) {
         let previous_grid = self.grid.clone();
         if let Event::MouseMoved(mouse_xy) = event {
-            self.modify_selection(terrain, mouse_xy, graphics)
+            self.update_last_cell(terrain, mouse_xy, graphics)
         }
 
         if self.binding.binds_event(event) {
-            if self.origin.is_none() {
-                self.set_origin(terrain, mouse_xy, graphics);
+            if self.cells.is_empty() {
+                self.add_cell(terrain, mouse_xy, graphics);
+                self.add_cell(terrain, mouse_xy, graphics);
             } else {
                 self.clear_selection();
             }
@@ -54,55 +55,70 @@ impl Handler {
 
     pub fn clear_selection(&mut self) {
         self.grid = None;
-        self.origin = None;
+        self.cells.clear();
     }
 
-    fn set_origin(
+    fn add_cell(
         &mut self,
         terrain: &Grid<f32>,
         mouse_xy: &Option<XY<u32>>,
         graphics: &mut dyn Graphics,
     ) {
-        let Some(mouse_xy) = mouse_xy else { return };
-        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+        let Some(mouse_xy) = mouse_xy else {
             return;
         };
-        let origin = selected_cell(terrain, xyz);
-        self.origin = Some(origin);
-        self.grid = Some(OriginGrid::from_rectangle(
-            XYRectangle {
-                from: origin,
-                to: origin,
-            },
-            true,
-        ));
+        if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
+            self.cells.push(cell);
+            self.rasterize()
+        }
     }
 
-    fn modify_selection(
+    fn update_last_cell(
         &mut self,
         terrain: &Grid<f32>,
         mouse_xy: &XY<u32>,
         graphics: &mut dyn Graphics,
     ) {
-        let Some(origin) = self.origin else { return };
-        let Ok(xyz) = graphics.world_xyz_at(mouse_xy) else {
+        if let Some(cell) = selected_cell(mouse_xy, graphics, terrain) {
+            if let Some(last) = self.cells.last_mut() {
+                *last = cell;
+                self.rasterize()
+            }
+        }
+    }
+
+    fn rasterize(&mut self) {
+        if self.cells.is_empty() {
             return;
-        };
-        let focus = selected_cell(terrain, xyz);
+        }
 
         self.grid = Some(OriginGrid::from_rectangle(
             XYRectangle {
-                from: xy(origin.x.min(focus.x), origin.y.min(focus.y)),
-                to: xy(origin.x.max(focus.x), origin.y.max(focus.y)),
+                from: xy(
+                    self.cells.iter().map(|point| point.x).min().unwrap(),
+                    self.cells.iter().map(|point| point.y).min().unwrap(),
+                ),
+                to: xy(
+                    self.cells.iter().map(|point| point.x).max().unwrap(),
+                    self.cells.iter().map(|point| point.y).max().unwrap(),
+                ),
             },
             true,
         ));
     }
 }
 
-fn selected_cell(terrain: &Grid<f32>, XYZ { x, y, .. }: XYZ<f32>) -> XY<u32> {
-    xy(
+fn selected_cell(
+    mouse_xy: &XY<u32>,
+    graphics: &mut dyn Graphics,
+    terrain: &Grid<f32>,
+) -> Option<XY<u32>> {
+    let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+        return None;
+    };
+    let cell = xy(
         (x.floor() as u32).min(terrain.width() - 2),
         (y.floor() as u32).min(terrain.height() - 2),
-    )
+    );
+    Some(cell)
 }
