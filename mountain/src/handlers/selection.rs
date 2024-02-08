@@ -165,10 +165,6 @@ impl Handler {
     fn compute_border_1(&self) -> Option<XY<u32>> {
         let cells = &self.cells;
 
-        if cells[0] == cells[2] {
-            return Some(cells[1]);
-        }
-
         // Case where user did not drag
         let to = if cells[0] == cells[1] {
             // Default is a grid aligned to the x-axis
