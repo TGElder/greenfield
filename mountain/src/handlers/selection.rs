@@ -1,7 +1,8 @@
-use commons::geometry::{xy, XYRectangle, XY, XYZ};
-use commons::grid::Grid;
+use commons::geometry::{project_point_onto_line, xy, Line, XYRectangle, XY, XYZ};
+use commons::grid::{Grid, OFFSETS_4};
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
+use line_drawing::Bresenham;
 
 use crate::systems::overlay;
 
@@ -93,24 +94,76 @@ impl Handler {
         }
     }
 
-    fn rasterize(&mut self) {
-        if self.cells.is_empty() {
+    fn rasterize(&mut self, terrain: &Grid<f32>) {
+        let cells = &self.cells;
+        if cells.len() < 2 {
             return;
         }
 
-        self.grid = Some(OriginGrid::from_rectangle(
+        let mut border = Vec::with_capacity(5);
+
+        if cells.len() == 2 {
+            border.push(cells[0]);
+            border.push(cells[1]);
+        } else if cells.len() == 3 {
+            if cells[0] == cells[2] {
+                border.push(cells[0]);
+                border.push(cells[1]);
+            } else {
+                border.push(cells[0]);
+                border.push(self.get_second_rectangle_point());
+                border.push(cells[2]);
+                border.push(to_xy_u32(
+                    &(to_xy_i32(&border[2]) - (to_xy_i32(&border[1]) - to_xy_i32(&border[0]))),
+                ));
+                border.push(cells[0]);
+            }
+        }
+
+        let mut grid = OriginGrid::from_rectangle(
             XYRectangle {
                 from: xy(
-                    self.cells.iter().map(|point| point.x).min().unwrap(),
-                    self.cells.iter().map(|point| point.y).min().unwrap(),
+                    border.iter().map(|point| point.x).min().unwrap(),
+                    border.iter().map(|point| point.y).min().unwrap(),
                 ),
                 to: xy(
-                    self.cells.iter().map(|point| point.x).max().unwrap(),
-                    self.cells.iter().map(|point| point.y).max().unwrap(),
+                    border.iter().map(|point| point.x).max().unwrap(),
+                    border.iter().map(|point| point.y).max().unwrap(),
                 ),
             },
-            true,
-        ));
+            false,
+        );
+
+        for pair in border.windows(2) {
+            rasterize_line(&mut grid, &pair[0], &pair[1]);
+        }
+
+        let filled = fill_cells_inaccessible_from_border(&grid);
+
+        self.grid = Some(filled)
+    }
+
+    fn get_second_rectangle_point(&self) -> XY<u32> {
+        let cells = &self.cells;
+
+        if cells[0] == cells[2] {
+            return cells[1];
+        }
+
+        let to = if cells[0] == cells[1] {
+            cells[0] + xy(1, 0)
+        } else {
+            cells[1]
+        };
+        let out = project_point_onto_line(
+            to_xy_f32(&cells[2]),
+            Line {
+                from: to_xy_f32(&cells[0]),
+                to: to_xy_f32(&to),
+            },
+        );
+        let out = out.unwrap();
+        xy(out.x.round() as u32, out.y.round() as u32)
     }
 }
 
@@ -127,4 +180,45 @@ fn selected_cell(
         (y.floor() as u32).min(terrain.height() - 2),
     );
     Some(cell)
+}
+
+fn to_xy_f32(XY { x, y }: &XY<u32>) -> XY<f32> {
+    xy(*x as f32, *y as f32)
+}
+
+fn to_xy_i32(XY { x, y }: &XY<u32>) -> XY<i32> {
+    xy(*x as i32, *y as i32)
+}
+
+fn to_xy_u32(XY { x, y }: &XY<i32>) -> XY<u32> {
+    xy(*x as u32, *y as u32)
+}
+
+fn rasterize_line(grid: &mut OriginGrid<bool>, from: &XY<u32>, to: &XY<u32>) {
+    for (x, y) in Bresenham::new((from.x as i32, from.y as i32), (to.x as i32, to.y as i32)) {
+        grid[xy(x as u32, y as u32)] = true;
+    }
+}
+
+fn fill_cells_inaccessible_from_border(grid: &OriginGrid<bool>) -> OriginGrid<bool> {
+    let border = grid
+        .iter()
+        .filter(|xy| !grid[xy])
+        .filter(|xy| grid.is_border(xy));
+
+    let mut out = grid.map(|_, _| true);
+    let mut queue = Vec::with_capacity((grid.width() * grid.height()) as usize);
+    for cell in border {
+        out[cell] = false;
+        queue.push(cell);
+    }
+    while let Some(cell) = queue.pop() {
+        for neighbour in grid.offsets(cell, &OFFSETS_4).collect::<Vec<_>>() {
+            if !grid[neighbour] && out[neighbour] {
+                out[neighbour] = false;
+                queue.push(neighbour);
+            }
+        }
+    }
+    out
 }
