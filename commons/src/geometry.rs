@@ -230,6 +230,9 @@ where
     if line.from == line.to {
         return Err("Cannot project point onto zero length line");
     }
+    if line.from == point {
+        return Ok(line.from);
+    }
     let from2to = line.to - line.from;
     let from2point = point - line.from;
     let dot_product = from2to.dot(&from2point);
@@ -541,6 +544,23 @@ mod tests {
 
         // then
         assert_eq!(result, Err("Cannot project point onto zero length line"));
+    }
+
+    #[test]
+    fn test_project_point_onto_line_point_equals_from() {
+        // given
+        let point = xy(2.0, 1.0);
+        let line = Line {
+            from: xy(2.0, 1.0),
+            to: xy(6.0, 2.0),
+        };
+
+        // when
+        let result = project_point_onto_line(point, line).unwrap();
+
+        // then
+        assert_almost_eq(result.x, 2.0);
+        assert_almost_eq(result.y, 1.0);
     }
 
     #[test]
