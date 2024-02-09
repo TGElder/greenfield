@@ -222,6 +222,7 @@ fn main() {
                             expert: Rgba::new(3, 2, 3, 192),
                             ungraded: Rgba::new(238, 76, 2, 192),
                         },
+                        cliff: Rgba::new(6, 6, 6, 128),
                     },
                 },
                 carousel: carousel::System::new(),

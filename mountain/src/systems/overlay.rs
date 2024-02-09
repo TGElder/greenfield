@@ -21,6 +21,7 @@ pub struct System {
 pub struct Colors {
     pub piste: AbilityColors,
     pub highlight: AbilityColors,
+    pub cliff: Rgba<u8>,
 }
 
 pub struct AbilityColors {
@@ -83,6 +84,14 @@ impl Colors {
 
         Some(color)
     }
+
+    fn cliff_color(&self, xy: &XY<u32>, terrain: &Grid<f32>) -> Option<Rgba<u8>> {
+        if cell_ability(terrain, xy).is_none() {
+            Some(self.cliff)
+        } else {
+            None
+        }
+    }
 }
 
 pub struct Parameters<'a> {
@@ -125,6 +134,7 @@ impl System {
                         self.colors
                             .piste_color(&position, piste_map, highlights, abilities)
                     })
+                    .or_else(|| self.colors.cliff_color(&position, terrain))
                     .unwrap_or(CLEAR);
             }
 
