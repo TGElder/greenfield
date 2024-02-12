@@ -10,6 +10,7 @@ use commons::color::Rgba;
 use commons::geometry::{XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
+use nalgebra::Matrix4;
 pub use projection::Projection;
 
 use elements::*;
@@ -94,6 +95,12 @@ pub trait Graphics {
     }
 
     fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
+
+    fn instance_triangles(
+        &mut self,
+        index: &usize,
+        matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError>;
 
     fn render(&mut self) -> Result<(), RenderError>;
 

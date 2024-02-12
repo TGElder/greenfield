@@ -5,6 +5,7 @@ mod tests;
 mod vertices;
 
 use std::error::Error;
+use std::primitive;
 
 use crate::graphics::elements::{self, OverlayTriangles, TexturedPosition, Triangle};
 use crate::graphics::errors::{
@@ -18,6 +19,7 @@ use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use glium::glutin;
+use nalgebra::Matrix4;
 use programs::*;
 use vertices::*;
 
@@ -60,6 +62,7 @@ pub struct GliumGraphics {
     primitives: Vec<Option<Primitive>>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     billboards: Vec<Option<Billboard>>,
+    instancing: Vec<Option<Instancing>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -120,6 +123,7 @@ impl GliumGraphics {
             primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
+            instancing: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -237,6 +241,38 @@ impl GliumGraphics {
                     &self.draw_parameters,
                 )?;
             }
+        }
+        Ok(())
+    }
+
+    fn instance_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let uniforms = glium::uniform! {
+            transform: self.projection.projection()
+        };
+
+        for Instancing {
+            primitive,
+            vertex_buffer,
+        } in self.instancing.iter().flatten()
+        {
+            let Some(Some(primitive)) = self.primitives.get(*primitive) else {
+                continue;
+            }; // TODO proper error handling
+            surface.draw(
+                (
+                    &primitive.vertex_buffer,
+                    vertex_buffer
+                        .per_instance()
+                        .map_err(|_| String::from("Instancing is not supported"))?,
+                ),
+                INDICES,
+                &self.programs.primitive,
+                &uniforms,
+                &self.draw_parameters,
+            )?;
         }
         Ok(())
     }
@@ -469,6 +505,34 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn instance_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        matrices: &[Matrix4<f32>],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.instancing.len() {
+            return Err(format!(
+                "Trying to draw instancing #{} but there are only {} instancings",
+                index,
+                self.instancing.len()
+            )
+            .into());
+        }
+
+        let vertices = matrices
+            .iter()
+            .map(|matrix| (*matrix).into())
+            .map(|transformation| InstanceVertex { transformation })
+            .collect::<Vec<_>>();
+
+        self.instancing[*index] = Some(Instancing {
+            primitive: *index,
+            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
+        });
+
+        Ok(())
+    }
+
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
         let mut frame = self.display.frame();
 
@@ -552,6 +616,14 @@ impl Graphics for GliumGraphics {
         Ok(self.add_billboard_unsafe(index, billboard)?)
     }
 
+    fn instance_triangles(
+        &mut self,
+        index: &usize,
+        matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError> {
+        Ok(self.instance_triangles_unsafe(index, matrices)?)
+    }
+
     fn render(&mut self) -> Result<(), RenderError> {
         Ok(self.render_unsafe()?)
     }
@@ -618,4 +690,9 @@ struct OverlayPrimitive {
 struct Billboard {
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
+}
+
+struct Instancing {
+    primitive: usize,
+    vertex_buffer: glium::VertexBuffer<InstanceVertex>,
 }
