@@ -29,6 +29,6 @@ glium::implement_vertex!(BillboardVertex, position, offset, texture_coordinates)
 
 #[derive(Copy, Clone)]
 pub struct InstanceVertex {
-    pub transformation: [[f32; 4]; 4],
+    pub world_matrix: [[f32; 4]; 4],
 }
-glium::implement_vertex!(InstanceVertex, transformation);
+glium::implement_vertex!(InstanceVertex, world_matrix);
