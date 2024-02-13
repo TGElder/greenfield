@@ -16,7 +16,7 @@ pub fn run(
 ) {
     for (id, entrance) in entrances {
         if let Entry::Vacant(cell) = drawings.entry(*id) {
-            if let Ok(index) = graphics.create_quads() {
+            if let Ok(index) = graphics.create_triangles() {
                 draw(graphics, &index, entrance, terrain, piste_map);
                 cell.insert(index);
             }

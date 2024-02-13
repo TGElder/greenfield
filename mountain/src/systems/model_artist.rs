@@ -16,7 +16,7 @@ pub fn run(
         let index = match entry {
             Entry::Occupied(ref value) => value.get(),
             Entry::Vacant(cell) => {
-                let Ok(index) = graphics.create_quads() else {
+                let Ok(index) = graphics.create_triangles() else {
                     continue;
                 };
                 &*cell.insert(index)
@@ -25,7 +25,7 @@ pub fn run(
 
         match frame {
             Some(frame) => draw(graphics, index, frame),
-            None => graphics.draw_quads(index, &[]).unwrap(),
+            None => graphics.draw_triangles(index, &[]).unwrap(),
         }
     }
 }

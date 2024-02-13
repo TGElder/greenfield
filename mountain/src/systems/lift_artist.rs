@@ -20,7 +20,7 @@ pub fn run(
         match drawings.entry(*id) {
             Entry::Occupied(value) => draw(graphics, value.get(), &segments, 0.5),
             Entry::Vacant(cell) => {
-                if let Ok(index) = graphics.create_quads() {
+                if let Ok(index) = graphics.create_triangles() {
                     draw(graphics, &index, &segments, 0.5);
                     cell.insert(index);
                 }

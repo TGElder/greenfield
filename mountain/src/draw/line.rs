@@ -2,6 +2,7 @@ use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 
 use engine::graphics::elements::Quad;
+use engine::graphics::utils::triangles_from_quads;
 use engine::graphics::Graphics;
 
 const BLACK: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
@@ -35,5 +36,6 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 
         })
         .collect::<Vec<_>>();
 
-    graphics.draw_quads(index, &quads).unwrap();
+    let triangles = triangles_from_quads(&quads);
+    graphics.draw_triangles(index, &triangles).unwrap();
 }

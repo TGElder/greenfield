@@ -20,13 +20,6 @@ pub struct OverlayTriangles {
     pub triangles: Vec<[TexturedPosition; 3]>,
 }
 
-#[derive(Clone)]
-pub struct OverlayQuads {
-    pub base_texture: usize,
-    pub overlay_texture: usize,
-    pub quads: Vec<[TexturedPosition; 4]>,
-}
-
 #[derive(Clone, Copy, Debug)]
 pub struct TexturedPosition {
     pub position: XYZ<f32>,

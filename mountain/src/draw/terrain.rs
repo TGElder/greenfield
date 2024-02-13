@@ -5,8 +5,9 @@ use commons::geometry::{xy, xyz, XYZ};
 use commons::grid::Grid;
 
 use commons::origin_grid::OriginGrid;
-use engine::graphics::elements::{OverlayQuads, TexturedPosition};
+use engine::graphics::elements::{OverlayTriangles, TexturedPosition};
 
+use engine::graphics::utils::textured_triangles_from_textured_quads;
 use engine::graphics::Graphics;
 
 use nalgebra::Vector3;
@@ -93,14 +94,16 @@ pub fn draw(graphics: &mut dyn Graphics, terrain: &Grid<f32>) -> Drawing {
     let overlay_texture = graphics.load_texture(&overlay).unwrap();
 
     for quads in to_draw {
-        let index = graphics.create_overlay_quads().unwrap();
+        let index = graphics.create_overlay_triangles().unwrap();
 
-        let overlay_quads = OverlayQuads {
+        let overlay_triangles = OverlayTriangles {
             base_texture,
             overlay_texture,
-            quads,
+            triangles: textured_triangles_from_textured_quads(&quads),
         };
-        graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
+        graphics
+            .draw_overlay_triangles(&index, &overlay_triangles)
+            .unwrap();
     }
 
     Drawing { overlay_texture }

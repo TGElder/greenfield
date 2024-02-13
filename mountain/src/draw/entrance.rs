@@ -8,6 +8,7 @@ use commons::unsafe_ordering::unsafe_ordering;
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
 use engine::graphics::transform::Transform;
+use engine::graphics::utils::triangles_from_quads;
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
@@ -76,8 +77,8 @@ pub fn draw(
     );
 
     let quads = from_pole.chain(to_pole).chain(banner).collect::<Vec<_>>();
-
-    graphics.draw_quads(index, &quads).unwrap();
+    let triangles = triangles_from_quads(&quads);
+    graphics.draw_triangles(index, &triangles).unwrap();
 }
 
 fn entrance_side(
