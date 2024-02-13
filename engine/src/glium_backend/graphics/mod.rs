@@ -60,8 +60,8 @@ pub struct GliumGraphics {
     textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
+    instanced_primitives: Vec<Option<InstancedPrimitives>>,
     billboards: Vec<Option<Billboard>>,
-    instancing: Vec<Option<Instancing>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
 }
@@ -122,7 +122,7 @@ impl GliumGraphics {
             primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
-            instancing: vec![],
+            instanced_primitives: vec![],
             programs: Programs::new(display.facade())?,
             draw_parameters: glium::DrawParameters {
                 depth: glium::Depth {
@@ -255,10 +255,10 @@ impl GliumGraphics {
             transform: self.projection.projection()
         };
 
-        for Instancing {
+        for InstancedPrimitives {
             primitive,
             vertex_buffer,
-        } in self.instancing.iter().flatten()
+        } in self.instanced_primitives.iter().flatten()
         {
             surface.draw(
                 (
@@ -415,11 +415,11 @@ impl GliumGraphics {
     }
 
     fn create_instanced_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.instancing.len() == isize::MAX as usize {
-            return Err("No space for more instancings".into());
+        if self.instanced_primitives.len() == isize::MAX as usize {
+            return Err("No space for more instanced_primitives".into());
         }
-        self.instancing.push(None);
-        Ok(self.instancing.len() - 1)
+        self.instanced_primitives.push(None);
+        Ok(self.instanced_primitives.len() - 1)
     }
 
     fn add_overlay_triangles_unsafe(
@@ -456,6 +456,35 @@ impl GliumGraphics {
             base_texture: overlay.base_texture,
             overlay_texture: overlay.overlay_texture,
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+        });
+
+        Ok(())
+    }
+
+    fn add_instanced_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle],
+        world_matrices: &[Matrix4<f32>],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.instanced_primitives.len() {
+            return Err(format!(
+                "Trying to draw instanced triangles #{} but there are only {} instanced triangles",
+                index,
+                self.instanced_primitives.len()
+            )
+            .into());
+        }
+
+        let vertices = world_matrices
+            .iter()
+            .map(|matrix| (*matrix).into())
+            .map(|world_matrix| InstanceVertex { world_matrix })
+            .collect::<Vec<_>>();
+
+        self.instanced_primitives[*index] = Some(InstancedPrimitives {
+            primitive: self.create_primitive(triangles)?,
+            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
         });
 
         Ok(())
@@ -511,35 +540,6 @@ impl GliumGraphics {
         self.billboards[*index] = Some(Billboard {
             texture: *texture,
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
-        });
-
-        Ok(())
-    }
-
-    fn add_instanced_triangles_unsafe(
-        &mut self,
-        index: &usize,
-        triangles: &[Triangle],
-        matrices: &[Matrix4<f32>],
-    ) -> Result<(), Box<dyn Error>> {
-        if *index >= self.instancing.len() {
-            return Err(format!(
-                "Trying to draw instancing #{} but there are only {} instancings",
-                index,
-                self.instancing.len()
-            )
-            .into());
-        }
-
-        let vertices = matrices
-            .iter()
-            .map(|matrix| (*matrix).into())
-            .map(|world_matrix| InstanceVertex { world_matrix })
-            .collect::<Vec<_>>();
-
-        self.instancing[*index] = Some(Instancing {
-            primitive: self.create_primitive(triangles)?,
-            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
         });
 
         Ok(())
@@ -630,9 +630,9 @@ impl Graphics for GliumGraphics {
         &mut self,
         index: &usize,
         triangles: &[Triangle],
-        matrices: &[Matrix4<f32>],
+        world_matrices: &[Matrix4<f32>],
     ) -> Result<(), DrawError> {
-        Ok(self.add_instanced_triangles_unsafe(index, triangles, matrices)?)
+        Ok(self.add_instanced_triangles_unsafe(index, triangles, world_matrices)?)
     }
 
     fn draw_billboard(
@@ -706,12 +706,12 @@ struct OverlayPrimitive {
     vertex_buffer: glium::VertexBuffer<TexturedVertex>,
 }
 
+struct InstancedPrimitives {
+    primitive: Primitive,
+    vertex_buffer: glium::VertexBuffer<InstanceVertex>,
+}
+
 struct Billboard {
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
-}
-
-struct Instancing {
-    primitive: Primitive,
-    vertex_buffer: glium::VertexBuffer<InstanceVertex>,
 }

@@ -54,7 +54,7 @@ pub trait Graphics {
         &mut self,
         index: &usize,
         triangles: &[Triangle],
-        matrices: &[Matrix4<f32>],
+        world_matrices: &[Matrix4<f32>],
     ) -> Result<(), DrawError>;
 
     fn draw_instanced_quads(

@@ -103,7 +103,7 @@ fn render_cube() {
 }
 
 #[test]
-fn instance_cubes() {
+fn instanced_cubes() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {
         name: "Test".to_string(),
@@ -157,7 +157,10 @@ fn instance_cubes() {
         .draw_instanced_quads(
             &index,
             &quads,
-            &[left * shrink * identity, right * shrink * identity],
+            &[
+                left * shrink * identity,  //
+                right * shrink * identity, //
+            ],
         )
         .unwrap();
 
