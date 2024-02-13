@@ -5,6 +5,7 @@ mod skier_standing;
 use commons::geometry::XYZ;
 
 use engine::graphics::transform::Transform;
+use engine::graphics::utils::triangles_from_quads;
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
@@ -52,5 +53,6 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
     let transformed_quads = quads
         .map(|quad| quad.transform(&transformation))
         .collect::<Vec<_>>();
-    graphics.draw_quads(index, &transformed_quads).unwrap();
+    let triangles = triangles_from_quads(&transformed_quads);
+    graphics.draw_triangles(index, &triangles).unwrap();
 }

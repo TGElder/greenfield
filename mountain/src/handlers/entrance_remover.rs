@@ -90,6 +90,6 @@ pub fn remove_entrance(
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, drawing_id: &usize) {
     if let Some(drawing_id) = components.drawings.get(drawing_id) {
-        let _ = graphics.draw_quads(drawing_id, &[]);
+        let _ = graphics.draw_triangles(drawing_id, &[]);
     }
 }

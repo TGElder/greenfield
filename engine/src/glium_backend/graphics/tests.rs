@@ -9,23 +9,25 @@ use crate::binding::Binding;
 use crate::engine::Engine;
 use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
-use crate::graphics::elements::{OverlayQuads, Quad};
+use crate::graphics::elements::Quad;
 use crate::graphics::models::cube;
 use crate::graphics::projections::isometric;
 use crate::graphics::transform::Transform;
+use crate::graphics::utils::{textured_triangles_from_textured_quads, triangles_from_quads};
 use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;
 
-fn cube_quads() -> [Quad; 6] {
-    cube::model(&|side| match side {
+fn cube_triangles() -> Vec<Triangle> {
+    let quads = cube::model(&|side| match side {
         cube::Side::Left => Rgb::new(1.0, 1.0, 0.0),
         cube::Side::Right => Rgb::new(0.0, 0.0, 1.0),
         cube::Side::Back => Rgb::new(1.0, 0.0, 1.0),
         cube::Side::Front => Rgb::new(0.0, 1.0, 0.0),
         cube::Side::Bottom => Rgb::new(0.0, 1.0, 1.0),
         cube::Side::Top => Rgb::new(1.0, 0.0, 0.0),
-    })
+    });
+    triangles_from_quads(&quads)
 }
 
 #[test]
@@ -53,9 +55,9 @@ fn render_cube() {
     .unwrap();
 
     // when
-    let index = graphics.create_quads().unwrap();
-    let quads = cube_quads();
-    graphics.draw_quads(&index, &quads).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -85,11 +87,13 @@ fn render_cube() {
 
     let transformation = yaw * roll;
 
-    let rear_facing_quads = quads
+    let rear_facing_triangles = triangles
         .iter()
         .map(|quad| quad.transform(&transformation))
         .collect::<Vec<_>>();
-    graphics.draw_quads(&index, &rear_facing_quads).unwrap();
+    graphics
+        .draw_triangles(&index, &rear_facing_triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -128,7 +132,7 @@ fn instanced_cubes() {
 
     // when
     let index = graphics.create_instanced_triangles().unwrap();
-    let quads = cube_quads();
+    let triangles = cube_triangles();
 
     let shrink: Matrix4<f32> = [
         [0.5, 0.0, 0.0, 0.0],
@@ -154,9 +158,9 @@ fn instanced_cubes() {
     let identity = Matrix4::identity();
 
     graphics
-        .draw_instanced_quads(
+        .draw_instanced_triangles(
             &index,
-            &quads,
+            &triangles,
             &[
                 left * shrink * identity,  //
                 right * shrink * identity, //
@@ -214,21 +218,17 @@ fn render_billboard() {
     };
     let index = graphics.create_billboards().unwrap();
     graphics.draw_billboard(&index, &billboard).unwrap();
-    let index = graphics.create_quads().unwrap();
-    graphics
-        .draw_quads(
-            &index,
-            &[Quad {
-                corners: [
-                    xyz(-0.5, -0.5, 0.0),
-                    xyz(0.5, -0.5, 0.0),
-                    xyz(0.5, 0.5, 0.0),
-                    xyz(-0.5, 0.5, 0.0),
-                ],
-                color: Rgb::new(0.0, 0.0, 1.0),
-            }],
-        )
-        .unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = triangles_from_quads(&[Quad {
+        corners: [
+            xyz(-0.5, -0.5, 0.0),
+            xyz(0.5, -0.5, 0.0),
+            xyz(0.5, 0.5, 0.0),
+            xyz(-0.5, 0.5, 0.0),
+        ],
+        color: Rgb::new(0.0, 0.0, 1.0),
+    }]);
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -308,13 +308,15 @@ fn render_overlay_quads() {
         [bb, cb, cc, bc],
     ];
 
-    let overlay_quads = OverlayQuads {
+    let overlay_triangles = OverlayTriangles {
         base_texture,
         overlay_texture,
-        quads,
+        triangles: textured_triangles_from_textured_quads(&quads),
     };
-    let index = graphics.create_overlay_quads().unwrap();
-    graphics.draw_overlay_quads(&index, &overlay_quads).unwrap();
+    let index = graphics.create_overlay_triangles().unwrap();
+    graphics
+        .draw_overlay_triangles(&index, &overlay_triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let temp_dir = temp_dir();
@@ -392,8 +394,9 @@ fn look_at() {
     .unwrap();
 
     // when
-    let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
     graphics.render().unwrap();
 
@@ -446,8 +449,9 @@ fn drag_handler() {
     })
     .unwrap();
 
-    let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
     let mut drag_handler = drag::Handler::new(drag::Bindings {
@@ -522,8 +526,9 @@ fn yaw_handler() {
     })
     .unwrap();
 
-    let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
@@ -622,8 +627,9 @@ fn zoom_handler() {
     })
     .unwrap();
 
-    let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
     let mut zoom_handler = zoom::Handler::new(zoom::Parameters {
@@ -723,8 +729,9 @@ fn resize_handler() {
     })
     .unwrap();
 
-    let index = graphics.create_quads().unwrap();
-    graphics.draw_quads(&index, &cube_quads()).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
 
     let mut resize_hander = resize::Handler::new();
 
