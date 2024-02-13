@@ -10,6 +10,7 @@ use commons::color::Rgba;
 use commons::geometry::{XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
+use nalgebra::Matrix4;
 pub use projection::Projection;
 
 use elements::*;
@@ -34,6 +35,8 @@ pub trait Graphics {
 
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
 
+    fn create_instanced_triangles(&mut self) -> Result<usize, IndexError>;
+
     fn create_overlay_quads(&mut self) -> Result<usize, IndexError> {
         self.create_overlay_triangles()
     }
@@ -43,28 +46,25 @@ pub trait Graphics {
     fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
 
     fn draw_quads(&mut self, index: &usize, quads: &[Quad]) -> Result<(), DrawError> {
-        let triangles = quads
-            .iter()
-            .flat_map(
-                |Quad {
-                     corners: [a, b, c, d],
-                     color,
-                 }| {
-                    [
-                        Triangle {
-                            corners: [*a, *b, *d],
-                            color: *color,
-                        },
-                        Triangle {
-                            corners: [*b, *c, *d],
-                            color: *color,
-                        },
-                    ]
-                    .into_iter()
-                },
-            )
-            .collect::<Vec<_>>();
+        let triangles = to_triangles(quads);
         self.draw_triangles(index, &triangles)
+    }
+
+    fn draw_instanced_triangles(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle],
+        world_matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError>;
+
+    fn draw_instanced_quads(
+        &mut self,
+        index: &usize,
+        quads: &[Quad],
+        matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError> {
+        let triangles = to_triangles(quads);
+        self.draw_instanced_triangles(index, &triangles, matrices)
     }
 
     fn draw_overlay_triangles(
@@ -104,4 +104,29 @@ pub trait Graphics {
     fn world_xyz_at(&mut self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, IndexError>;
 
     fn projection(&mut self) -> &mut Box<dyn Projection>;
+}
+
+fn to_triangles(quads: &[Quad]) -> Vec<Triangle> {
+    let triangles = quads
+        .iter()
+        .flat_map(
+            |Quad {
+                 corners: [a, b, c, d],
+                 color,
+             }| {
+                [
+                    Triangle {
+                        corners: [*a, *b, *d],
+                        color: *color,
+                    },
+                    Triangle {
+                        corners: [*b, *c, *d],
+                        color: *color,
+                    },
+                ]
+                .into_iter()
+            },
+        )
+        .collect::<Vec<_>>();
+    triangles
 }

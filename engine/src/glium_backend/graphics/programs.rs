@@ -5,6 +5,7 @@ pub struct Programs {
     pub screen: glium::Program,
     pub billboard: glium::Program,
     pub overlay_primitive: glium::Program,
+    pub instanced_primitive: glium::Program,
 }
 
 impl Programs {
@@ -20,6 +21,12 @@ impl Programs {
                 facade,
                 include_str!("../../graphics/shaders/overlay_primitive.vert"),
                 include_str!("../../graphics/shaders/overlay_primitive.frag"),
+                None,
+            )?,
+            instanced_primitive: glium::Program::from_source(
+                facade,
+                include_str!("../../graphics/shaders/instanced_primitive.vert"),
+                include_str!("../../graphics/shaders/instanced_primitive.frag"),
                 None,
             )?,
             screen: glium::Program::from_source(

@@ -103,6 +103,80 @@ fn render_cube() {
 }
 
 #[test]
+fn instanced_cubes() {
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 256.0,
+                z_max: 1.0,
+                viewport: Rectangle {
+                    width: 256,
+                    height: 256,
+                },
+            },
+        })),
+    })
+    .unwrap();
+
+    // when
+    let index = graphics.create_instanced_triangles().unwrap();
+    let quads = cube_quads();
+
+    let shrink: Matrix4<f32> = [
+        [0.5, 0.0, 0.0, 0.0],
+        [0.0, 0.5, 0.0, 0.0],
+        [0.0, 0.0, 0.5, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let left: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [-0.5, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let right: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.5, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let identity = Matrix4::identity();
+
+    graphics
+        .draw_instanced_quads(
+            &index,
+            &quads,
+            &[
+                left * shrink * identity,  //
+                right * shrink * identity, //
+            ],
+        )
+        .unwrap();
+
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/instance_cubes.png").unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn render_billboard() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {
