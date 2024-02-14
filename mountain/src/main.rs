@@ -273,7 +273,7 @@ fn load_components(path: &str) -> Option<Components> {
 }
 
 fn new_components() -> Components {
-    let power = 10;
+    let power = 11;
     let terrain = generate_heightmap(power);
     let trees = generate_trees(power, &terrain);
     Components {
@@ -381,6 +381,8 @@ impl Game {
         self.drawings = Some(Drawings {
             terrain: draw::terrain::draw(graphics, terrain),
         });
+
+        draw::trees::draw(graphics, &self.components.trees, &self.components.terrain);
 
         graphics.look_at(
             &xyz(

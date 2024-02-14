@@ -1,6 +1,7 @@
 mod chair;
 mod skier_sitting;
 mod skier_standing;
+pub mod tree;
 
 use commons::geometry::XYZ;
 
