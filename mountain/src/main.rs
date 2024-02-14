@@ -32,7 +32,8 @@ use crate::handlers::{
     piste_builder, piste_computer, piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
-use crate::init::generate_heightmap;
+use crate::init::terrain::generate_heightmap;
+use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
@@ -272,7 +273,9 @@ fn load_components(path: &str) -> Option<Components> {
 }
 
 fn new_components() -> Components {
-    let terrain = generate_heightmap();
+    let power = 10;
+    let terrain = generate_heightmap(power);
+    let trees = generate_trees(power, &terrain);
     Components {
         plans: HashMap::default(),
         locations: HashMap::default(),
@@ -292,6 +295,7 @@ fn new_components() -> Components {
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
+        trees,
         planning_queue: HashVec::new(),
         services: Services {
             clock: services::clock::Service::new(),
@@ -329,6 +333,7 @@ pub struct Components {
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
+    trees: Grid<bool>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
