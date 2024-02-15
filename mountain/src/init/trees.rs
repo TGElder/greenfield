@@ -1,11 +1,13 @@
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
 use commons::scale::Scale;
+use rand::random;
 
 use crate::model::ability::Ability;
+use crate::model::tree::Tree;
 use crate::utils::ability::exposure;
 
-pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<bool> {
+pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
     let weights = vec![1.0; power as usize];
     let noise = simplex_noise(power, 1990, &weights).normalize();
 
@@ -17,9 +19,13 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<bool> {
     );
 
     noise.map(|position, value| {
-        exposure(terrain, &position) <= Ability::Expert.max_exposure()
-            && position.x % 4 == 0
-            && position.y % 4 == 0
-            && scale.scale(value) >= terrain[position]
+        if exposure(terrain, &position) > Ability::Expert.max_exposure()
+            || position.x % 4 != 0
+            || position.y % 4 != 0
+            || scale.scale(value) < terrain[position]
+        {
+            return None;
+        }
+        Some(Tree { yaw: random() })
     })
 }

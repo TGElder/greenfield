@@ -3,7 +3,7 @@ use std::collections::HashMap;
 
 use engine::graphics::Graphics;
 
-use crate::draw::model::draw;
+use crate::draw::frame;
 use crate::model::frame::Frame;
 
 pub fn run(
@@ -24,7 +24,7 @@ pub fn run(
         };
 
         match frame {
-            Some(frame) => draw(graphics, index, frame),
+            Some(frame) => frame::draw(graphics, index, frame),
             None => graphics.draw_triangles(index, &[]).unwrap(),
         }
     }

@@ -44,6 +44,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing;
+use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
@@ -333,7 +334,7 @@ pub struct Components {
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
-    trees: Grid<bool>,
+    trees: Grid<Option<Tree>>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
@@ -382,7 +383,7 @@ impl Game {
             terrain: draw::terrain::draw(graphics, terrain),
         });
 
-        draw::trees::draw(graphics, &self.components.trees, &self.components.terrain);
+        draw::trees::draw(graphics, &self.components.terrain, &self.components.trees);
 
         graphics.look_at(
             &xyz(
