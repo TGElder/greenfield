@@ -1,19 +1,19 @@
 use commons::color::Rgb;
 use commons::geometry::{Rectangle, XY, XYZ};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Triangle {
     pub corners: [XYZ<f32>; 3],
     pub color: Rgb<f32>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Quad {
     pub corners: [XYZ<f32>; 4],
     pub color: Rgb<f32>,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct OverlayTriangles {
     pub base_texture: usize,
     pub overlay_texture: usize,
@@ -26,7 +26,7 @@ pub struct TexturedPosition {
     pub texture_coordinates: XY<f32>,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct Billboard {
     pub position: XYZ<f32>,
     pub dimensions: Rectangle<f32>,
