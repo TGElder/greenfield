@@ -32,7 +32,8 @@ use crate::handlers::{
     piste_builder, piste_computer, piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
-use crate::init::generate_heightmap;
+use crate::init::terrain::generate_heightmap;
+use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::entrance::Entrance;
@@ -43,6 +44,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing;
+use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
@@ -272,7 +274,9 @@ fn load_components(path: &str) -> Option<Components> {
 }
 
 fn new_components() -> Components {
-    let terrain = generate_heightmap();
+    let power = 11;
+    let terrain = generate_heightmap(power);
+    let trees = generate_trees(power, &terrain);
     Components {
         plans: HashMap::default(),
         locations: HashMap::default(),
@@ -292,6 +296,7 @@ fn new_components() -> Components {
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
+        trees,
         planning_queue: HashVec::new(),
         services: Services {
             clock: services::clock::Service::new(),
@@ -329,6 +334,7 @@ pub struct Components {
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,
+    trees: Grid<Option<Tree>>,
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
@@ -376,6 +382,8 @@ impl Game {
         self.drawings = Some(Drawings {
             terrain: draw::terrain::draw(graphics, terrain),
         });
+
+        draw::trees::draw(graphics, &self.components.terrain, &self.components.trees);
 
         graphics.look_at(
             &xyz(

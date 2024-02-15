@@ -1,3 +1,2 @@
-mod terrain;
-
-pub use terrain::*;
+pub mod terrain;
+pub mod trees;
