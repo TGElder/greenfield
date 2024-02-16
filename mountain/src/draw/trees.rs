@@ -6,17 +6,53 @@ use nalgebra::Matrix4;
 use crate::draw::model::tree;
 use crate::model::tree::Tree;
 
-pub fn draw(graphics: &mut dyn Graphics, terrain: &Grid<f32>, trees: &Grid<Option<Tree>>) {
-    let index = graphics.create_instanced_triangles().unwrap();
-    let triangles = tree::model();
-    let world_matrices = trees
-        .iter()
-        .flat_map(|position| trees[position].as_ref().map(|tree| (position, tree)))
-        .map(|(position, tree)| tree_world_matrix(terrain, &position, tree))
-        .collect::<Vec<_>>();
-    graphics
-        .draw_instanced_triangles(&index, &triangles, &world_matrices)
-        .unwrap();
+pub struct Drawing {
+    pub index: usize,
+}
+
+impl Drawing {
+    pub fn init(
+        graphics: &mut dyn Graphics,
+        terrain: &Grid<f32>,
+        trees: &Grid<Option<Tree>>,
+        piste_map: &Grid<Option<usize>>,
+    ) -> Drawing {
+        let index = graphics.create_instanced_triangles().unwrap();
+        let triangles = tree::model();
+        let world_matrices = trees
+            .iter()
+            .flat_map(|position| trees[position].as_ref().map(|tree| (position, tree)))
+            .filter(|(position, _)| piste_map[position].is_none())
+            .map(|(position, tree)| tree_world_matrix(terrain, &position, tree))
+            .collect::<Vec<_>>();
+        graphics
+            .draw_instanced_triangles(&index, &triangles, &world_matrices)
+            .unwrap();
+        Drawing { index }
+    }
+
+    pub fn update(
+        &self,
+        graphics: &mut dyn Graphics,
+        terrain: &Grid<f32>,
+        trees: &Grid<Option<Tree>>,
+        piste_map: &Grid<Option<usize>>,
+    ) {
+        let world_matrices = trees
+            .iter()
+            .flat_map(|position| trees[position].as_ref().map(|tree| (position, tree)))
+            .map(|(position, tree)| {
+                if piste_map[position].is_some() {
+                    Matrix4::zeros()
+                } else {
+                    tree_world_matrix(terrain, &position, tree)
+                }
+            })
+            .collect::<Vec<_>>();
+        graphics
+            .update_instanced_triangles(&self.index, &world_matrices)
+            .unwrap();
+    }
 }
 
 fn tree_world_matrix(

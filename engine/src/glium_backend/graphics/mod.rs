@@ -490,6 +490,33 @@ impl GliumGraphics {
         Ok(())
     }
 
+    fn update_instanced_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        world_matrices: &[Matrix4<f32>],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.instanced_primitives.len() {
+            return Err(format!(
+                "Trying to draw instanced triangles #{} but there are only {} instanced triangles",
+                index,
+                self.instanced_primitives.len()
+            )
+            .into());
+        }
+
+        if let Some(instanced_primitives) = &mut self.instanced_primitives[*index] {
+            let vertices = world_matrices
+                .iter()
+                .map(|matrix| (*matrix).into())
+                .map(|world_matrix| InstanceVertex { world_matrix })
+                .collect::<Vec<_>>();
+
+            instanced_primitives.vertex_buffer.write(&vertices);
+        }
+
+        Ok(())
+    }
+
     fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
         if self.billboards.len() == isize::MAX as usize {
             return Err("No space for more billboards".into());
@@ -633,6 +660,14 @@ impl Graphics for GliumGraphics {
         world_matrices: &[Matrix4<f32>],
     ) -> Result<(), DrawError> {
         Ok(self.add_instanced_triangles_unsafe(index, triangles, world_matrices)?)
+    }
+
+    fn update_instanced_triangles(
+        &mut self,
+        index: &usize,
+        world_matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError> {
+        Ok(self.update_instanced_triangles_unsafe(index, world_matrices)?)
     }
 
     fn draw_billboard(

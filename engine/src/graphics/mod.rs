@@ -45,6 +45,12 @@ pub trait Graphics {
         world_matrices: &[Matrix4<f32>],
     ) -> Result<(), DrawError>;
 
+    fn update_instanced_triangles(
+        &mut self,
+        index: &usize,
+        world_matrices: &[Matrix4<f32>],
+    ) -> Result<(), DrawError>;
+
     fn draw_overlay_triangles(
         &mut self,
         index: &usize,
