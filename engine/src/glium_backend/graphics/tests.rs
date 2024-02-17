@@ -131,8 +131,8 @@ fn instanced_cubes() {
     .unwrap();
 
     // when
-    let index = graphics.create_instanced_triangles().unwrap();
     let triangles = cube_triangles();
+    let index = graphics.create_instanced_triangles(&triangles, &2).unwrap();
 
     let shrink: Matrix4<f32> = [
         [0.5, 0.0, 0.0, 0.0],
@@ -158,12 +158,11 @@ fn instanced_cubes() {
     let identity = Matrix4::identity();
 
     graphics
-        .draw_instanced_triangles(
+        .update_instanced_triangles(
             &index,
-            &triangles,
             &[
-                left * shrink * identity,  //
-                right * shrink * identity, //
+                Some(left * shrink * identity),  //
+                Some(right * shrink * identity), //
             ],
         )
         .unwrap();

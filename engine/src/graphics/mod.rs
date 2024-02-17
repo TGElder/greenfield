@@ -32,17 +32,20 @@ pub trait Graphics {
 
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
 
-    fn create_instanced_triangles(&mut self) -> Result<usize, IndexError>;
+    fn create_instanced_triangles(
+        &mut self,
+        triangles: &[Triangle],
+        max_instances: &usize,
+    ) -> Result<usize, IndexError>;
 
     fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
     fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
 
-    fn draw_instanced_triangles(
+    fn update_instanced_triangles(
         &mut self,
         index: &usize,
-        triangles: &[Triangle],
-        world_matrices: &[Matrix4<f32>],
+        world_matrices: &[Option<Matrix4<f32>>],
     ) -> Result<(), DrawError>;
 
     fn draw_overlay_triangles(
