@@ -343,6 +343,7 @@ pub struct Components {
 
 struct Drawings {
     terrain: draw::terrain::Drawing,
+    trees: draw::trees::Drawing,
 }
 
 struct Handlers {
@@ -379,11 +380,17 @@ pub struct Services {
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
+        let tree_drawing = draw::trees::Drawing::init(graphics, &self.components.trees);
+        tree_drawing.update(
+            graphics,
+            &self.components.terrain,
+            &self.components.trees,
+            &self.components.piste_map,
+        );
         self.drawings = Some(Drawings {
             terrain: draw::terrain::draw(graphics, terrain),
+            trees: tree_drawing,
         });
-
-        draw::trees::draw(graphics, &self.components.terrain, &self.components.trees);
 
         graphics.look_at(
             &xyz(
