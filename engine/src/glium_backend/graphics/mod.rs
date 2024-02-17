@@ -414,11 +414,26 @@ impl GliumGraphics {
         Ok(self.overlay_primitives.len() - 1)
     }
 
-    fn create_instanced_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+    fn create_instanced_triangles_unsafe(
+        &mut self,
+        triangles: &[Triangle],
+        max_instances: &usize,
+    ) -> Result<usize, Box<dyn Error>> {
         if self.instanced_primitives.len() == isize::MAX as usize {
             return Err("No space for more instanced_primitives".into());
         }
-        self.instanced_primitives.push(None);
+
+        let vertices = (0..*max_instances)
+            .map(|_| InstanceVertex {
+                world_matrix: [[0.0; 4]; 4],
+            })
+            .collect::<Vec<_>>();
+        let instanced_primitives = InstancedPrimitives {
+            primitive: self.create_primitive(triangles)?,
+            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
+        };
+        self.instanced_primitives.push(Some(instanced_primitives));
+
         Ok(self.instanced_primitives.len() - 1)
     }
 
@@ -461,31 +476,36 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn add_instanced_triangles_unsafe(
+    fn update_instanced_triangles_unsafe(
         &mut self,
         index: &usize,
-        triangles: &[Triangle],
-        world_matrices: &[Matrix4<f32>],
+        world_matrices: &[Option<Matrix4<f32>>],
     ) -> Result<(), Box<dyn Error>> {
         if *index >= self.instanced_primitives.len() {
             return Err(format!(
-                "Trying to draw instanced triangles #{} but there are only {} instanced triangles",
+                "Trying to update instanced triangles #{} but there are only {} instanced triangles",
                 index,
                 self.instanced_primitives.len()
             )
             .into());
         }
 
+        let Some(instanced_primitives) = &mut self.instanced_primitives[*index] else {
+            return Ok(());
+        };
+
         let vertices = world_matrices
             .iter()
-            .map(|matrix| (*matrix).into())
+            .map(|matrix| {
+                if let Some(matrix) = matrix {
+                    (*matrix).into()
+                } else {
+                    [[0.0; 4]; 4]
+                }
+            })
             .map(|world_matrix| InstanceVertex { world_matrix })
             .collect::<Vec<_>>();
-
-        self.instanced_primitives[*index] = Some(InstancedPrimitives {
-            primitive: self.create_primitive(triangles)?,
-            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
-        });
+        instanced_primitives.vertex_buffer.write(&vertices);
 
         Ok(())
     }
@@ -606,8 +626,12 @@ impl Graphics for GliumGraphics {
         Ok(self.create_overlay_triangles_unsafe()?)
     }
 
-    fn create_instanced_triangles(&mut self) -> Result<usize, IndexError> {
-        Ok(self.create_instanced_triangles_unsafe()?)
+    fn create_instanced_triangles(
+        &mut self,
+        triangles: &[Triangle],
+        max_instances: &usize,
+    ) -> Result<usize, IndexError> {
+        Ok(self.create_instanced_triangles_unsafe(triangles, max_instances)?)
     }
 
     fn create_billboards(&mut self) -> Result<usize, IndexError> {
@@ -626,13 +650,12 @@ impl Graphics for GliumGraphics {
         Ok(self.add_overlay_triangles_unsafe(index, overlay_triangles)?)
     }
 
-    fn draw_instanced_triangles(
+    fn update_instanced_triangles(
         &mut self,
         index: &usize,
-        triangles: &[Triangle],
-        world_matrices: &[Matrix4<f32>],
+        world_matrices: &[Option<Matrix4<f32>>],
     ) -> Result<(), DrawError> {
-        Ok(self.add_instanced_triangles_unsafe(index, triangles, world_matrices)?)
+        Ok(self.update_instanced_triangles_unsafe(index, world_matrices)?)
     }
 
     fn draw_billboard(
