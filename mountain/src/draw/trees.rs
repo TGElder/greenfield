@@ -26,8 +26,8 @@ impl Drawing {
     pub fn update(
         &self,
         graphics: &mut dyn Graphics,
-        terrain: &Grid<f32>,
         trees: &Grid<Option<Tree>>,
+        terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
     ) {
         let world_matrices = trees

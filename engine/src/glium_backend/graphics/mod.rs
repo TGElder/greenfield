@@ -490,20 +490,22 @@ impl GliumGraphics {
             .into());
         }
 
-        if let Some(instanced_primitives) = &mut self.instanced_primitives[*index] {
-            let vertices = world_matrices
-                .iter()
-                .map(|matrix| {
-                    if let Some(matrix) = matrix {
-                        (*matrix).into()
-                    } else {
-                        [[0.0; 4]; 4]
-                    }
-                })
-                .map(|world_matrix| InstanceVertex { world_matrix })
-                .collect::<Vec<_>>();
-            instanced_primitives.vertex_buffer.write(&vertices);
-        }
+        let Some(instanced_primitives) = &mut self.instanced_primitives[*index] else {
+            return Ok(());
+        };
+
+        let vertices = world_matrices
+            .iter()
+            .map(|matrix| {
+                if let Some(matrix) = matrix {
+                    (*matrix).into()
+                } else {
+                    [[0.0; 4]; 4]
+                }
+            })
+            .map(|world_matrix| InstanceVertex { world_matrix })
+            .collect::<Vec<_>>();
+        instanced_primitives.vertex_buffer.write(&vertices);
 
         Ok(())
     }
