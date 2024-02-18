@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
-use crate::draw::terrain::{draw, Drawing};
+use crate::draw::terrain::Drawing;
 use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::utils::ability::cell_ability;
@@ -106,7 +106,7 @@ pub struct Parameters<'a> {
 
 impl System {
     pub fn init(&mut self, graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
-        self.drawing = Some(draw(graphics, terrain))
+        self.drawing = Some(Drawing::init(graphics, terrain))
     }
 
     pub fn update(&mut self, update: XYRectangle<u32>) {

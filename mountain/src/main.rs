@@ -49,6 +49,7 @@ use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
     piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
+    tree_artist,
 };
 
 fn main() {
@@ -227,6 +228,10 @@ fn main() {
                         cliff: Rgba::new(6, 6, 6, 128),
                     },
                 },
+                tree_artist: tree_artist::System {
+                    drawing: None,
+                    redraw: true,
+                },
                 carousel: carousel::System::new(),
             },
             mouse_xy: None,
@@ -362,6 +367,7 @@ struct Handlers {
 
 struct Systems {
     terrain_artist: terrain_artist::System,
+    tree_artist: tree_artist::System,
     carousel: carousel::System,
 }
 
@@ -375,15 +381,9 @@ impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
         self.systems.terrain_artist.init(graphics, terrain);
-
-        let tree_drawing = draw::trees::Drawing::init(graphics, &self.components.trees);
-        tree_drawing.update(
-            graphics,
-            &self.components.trees,
-            &self.components.terrain,
-            &self.components.piste_map,
-        );
-
+        self.systems
+            .tree_artist
+            .init(graphics, &self.components.trees);
         graphics.look_at(
             &xyz(
                 terrain.width() as f32 / 2.0,
@@ -418,14 +418,17 @@ impl EventHandler for Game {
         self.handlers
             .clock
             .handle(event, &mut self.components.services.clock);
-        self.handlers.piste_builder.handle(
-            event,
-            &mut self.components.pistes,
-            &mut self.components.piste_map,
-            &mut self.handlers.selection,
-            &mut self.systems.terrain_artist,
-            &mut self.components.services.id_allocator,
-        );
+        self.handlers
+            .piste_builder
+            .handle(handlers::piste_builder::Parameters {
+                event,
+                pistes: &mut self.components.pistes,
+                piste_map: &mut self.components.piste_map,
+                selection: &mut self.handlers.selection,
+                terrain_artist: &mut self.systems.terrain_artist,
+                tree_artist: &mut self.systems.tree_artist,
+                id_allocator: &mut self.components.services.id_allocator,
+            });
         self.handlers
             .lift_builder
             .handle(handlers::lift_builder::Parameters {
@@ -600,5 +603,12 @@ impl EventHandler for Game {
                 abilities: &self.components.abilities,
                 selection: &self.handlers.selection,
             });
+
+        self.systems.tree_artist.run(
+            graphics,
+            &self.components.trees,
+            &self.components.terrain,
+            &self.components.piste_map,
+        );
     }
 }

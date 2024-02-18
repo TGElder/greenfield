@@ -11,3 +11,4 @@ pub mod skiing_framer;
 pub mod target_scrubber;
 pub mod target_setter;
 pub mod terrain_artist;
+pub mod tree_artist;
