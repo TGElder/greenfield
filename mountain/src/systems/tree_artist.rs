@@ -6,7 +6,7 @@ use crate::model::tree::Tree;
 
 pub struct System {
     pub drawing: Option<Drawing>,
-    pub redraw: bool,
+    pub update: bool,
 }
 
 impl System {
@@ -15,7 +15,7 @@ impl System {
     }
 
     pub fn update(&mut self) {
-        self.redraw = true;
+        self.update = true;
     }
 
     pub fn run(
@@ -25,11 +25,11 @@ impl System {
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
     ) {
-        if self.redraw {
+        if self.update {
             if let Some(drawing) = &mut self.drawing {
                 drawing.update(graphics, trees, terrain, piste_map);
             }
-            self.redraw = false;
+            self.update = false;
         }
     }
 }

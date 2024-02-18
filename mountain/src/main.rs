@@ -230,7 +230,7 @@ fn main() {
                 },
                 tree_artist: tree_artist::System {
                     drawing: None,
-                    redraw: true,
+                    update: true,
                 },
                 carousel: carousel::System::new(),
             },

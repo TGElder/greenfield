@@ -30,7 +30,6 @@ impl Drawing {
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
     ) {
-        println!("Drawing trees");
         let world_matrices = trees
             .iter()
             .flat_map(|position| trees[position].as_ref().map(|tree| (position, tree)))
