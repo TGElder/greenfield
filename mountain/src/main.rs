@@ -174,7 +174,7 @@ fn main() {
                 }),
                 zoom: zoom::Handler::new(zoom::Parameters {
                     initial_level: 1,
-                    min_level: 1,
+                    min_level: -1,
                     max_level: 8,
                     bindings: zoom::Bindings {
                         plus: Binding::Multi(vec![
