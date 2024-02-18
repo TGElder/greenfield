@@ -48,7 +48,8 @@ use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
-    overlay, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
+    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
+    tree_artist,
 };
 
 fn main() {
@@ -57,7 +58,6 @@ fn main() {
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
-            drawings: None,
             handlers: Handlers {
                 add_skier: add_skier::Handler {
                     binding: Binding::Single {
@@ -201,23 +201,24 @@ fn main() {
                 }),
             },
             systems: Systems {
-                overlay: overlay::System {
+                terrain_artist: terrain_artist::System {
+                    drawing: None,
                     updates: vec![XYRectangle {
                         from: xy(0, 0),
                         to: xy(
                             components.terrain.width() - 2,
                             components.terrain.height() - 2,
-                        ), // -2 because bottom right corner is width - 1, height - 1 and the overlay is on cells which also reduce each dimension by one
+                        ), // -2 because bottom right corner is width - 1, height - 1 and the artist deals with cells which also reduce each dimension by one
                     }],
-                    colors: overlay::Colors {
-                        piste: overlay::AbilityColors {
+                    colors: terrain_artist::Colors {
+                        piste: terrain_artist::AbilityColors {
                             beginner: Rgba::new(0, 98, 19, 128),
                             intermedite: Rgba::new(3, 105, 194, 128),
                             advanced: Rgba::new(219, 2, 3, 128),
                             expert: Rgba::new(3, 2, 3, 128),
                             ungraded: Rgba::new(238, 76, 2, 128),
                         },
-                        highlight: overlay::AbilityColors {
+                        highlight: terrain_artist::AbilityColors {
                             beginner: Rgba::new(0, 98, 19, 192),
                             intermedite: Rgba::new(3, 105, 194, 192),
                             advanced: Rgba::new(219, 2, 3, 192),
@@ -226,6 +227,10 @@ fn main() {
                         },
                         cliff: Rgba::new(6, 6, 6, 128),
                     },
+                },
+                tree_artist: tree_artist::System {
+                    drawing: None,
+                    update: true,
                 },
                 carousel: carousel::System::new(),
             },
@@ -307,7 +312,6 @@ fn new_components() -> Components {
 
 struct Game {
     components: Components,
-    drawings: Option<Drawings>,
     handlers: Handlers,
     systems: Systems,
     mouse_xy: Option<XY<u32>>,
@@ -341,11 +345,6 @@ pub struct Components {
     services: Services,
 }
 
-struct Drawings {
-    terrain: draw::terrain::Drawing,
-    _trees: draw::trees::Drawing,
-}
-
 struct Handlers {
     add_skier: add_skier::Handler,
     clock: handlers::clock::Handler,
@@ -367,7 +366,8 @@ struct Handlers {
 }
 
 struct Systems {
-    overlay: overlay::System,
+    terrain_artist: terrain_artist::System,
+    tree_artist: tree_artist::System,
     carousel: carousel::System,
 }
 
@@ -380,21 +380,10 @@ pub struct Services {
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
-        let terrain_drawing = draw::terrain::draw(graphics, terrain);
-
-        let tree_drawing = draw::trees::Drawing::init(graphics, &self.components.trees);
-        tree_drawing.update(
-            graphics,
-            &self.components.trees,
-            &self.components.terrain,
-            &self.components.piste_map,
-        );
-
-        self.drawings = Some(Drawings {
-            terrain: terrain_drawing,
-            _trees: tree_drawing,
-        });
-
+        self.systems.terrain_artist.init(graphics, terrain);
+        self.systems
+            .tree_artist
+            .init(graphics, &self.components.trees);
         graphics.look_at(
             &xyz(
                 terrain.width() as f32 / 2.0,
@@ -429,14 +418,17 @@ impl EventHandler for Game {
         self.handlers
             .clock
             .handle(event, &mut self.components.services.clock);
-        self.handlers.piste_builder.handle(
-            event,
-            &mut self.components.pistes,
-            &mut self.components.piste_map,
-            &mut self.handlers.selection,
-            &mut self.systems.overlay,
-            &mut self.components.services.id_allocator,
-        );
+        self.handlers
+            .piste_builder
+            .handle(handlers::piste_builder::Parameters {
+                event,
+                pistes: &mut self.components.pistes,
+                piste_map: &mut self.components.piste_map,
+                selection: &mut self.handlers.selection,
+                terrain_artist: &mut self.systems.terrain_artist,
+                tree_artist: &mut self.systems.tree_artist,
+                id_allocator: &mut self.components.services.id_allocator,
+            });
         self.handlers
             .lift_builder
             .handle(handlers::lift_builder::Parameters {
@@ -467,7 +459,7 @@ impl EventHandler for Game {
                 event,
                 piste_map: &self.components.piste_map,
                 selection: &mut self.handlers.selection,
-                overlay: &mut self.systems.overlay,
+                terrain_artist: &mut self.systems.terrain_artist,
                 id_allocator: &mut self.components.services.id_allocator,
                 entrances: &mut self.components.entrances,
                 open: &mut self.components.open,
@@ -493,7 +485,7 @@ impl EventHandler for Game {
             &self.mouse_xy,
             &self.components.terrain,
             graphics,
-            &mut self.systems.overlay,
+            &mut self.systems.terrain_artist,
         );
         self.handlers
             .piste_computer
@@ -510,7 +502,7 @@ impl EventHandler for Game {
                 costs: &mut self.components.costs,
                 abilities: &mut self.components.abilities,
                 clock: &mut self.components.services.clock,
-                overlay: &mut self.systems.overlay,
+                terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
 
@@ -597,18 +589,26 @@ impl EventHandler for Game {
                 pistes: &self.components.pistes,
                 piste_map: &self.components.piste_map,
                 highlights: &mut self.components.highlights,
-                overlay: &mut self.systems.overlay,
+                terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
 
-        self.systems.overlay.run(systems::overlay::Parameters {
+        self.systems
+            .terrain_artist
+            .run(systems::terrain_artist::Parameters {
+                graphics,
+                terrain: &self.components.terrain,
+                piste_map: &self.components.piste_map,
+                highlights: &self.components.highlights,
+                abilities: &self.components.abilities,
+                selection: &self.handlers.selection,
+            });
+
+        self.systems.tree_artist.run(
             graphics,
-            drawing: self.drawings.as_ref().map(|drawings| &drawings.terrain),
-            terrain: &self.components.terrain,
-            piste_map: &self.components.piste_map,
-            highlights: &self.components.highlights,
-            abilities: &self.components.abilities,
-            selection: &self.handlers.selection,
-        });
+            &self.components.trees,
+            &self.components.terrain,
+            &self.components.piste_map,
+        );
     }
 }

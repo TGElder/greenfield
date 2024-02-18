@@ -6,7 +6,7 @@ use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
-use crate::draw::terrain;
+use crate::draw::terrain::Drawing;
 use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::utils::ability::cell_ability;
@@ -14,6 +14,7 @@ use crate::utils::ability::cell_ability;
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
 pub struct System {
+    pub drawing: Option<Drawing>,
     pub updates: Vec<XYRectangle<u32>>,
     pub colors: Colors,
 }
@@ -96,7 +97,6 @@ impl Colors {
 
 pub struct Parameters<'a> {
     pub graphics: &'a mut dyn Graphics,
-    pub drawing: Option<&'a terrain::Drawing>,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub highlights: &'a HashSet<usize>,
@@ -105,6 +105,10 @@ pub struct Parameters<'a> {
 }
 
 impl System {
+    pub fn init(&mut self, graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
+        self.drawing = Some(Drawing::init(graphics, terrain))
+    }
+
     pub fn update(&mut self, update: XYRectangle<u32>) {
         self.updates.push(update);
     }
@@ -113,7 +117,6 @@ impl System {
         &mut self,
         Parameters {
             graphics,
-            drawing,
             terrain,
             piste_map,
             highlights,
@@ -121,7 +124,7 @@ impl System {
             selection,
         }: Parameters<'_>,
     ) {
-        let Some(drawing) = drawing else { return };
+        let Some(drawing) = &self.drawing else { return };
 
         for update in self.updates.drain(..) {
             let mut image = OriginGrid::from_rectangle(update, CLEAR);

@@ -9,7 +9,7 @@ use engine::binding::Binding;
 use crate::handlers::selection;
 use crate::model::piste::Piste;
 use crate::services::id_allocator;
-use crate::systems::overlay;
+use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -20,15 +20,28 @@ pub struct Bindings {
     pub subtract: Binding,
 }
 
+pub struct Parameters<'a> {
+    pub event: &'a engine::events::Event,
+    pub pistes: &'a mut HashMap<usize, Piste>,
+    pub piste_map: &'a mut Grid<Option<usize>>,
+    pub selection: &'a mut selection::Handler,
+    pub terrain_artist: &'a mut terrain_artist::System,
+    pub tree_artist: &'a mut tree_artist::System,
+    pub id_allocator: &'a mut id_allocator::Service,
+}
+
 impl Handler {
     pub fn handle(
         &mut self,
-        event: &engine::events::Event,
-        pistes: &mut HashMap<usize, Piste>,
-        piste_map: &mut Grid<Option<usize>>,
-        selection: &mut selection::Handler,
-        overlay: &mut overlay::System,
-        id_allocator: &mut id_allocator::Service,
+        Parameters {
+            event,
+            pistes,
+            piste_map,
+            selection,
+            terrain_artist,
+            tree_artist,
+            id_allocator,
+        }: Parameters<'_>,
     ) {
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
@@ -80,9 +93,10 @@ impl Handler {
             }
         }
 
-        // updating overlay
+        // updating art
 
-        overlay.update(rectangle);
+        terrain_artist.update(rectangle);
+        tree_artist.update();
 
         // clearing selection
 

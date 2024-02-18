@@ -8,7 +8,7 @@ use crate::handlers::selection;
 use crate::model::entrance::Entrance;
 use crate::model::reservation::Reservation;
 use crate::services::id_allocator;
-use crate::systems::overlay;
+use crate::systems::terrain_artist;
 
 pub struct Handler {
     pub binding: Binding,
@@ -18,7 +18,7 @@ pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
     pub piste_map: &'a Grid<Option<usize>>,
     pub selection: &'a mut selection::Handler,
-    pub overlay: &'a mut overlay::System,
+    pub terrain_artist: &'a mut terrain_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub open: &'a mut HashSet<usize>,
@@ -35,7 +35,7 @@ impl Handler {
         Parameters {
             event,
             selection,
-            overlay,
+            terrain_artist,
             piste_map,
             id_allocator,
             entrances,
@@ -57,7 +57,7 @@ impl Handler {
         // clearing selection
 
         selection.clear_selection();
-        overlay.update(rectangle);
+        terrain_artist.update(rectangle);
 
         // create entrance
 
