@@ -11,7 +11,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::services::clock;
-use crate::systems::overlay;
+use crate::systems::terrain_artist;
 use crate::utils::computer;
 
 pub struct Handler {
@@ -31,7 +31,7 @@ pub struct Parameters<'a> {
     pub costs: &'a mut HashMap<usize, Costs>,
     pub abilities: &'a mut HashMap<usize, Ability>,
     pub clock: &'a mut clock::Service,
-    pub overlay: &'a mut overlay::System,
+    pub terrain_artist: &'a mut terrain_artist::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -51,7 +51,7 @@ impl Handler {
             costs,
             abilities,
             clock,
-            overlay,
+            terrain_artist,
             graphics,
         }: Parameters<'_>,
     ) {
@@ -82,7 +82,7 @@ impl Handler {
 
         if let Some(piste) = pistes.get(&piste_id) {
             let grid = &piste.grid;
-            overlay.update(XYRectangle {
+            terrain_artist.update(XYRectangle {
                 from: *grid.origin(),
                 to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
             });

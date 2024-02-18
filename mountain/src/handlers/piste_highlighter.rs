@@ -4,7 +4,7 @@ use commons::geometry::{xy, XYRectangle, XY, XYZ};
 use commons::grid::Grid;
 
 use crate::model::piste::Piste;
-use crate::systems::overlay;
+use crate::systems::terrain_artist;
 
 #[derive(Default)]
 pub struct Handler {
@@ -17,7 +17,7 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub highlights: &'a mut HashSet<usize>,
-    pub overlay: &'a mut overlay::System,
+    pub terrain_artist: &'a mut terrain_artist::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -30,7 +30,7 @@ impl Handler {
             pistes,
             piste_map,
             highlights,
-            overlay,
+            terrain_artist,
             graphics,
         }: Parameters<'_>,
     ) {
@@ -55,23 +55,23 @@ impl Handler {
                 highlights.insert(selected_piste);
             }
 
-            update_overlay(pistes, overlay, self.selected_piste);
-            update_overlay(pistes, overlay, selected_piste);
+            update_terrain_artist(terrain_artist, pistes, self.selected_piste);
+            update_terrain_artist(terrain_artist, pistes, selected_piste);
 
             self.selected_piste = selected_piste;
         }
     }
 }
 
-fn update_overlay(
+fn update_terrain_artist(
+    terrain_artist: &mut terrain_artist::System,
     pistes: &HashMap<usize, Piste>,
-    overlay: &mut overlay::System,
     selected_piste: Option<usize>,
 ) {
     if let Some(selected_piste) = selected_piste {
         if let Some(piste) = pistes.get(&selected_piste) {
             let grid = &piste.grid;
-            overlay.update(XYRectangle {
+            terrain_artist.update(XYRectangle {
                 from: *grid.origin(),
                 to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
             });

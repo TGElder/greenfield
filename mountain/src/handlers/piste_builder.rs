@@ -9,7 +9,7 @@ use engine::binding::Binding;
 use crate::handlers::selection;
 use crate::model::piste::Piste;
 use crate::services::id_allocator;
-use crate::systems::overlay;
+use crate::systems::terrain_artist;
 
 pub struct Handler {
     pub bindings: Bindings,
@@ -27,7 +27,7 @@ impl Handler {
         pistes: &mut HashMap<usize, Piste>,
         piste_map: &mut Grid<Option<usize>>,
         selection: &mut selection::Handler,
-        overlay: &mut overlay::System,
+        terrain_artist: &mut terrain_artist::System,
         id_allocator: &mut id_allocator::Service,
     ) {
         let add = self.bindings.add.binds_event(event);
@@ -80,9 +80,9 @@ impl Handler {
             }
         }
 
-        // updating overlay
+        // updating terrain artist
 
-        overlay.update(rectangle);
+        terrain_artist.update(rectangle);
 
         // clearing selection
 

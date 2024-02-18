@@ -4,7 +4,7 @@ use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 use line_drawing::Bresenham;
 
-use crate::systems::overlay;
+use crate::systems::terrain_artist;
 
 use super::*;
 
@@ -34,7 +34,7 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         terrain: &Grid<f32>,
         graphics: &mut dyn engine::graphics::Graphics,
-        overlay: &mut overlay::System,
+        terrain_artist: &mut terrain_artist::System,
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
             self.update_last_cell(terrain, mouse_xy, graphics)
@@ -59,7 +59,7 @@ impl Handler {
                 .iter()
                 .chain(new_grid.iter())
                 .flat_map(|grid| grid.rectangle())
-                .for_each(|rectangle| overlay.update(rectangle));
+                .for_each(|rectangle| terrain_artist.update(rectangle));
         }
     }
 
