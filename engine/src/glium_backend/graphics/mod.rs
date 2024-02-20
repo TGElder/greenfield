@@ -55,6 +55,7 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 pub struct GliumGraphics {
     display: Display,
     projection: Box<dyn Projection>,
+    light_direction: [f32; 3],
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
@@ -116,6 +117,7 @@ impl GliumGraphics {
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
             projection: parameters.projection,
+            light_direction: [1.0, 0.0, 0.0],
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
@@ -151,7 +153,8 @@ impl GliumGraphics {
         S: glium::Surface,
     {
         let uniforms = glium::uniform! {
-            transform: self.projection.projection()
+            transform: self.projection.projection(),
+            light_direction: self.light_direction
         };
 
         for primitive in self.primitives.iter().flatten() {
@@ -198,6 +201,7 @@ impl GliumGraphics {
                 let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
                 uniforms = Some(glium::uniform! {
                     transform: self.projection.projection(),
+                    light_direction: self.light_direction,
                     base: base,
                     overlay: overlay,
                 });
@@ -252,7 +256,8 @@ impl GliumGraphics {
         S: glium::Surface,
     {
         let uniforms = glium::uniform! {
-            transform: self.projection.projection()
+            transform: self.projection.projection(),
+            light_direction: self.light_direction,
         };
 
         for InstancedPrimitives {
@@ -393,12 +398,19 @@ impl GliumGraphics {
     fn create_primitive(&mut self, triangles: &[Triangle]) -> Result<Primitive, Box<dyn Error>> {
         let vertices = triangles
             .iter()
-            .flat_map(|Triangle { corners, color }| {
-                corners.iter().map(|corner| ColoredVertex {
-                    position: (*corner).into(),
-                    color: [color.r, color.g, color.b],
-                })
-            })
+            .flat_map(
+                |Triangle {
+                     corners,
+                     normal,
+                     color,
+                 }| {
+                    corners.iter().map(|corner| ColoredVertex {
+                        position: (*corner).into(),
+                        normal: (*normal).into(),
+                        color: [color.r, color.g, color.b],
+                    })
+                },
+            )
             .collect::<Vec<ColoredVertex>>();
         let primitive = Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,

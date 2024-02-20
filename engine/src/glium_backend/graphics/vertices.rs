@@ -1,9 +1,10 @@
 #[derive(Copy, Clone)]
 pub struct ColoredVertex {
     pub position: [f32; 3],
+    pub normal: [f32; 3],
     pub color: [f32; 3],
 }
-glium::implement_vertex!(ColoredVertex, position, color);
+glium::implement_vertex!(ColoredVertex, position, normal, color);
 
 #[derive(Copy, Clone)]
 pub struct TexturedVertex {
