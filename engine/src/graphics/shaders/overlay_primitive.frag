@@ -2,6 +2,7 @@
 
 in vec2 fragment_texture_coordinates;
 in float depth;
+in float shade;
 
 out vec4 color;
 
@@ -12,6 +13,6 @@ void main() {
     vec4 base_color = texture(base, fragment_texture_coordinates);
     vec4 overlay_color = texture(overlay, fragment_texture_coordinates);
     float alpha = overlay_color.a;
-    color = base_color * (1.0 - alpha) + overlay_color * alpha;
+    color = base_color * (1.0 - alpha) * shade + overlay_color * alpha;
     color.a = depth;
 }

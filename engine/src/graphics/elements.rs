@@ -24,6 +24,7 @@ pub struct OverlayTriangles {
 #[derive(Clone, Copy, Debug)]
 pub struct TexturedPosition {
     pub position: XYZ<f32>,
+    pub normal: XYZ<f32>,
     pub texture_coordinates: XY<f32>,
 }
 

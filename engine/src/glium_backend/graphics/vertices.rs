@@ -9,9 +9,10 @@ glium::implement_vertex!(ColoredVertex, position, normal, color);
 #[derive(Copy, Clone)]
 pub struct TexturedVertex {
     pub position: [f32; 3],
+    pub normal: [f32; 3],
     pub texture_coordinates: [f32; 2],
 }
-glium::implement_vertex!(TexturedVertex, position, texture_coordinates);
+glium::implement_vertex!(TexturedVertex, position, normal, texture_coordinates);
 
 #[derive(Copy, Clone)]
 pub struct ScreenVertex {

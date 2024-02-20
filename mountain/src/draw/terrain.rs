@@ -1,16 +1,12 @@
-use std::f32::consts::PI;
-
-use commons::color::{Rgb, Rgba};
+use commons::color::Rgba;
 use commons::geometry::{xy, xyz, XYZ};
 use commons::grid::Grid;
 
 use commons::origin_grid::OriginGrid;
 use engine::graphics::elements::{OverlayTriangles, TexturedPosition};
 
-use engine::graphics::utils::textured_triangles_from_textured_quads;
+use engine::graphics::utils::{quad_normal, textured_triangles_from_textured_quads};
 use engine::graphics::Graphics;
-
-use nalgebra::Vector3;
 
 pub struct Drawing {
     overlay_texture: usize,
@@ -58,10 +54,13 @@ impl Drawing {
 
                         colors[xy(x, y)] = color(&corners);
 
+                        let normal = quad_normal(&corners);
+
                         let textured_positions = corners
                             .into_iter()
                             .map(|position| TexturedPosition {
                                 position,
+                                normal,
                                 texture_coordinates: xy(
                                     position.x / colors.width() as f32,
                                     position.y / colors.height() as f32,
@@ -110,28 +109,5 @@ impl Drawing {
 }
 
 fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {
-    let light_direction: Vector3<f32> = Vector3::new(1.0, 0.0, 0.0);
-    let base_color: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
-
-    let corners = corners
-        .iter()
-        .map(|XYZ { x, y, z }| Vector3::new(*x, *y, *z))
-        .collect::<Vec<_>>();
-
-    let u = corners[0] - corners[2];
-    let v = corners[1] - corners[3];
-    let normal = u.cross(&v);
-    let angle = normal.angle(&light_direction);
-    let shade = angle / PI;
-
-    fn to_u8(value: f32) -> u8 {
-        (value * 255.0).round() as u8
-    }
-
-    Rgba::new(
-        to_u8(base_color.r * shade),
-        to_u8(base_color.g * shade),
-        to_u8(base_color.b * shade),
-        255,
-    )
+    Rgba::new(255, 255, 255, 255)
 }

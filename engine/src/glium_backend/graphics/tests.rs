@@ -13,7 +13,9 @@ use crate::graphics::elements::Quad;
 use crate::graphics::models::cube;
 use crate::graphics::projections::isometric;
 use crate::graphics::transform::Transform;
-use crate::graphics::utils::{textured_triangles_from_textured_quads, triangles_from_quads};
+use crate::graphics::utils::{
+    quad_normal, textured_triangles_from_textured_quads, triangles_from_quads,
+};
 use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;

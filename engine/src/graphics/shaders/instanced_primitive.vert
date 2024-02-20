@@ -20,7 +20,10 @@ void main() {
     vec4 position = transform * world_matrix * vec4(position.x, position.y, position.z, 1.0);
     depth = position.z;
 
-    float angle = dot(normal, light_direction);
+    mat4 normal_transform = transpose(inverse(world_matrix));
+    vec3 transformed_normal = (normal_transform * vec4(normal, 1.0)).xyz;
+
+    float angle = acos(dot(transformed_normal, light_direction));
     shade = angle / PI;
 
     gl_Position = position;

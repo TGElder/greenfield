@@ -2,7 +2,7 @@ use commons::color::Rgb;
 use commons::geometry::xyz;
 use engine::graphics::elements::Quad;
 
-const BLACK: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
+const BLACK: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
 
 const POLE_FRONT: Quad = Quad {
     color: BLACK,

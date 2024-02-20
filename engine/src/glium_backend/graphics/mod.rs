@@ -117,7 +117,7 @@ impl GliumGraphics {
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
             projection: parameters.projection,
-            light_direction: [1.0, 0.0, 0.0],
+            light_direction: [0.577_350_26, 0.577_350_26, -0.577_350_26],
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
@@ -470,9 +470,11 @@ impl GliumGraphics {
                 corners.iter().map(
                     |TexturedPosition {
                          position,
+                         normal,
                          texture_coordinates,
                      }| TexturedVertex {
                         position: (*position).into(),
+                        normal: (*normal).into(),
                         texture_coordinates: (*texture_coordinates).into(),
                     },
                 )
