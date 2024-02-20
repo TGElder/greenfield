@@ -21,7 +21,7 @@ void main() {
     depth = position.z;
 
     mat4 normal_transform = transpose(inverse(world_matrix));
-    vec3 transformed_normal = (normal_transform * vec4(normal, 1.0)).xyz;
+    vec3 transformed_normal = normalize((normal_transform * vec4(normal, 1.0)).xyz);
 
     float angle = acos(dot(transformed_normal, light_direction));
     shade = angle / PI;
