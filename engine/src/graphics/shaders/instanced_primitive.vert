@@ -6,6 +6,7 @@ in vec3 position;
 in vec3 normal;
 in vec3 color;
 in mat4 world_matrix;
+in mat4 normal_matrix;
 
 out vec3 fragment_color;
 out float depth;
@@ -20,9 +21,7 @@ void main() {
     vec4 position = transform * world_matrix * vec4(position.x, position.y, position.z, 1.0);
     depth = position.z;
 
-    mat4 normal_transform = transpose(inverse(world_matrix));
-    vec3 transformed_normal = normalize((normal_transform * vec4(normal, 1.0)).xyz);
-
+    vec3 transformed_normal = normalize((normal_matrix * vec4(normal, 1.0)).xyz);
     float angle = acos(dot(transformed_normal, light_direction));
     shade = angle / PI;
 

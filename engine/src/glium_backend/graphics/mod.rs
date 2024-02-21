@@ -72,6 +72,7 @@ pub struct Parameters {
     pub width: u32,
     pub height: u32,
     pub projection: Box<dyn Projection>,
+    pub light_direction: XYZ<f32>,
 }
 
 impl GliumGraphics {
@@ -117,7 +118,7 @@ impl GliumGraphics {
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
             projection: parameters.projection,
-            light_direction: [0.577_350_26, 0.577_350_26, -0.577_350_26],
+            light_direction: parameters.light_direction.into(),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
@@ -438,6 +439,7 @@ impl GliumGraphics {
         let vertices = (0..*max_instances)
             .map(|_| InstanceVertex {
                 world_matrix: [[0.0; 4]; 4],
+                normal_matrix: [[0.0; 4]; 4],
             })
             .collect::<Vec<_>>();
         let instanced_primitives = InstancedPrimitives {
@@ -510,14 +512,19 @@ impl GliumGraphics {
 
         let vertices = world_matrices
             .iter()
-            .map(|matrix| {
+            .flat_map(|matrix| {
                 if let Some(matrix) = matrix {
-                    (*matrix).into()
+                    Some(InstanceVertex {
+                        world_matrix: (*matrix).into(),
+                        normal_matrix: (matrix.try_inverse()?.transpose()).into(),
+                    })
                 } else {
-                    [[0.0; 4]; 4]
+                    Some(InstanceVertex {
+                        world_matrix: [[0.0; 4]; 4],
+                        normal_matrix: [[0.0; 4]; 4],
+                    })
                 }
             })
-            .map(|world_matrix| InstanceVertex { world_matrix })
             .collect::<Vec<_>>();
         instanced_primitives.vertex_buffer.write(&vertices);
 

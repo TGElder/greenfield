@@ -1,5 +1,5 @@
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, XYZ};
+use commons::geometry::{xy, xyz};
 use commons::grid::Grid;
 
 use commons::origin_grid::OriginGrid;
@@ -7,6 +7,8 @@ use engine::graphics::elements::{OverlayTriangles, TexturedPosition};
 
 use engine::graphics::utils::{quad_normal, textured_triangles_from_textured_quads};
 use engine::graphics::Graphics;
+
+const WHITE: Rgba<u8> = Rgba::new(255, 255, 255, 255);
 
 pub struct Drawing {
     overlay_texture: usize,
@@ -19,11 +21,7 @@ impl Drawing {
             (terrain.width() / slab_size) + 1,
             (terrain.height() / slab_size) + 1,
         );
-        let mut colors = Grid::from_element(
-            terrain.width() - 1,
-            terrain.height() - 1,
-            Rgba::new(0, 0, 0, 0),
-        );
+        let colors = Grid::from_element(terrain.width() - 1, terrain.height() - 1, WHITE);
 
         let mut to_draw = Vec::with_capacity((slabs.x * slabs.y) as usize);
 
@@ -51,8 +49,6 @@ impl Drawing {
                                 )
                             })
                             .collect::<Vec<_>>();
-
-                        colors[xy(x, y)] = color(&corners);
 
                         let normal = quad_normal(&corners);
 
@@ -106,8 +102,4 @@ impl Drawing {
     ) -> Result<(), engine::graphics::errors::DrawError> {
         graphics.modify_texture(&self.overlay_texture, image)
     }
-}
-
-fn color(corners: &[XYZ<f32>]) -> Rgba<u8> {
-    Rgba::new(255, 255, 255, 255)
 }

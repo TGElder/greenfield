@@ -53,6 +53,7 @@ fn render_cube() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -129,6 +130,7 @@ fn instanced_cubes() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -225,6 +227,7 @@ fn render_billboard() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -289,6 +292,7 @@ fn render_overlay_quads() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -309,28 +313,40 @@ fn render_overlay_quads() {
         ))
         .unwrap();
 
-    fn textured_position(position: XYZ<f32>) -> TexturedPosition {
+    fn textured_position(position: XYZ<f32>, normal: XYZ<f32>) -> TexturedPosition {
         TexturedPosition {
             position,
+            normal,
             texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
         }
     }
 
-    let aa = textured_position(xyz(-0.5, -0.5, 0.0));
-    let ba = textured_position(xyz(0.0, -0.5, 0.0));
-    let ca = textured_position(xyz(0.5, -0.5, 0.0));
-    let ab = textured_position(xyz(-0.5, 0.0, 0.0));
-    let bb = textured_position(xyz(0.0, 0.0, 0.5));
-    let cb = textured_position(xyz(0.5, 0.0, 0.0));
-    let ac = textured_position(xyz(-0.5, 0.5, 0.0));
-    let bc = textured_position(xyz(0.0, 0.5, 0.0));
-    let cc = textured_position(xyz(0.5, 0.5, 0.0));
-    let quads = vec![
+    let aa = xyz(-0.5, -0.5, 0.0);
+    let ba = xyz(0.0, -0.5, 0.0);
+    let ca = xyz(0.5, -0.5, 0.0);
+    let ab = xyz(-0.5, 0.0, 0.0);
+    let bb = xyz(0.0, 0.0, 0.5);
+    let cb = xyz(0.5, 0.0, 0.0);
+    let ac = xyz(-0.5, 0.5, 0.0);
+    let bc = xyz(0.0, 0.5, 0.0);
+    let cc = xyz(0.5, 0.5, 0.0);
+    let quads = [
         [aa, ba, bb, ab],
         [ba, ca, cb, bb],
         [ab, bb, bc, ac],
         [bb, cb, cc, bc],
-    ];
+    ]
+    .into_iter()
+    .map(|quad| {
+        let normal = quad_normal(&quad);
+        [
+            textured_position(quad[0], normal),
+            textured_position(quad[1], normal),
+            textured_position(quad[2], normal),
+            textured_position(quad[3], normal),
+        ]
+    })
+    .collect::<Vec<_>>();
 
     let overlay_triangles = OverlayTriangles {
         base_texture,
@@ -414,6 +430,7 @@ fn look_at() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -470,6 +487,7 @@ fn drag_handler() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -547,6 +565,7 @@ fn yaw_handler() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -648,6 +667,7 @@ fn zoom_handler() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 
@@ -750,6 +770,7 @@ fn resize_handler() {
                 },
             },
         })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
     })
     .unwrap();
 

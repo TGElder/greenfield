@@ -27,14 +27,25 @@ pub fn triangles_from_quads(quads: &[Quad]) -> Vec<Triangle> {
     triangles
 }
 
+pub fn triangle_normal(corners: &[XYZ<f32>]) -> XYZ<f32> {
+    let vectors = corners
+        .iter()
+        .map(|XYZ { x, y, z }| Vector3::new(*x, *y, *z))
+        .collect::<Vec<_>>();
+    let u = vectors[0] - vectors[1];
+    let v = vectors[1] - vectors[2];
+    let normal = u.cross(&v).normalize();
+    xyz(normal.x, normal.y, normal.z)
+}
+
 pub fn quad_normal(corners: &[XYZ<f32>]) -> XYZ<f32> {
-    let corners = corners
+    let vectors = corners
         .iter()
         .map(|XYZ { x, y, z }| Vector3::new(*x, *y, *z))
         .collect::<Vec<_>>();
 
-    let u = corners[0] - corners[2];
-    let v = corners[1] - corners[3];
+    let u = vectors[0] - vectors[2];
+    let v = vectors[1] - vectors[3];
     let normal = u.cross(&v).normalize();
     xyz(normal.x, normal.y, normal.z)
 }

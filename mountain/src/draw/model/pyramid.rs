@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 use engine::graphics::elements::Triangle;
-use nalgebra::Vector3;
+use engine::graphics::utils::triangle_normal;
 
 pub fn model(radius: f32, base_z: f32, peak_z: f32, color: Rgb<f32>) -> [Triangle; 3] {
     let triangle = (0..3)
@@ -20,17 +20,9 @@ pub fn model(radius: f32, base_z: f32, peak_z: f32, color: Rgb<f32>) -> [Triangl
 }
 
 fn compute_triangle(corners: [XYZ<f32>; 3], color: Rgb<f32>) -> Triangle {
-    let vectors = corners
-        .iter()
-        .map(|XYZ { x, y, z }| Vector3::new(*x, *y, *z))
-        .collect::<Vec<_>>();
-    let u = vectors[0] - vectors[1];
-    let v = vectors[1] - vectors[2];
-    let normal = u.cross(&v).normalize();
-
     Triangle {
         corners,
-        normal: xyz(normal.x, normal.y, normal.z),
+        normal: triangle_normal(&corners),
         color,
     }
 }
