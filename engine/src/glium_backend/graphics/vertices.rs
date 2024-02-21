@@ -1,16 +1,18 @@
 #[derive(Copy, Clone)]
 pub struct ColoredVertex {
     pub position: [f32; 3],
+    pub normal: [f32; 3],
     pub color: [f32; 3],
 }
-glium::implement_vertex!(ColoredVertex, position, color);
+glium::implement_vertex!(ColoredVertex, position, normal, color);
 
 #[derive(Copy, Clone)]
 pub struct TexturedVertex {
     pub position: [f32; 3],
+    pub normal: [f32; 3],
     pub texture_coordinates: [f32; 2],
 }
-glium::implement_vertex!(TexturedVertex, position, texture_coordinates);
+glium::implement_vertex!(TexturedVertex, position, normal, texture_coordinates);
 
 #[derive(Copy, Clone)]
 pub struct ScreenVertex {
@@ -27,8 +29,9 @@ pub struct BillboardVertex {
 }
 glium::implement_vertex!(BillboardVertex, position, offset, texture_coordinates);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct InstanceVertex {
     pub world_matrix: [[f32; 4]; 4],
+    pub world_normal_matrix: [[f32; 4]; 4],
 }
-glium::implement_vertex!(InstanceVertex, world_matrix);
+glium::implement_vertex!(InstanceVertex, world_matrix, world_normal_matrix);

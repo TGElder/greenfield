@@ -55,6 +55,7 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 pub struct GliumGraphics {
     display: Display,
     projection: Box<dyn Projection>,
+    light_direction: [f32; 3],
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
@@ -71,6 +72,7 @@ pub struct Parameters {
     pub width: u32,
     pub height: u32,
     pub projection: Box<dyn Projection>,
+    pub light_direction: XYZ<f32>,
 }
 
 impl GliumGraphics {
@@ -116,6 +118,7 @@ impl GliumGraphics {
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
             projection: parameters.projection,
+            light_direction: parameters.light_direction.into(),
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
@@ -151,7 +154,8 @@ impl GliumGraphics {
         S: glium::Surface,
     {
         let uniforms = glium::uniform! {
-            transform: self.projection.projection()
+            transform: self.projection.projection(),
+            light_direction: self.light_direction
         };
 
         for primitive in self.primitives.iter().flatten() {
@@ -198,6 +202,7 @@ impl GliumGraphics {
                 let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
                 uniforms = Some(glium::uniform! {
                     transform: self.projection.projection(),
+                    light_direction: self.light_direction,
                     base: base,
                     overlay: overlay,
                 });
@@ -252,7 +257,8 @@ impl GliumGraphics {
         S: glium::Surface,
     {
         let uniforms = glium::uniform! {
-            transform: self.projection.projection()
+            transform: self.projection.projection(),
+            light_direction: self.light_direction,
         };
 
         for InstancedPrimitives {
@@ -393,12 +399,19 @@ impl GliumGraphics {
     fn create_primitive(&mut self, triangles: &[Triangle]) -> Result<Primitive, Box<dyn Error>> {
         let vertices = triangles
             .iter()
-            .flat_map(|Triangle { corners, color }| {
-                corners.iter().map(|corner| ColoredVertex {
-                    position: (*corner).into(),
-                    color: [color.r, color.g, color.b],
-                })
-            })
+            .flat_map(
+                |Triangle {
+                     corners,
+                     normal,
+                     color,
+                 }| {
+                    corners.iter().map(|corner| ColoredVertex {
+                        position: (*corner).into(),
+                        normal: (*normal).into(),
+                        color: [color.r, color.g, color.b],
+                    })
+                },
+            )
             .collect::<Vec<ColoredVertex>>();
         let primitive = Primitive {
             vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
@@ -424,9 +437,7 @@ impl GliumGraphics {
         }
 
         let vertices = (0..*max_instances)
-            .map(|_| InstanceVertex {
-                world_matrix: [[0.0; 4]; 4],
-            })
+            .map(|_| InstanceVertex::default())
             .collect::<Vec<_>>();
         let instanced_primitives = InstancedPrimitives {
             primitive: self.create_primitive(triangles)?,
@@ -458,9 +469,11 @@ impl GliumGraphics {
                 corners.iter().map(
                     |TexturedPosition {
                          position,
+                         normal,
                          texture_coordinates,
                      }| TexturedVertex {
                         position: (*position).into(),
+                        normal: (*normal).into(),
                         texture_coordinates: (*texture_coordinates).into(),
                     },
                 )
@@ -496,14 +509,16 @@ impl GliumGraphics {
 
         let vertices = world_matrices
             .iter()
-            .map(|matrix| {
+            .flat_map(|matrix| {
                 if let Some(matrix) = matrix {
-                    (*matrix).into()
+                    Some(InstanceVertex {
+                        world_matrix: (*matrix).into(),
+                        world_normal_matrix: (matrix.try_inverse()?.transpose()).into(),
+                    })
                 } else {
-                    [[0.0; 4]; 4]
+                    Some(InstanceVertex::default())
                 }
             })
-            .map(|world_matrix| InstanceVertex { world_matrix })
             .collect::<Vec<_>>();
         instanced_primitives.vertex_buffer.write(&vertices);
 

@@ -48,8 +48,9 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
         Model::Chair => model::chair::MODEL.iter(),
     };
     let transformed_quads = quads
-        .map(|quad| quad.transform(&transformation))
-        .collect::<Vec<_>>();
+        .copied()
+        .collect::<Vec<_>>()
+        .transform(&transformation);
     let triangles = triangles_from_quads(&transformed_quads);
     graphics.draw_triangles(index, &triangles).unwrap();
 }

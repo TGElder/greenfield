@@ -4,6 +4,7 @@ use commons::geometry::{Rectangle, XY, XYZ};
 #[derive(Clone, Copy, Debug)]
 pub struct Triangle {
     pub corners: [XYZ<f32>; 3],
+    pub normal: XYZ<f32>,
     pub color: Rgb<f32>,
 }
 
@@ -23,6 +24,7 @@ pub struct OverlayTriangles {
 #[derive(Clone, Copy, Debug)]
 pub struct TexturedPosition {
     pub position: XYZ<f32>,
+    pub normal: XYZ<f32>,
     pub texture_coordinates: XY<f32>,
 }
 

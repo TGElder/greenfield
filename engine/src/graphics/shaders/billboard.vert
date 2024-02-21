@@ -4,11 +4,11 @@ in vec3 position;
 in vec2 offset;
 in vec2 texture_coordinates;
 
-out vec2 fragment_texture_coordinates;
-out float depth;
-
 uniform mat4 transform;
 uniform mat4 scale;
+
+out vec2 fragment_texture_coordinates;
+out float depth;
 
 void main() {
     vec4 center = transform * vec4(position.x, position.y, position.z, 1.0);

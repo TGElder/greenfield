@@ -5,7 +5,7 @@ use engine::graphics::elements::Quad;
 use engine::graphics::utils::triangles_from_quads;
 use engine::graphics::Graphics;
 
-const BLACK: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
+const GREY: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 2]], height: f32) {
     let quads = segments
@@ -15,7 +15,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 
             let to = segment[1];
             [
                 Quad {
-                    color: BLACK,
+                    color: GREY,
                     corners: [
                         xyz(from.x, from.y, from.z),
                         xyz(from.x, from.y, from.z + height),
@@ -24,7 +24,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 
                     ],
                 },
                 Quad {
-                    color: BLACK,
+                    color: GREY,
                     corners: [
                         xyz(from.x, from.y, from.z),
                         xyz(to.x, to.y, to.z),
