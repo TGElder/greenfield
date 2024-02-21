@@ -4,10 +4,10 @@ in vec2 fragment_texture_coordinates;
 in float depth;
 in float shade;
 
-out vec4 color;
-
 uniform sampler2D base;
 uniform sampler2D overlay;
+
+out vec4 color;
 
 void main() {
     vec4 base_color = texture(base, fragment_texture_coordinates);

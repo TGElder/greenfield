@@ -6,11 +6,11 @@ in vec3 position;
 in vec3 normal;
 in vec3 color;
 
-out vec3 fragment_color;
-out float depth;
-
 uniform mat4 transform;
 uniform vec3 light_direction;
+
+out vec3 fragment_color;
+out float depth;
 
 void main() {
     vec4 position = transform * vec4(position.x, position.y, position.z, 1.0);
