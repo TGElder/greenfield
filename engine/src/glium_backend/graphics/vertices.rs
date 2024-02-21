@@ -29,9 +29,9 @@ pub struct BillboardVertex {
 }
 glium::implement_vertex!(BillboardVertex, position, offset, texture_coordinates);
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct InstanceVertex {
     pub world_matrix: [[f32; 4]; 4],
-    pub normal_matrix: [[f32; 4]; 4],
+    pub world_normal_matrix: [[f32; 4]; 4],
 }
-glium::implement_vertex!(InstanceVertex, world_matrix, normal_matrix);
+glium::implement_vertex!(InstanceVertex, world_matrix, world_normal_matrix);

@@ -437,10 +437,7 @@ impl GliumGraphics {
         }
 
         let vertices = (0..*max_instances)
-            .map(|_| InstanceVertex {
-                world_matrix: [[0.0; 4]; 4],
-                normal_matrix: [[0.0; 4]; 4],
-            })
+            .map(|_| InstanceVertex::default())
             .collect::<Vec<_>>();
         let instanced_primitives = InstancedPrimitives {
             primitive: self.create_primitive(triangles)?,
@@ -516,13 +513,10 @@ impl GliumGraphics {
                 if let Some(matrix) = matrix {
                     Some(InstanceVertex {
                         world_matrix: (*matrix).into(),
-                        normal_matrix: (matrix.try_inverse()?.transpose()).into(),
+                        world_normal_matrix: (matrix.try_inverse()?.transpose()).into(),
                     })
                 } else {
-                    Some(InstanceVertex {
-                        world_matrix: [[0.0; 4]; 4],
-                        normal_matrix: [[0.0; 4]; 4],
-                    })
+                    Some(InstanceVertex::default())
                 }
             })
             .collect::<Vec<_>>();

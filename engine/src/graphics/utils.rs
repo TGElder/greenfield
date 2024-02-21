@@ -7,8 +7,8 @@ pub fn triangles_from_quads(quads: &[Quad]) -> Vec<Triangle> {
     let triangles = quads
         .iter()
         .flat_map(|Quad { corners, color }| {
-            let [a, b, c, d] = corners;
             let normal = quad_normal(corners);
+            let [a, b, c, d] = corners;
             [
                 Triangle {
                     corners: [*a, *b, *d],

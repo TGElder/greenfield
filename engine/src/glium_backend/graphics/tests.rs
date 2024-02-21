@@ -90,10 +90,7 @@ fn render_cube() {
 
     let transformation = yaw * roll;
 
-    let rear_facing_triangles = triangles
-        .iter()
-        .map(|quad| quad.transform(&transformation))
-        .collect::<Vec<_>>();
+    let rear_facing_triangles = triangles.transform(&transformation);
     graphics
         .draw_triangles(&index, &rear_facing_triangles)
         .unwrap();

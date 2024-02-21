@@ -14,13 +14,12 @@ uniform mat4 transform;
 uniform vec3 light_direction;
 
 void main() {
-    fragment_texture_coordinates = texture_coordinates;
-
     vec4 position = transform * vec4(position.x, position.y, position.z, 1.0);
+
+    float light_angle = acos(dot(normal, light_direction));
+
+    fragment_texture_coordinates = texture_coordinates;
     depth = position.z; 
-
-    float angle = acos(dot(normal, light_direction));
-    shade = angle / PI;
-
+    shade = light_angle / PI;
     gl_Position = position;
 }

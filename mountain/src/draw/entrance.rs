@@ -1,5 +1,3 @@
-use std::iter::once;
-
 use commons::color::Rgb;
 use commons::geometry::{xyz, XYRectangle, XYZ};
 
@@ -121,7 +119,5 @@ fn scaled_and_translated_cube(
 
     let cube = cube::model(coloring);
 
-    once(cube)
-        .flatten()
-        .map(move |quad| quad.transform(&transformation))
+    cube.to_vec().transform(&transformation).into_iter()
 }
