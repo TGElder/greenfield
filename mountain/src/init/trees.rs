@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use commons::geometry::xy;
 use commons::grid::Grid;
 use commons::noise::simplex_noise;
@@ -41,7 +43,9 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
                 continue;
             }
 
-            out[position] = Some(Tree { yaw: rng.gen() })
+            out[position] = Some(Tree {
+                yaw: rng.gen::<f32>() * 2.0 * PI,
+            })
         }
     }
 
