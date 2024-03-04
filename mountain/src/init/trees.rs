@@ -16,7 +16,7 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
 
     let min_elevation = 192.0; // elevation at border. Tree probability is 1.0 at elevation 0 but you probably don't want probability 1.0.
     let tree_line_elevation = 512.0;
-    let noise_to_elevation = Scale::new(
+    let noise_to_max_elevation = Scale::new(
         (0.0, 1.0),
         (-min_elevation, tree_line_elevation - min_elevation),
     );
@@ -36,8 +36,8 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
 
             let noise = noise[position];
             let elevation = terrain[position];
-            let max_tree_elevation = noise_to_elevation.scale(noise);
-            if elevation > max_tree_elevation {
+            let max_elevation = noise_to_max_elevation.scale(noise);
+            if elevation > max_elevation {
                 continue;
             }
 
