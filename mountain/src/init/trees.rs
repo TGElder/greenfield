@@ -11,16 +11,19 @@ use crate::model::tree::Tree;
 use crate::utils::ability::exposure;
 
 const STRIP_WIDTH: u32 = 4;
+const BORDER_ELEVATION: f32 = 192.0; // Tree probability is 1.0 at elevation 0 but you probably don't want probability 1.0.
+const TREE_LINE_ELEVATION: f32 = 512.0;
+const SEA_LEVEL_MAX_TREE_HEIGHT: f32 = 40.0;
+const TREE_LINE_MAX_TREE_HEIGHT: f32 = 1.0;
 
 pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
     let weights = vec![1.0; power as usize];
     let noise = simplex_noise(power, 1990, &weights).normalize();
 
-    let min_elevation = 192.0; // elevation at border. Tree probability is 1.0 at elevation 0 but you probably don't want probability 1.0.
-    let tree_line_elevation = 512.0;
-    let noise_to_max_elevation = Scale::new(
+    let noise_to_max_elevation = Scale::new((0.0, 1.0), (0.0, TREE_LINE_ELEVATION));
+    let noise_to_tree_height = Scale::new(
         (0.0, 1.0),
-        (-min_elevation, tree_line_elevation - min_elevation),
+        (SEA_LEVEL_MAX_TREE_HEIGHT, TREE_LINE_MAX_TREE_HEIGHT),
     );
 
     let mut out = noise.map(|_, _| None);
@@ -37,7 +40,7 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
             }
 
             let noise = noise[position];
-            let elevation = terrain[position];
+            let elevation = terrain[position] + BORDER_ELEVATION;
             let max_elevation = noise_to_max_elevation.scale(noise);
             if elevation > max_elevation {
                 continue;
@@ -45,6 +48,7 @@ pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
 
             out[position] = Some(Tree {
                 yaw: rng.gen::<f32>() * 2.0 * PI,
+                height: noise_to_tree_height.scale(noise),
             })
         }
     }

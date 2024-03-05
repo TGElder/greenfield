@@ -50,7 +50,7 @@ impl Drawing {
 fn tree_world_matrix(
     terrain: &Grid<f32>,
     position: &XY<u32>,
-    Tree { yaw, .. }: &Tree,
+    Tree { yaw, height }: &Tree,
 ) -> Matrix4<f32> {
     let XYZ { x, y, z } = xyz(position.x as f32, position.y as f32, terrain[position]);
     let translation: Matrix4<f32> = [
@@ -71,5 +71,13 @@ fn tree_world_matrix(
     ]
     .into();
 
-    translation * rotation
+    let scale: Matrix4<f32> = [
+        [*height, 0.0, 0.0, 0.0],
+        [0.0, *height, 0.0, 0.0],
+        [0.0, 0.0, *height, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+
+    translation * rotation * scale
 }
