@@ -8,6 +8,7 @@ use crate::model::tree::Tree;
 
 pub struct Drawing {
     pub index: usize,
+    pub tree_count: usize,
 }
 
 impl Drawing {
@@ -20,10 +21,10 @@ impl Drawing {
         let index = graphics
             .create_instanced_triangles(&triangles, &tree_count)
             .unwrap();
-        Drawing { index }
+        Drawing { index, tree_count }
     }
 
-    pub fn update(
+    pub fn draw(
         &self,
         graphics: &mut dyn Graphics,
         trees: &Grid<Option<Tree>>,
@@ -41,6 +42,13 @@ impl Drawing {
                 }
             })
             .collect::<Vec<_>>();
+        graphics
+            .update_instanced_triangles(&self.index, &world_matrices)
+            .unwrap();
+    }
+
+    pub fn hide(&self, graphics: &mut dyn Graphics) {
+        let world_matrices = vec![None; self.tree_count];
         graphics
             .update_instanced_triangles(&self.index, &world_matrices)
             .unwrap();

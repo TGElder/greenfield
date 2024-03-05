@@ -14,3 +14,4 @@ pub mod piste_computer;
 pub mod piste_highlighter;
 pub mod save;
 pub mod selection;
+pub mod tree_visibility;

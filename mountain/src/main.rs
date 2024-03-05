@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
-    piste_builder, piste_computer, piste_highlighter, save,
+    piste_builder, piste_computer, piste_highlighter, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -158,6 +158,12 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
+                tree_visibility: tree_visibility::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::T),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 yaw: yaw::Handler::new(yaw::Parameters {
                     initial_angle: 5,
                     angles: 16,
@@ -228,10 +234,7 @@ fn main() {
                         cliff: Rgba::new(6, 6, 6, 128),
                     },
                 },
-                tree_artist: tree_artist::System {
-                    drawing: None,
-                    update: true,
-                },
+                tree_artist: tree_artist::System::new(),
                 carousel: carousel::System::new(),
             },
             mouse_xy: None,
@@ -362,6 +365,7 @@ struct Handlers {
     lift_remover: lift_remover::Handler,
     save: save::Handler,
     selection: selection::Handler,
+    tree_visibility: tree_visibility::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
 }
@@ -488,6 +492,9 @@ impl EventHandler for Game {
             graphics,
             &mut self.systems.terrain_artist,
         );
+        self.handlers
+            .tree_visibility
+            .handle(event, &mut self.systems.tree_artist, graphics);
         self.handlers
             .piste_computer
             .handle(handlers::piste_computer::Parameters {
