@@ -6,9 +6,8 @@ use commons::unsafe_ordering::unsafe_ordering;
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
 use engine::graphics::transform::Transform;
-use engine::graphics::utils::triangles_from_quads;
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
 use engine::graphics::Graphics;
-use nalgebra::Matrix4;
 
 use crate::model::entrance::Entrance;
 
@@ -41,14 +40,14 @@ pub fn draw(
     let from_pole_height = bar_bottom_z - from.z;
     let to_pole_height = bar_bottom_z - to.z;
 
-    let from_pole = scaled_and_translated_cube(
-        xyz(0.1, 0.1, from_pole_height),
+    let from_pole = translated_and_scaled_cube(
         xyz(from.x, from.y, from.z + from_pole_height / 2.0),
+        xyz(0.1, 0.1, from_pole_height),
         &|_| STRUCTURE_COLOR,
     );
-    let to_pole = scaled_and_translated_cube(
-        xyz(0.1, 0.1, to_pole_height),
+    let to_pole = translated_and_scaled_cube(
         xyz(to.x, to.y, to.z + to_pole_height / 2.0),
+        xyz(0.1, 0.1, to_pole_height),
         &|_| STRUCTURE_COLOR,
     );
 
@@ -60,16 +59,16 @@ pub fn draw(
             STRUCTURE_COLOR
         }
     };
-    let banner = scaled_and_translated_cube(
-        xyz(
-            (from.x - to.x).abs() + 0.1,
-            (from.y - to.y).abs() + 0.1,
-            BAR_HEIGHT,
-        ),
+    let banner = translated_and_scaled_cube(
         xyz(
             from.x + (to.x - from.x) / 2.0,
             from.y + (to.y - from.y) / 2.0,
             bar_bottom_z + BAR_HEIGHT / 2.0,
+        ),
+        xyz(
+            (from.x - to.x).abs() + 0.1,
+            (from.y - to.y).abs() + 0.1,
+            BAR_HEIGHT,
         ),
         &coloring,
     );
@@ -94,28 +93,12 @@ fn entrance_side(
     }
 }
 
-fn scaled_and_translated_cube(
-    scale: XYZ<f32>,
+fn translated_and_scaled_cube(
     translation: XYZ<f32>,
+    scale: XYZ<f32>,
     coloring: &dyn Fn(cube::Side) -> Rgb<f32>,
 ) -> impl Iterator<Item = Quad> {
-    let translation: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [translation.x, translation.y, translation.z, 1.0],
-    ]
-    .into();
-
-    let scale: Matrix4<f32> = [
-        [scale.x, 0.0, 0.0, 0.0],
-        [0.0, scale.y, 0.0, 0.0],
-        [0.0, 0.0, scale.z, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
-
-    let transformation = translation * scale;
+    let transformation = transformation_matrix(translation, 0.0, 0.0, 0.0, scale);
 
     let cube = cube::model(coloring);
 

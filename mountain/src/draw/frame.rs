@@ -1,7 +1,7 @@
-use commons::geometry::XYZ;
+use commons::geometry::{xyz, XYZ};
 
 use engine::graphics::transform::Transform;
-use engine::graphics::utils::triangles_from_quads;
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
@@ -9,25 +9,8 @@ use crate::draw::model;
 use crate::model::frame::{Frame, Model};
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
-    let cos = frame.angle.cos();
-    let sin = frame.angle.sin();
-    let rotation: Matrix4<f32> = [
-        [cos, sin, 0.0, 0.0],
-        [-sin, cos, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
-
-    let translation: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [frame.position.x, frame.position.y, frame.position.z, 1.0],
-    ]
-    .into();
-
-    let mut transformation = translation * rotation;
+    let mut transformation =
+        transformation_matrix(frame.position, frame.angle, 0.0, 0.0, xyz(1.0, 1.0, 1.0));
 
     if let Some(XYZ { x, y, z }) = frame.model_offset {
         let offset: Matrix4<f32> = [
