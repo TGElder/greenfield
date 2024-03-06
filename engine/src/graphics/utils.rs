@@ -1,5 +1,5 @@
 use commons::geometry::{xyz, XYZ};
-use nalgebra::Vector3;
+use nalgebra::{Matrix4, Vector3};
 
 use crate::graphics::{Quad, TexturedPosition, Triangle};
 
@@ -57,4 +57,72 @@ pub fn textured_triangles_from_textured_quads(
         .iter()
         .flat_map(|[a, b, c, d]| [[*a, *b, *d], [*b, *c, *d]].into_iter())
         .collect()
+}
+
+pub fn transformation_matrix(
+    translation: XYZ<f32>,
+    yaw: f32,
+    pitch: f32,
+    roll: f32,
+    scale: XYZ<f32>,
+) -> Matrix4<f32> {
+    let translation: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [translation.x, translation.y, translation.z, 1.0],
+    ]
+    .into();
+
+    let yaw = if yaw == 0.0 {
+        Matrix4::identity()
+    } else {
+        let cos = yaw.cos();
+        let sin = yaw.sin();
+        [
+            [cos, sin, 0.0, 0.0],
+            [-sin, cos, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    };
+
+    let pitch = if pitch == 0.0 {
+        Matrix4::identity()
+    } else {
+        let cos = pitch.cos();
+        let sin = pitch.sin();
+        [
+            [cos, 0.0, -sin, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [sin, 0.0, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    };
+
+    let roll = if roll == 0.0 {
+        Matrix4::identity()
+    } else {
+        let cos = roll.cos();
+        let sin = roll.sin();
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, cos, sin, 0.0],
+            [0.0, -sin, cos, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    };
+
+    let scale: Matrix4<f32> = [
+        [scale.x, 0.0, 0.0, 0.0],
+        [0.0, scale.y, 0.0, 0.0],
+        [0.0, 0.0, scale.z, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+
+    translation * yaw * pitch * roll * scale
 }
