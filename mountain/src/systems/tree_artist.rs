@@ -5,16 +5,46 @@ use crate::draw::trees::Drawing;
 use crate::model::tree::Tree;
 
 pub struct System {
-    pub drawing: Option<Drawing>,
-    pub update: bool,
+    drawing: Option<Drawing>,
+    update: bool,
+    visible: bool,
 }
 
 impl System {
+    pub fn new() -> System {
+        System {
+            drawing: None,
+            update: true,
+            visible: true,
+        }
+    }
     pub fn init(&mut self, graphics: &mut dyn Graphics, trees: &Grid<Option<Tree>>) {
         self.drawing = Some(Drawing::init(graphics, trees))
     }
 
     pub fn update(&mut self) {
+        if self.visible {
+            self.update = true;
+        }
+    }
+
+    pub fn toggle_visible(&mut self, graphics: &mut dyn Graphics) {
+        if self.visible {
+            self.set_invisible(graphics);
+        } else {
+            self.set_visible();
+        }
+    }
+
+    fn set_invisible(&mut self, graphics: &mut dyn Graphics) {
+        self.visible = false;
+        if let Some(drawing) = &mut self.drawing {
+            drawing.hide(graphics);
+        }
+    }
+
+    fn set_visible(&mut self) {
+        self.visible = true;
         self.update = true;
     }
 
@@ -25,9 +55,9 @@ impl System {
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
     ) {
-        if self.update {
+        if self.visible && self.update {
             if let Some(drawing) = &mut self.drawing {
-                drawing.update(graphics, trees, terrain, piste_map);
+                drawing.draw(graphics, trees, terrain, piste_map);
             }
             self.update = false;
         }
