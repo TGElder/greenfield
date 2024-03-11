@@ -54,10 +54,12 @@ const CHAIR_SEAT: Quad = Quad {
     ],
 };
 
-pub const MODEL: [Quad; 5] = [
-    POLE_FRONT,
-    POLE_BACK,
-    CHAIR_REST_FRONT,
-    CHAIR_REST_BACK,
-    CHAIR_SEAT,
-];
+pub fn model() -> Vec<Quad> {
+    vec![
+        POLE_FRONT,
+        POLE_BACK,
+        CHAIR_REST_FRONT,
+        CHAIR_REST_BACK,
+        CHAIR_SEAT,
+    ]
+}

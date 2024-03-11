@@ -64,11 +64,13 @@ const SKIS: Quad = Quad {
     ],
 };
 
-pub const MODEL: [Quad; 6] = [
-    TORSO_FRONT,
-    TORSO_BACK,
-    LEGS_TOP,
-    LEGS_BOTTOM_FRONT,
-    LEGS_BOTTOM_BACK,
-    SKIS,
-];
+pub fn model() -> Vec<Quad> {
+    vec![
+        TORSO_FRONT,
+        TORSO_BACK,
+        LEGS_TOP,
+        LEGS_BOTTOM_FRONT,
+        LEGS_BOTTOM_BACK,
+        SKIS,
+    ]
+}
