@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use commons::geometry::{xyz, XYZ};
 
 use engine::graphics::transform::Transform;
@@ -25,15 +27,16 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
     }
 
     let quads = match frame.model {
-        Model::Standing { skis: false } => model::skier_standing::WITHOUT_SKIS.iter(),
-        Model::Standing { skis: true } => model::skier_standing::WITH_SKIS.iter(),
-        Model::Sitting => model::skier_sitting::MODEL.iter(),
-        Model::Chair => model::chair::MODEL.iter(),
+        Model::Standing { skis: false } => {
+            model::skier::model(PI / 16.0, -PI / 4.0, PI / 6.0).into_iter()
+        }
+        Model::Standing { skis: true } => {
+            model::skier::model(PI / 16.0, -PI / 4.0, PI / 6.0).into_iter()
+        }
+        Model::Sitting => model::skier_sitting::model().into_iter(),
+        Model::Chair => model::chair::model().into_iter(),
     };
-    let transformed_quads = quads
-        .copied()
-        .collect::<Vec<_>>()
-        .transform(&transformation);
+    let transformed_quads = quads.collect::<Vec<_>>().transform(&transformation);
     let triangles = triangles_from_quads(&transformed_quads);
     graphics.draw_triangles(index, &triangles).unwrap();
 }
