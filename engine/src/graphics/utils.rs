@@ -59,6 +59,16 @@ pub fn textured_triangles_from_textured_quads(
         .collect()
 }
 
+pub fn translation_matrix(translation: XYZ<f32>) -> Matrix4<f32> {
+    [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [translation.x, translation.y, translation.z, 1.0],
+    ]
+    .into()
+}
+
 pub fn transformation_matrix(
     translation: XYZ<f32>,
     yaw: f32,
@@ -66,13 +76,7 @@ pub fn transformation_matrix(
     roll: f32,
     scale: XYZ<f32>,
 ) -> Matrix4<f32> {
-    let translation: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [translation.x, translation.y, translation.z, 1.0],
-    ]
-    .into();
+    let translation = translation_matrix(translation);
 
     let yaw = if yaw == 0.0 {
         Matrix4::identity()
