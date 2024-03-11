@@ -29,8 +29,8 @@ pub fn model(lower_leg_pitch: f32, upper_leg_pitch: f32, torso_pitch: f32) -> Ve
             0.0,
             xyz(0.2, 0.5, 0.5),
         ));
-    let ski_centre = (SKIS.corners[0] + SKIS.corners[1]) / 2.0;
-    let offset = ski_centre - lower_legs[Side::Bottom.index()].corners[3];
+    let ski_center = (SKIS.corners[0] + SKIS.corners[1]) / 2.0;
+    let offset = ski_center - lower_legs[Side::Bottom.index()].corners[3];
     let lower_legs = lower_legs.transform(&translation_matrix(offset));
 
     let upper_legs = cube::model(&|_| COLOR)
@@ -67,11 +67,11 @@ pub fn model(lower_leg_pitch: f32, upper_leg_pitch: f32, torso_pitch: f32) -> Ve
             0.0,
             xyz(0.25, 0.25, 0.25),
         ));
-    let torso_middle =
+    let torso_center =
         (torso[Side::Top.index()].corners[0] + torso[Side::Top.index()].corners[3]) / 2.0;
-    let head_middle =
+    let head_center =
         (head[Side::Bottom.index()].corners[0] + head[Side::Bottom.index()].corners[1]) / 2.0;
-    let offset = torso_middle - head_middle;
+    let offset = torso_center - head_center;
     let head = head.transform(&transformation_matrix(
         offset,
         0.0,
