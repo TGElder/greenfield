@@ -8,8 +8,13 @@ use crate::draw::model;
 use crate::model::frame::{Frame, Model};
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
-    let transformation =
-        transformation_matrix(frame.position, frame.angle, 0.0, 0.0, xyz(1.0, 1.0, 1.0));
+    let transformation = transformation_matrix(
+        frame.position,
+        frame.yaw,
+        frame.pitch,
+        0.0,
+        xyz(1.0, 1.0, 1.0),
+    );
 
     let quads = match frame.model {
         Model::Standing { skis: false } => model::skier_standing::model().quads.into_iter(),
