@@ -1,76 +1,35 @@
-use commons::color::Rgb;
+use std::collections::HashMap;
+use std::f32::consts::PI;
+
 use commons::geometry::xyz;
-use engine::graphics::elements::Quad;
+use engine::graphics::transform::Transform;
+use engine::graphics::utils::translation_matrix;
 
-const COLOR: Rgb<f32> = Rgb::new(0.86, 0.01, 0.01);
+use crate::draw::model::{chair, skier, Model};
 
-const TORSO_FRONT: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(0.0, -0.25, 0.0),
-        xyz(0.0, 0.25, 0.0),
-        xyz(0.0, 0.25, 0.5),
-        xyz(0.0, -0.25, 0.5),
-    ],
-};
-
-const TORSO_BACK: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(0.0, -0.25, 0.5),
-        xyz(0.0, 0.25, 0.5),
-        xyz(0.0, 0.25, 0.0),
-        xyz(0.0, -0.25, 0.0),
-    ],
-};
-
-const LEGS_TOP: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(0.25, -0.25, 0.0),
-        xyz(0.25, 0.25, 0.0),
-        xyz(0.0, 0.25, 0.0),
-        xyz(0.0, -0.25, 0.0),
-    ],
-};
-
-const LEGS_BOTTOM_FRONT: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(0.25, -0.25, -0.25),
-        xyz(0.25, 0.25, -0.25),
-        xyz(0.25, 0.25, 0.0),
-        xyz(0.25, -0.25, 0.0),
-    ],
-};
-
-const LEGS_BOTTOM_BACK: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(0.25, -0.25, 0.0),
-        xyz(0.25, 0.25, 0.0),
-        xyz(0.25, 0.25, -0.25),
-        xyz(0.25, -0.25, -0.25),
-    ],
-};
-
-const SKIS: Quad = Quad {
-    color: COLOR,
-    corners: [
-        xyz(-0.25, -0.25, -0.25),
-        xyz(0.75, -0.25, -0.25),
-        xyz(0.75, 0.25, -0.25),
-        xyz(-0.25, 0.25, -0.25),
-    ],
-};
-
-pub fn model() -> Vec<Quad> {
-    vec![
-        TORSO_FRONT,
-        TORSO_BACK,
-        LEGS_TOP,
-        LEGS_BOTTOM_FRONT,
-        LEGS_BOTTOM_BACK,
-        SKIS,
-    ]
+pub fn model() -> Model<()> {
+    let skier_parameters = skier::Parameters {
+        lower_leg_pitch: 0.0,
+        lower_leg_scale: xyz(0.2, 0.5, 0.5),
+        upper_leg_pitch: -PI / 2.0,
+        upper_leg_scale: xyz(0.2, 0.5, 0.4),
+        torso_pitch: 0.0,
+        torso_scale: xyz(0.2, 0.5, 0.55),
+        head_pitch: 0.0,
+        head_scale: xyz(0.25, 0.25, 0.25),
+    };
+    let heels_to_knee = -xyz(
+        0.0,
+        0.0,
+        skier_parameters.lower_leg_scale.z - skier_parameters.upper_leg_scale.x,
+    );
+    let skier = skier::model(skier_parameters);
+    let chair = chair::model();
+    let offset = chair.attachment_points[&chair::AttachmentPoints::FrontOfChair]
+        - skier.attachment_points[&skier::AttachmentPoints::BackOfHeels]
+        + heels_to_knee;
+    Model {
+        quads: skier.quads.transform(&translation_matrix(offset)),
+        attachment_points: HashMap::new(),
+    }
 }
