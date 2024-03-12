@@ -36,13 +36,14 @@ pub fn run(
             let segment_meters = vector.magnitude();
             let p = car.distance_from_start_meters / segment_meters;
             let position = segment.from + vector * p;
-            let angle = vector.xy().angle();
+            let yaw = vector.xy().angle();
 
             frames.insert(
                 *car_id,
                 Some(Frame {
                     position,
-                    angle,
+                    yaw,
+                    pitch: 0.0,
                     model_offset: None,
                     model: Model::Chair,
                 }),
@@ -52,7 +53,8 @@ pub fn run(
                     *id,
                     Some(Frame {
                         position,
-                        angle,
+                        yaw,
+                        pitch: 0.0,
                         model_offset: Some(SITTING_OFFSET),
                         model: Model::Sitting,
                     }),

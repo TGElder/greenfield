@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use commons::geometry::xyz;
+use commons::geometry::{xy, xyz, XY};
 use commons::grid::Grid;
 use commons::scale::Scale;
 
@@ -37,7 +37,8 @@ fn frame_from_skiing_state(
 ) -> Frame {
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
-        angle: travel_direction.angle(),
+        yaw: travel_direction.angle(),
+        pitch: 0.0,
         model_offset: None,
         model: frame::Model::Standing { skis: true },
     }
@@ -57,12 +58,25 @@ fn moving_frame(terrain: &Grid<f32>, events: &[Event], micros: &u128) -> Option<
 fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame {
     let scale = Scale::new((from.micros as f32, to.micros as f32), (0.0, 1.0));
     let p = scale.scale(*micros as f32);
+    let pitch = slope_pitch(terrain, &from.state.position, &to.state.position);
     let from = frame_from_skiing_state(terrain, &from.state);
     let to = frame_from_skiing_state(terrain, &to.state);
     Frame {
         position: from.position * (1.0 - p) + to.position * p,
-        angle: to.angle,
+        yaw: to.yaw,
+        pitch,
         model: from.model,
         model_offset: None,
     }
+}
+
+fn slope_pitch(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> f32 {
+    let rise = terrain[to] - terrain[from];
+    let run = xy(to.x as f32 - from.x as f32, to.y as f32 - from.y as f32).magnitude();
+
+    if run == 0.0 {
+        return 0.0;
+    }
+
+    (-rise / run).atan()
 }
