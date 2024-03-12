@@ -18,7 +18,7 @@ pub fn model() -> Model<()> {
         head_pitch: 0.0,
         head_scale: xyz(0.25, 0.25, 0.25),
     };
-    let heels_to_knee = -xyz(
+    let heels_to_knee = xyz(
         0.0,
         0.0,
         skier_parameters.lower_leg_scale.z - skier_parameters.upper_leg_scale.x,
@@ -27,7 +27,7 @@ pub fn model() -> Model<()> {
     let chair = chair::model();
     let offset = chair.attachment_points[&chair::AttachmentPoints::FrontOfChair]
         - skier.attachment_points[&skier::AttachmentPoints::BackOfHeels]
-        + heels_to_knee;
+        - heels_to_knee;
     Model {
         quads: skier.quads.transform(&translation_matrix(offset)),
         attachment_points: HashMap::new(),
