@@ -1,9 +1,11 @@
 use std::collections::HashMap;
 
+use commons::color::Rgb;
 use commons::geometry::{xy, xyz, XY};
 use commons::grid::Grid;
 use commons::scale::Scale;
 
+use crate::model::clothes::{self, Clothes};
 use crate::model::frame::{self, Frame};
 use crate::model::skiing::{Event, Plan, State};
 
@@ -11,19 +13,29 @@ pub fn run(
     terrain: &Grid<f32>,
     micros: &u128,
     plans: &HashMap<usize, Plan>,
+    clothes: &HashMap<usize, Clothes<clothes::Color>>,
     frames: &mut HashMap<usize, Option<Frame>>,
 ) {
     for (id, plan) in plans {
-        if let Some(frame) = frame_from_plan(terrain, micros, plan) {
+        let clothes = clothes
+            .get(id)
+            .map(|clothes| clothes.into())
+            .unwrap_or(missing_clothes());
+        if let Some(frame) = frame_from_plan(terrain, micros, plan, clothes) {
             frames.insert(*id, Some(frame));
         };
     }
 }
 
-fn frame_from_plan(terrain: &Grid<f32>, micros: &u128, plan: &Plan) -> Option<Frame> {
+fn frame_from_plan(
+    terrain: &Grid<f32>,
+    micros: &u128,
+    plan: &Plan,
+    clothes: Clothes<Rgb<f32>>,
+) -> Option<Frame> {
     match plan {
-        Plan::Stationary(state) => Some(frame_from_skiing_state(terrain, state)),
-        Plan::Moving(events) => moving_frame(terrain, events, micros),
+        Plan::Stationary(state) => Some(frame_from_skiing_state(terrain, state, clothes)),
+        Plan::Moving(events) => moving_frame(terrain, events, micros, clothes),
     }
 }
 
@@ -34,33 +46,48 @@ fn frame_from_skiing_state(
         travel_direction,
         ..
     }: &State,
+    clothes: Clothes<Rgb<f32>>,
 ) -> Frame {
     Frame {
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         yaw: travel_direction.angle(),
         pitch: 0.0,
         model_offset: None,
-        model: frame::Model::Standing { skis: true },
+        model: frame::Model::Standing {
+            skis: true,
+            clothes,
+        },
     }
 }
 
-fn moving_frame(terrain: &Grid<f32>, events: &[Event], micros: &u128) -> Option<Frame> {
+fn moving_frame(
+    terrain: &Grid<f32>,
+    events: &[Event],
+    micros: &u128,
+    clothes: Clothes<Rgb<f32>>,
+) -> Option<Frame> {
     let maybe_pair = events.windows(2).find(|maybe_pair| match maybe_pair {
         [from, to] => from.micros <= *micros && to.micros > *micros,
         _ => false,
     });
     match maybe_pair {
-        Some([from, to]) => Some(blend(terrain, micros, from, to)),
+        Some([from, to]) => Some(blend(terrain, micros, clothes, from, to)),
         _ => None,
     }
 }
 
-fn blend(terrain: &Grid<f32>, micros: &u128, from: &Event, to: &Event) -> Frame {
+fn blend(
+    terrain: &Grid<f32>,
+    micros: &u128,
+    clothes: Clothes<Rgb<f32>>,
+    from: &Event,
+    to: &Event,
+) -> Frame {
     let scale = Scale::new((from.micros as f32, to.micros as f32), (0.0, 1.0));
     let p = scale.scale(*micros as f32);
     let pitch = slope_pitch(terrain, &from.state.position, &to.state.position);
-    let from = frame_from_skiing_state(terrain, &from.state);
-    let to = frame_from_skiing_state(terrain, &to.state);
+    let from = frame_from_skiing_state(terrain, &from.state, clothes);
+    let to = frame_from_skiing_state(terrain, &to.state, clothes);
     Frame {
         position: from.position * (1.0 - p) + to.position * p,
         yaw: to.yaw,
@@ -79,4 +106,14 @@ fn slope_pitch(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> f32 {
     }
 
     (-rise / run).atan()
+}
+
+fn missing_clothes() -> Clothes<Rgb<f32>> {
+    const MISSING_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
+    Clothes {
+        skis: MISSING_COLOR,
+        trousers: MISSING_COLOR,
+        jacket: MISSING_COLOR,
+        helmet: MISSING_COLOR,
+    }
 }
