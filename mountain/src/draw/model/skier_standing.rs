@@ -1,10 +1,11 @@
 use std::f32::consts::PI;
 
+use commons::color::Rgb;
 use commons::geometry::xyz;
 
 use crate::draw::model::{skier, Model};
 
-pub fn model() -> Model<skier::AttachmentPoints> {
+pub fn model() -> Model<Rgb<f32>, skier::AttachmentPoints> {
     skier::model(skier::Parameters {
         lower_leg_pitch: PI / 16.0,
         lower_leg_scale: xyz(0.2, 0.5, 0.5),

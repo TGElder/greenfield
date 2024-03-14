@@ -1,13 +1,14 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
+use commons::color::Rgb;
 use commons::geometry::xyz;
 use engine::graphics::transform::Transform;
 use engine::graphics::utils::translation_matrix;
 
 use crate::draw::model::{chair, skier, Model};
 
-pub fn model() -> Model<()> {
+pub fn model() -> Model<Rgb<f32>, ()> {
     let skier_parameters = skier::Parameters {
         lower_leg_pitch: 0.0,
         lower_leg_scale: xyz(0.2, 0.5, 0.5),

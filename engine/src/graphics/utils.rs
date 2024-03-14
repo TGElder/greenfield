@@ -3,7 +3,10 @@ use nalgebra::{Matrix4, Vector3};
 
 use crate::graphics::{Quad, TexturedPosition, Triangle};
 
-pub fn triangles_from_quads(quads: &[Quad]) -> Vec<Triangle> {
+pub fn triangles_from_quads<T>(quads: &[Quad<T>]) -> Vec<Triangle<T>>
+where
+    T: Copy,
+{
     let triangles = quads
         .iter()
         .flat_map(|Quad { corners, color }| {

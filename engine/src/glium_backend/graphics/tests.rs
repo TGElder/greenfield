@@ -12,7 +12,7 @@ use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::models::cube;
 use crate::graphics::projections::isometric;
-use crate::graphics::transform::Transform;
+use crate::graphics::transform::{Recolor, Transform};
 use crate::graphics::utils::{
     quad_normal, textured_triangles_from_textured_quads, triangles_from_quads,
 };
@@ -20,8 +20,8 @@ use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;
 
-fn cube_triangles() -> Vec<Triangle> {
-    let quads = cube::model(&|side| match side {
+fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
+    let quads = cube::model().recolor(&|side| match side {
         cube::Side::Left => Rgb::new(1.0, 1.0, 0.0),
         cube::Side::Right => Rgb::new(0.0, 0.0, 1.0),
         cube::Side::Back => Rgb::new(1.0, 0.0, 1.0),

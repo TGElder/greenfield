@@ -5,14 +5,14 @@ use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube::{self, Side};
-use engine::graphics::transform::Transform;
+use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, translation_matrix};
 
 use crate::draw::model::Model;
 
 const COLOR: Rgb<f32> = Rgb::new(0.86, 0.01, 0.01);
 
-const SKIS: Quad = Quad {
+const SKIS: Quad<Rgb<f32>> = Quad {
     color: COLOR,
     corners: [
         xyz(-0.8, -0.25, 0.0),
@@ -49,9 +49,9 @@ pub fn model(
         head_pitch,
         head_scale,
     }: Parameters,
-) -> Model<AttachmentPoints> {
-    let lower_legs = cube::model(&|_| COLOR)
-        .to_vec()
+) -> Model<Rgb<f32>, AttachmentPoints> {
+    let lower_legs = cube::model()
+        .recolor(&|_| COLOR)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -63,8 +63,8 @@ pub fn model(
     let offset = ski_center - lower_legs[Side::Bottom.index()].corners[3];
     let lower_legs = lower_legs.transform(&translation_matrix(offset));
 
-    let upper_legs = cube::model(&|_| COLOR)
-        .to_vec()
+    let upper_legs = cube::model()
+        .recolor(&|_| COLOR)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -78,8 +78,8 @@ pub fn model(
     let lower_legs_top = lower_legs[Side::Bottom.index()].corners;
     let back_of_heels = (lower_legs_top[0] + lower_legs_top[1]) / 2.0;
 
-    let torso = cube::model(&|_| COLOR)
-        .to_vec()
+    let torso = cube::model()
+        .recolor(&|_| COLOR)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -90,8 +90,8 @@ pub fn model(
     let offset = upper_legs[Side::Top.index()].corners[0] - torso[Side::Bottom.index()].corners[0];
     let torso = torso.transform(&translation_matrix(offset));
 
-    let head = cube::model(&|_| COLOR)
-        .to_vec()
+    let head = cube::model()
+        .recolor(&|_| COLOR)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,

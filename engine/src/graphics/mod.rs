@@ -7,7 +7,7 @@ pub mod projections;
 pub mod transform;
 pub mod utils;
 
-use commons::color::Rgba;
+use commons::color::{Rgb, Rgba};
 use commons::geometry::{XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
@@ -34,13 +34,17 @@ pub trait Graphics {
 
     fn create_instanced_triangles(
         &mut self,
-        triangles: &[Triangle],
+        triangles: &[Triangle<Rgb<f32>>],
         max_instances: &usize,
     ) -> Result<usize, IndexError>;
 
     fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
-    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError>;
+    fn draw_triangles(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), DrawError>;
 
     fn update_instanced_triangles(
         &mut self,
