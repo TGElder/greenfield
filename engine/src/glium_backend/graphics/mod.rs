@@ -13,7 +13,7 @@ use crate::graphics::errors::{
 use crate::graphics::projection::Projection;
 use crate::graphics::Graphics;
 use canvas::*;
-use commons::color::Rgba;
+use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
@@ -380,7 +380,7 @@ impl GliumGraphics {
     fn add_triangles_unsafe(
         &mut self,
         index: &usize,
-        triangles: &[Triangle],
+        triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), Box<dyn Error>> {
         if *index >= self.primitives.len() {
             return Err(format!(
@@ -396,7 +396,10 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn create_primitive(&mut self, triangles: &[Triangle]) -> Result<Primitive, Box<dyn Error>> {
+    fn create_primitive(
+        &mut self,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<Primitive, Box<dyn Error>> {
         let vertices = triangles
             .iter()
             .flat_map(
@@ -429,7 +432,7 @@ impl GliumGraphics {
 
     fn create_instanced_triangles_unsafe(
         &mut self,
-        triangles: &[Triangle],
+        triangles: &[Triangle<Rgb<f32>>],
         max_instances: &usize,
     ) -> Result<usize, Box<dyn Error>> {
         if self.instanced_primitives.len() == isize::MAX as usize {
@@ -643,7 +646,7 @@ impl Graphics for GliumGraphics {
 
     fn create_instanced_triangles(
         &mut self,
-        triangles: &[Triangle],
+        triangles: &[Triangle<Rgb<f32>>],
         max_instances: &usize,
     ) -> Result<usize, IndexError> {
         Ok(self.create_instanced_triangles_unsafe(triangles, max_instances)?)
@@ -653,7 +656,11 @@ impl Graphics for GliumGraphics {
         Ok(self.create_billboards_unsafe()?)
     }
 
-    fn draw_triangles(&mut self, index: &usize, triangles: &[Triangle]) -> Result<(), DrawError> {
+    fn draw_triangles(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), DrawError> {
         Ok(self.add_triangles_unsafe(index, triangles)?)
     }
 

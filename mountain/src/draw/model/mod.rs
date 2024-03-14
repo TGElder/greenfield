@@ -10,7 +10,7 @@ pub mod skier_sitting;
 pub mod skier_standing;
 pub mod tree;
 
-pub struct Model<T> {
-    pub quads: Vec<Quad>,
-    pub attachment_points: HashMap<T, XYZ<f32>>,
+pub struct Model<T, U> {
+    pub quads: Vec<Quad<T>>,
+    pub attachment_points: HashMap<U, XYZ<f32>>,
 }

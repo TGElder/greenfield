@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
-use engine::graphics::transform::Transform;
+use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
 use engine::graphics::Graphics;
 
@@ -52,8 +52,8 @@ pub fn draw(
     );
 
     let entrance_side = entrance_side(entrance, piste_map);
-    let coloring = |side| {
-        if side == entrance_side {
+    let coloring = |side: &cube::Side| {
+        if *side == entrance_side {
             ENTRANCE_BANNER_COLOR
         } else {
             STRUCTURE_COLOR
@@ -96,11 +96,12 @@ fn entrance_side(
 fn translated_and_scaled_cube(
     translation: XYZ<f32>,
     scale: XYZ<f32>,
-    coloring: &dyn Fn(cube::Side) -> Rgb<f32>,
-) -> impl Iterator<Item = Quad> {
+    coloring: &dyn Fn(&cube::Side) -> Rgb<f32>,
+) -> impl Iterator<Item = Quad<Rgb<f32>>> {
     let transformation = transformation_matrix(translation, 0.0, 0.0, 0.0, scale);
 
-    let cube = cube::model(coloring);
-
-    cube.to_vec().transform(&transformation).into_iter()
+    cube::model()
+        .transform(&transformation)
+        .recolor(coloring)
+        .into_iter()
 }

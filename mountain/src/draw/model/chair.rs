@@ -8,7 +8,7 @@ use crate::draw::model::Model;
 
 const GREY: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
 
-const POLE_FRONT: Quad = Quad {
+const POLE_FRONT: Quad<Rgb<f32>> = Quad {
     color: GREY,
     corners: [
         xyz(0.0, -0.05, -1.0),
@@ -18,7 +18,7 @@ const POLE_FRONT: Quad = Quad {
     ],
 };
 
-const POLE_BACK: Quad = Quad {
+const POLE_BACK: Quad<Rgb<f32>> = Quad {
     color: GREY,
     corners: [
         xyz(0.0, -0.05, -0.0),
@@ -28,7 +28,7 @@ const POLE_BACK: Quad = Quad {
     ],
 };
 
-const CHAIR_REST_FRONT: Quad = Quad {
+const CHAIR_REST_FRONT: Quad<Rgb<f32>> = Quad {
     color: GREY,
     corners: [
         xyz(0.0, -0.75, -1.5),
@@ -38,7 +38,7 @@ const CHAIR_REST_FRONT: Quad = Quad {
     ],
 };
 
-const CHAIR_REST_BACK: Quad = Quad {
+const CHAIR_REST_BACK: Quad<Rgb<f32>> = Quad {
     color: GREY,
     corners: [
         xyz(0.0, -0.75, -1.0),
@@ -48,7 +48,7 @@ const CHAIR_REST_BACK: Quad = Quad {
     ],
 };
 
-const CHAIR_SEAT: Quad = Quad {
+const CHAIR_SEAT: Quad<Rgb<f32>> = Quad {
     color: GREY,
     corners: [
         xyz(0.5, -0.75, -1.5),
@@ -63,7 +63,7 @@ pub enum AttachmentPoints {
     FrontOfChair,
 }
 
-pub fn model() -> Model<AttachmentPoints> {
+pub fn model() -> Model<Rgb<f32>, AttachmentPoints> {
     Model {
         quads: vec![
             POLE_FRONT,

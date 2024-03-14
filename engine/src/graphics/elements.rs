@@ -1,17 +1,16 @@
-use commons::color::Rgb;
 use commons::geometry::{Rectangle, XY, XYZ};
 
 #[derive(Clone, Copy, Debug)]
-pub struct Triangle {
+pub struct Triangle<T> {
     pub corners: [XYZ<f32>; 3],
     pub normal: XYZ<f32>,
-    pub color: Rgb<f32>,
+    pub color: T,
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Quad {
+pub struct Quad<T> {
     pub corners: [XYZ<f32>; 4],
-    pub color: Rgb<f32>,
+    pub color: T,
 }
 
 #[derive(Clone, Debug)]

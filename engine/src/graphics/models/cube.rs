@@ -1,4 +1,3 @@
-use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 
 use crate::graphics::elements::Quad;
@@ -17,36 +16,36 @@ const TOP: [XYZ<f32>; 4] = [
     xyz(-0.5, 0.5, 0.5),
 ];
 
-pub fn model(coloring: &dyn Fn(Side) -> Rgb<f32>) -> [Quad; 6] {
-    [
+pub fn model() -> Vec<Quad<Side>> {
+    vec![
         Quad {
             corners: [TOP[3], BASE[1], BASE[0], TOP[0]],
-            color: coloring(Side::Left),
+            color: Side::Left,
         },
         Quad {
             corners: [TOP[1], BASE[3], BASE[2], TOP[2]],
-            color: coloring(Side::Right),
+            color: Side::Right,
         },
         Quad {
             corners: [TOP[0], BASE[0], BASE[3], TOP[1]],
-            color: coloring(Side::Back),
+            color: Side::Back,
         },
         Quad {
             corners: [TOP[2], BASE[2], BASE[1], TOP[3]],
-            color: coloring(Side::Front),
+            color: Side::Front,
         },
         Quad {
             corners: BASE,
-            color: coloring(Side::Bottom),
+            color: Side::Bottom,
         },
         Quad {
             corners: TOP,
-            color: coloring(Side::Top),
+            color: Side::Top,
         },
     ]
 }
 
-#[derive(PartialEq)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Side {
     Right,
     Left,
