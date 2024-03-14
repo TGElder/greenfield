@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::iter::once;
 
-use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube::{self, Side};
@@ -10,10 +9,8 @@ use engine::graphics::utils::{transformation_matrix, translation_matrix};
 
 use crate::draw::model::Model;
 
-const COLOR: Rgb<f32> = Rgb::new(0.86, 0.01, 0.01);
-
-const SKIS: Quad<Rgb<f32>> = Quad {
-    color: COLOR,
+const SKIS: Quad<Color> = Quad {
+    color: Color::Skis,
     corners: [
         xyz(-0.8, -0.25, 0.0),
         xyz(0.8, -0.25, 0.0),
@@ -21,6 +18,14 @@ const SKIS: Quad<Rgb<f32>> = Quad {
         xyz(-0.8, 0.25, 0.0),
     ],
 };
+
+#[derive(Clone, Copy)]
+pub enum Color {
+    Skis,
+    Trousers,
+    Jacket,
+    Helmet,
+}
 
 #[derive(Eq, Hash, PartialEq)]
 pub enum AttachmentPoints {
@@ -49,9 +54,9 @@ pub fn model(
         head_pitch,
         head_scale,
     }: Parameters,
-) -> Model<Rgb<f32>, AttachmentPoints> {
+) -> Model<Color, AttachmentPoints> {
     let lower_legs = cube::model()
-        .recolor(&|_| COLOR)
+        .recolor(&|_| Color::Trousers)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -59,12 +64,15 @@ pub fn model(
             0.0,
             lower_leg_scale,
         ));
-    let ski_center = (SKIS.corners[0] + SKIS.corners[1]) / 2.0;
-    let offset = ski_center - lower_legs[Side::Bottom.index()].corners[3];
+    let ski_center = (SKIS.corners[0] + SKIS.corners[2]) / 2.0;
+    let lower_legs_bottom = lower_legs[Side::Bottom.index()].corners;
+    let back_of_heels = (lower_legs_bottom[0] + lower_legs_bottom[1]) / 2.0;
+    let front_of_feet = (lower_legs_bottom[2] + lower_legs_bottom[3]) / 2.0;
+    let offset = ski_center - front_of_feet;
     let lower_legs = lower_legs.transform(&translation_matrix(offset));
 
     let upper_legs = cube::model()
-        .recolor(&|_| COLOR)
+        .recolor(&|_| Color::Trousers)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -75,11 +83,9 @@ pub fn model(
     let offset =
         lower_legs[Side::Top.index()].corners[2] - upper_legs[Side::Bottom.index()].corners[2];
     let upper_legs = upper_legs.transform(&translation_matrix(offset));
-    let lower_legs_top = lower_legs[Side::Bottom.index()].corners;
-    let back_of_heels = (lower_legs_top[0] + lower_legs_top[1]) / 2.0;
 
     let torso = cube::model()
-        .recolor(&|_| COLOR)
+        .recolor(&|_| Color::Jacket)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,
@@ -87,11 +93,15 @@ pub fn model(
             0.0,
             torso_scale,
         ));
-    let offset = upper_legs[Side::Top.index()].corners[0] - torso[Side::Bottom.index()].corners[0];
+    let top_of_upper_legs = upper_legs[Side::Top.index()].corners;
+    let top_of_upper_legs_back = (top_of_upper_legs[0] + top_of_upper_legs[3]) / 2.0;
+    let bottom_of_torso = torso[Side::Bottom.index()].corners;
+    let bottom_of_torso_back = (bottom_of_torso[0] + bottom_of_torso[1]) / 2.0;
+    let offset = top_of_upper_legs_back - bottom_of_torso_back;
     let torso = torso.transform(&translation_matrix(offset));
 
     let head = cube::model()
-        .recolor(&|_| COLOR)
+        .recolor(&|_| Color::Helmet)
         .transform(&transformation_matrix(
             xyz(0.0, 0.0, 0.0),
             0.0,

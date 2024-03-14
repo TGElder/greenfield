@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 
 use crate::model::carousel::{Car, Carousel};
+use crate::model::clothes::{self, Clothes};
 use crate::model::frame::{Frame, Model};
 use crate::model::lift::Lift;
 
@@ -13,6 +15,7 @@ pub fn run(
     lifts: &HashMap<usize, Lift>,
     cars: &HashMap<usize, Car>,
     locations: &HashMap<usize, usize>,
+    clothes: &HashMap<usize, Clothes<clothes::Color>>,
     frames: &mut HashMap<usize, Option<Frame>>,
 ) {
     let location_reverse_map = locations
@@ -48,18 +51,35 @@ pub fn run(
                     model: Model::Chair,
                 }),
             );
-            if let Some(id) = location_reverse_map.get(car_id) {
-                frames.insert(
-                    *id,
-                    Some(Frame {
-                        position,
-                        yaw,
-                        pitch: 0.0,
-                        model_offset: Some(SITTING_OFFSET),
-                        model: Model::Sitting,
-                    }),
-                );
-            }
+
+            // skier riding in chair
+            let Some(id) = location_reverse_map.get(car_id) else {
+                continue;
+            };
+            let clothes = clothes
+                .get(id)
+                .map(|clothes| clothes.into())
+                .unwrap_or(missing_clothes());
+            frames.insert(
+                *id,
+                Some(Frame {
+                    position,
+                    yaw,
+                    pitch: 0.0,
+                    model_offset: Some(SITTING_OFFSET),
+                    model: Model::Sitting { clothes },
+                }),
+            );
         }
+    }
+}
+
+fn missing_clothes() -> Clothes<Rgb<f32>> {
+    const MISSING_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
+    Clothes {
+        skis: MISSING_COLOR,
+        trousers: MISSING_COLOR,
+        jacket: MISSING_COLOR,
+        helmet: MISSING_COLOR,
     }
 }

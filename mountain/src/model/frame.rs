@@ -1,6 +1,9 @@
+use commons::color::Rgb;
 use commons::geometry::XYZ;
 
-#[derive(Clone, Copy, Debug)]
+use crate::model::clothes::Clothes;
+
+#[derive(Clone, Copy)]
 pub struct Frame {
     pub position: XYZ<f32>,
     pub yaw: f32,
@@ -9,9 +12,14 @@ pub struct Frame {
     pub model: Model,
 }
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub enum Model {
-    Standing { skis: bool },
-    Sitting,
+    Standing {
+        skis: bool,
+        clothes: Clothes<Rgb<f32>>,
+    },
+    Sitting {
+        clothes: Clothes<Rgb<f32>>,
+    },
     Chair,
 }

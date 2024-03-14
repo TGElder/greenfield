@@ -36,6 +36,7 @@ use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
+use crate::model::clothes::{self, Clothes};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
@@ -302,6 +303,7 @@ fn new_components() -> Components {
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
         abilities: HashMap::default(),
+        clothes: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -338,6 +340,7 @@ pub struct Components {
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
     abilities: HashMap<usize, Ability>,
+    clothes: HashMap<usize, Clothes<clothes::Color>>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -417,6 +420,7 @@ impl EventHandler for Game {
             event,
             &self.mouse_xy,
             &mut self.components.plans,
+            &mut self.components.clothes,
             &mut self.components.services.id_allocator,
             graphics,
         );
@@ -563,6 +567,7 @@ impl EventHandler for Game {
             &self.components.terrain,
             &self.components.services.clock.get_micros(),
             &self.components.plans,
+            &self.components.clothes,
             &mut self.components.frames,
         );
         chair_framer::run(
@@ -570,6 +575,7 @@ impl EventHandler for Game {
             &self.components.lifts,
             &self.components.cars,
             &self.components.locations,
+            &self.components.clothes,
             &mut self.components.frames,
         );
         model_artist::run(

@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
+use crate::model::clothes::{self, Clothes, Color};
 use crate::model::direction::Direction;
 use crate::model::skiing;
 use crate::services::id_allocator;
@@ -11,12 +14,34 @@ pub struct Handler {
     pub binding: Binding,
 }
 
+const SKI_COLORS: [Color; 5] = [
+    Color::Color1,
+    Color::Color2,
+    Color::Color3,
+    Color::Color4,
+    Color::Color5,
+];
+
+const SUIT_COLORS: [Color; 8] = [
+    Color::Black,
+    Color::Grey,
+    Color::White,
+    Color::Color1,
+    Color::Color2,
+    Color::Color3,
+    Color::Color4,
+    Color::Color5,
+];
+
+const HELMET_COLORS: [Color; 2] = [Color::Black, Color::Grey];
+
 impl Handler {
     pub fn handle(
         &self,
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
         plans: &mut HashMap<usize, skiing::Plan>,
+        clothes: &mut HashMap<usize, Clothes<clothes::Color>>,
         id_allocator: &mut id_allocator::Service,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
@@ -29,13 +54,26 @@ impl Handler {
             return;
         };
 
+        let id = id_allocator.next_id();
+
         plans.insert(
-            id_allocator.next_id(),
+            id,
             skiing::Plan::Stationary(skiing::State {
                 position: xy(x.round() as u32, y.round() as u32),
                 velocity: 1,
                 travel_direction: Direction::NorthEast,
             }),
+        );
+
+        let mut rng = thread_rng();
+        clothes.insert(
+            id,
+            Clothes {
+                skis: *SKI_COLORS.choose(&mut rng).unwrap(),
+                trousers: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
+            },
         );
     }
 }
