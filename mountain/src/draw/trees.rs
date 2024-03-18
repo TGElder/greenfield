@@ -1,6 +1,6 @@
 use commons::geometry::{xyz, XY};
 use commons::grid::Grid;
-use engine::graphics::utils::transformation_matrix;
+use engine::graphics::utils::{transformation_matrix, Transformation};
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
@@ -61,11 +61,10 @@ fn tree_world_matrix(
     position: &XY<u32>,
     Tree { yaw, height }: &Tree,
 ) -> Matrix4<f32> {
-    transformation_matrix(
-        xyz(position.x as f32, position.y as f32, terrain[position]),
-        *yaw,
-        0.0,
-        0.0,
-        xyz(*height, *height, *height),
-    )
+    transformation_matrix(Transformation {
+        translation: Some(xyz(position.x as f32, position.y as f32, terrain[position])),
+        yaw: Some(*yaw),
+        scale: Some(xyz(*height, *height, *height)),
+        ..Transformation::default()
+    })
 }

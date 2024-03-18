@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 
 use commons::geometry::xyz;
 use engine::graphics::transform::Transform;
-use engine::graphics::utils::translation_matrix;
+use engine::graphics::utils::{transformation_matrix, Transformation};
 
 use crate::draw::model::{chair, skier, Model};
 
@@ -29,7 +29,12 @@ pub fn model() -> Model<skier::Color, ()> {
         - skier.attachment_points[&skier::AttachmentPoints::BackOfHeels]
         - heels_to_knee;
     Model {
-        quads: skier.quads.transform(&translation_matrix(offset)),
+        quads: skier
+            .quads
+            .transform(&transformation_matrix(Transformation {
+                translation: Some(offset),
+                ..Transformation::default()
+            })),
         attachment_points: HashMap::new(),
     }
 }

@@ -62,28 +62,37 @@ pub fn textured_triangles_from_textured_quads(
         .collect()
 }
 
-pub fn translation_matrix(translation: XYZ<f32>) -> Matrix4<f32> {
-    [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [translation.x, translation.y, translation.z, 1.0],
-    ]
-    .into()
+#[derive(Default)]
+pub struct Transformation {
+    pub translation: Option<XYZ<f32>>,
+    pub yaw: Option<f32>,
+    pub pitch: Option<f32>,
+    pub roll: Option<f32>,
+    pub scale: Option<XYZ<f32>>,
 }
 
 pub fn transformation_matrix(
-    translation: XYZ<f32>,
-    yaw: f32,
-    pitch: f32,
-    roll: f32,
-    scale: XYZ<f32>,
+    Transformation {
+        translation,
+        yaw,
+        pitch,
+        roll,
+        scale,
+    }: Transformation,
 ) -> Matrix4<f32> {
-    let translation = translation_matrix(translation);
-
-    let yaw = if yaw == 0.0 {
-        Matrix4::identity()
+    let translation = if let Some(translation) = translation {
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [translation.x, translation.y, translation.z, 1.0],
+        ]
+        .into()
     } else {
+        Matrix4::identity()
+    };
+
+    let yaw = if let Some(yaw) = yaw {
         let cos = yaw.cos();
         let sin = yaw.sin();
         [
@@ -93,11 +102,11 @@ pub fn transformation_matrix(
             [0.0, 0.0, 0.0, 1.0],
         ]
         .into()
+    } else {
+        Matrix4::identity()
     };
 
-    let pitch = if pitch == 0.0 {
-        Matrix4::identity()
-    } else {
+    let pitch = if let Some(pitch) = pitch {
         let cos = pitch.cos();
         let sin = pitch.sin();
         [
@@ -107,11 +116,11 @@ pub fn transformation_matrix(
             [0.0, 0.0, 0.0, 1.0],
         ]
         .into()
+    } else {
+        Matrix4::identity()
     };
 
-    let roll = if roll == 0.0 {
-        Matrix4::identity()
-    } else {
+    let roll = if let Some(roll) = roll {
         let cos = roll.cos();
         let sin = roll.sin();
         [
@@ -121,15 +130,21 @@ pub fn transformation_matrix(
             [0.0, 0.0, 0.0, 1.0],
         ]
         .into()
+    } else {
+        Matrix4::identity()
     };
 
-    let scale: Matrix4<f32> = [
-        [scale.x, 0.0, 0.0, 0.0],
-        [0.0, scale.y, 0.0, 0.0],
-        [0.0, 0.0, scale.z, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
+    let scale = if let Some(scale) = scale {
+        [
+            [scale.x, 0.0, 0.0, 0.0],
+            [0.0, scale.y, 0.0, 0.0],
+            [0.0, 0.0, scale.z, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
+        .into()
+    } else {
+        Matrix4::identity()
+    };
 
     translation * yaw * pitch * roll * scale
 }

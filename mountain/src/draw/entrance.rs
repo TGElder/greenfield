@@ -6,7 +6,7 @@ use commons::unsafe_ordering::unsafe_ordering;
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
-use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
 use crate::model::entrance::Entrance;
@@ -98,7 +98,11 @@ fn translated_and_scaled_cube(
     scale: XYZ<f32>,
     coloring: &dyn Fn(&cube::Side) -> Rgb<f32>,
 ) -> impl Iterator<Item = Quad<Rgb<f32>>> {
-    let transformation = transformation_matrix(translation, 0.0, 0.0, 0.0, scale);
+    let transformation = transformation_matrix(Transformation {
+        translation: Some(translation),
+        scale: Some(scale),
+        ..Transformation::default()
+    });
 
     cube::model()
         .transform(&transformation)
