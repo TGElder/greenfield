@@ -12,6 +12,7 @@ pub mod lift_remover;
 pub mod piste_builder;
 pub mod piste_computer;
 pub mod piste_highlighter;
+pub mod piste_visibility;
 pub mod save;
 pub mod selection;
 pub mod tree_visibility;

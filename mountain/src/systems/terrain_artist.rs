@@ -1,7 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use commons::color::Rgba;
-use commons::geometry::{XYRectangle, XY};
+use commons::geometry::{xy, XYRectangle, XY};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
@@ -14,9 +14,10 @@ use crate::utils::ability::cell_ability;
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
 pub struct System {
-    pub drawing: Option<Drawing>,
-    pub updates: Vec<XYRectangle<u32>>,
-    pub colors: Colors,
+    drawing: Option<Drawing>,
+    updates: Vec<XYRectangle<u32>>,
+    show_pistes: bool,
+    colors: Colors,
 }
 
 pub struct Colors {
@@ -105,12 +106,35 @@ pub struct Parameters<'a> {
 }
 
 impl System {
+    pub fn new(colors: Colors) -> System {
+        System {
+            drawing: None,
+            updates: vec![],
+            show_pistes: true,
+            colors,
+        }
+    }
+
     pub fn init(&mut self, graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
-        self.drawing = Some(Drawing::init(graphics, terrain))
+        self.drawing = Some(Drawing::init(graphics, terrain));
+        self.update_all();
     }
 
     pub fn update(&mut self, update: XYRectangle<u32>) {
         self.updates.push(update);
+    }
+
+    pub fn update_all(&mut self) {
+        if let Some(drawing) = &self.drawing {
+            self.updates.push(XYRectangle {
+                from: xy(0, 0),
+                to: xy(drawing.width() - 1, drawing.height() - 1), // -1 because rectangle is inclusive
+            });
+        }
+    }
+
+    pub fn toggle_show_pistes(&mut self) {
+        self.show_pistes = !self.show_pistes;
     }
 
     pub fn run(
@@ -134,8 +158,12 @@ impl System {
                     .colors
                     .selection_color(&position, terrain, selection)
                     .or_else(|| {
-                        self.colors
-                            .piste_color(&position, piste_map, highlights, abilities)
+                        if self.show_pistes {
+                            self.colors
+                                .piste_color(&position, piste_map, highlights, abilities)
+                        } else {
+                            None
+                        }
                     })
                     .or_else(|| self.colors.cliff_color(&position, terrain))
                     .unwrap_or(CLEAR);

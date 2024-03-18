@@ -14,7 +14,7 @@ use std::io::BufReader;
 use std::time::Duration;
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XYRectangle, XY};
+use commons::geometry::{xy, xyz, Rectangle, XY};
 
 use commons::grid::Grid;
 use engine::binding::Binding;
@@ -29,7 +29,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
-    piste_builder, piste_computer, piste_highlighter, save, tree_visibility,
+    piste_builder, piste_computer, piste_highlighter, piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -121,6 +121,12 @@ fn main() {
                     },
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
+                piste_visibility: piste_visibility::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::Y),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 lift_builder: lift_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::L),
                     state: ButtonState::Pressed,
@@ -208,33 +214,23 @@ fn main() {
                 }),
             },
             systems: Systems {
-                terrain_artist: terrain_artist::System {
-                    drawing: None,
-                    updates: vec![XYRectangle {
-                        from: xy(0, 0),
-                        to: xy(
-                            components.terrain.width() - 2,
-                            components.terrain.height() - 2,
-                        ), // -2 because bottom right corner is width - 1, height - 1 and the artist deals with cells which also reduce each dimension by one
-                    }],
-                    colors: terrain_artist::Colors {
-                        piste: terrain_artist::AbilityColors {
-                            beginner: Rgba::new(0, 98, 19, 128),
-                            intermedite: Rgba::new(3, 105, 194, 128),
-                            advanced: Rgba::new(219, 2, 3, 128),
-                            expert: Rgba::new(3, 2, 3, 128),
-                            ungraded: Rgba::new(238, 76, 2, 128),
-                        },
-                        highlight: terrain_artist::AbilityColors {
-                            beginner: Rgba::new(0, 98, 19, 192),
-                            intermedite: Rgba::new(3, 105, 194, 192),
-                            advanced: Rgba::new(219, 2, 3, 192),
-                            expert: Rgba::new(3, 2, 3, 192),
-                            ungraded: Rgba::new(238, 76, 2, 192),
-                        },
-                        cliff: Rgba::new(6, 6, 6, 128),
+                terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
+                    piste: terrain_artist::AbilityColors {
+                        beginner: Rgba::new(0, 98, 19, 128),
+                        intermedite: Rgba::new(3, 105, 194, 128),
+                        advanced: Rgba::new(219, 2, 3, 128),
+                        expert: Rgba::new(3, 2, 3, 128),
+                        ungraded: Rgba::new(238, 76, 2, 128),
                     },
-                },
+                    highlight: terrain_artist::AbilityColors {
+                        beginner: Rgba::new(0, 98, 19, 192),
+                        intermedite: Rgba::new(3, 105, 194, 192),
+                        advanced: Rgba::new(219, 2, 3, 192),
+                        expert: Rgba::new(3, 2, 3, 192),
+                        ungraded: Rgba::new(238, 76, 2, 192),
+                    },
+                    cliff: Rgba::new(6, 6, 6, 128),
+                }),
                 tree_artist: tree_artist::System::new(),
                 carousel: carousel::System::new(),
             },
@@ -362,6 +358,7 @@ struct Handlers {
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
+    piste_visibility: piste_visibility::Handler,
     resize: resize::Handler,
     lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
@@ -496,6 +493,9 @@ impl EventHandler for Game {
             graphics,
             &mut self.systems.terrain_artist,
         );
+        self.handlers
+            .piste_visibility
+            .handle(event, &mut self.systems.terrain_artist);
         self.handlers
             .tree_visibility
             .handle(event, &mut self.systems.tree_artist, graphics);

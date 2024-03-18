@@ -11,6 +11,8 @@ use engine::graphics::Graphics;
 const WHITE: Rgba<u8> = Rgba::new(255, 255, 255, 255);
 
 pub struct Drawing {
+    width: u32,
+    height: u32,
     overlay_texture: usize,
 }
 
@@ -21,7 +23,9 @@ impl Drawing {
             (terrain.width() / slab_size) + 1,
             (terrain.height() / slab_size) + 1,
         );
-        let colors = Grid::from_element(terrain.width() - 1, terrain.height() - 1, WHITE);
+        let width = terrain.width() - 1;
+        let height = terrain.height() - 1;
+        let colors = Grid::from_element(width, height, WHITE);
 
         let mut to_draw = Vec::with_capacity((slabs.x * slabs.y) as usize);
 
@@ -72,11 +76,7 @@ impl Drawing {
         }
 
         let base_texture = graphics.load_texture(&colors).unwrap();
-        let overlay = Grid::from_element(
-            terrain.width() - 1,
-            terrain.height() - 1,
-            Rgba::new(0, 0, 0, 0),
-        );
+        let overlay = Grid::from_element(width, height, Rgba::new(0, 0, 0, 0));
         let overlay_texture = graphics.load_texture(&overlay).unwrap();
 
         for quads in to_draw {
@@ -92,7 +92,19 @@ impl Drawing {
                 .unwrap();
         }
 
-        Drawing { overlay_texture }
+        Drawing {
+            width,
+            height,
+            overlay_texture,
+        }
+    }
+
+    pub fn width(&self) -> u32 {
+        self.width
+    }
+
+    pub fn height(&self) -> u32 {
+        self.height
     }
 
     pub fn modify_overlay(
