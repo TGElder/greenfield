@@ -1,8 +1,7 @@
 use commons::color::Rgb;
-use commons::geometry::xyz;
 
 use engine::graphics::transform::{Recolor, Transform};
-use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
 use crate::draw;
@@ -24,13 +23,12 @@ lazy_static! {
 }
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
-    let transformation = transformation_matrix(
-        frame.position,
-        frame.yaw,
-        frame.pitch,
-        0.0,
-        xyz(1.0, 1.0, 1.0),
-    );
+    let transformation = transformation_matrix(Transformation {
+        translation: Some(frame.position),
+        yaw: Some(frame.yaw),
+        pitch: Some(frame.pitch),
+        ..Transformation::default()
+    });
 
     let quads = match frame.model {
         Model::Standing {
