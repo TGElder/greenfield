@@ -5,9 +5,23 @@ use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads};
 use engine::graphics::Graphics;
 
-use crate::draw::model::{self, skier};
+use crate::draw;
+use crate::draw::model::{self, chair, skier};
 use crate::model::clothes::Clothes;
 use crate::model::frame::{Frame, Model};
+
+lazy_static! {
+    static ref SKIER_STANDING_MODEL: draw::model::Model<skier::Color, skier::AttachmentPoints> =
+        model::skier_standing::model();
+}
+lazy_static! {
+    static ref SKIER_SITTING_MODEL: draw::model::Model<skier::Color, ()> =
+        model::skier_sitting::model();
+}
+lazy_static! {
+    static ref CHAIR_MODEL: draw::model::Model<Rgb<f32>, chair::AttachmentPoints> =
+        model::chair::model();
+}
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
     let transformation = transformation_matrix(
@@ -22,19 +36,19 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
         Model::Standing {
             skis: false,
             clothes,
-        } => model::skier_standing::model()
+        } => SKIER_STANDING_MODEL
             .quads
             .recolor(&|color| get_rgb(&clothes, color)),
         Model::Standing {
             skis: true,
             clothes,
-        } => model::skier_standing::model()
+        } => SKIER_STANDING_MODEL
             .quads
             .recolor(&|color| get_rgb(&clothes, color)),
-        Model::Sitting { clothes } => model::skier_sitting::model()
+        Model::Sitting { clothes } => SKIER_SITTING_MODEL
             .quads
             .recolor(&|color| get_rgb(&clothes, color)),
-        Model::Chair => model::chair::model().quads,
+        Model::Chair => CHAIR_MODEL.quads.clone(),
     };
     let transformed_quads = quads.transform(&transformation);
     let triangles = triangles_from_quads(&transformed_quads);

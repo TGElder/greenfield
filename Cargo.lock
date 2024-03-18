@@ -994,6 +994,7 @@ dependencies = [
  "bincode",
  "commons",
  "engine",
+ "lazy_static",
  "line_drawing",
  "nalgebra",
  "network",
