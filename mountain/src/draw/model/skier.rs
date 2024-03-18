@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::iter::once;
 
 use commons::geometry::{xyz, XYZ};
 use engine::graphics::elements::Quad;
@@ -9,13 +8,22 @@ use engine::graphics::utils::{transformation_matrix, translation_matrix};
 
 use crate::draw::model::Model;
 
-const SKIS: Quad<Color> = Quad {
+const SKI_LEFT: Quad<Color> = Quad {
     color: Color::Skis,
     corners: [
-        xyz(-0.8, -0.25, 0.0),
-        xyz(0.8, -0.25, 0.0),
-        xyz(0.8, 0.25, 0.0),
-        xyz(-0.8, 0.25, 0.0),
+        xyz(-0.8, -0.2, 0.0),
+        xyz(0.8, -0.2, 0.0),
+        xyz(0.8, -0.075, 0.0),
+        xyz(-0.8, -0.075, 0.0),
+    ],
+};
+const SKI_RIGHT: Quad<Color> = Quad {
+    color: Color::Skis,
+    corners: [
+        xyz(-0.8, 0.075, 0.0),
+        xyz(0.8, 0.075, 0.0),
+        xyz(0.8, 0.2, 0.0),
+        xyz(-0.8, 0.2, 0.0),
     ],
 };
 
@@ -64,7 +72,7 @@ pub fn model(
             0.0,
             lower_leg_scale,
         ));
-    let ski_center = (SKIS.corners[0] + SKIS.corners[2]) / 2.0;
+    let ski_center = (SKI_LEFT.corners[0] + SKI_RIGHT.corners[2]) / 2.0;
     let lower_legs_bottom = lower_legs[Side::Bottom.index()].corners;
     let back_of_heels = (lower_legs_bottom[0] + lower_legs_bottom[1]) / 2.0;
     let front_of_feet = (lower_legs_bottom[2] + lower_legs_bottom[3]) / 2.0;
@@ -122,7 +130,8 @@ pub fn model(
         xyz(1.0, 1.0, 1.0),
     ));
 
-    let quads = once(SKIS)
+    let quads = [SKI_LEFT, SKI_RIGHT]
+        .into_iter()
         .chain(lower_legs)
         .chain(upper_legs)
         .chain(torso)
