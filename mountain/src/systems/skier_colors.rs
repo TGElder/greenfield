@@ -2,20 +2,29 @@ use std::collections::HashMap;
 
 use commons::color::Rgb;
 
+use crate::model::ability::Ability;
 use crate::model::skier::{Clothes, Color, Skier};
 
 pub struct System {
-    mode: Mode,
+    colors: AbilityColors,
+    pub mode: Mode,
+}
+
+pub struct AbilityColors {
+    pub intermedite: Rgb<f32>,
+    pub advanced: Rgb<f32>,
+    pub expert: Rgb<f32>,
 }
 
 pub enum Mode {
     Clothes,
-    _Ability,
+    Ability,
 }
 
 impl System {
-    pub fn new() -> System {
+    pub fn new(colors: AbilityColors) -> System {
         System {
+            colors,
             mode: Mode::Clothes,
         }
     }
@@ -25,11 +34,33 @@ impl System {
         skiers: &HashMap<usize, Skier>,
         clothes: &mut HashMap<usize, Clothes<Rgb<f32>>>,
     ) {
-        clothes.clear();
         for (id, skier) in skiers {
-            if let Mode::Clothes = self.mode {
-                clothes.insert(*id, (&skier.clothes).into());
+            let skier_clothes = match self.mode {
+                Mode::Clothes => Some((&skier.clothes).into()),
+                Mode::Ability => self.ability_clothes(&skier.ability),
             };
+            if let Some(skier_clothes) = skier_clothes {
+                clothes.insert(*id, skier_clothes);
+            }
+        }
+    }
+
+    fn ability_clothes(&self, ability: &Ability) -> Option<Clothes<Rgb<f32>>> {
+        let color = self.ability_color(ability)?;
+        Some(Clothes {
+            skis: color,
+            trousers: color,
+            jacket: color,
+            helmet: color,
+        })
+    }
+
+    fn ability_color(&self, ability: &Ability) -> Option<Rgb<f32>> {
+        match ability {
+            Ability::Intermediate => Some(self.colors.intermedite),
+            Ability::Advanced => Some(self.colors.advanced),
+            Ability::Expert => Some(self.colors.expert),
+            _ => None,
         }
     }
 }
