@@ -1,7 +1,7 @@
 use commons::color::Rgb;
 use commons::geometry::XYZ;
 
-use crate::model::clothes::Clothes;
+use crate::model::skier::Clothes;
 
 #[derive(Clone, Copy)]
 pub struct Frame {

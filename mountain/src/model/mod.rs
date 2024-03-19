@@ -1,6 +1,5 @@
 pub mod ability;
 pub mod carousel;
-pub mod clothes;
 pub mod direction;
 pub mod entrance;
 pub mod exit;
@@ -9,5 +8,6 @@ pub mod hash_vec;
 pub mod lift;
 pub mod piste;
 pub mod reservation;
+pub mod skier;
 pub mod skiing;
 pub mod tree;

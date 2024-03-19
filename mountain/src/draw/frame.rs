@@ -6,8 +6,8 @@ use engine::graphics::Graphics;
 
 use crate::draw;
 use crate::draw::model::{self, chair, skier};
-use crate::model::clothes::Clothes;
 use crate::model::frame::{Frame, Model};
+use crate::model::skier::Clothes;
 
 lazy_static! {
     static ref SKIER_STANDING_MODEL: draw::model::Model<skier::Color, skier::AttachmentPoints> =

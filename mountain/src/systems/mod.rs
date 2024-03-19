@@ -7,6 +7,7 @@ pub mod lift_artist;
 pub mod model_artist;
 pub mod piste_adopter;
 pub mod planner;
+pub mod skier_colors;
 pub mod skiing_framer;
 pub mod target_scrubber;
 pub mod target_setter;
