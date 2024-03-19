@@ -52,8 +52,8 @@ use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
-    piste_adopter, planner, skier_colors, skiing_framer, target_scrubber, target_setter,
-    terrain_artist, tree_artist,
+    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
+    tree_artist,
 };
 
 fn main() {
@@ -146,7 +146,6 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
@@ -168,6 +167,12 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
+                skier_colors: handlers::skier_colors::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::U),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::T),
@@ -218,7 +223,13 @@ fn main() {
             },
             systems: Systems {
                 carousel: carousel::System::new(),
-                skier_colors: skier_colors::System::new(),
+                skier_colors: systems::skier_colors::System::new(
+                    systems::skier_colors::AbilityColors {
+                        intermedite: Rgb::new(0.01, 0.41, 0.76),
+                        advanced: Rgb::new(0.86, 0.01, 0.01),
+                        expert: Rgb::new(0.01, 0.01, 0.01),
+                    },
+                ),
                 terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
                     piste: terrain_artist::AbilityColors {
                         beginner: Rgba::new(0, 98, 19, 128),
@@ -362,16 +373,17 @@ struct Handlers {
     entrance_builder: entrance_builder::Handler,
     entrance_opener: entrance_opener::Handler,
     entrance_remover: entrance_remover::Handler,
+    lift_builder: lift_builder::Handler,
+    lift_opener: lift_opener::Handler,
+    lift_remover: lift_remover::Handler,
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
     piste_visibility: piste_visibility::Handler,
     resize: resize::Handler,
-    lift_builder: lift_builder::Handler,
-    lift_opener: lift_opener::Handler,
-    lift_remover: lift_remover::Handler,
     save: save::Handler,
     selection: selection::Handler,
+    skier_colors: handlers::skier_colors::Handler,
     tree_visibility: tree_visibility::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
@@ -379,7 +391,7 @@ struct Handlers {
 
 struct Systems {
     carousel: carousel::System,
-    skier_colors: skier_colors::System,
+    skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
 }
@@ -504,6 +516,9 @@ impl EventHandler for Game {
         self.handlers
             .piste_visibility
             .handle(event, &mut self.systems.terrain_artist);
+        self.handlers
+            .skier_colors
+            .handle(event, &mut self.systems.skier_colors);
         self.handlers
             .tree_visibility
             .handle(event, &mut self.systems.tree_artist, graphics);
