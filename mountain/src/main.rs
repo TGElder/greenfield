@@ -16,7 +16,7 @@ use std::fs::File;
 use std::io::BufReader;
 use std::time::Duration;
 
-use commons::color::Rgba;
+use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, Rectangle, XY};
 
 use commons::grid::Grid;
@@ -39,7 +39,6 @@ use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
-use crate::model::clothes::{self, Clothes};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
@@ -47,13 +46,14 @@ use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
+use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing;
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
-    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
-    tree_artist,
+    piste_adopter, planner, skier_colors, skiing_framer, target_scrubber, target_setter,
+    terrain_artist, tree_artist,
 };
 
 fn main() {
@@ -217,6 +217,8 @@ fn main() {
                 }),
             },
             systems: Systems {
+                carousel: carousel::System::new(),
+                skier_colors: skier_colors::System::new(),
                 terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
                     piste: terrain_artist::AbilityColors {
                         beginner: Rgba::new(0, 98, 19, 128),
@@ -235,7 +237,6 @@ fn main() {
                     cliff: Rgba::new(6, 6, 6, 128),
                 }),
                 tree_artist: tree_artist::System::new(),
-                carousel: carousel::System::new(),
             },
             mouse_xy: None,
             components,
@@ -287,6 +288,7 @@ fn new_components() -> Components {
     let terrain = generate_heightmap(power);
     let trees = generate_trees(power, &terrain);
     Components {
+        skiers: HashMap::default(),
         plans: HashMap::default(),
         locations: HashMap::default(),
         targets: HashMap::default(),
@@ -324,6 +326,7 @@ struct Game {
 
 #[derive(Serialize, Deserialize)]
 pub struct Components {
+    skiers: HashMap<usize, Skier>,
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
@@ -339,7 +342,8 @@ pub struct Components {
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
     abilities: HashMap<usize, Ability>,
-    clothes: HashMap<usize, Clothes<clothes::Color>>,
+    #[serde(skip)]
+    clothes: HashMap<usize, Clothes<Rgb<f32>>>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -374,9 +378,10 @@ struct Handlers {
 }
 
 struct Systems {
+    carousel: carousel::System,
+    skier_colors: skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
-    carousel: carousel::System,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -420,7 +425,7 @@ impl EventHandler for Game {
             event,
             &self.mouse_xy,
             &mut self.components.plans,
-            &mut self.components.clothes,
+            &mut self.components.skiers,
             &mut self.components.services.id_allocator,
             graphics,
         );
@@ -566,6 +571,9 @@ impl EventHandler for Game {
             planning_queue: &mut self.components.planning_queue,
         });
         frame_wiper::run(&mut self.components.frames);
+        self.systems
+            .skier_colors
+            .run(&self.components.skiers, &mut self.components.clothes);
         skiing_framer::run(
             &self.components.terrain,
             &self.components.services.clock.get_micros(),

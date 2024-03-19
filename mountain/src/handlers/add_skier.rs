@@ -5,14 +5,17 @@ use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::model::clothes::{self, Clothes, Color};
+use crate::model::ability::Ability;
 use crate::model::direction::Direction;
+use crate::model::skier::{Clothes, Color, Skier};
 use crate::model::skiing;
 use crate::services::id_allocator;
 
 pub struct Handler {
     pub binding: Binding,
 }
+
+const ABILITIES: [Ability; 3] = [Ability::Intermediate, Ability::Advanced, Ability::Expert];
 
 const SKI_COLORS: [Color; 5] = [
     Color::Color1,
@@ -41,7 +44,7 @@ impl Handler {
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
         plans: &mut HashMap<usize, skiing::Plan>,
-        clothes: &mut HashMap<usize, Clothes<clothes::Color>>,
+        skiers: &mut HashMap<usize, Skier>,
         id_allocator: &mut id_allocator::Service,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
@@ -66,13 +69,16 @@ impl Handler {
         );
 
         let mut rng = thread_rng();
-        clothes.insert(
+        skiers.insert(
             id,
-            Clothes {
-                skis: *SKI_COLORS.choose(&mut rng).unwrap(),
-                trousers: *SUIT_COLORS.choose(&mut rng).unwrap(),
-                jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
-                helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
+            Skier {
+                ability: *ABILITIES.choose(&mut rng).unwrap(),
+                clothes: Clothes {
+                    skis: *SKI_COLORS.choose(&mut rng).unwrap(),
+                    trousers: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                    jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                    helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
+                },
             },
         );
     }
