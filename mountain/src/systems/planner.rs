@@ -10,6 +10,7 @@ use crate::model::ability::Ability;
 use crate::model::hash_vec::HashVec;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::{Reservation, ReservationPeriod};
+use crate::model::skier::Skier;
 use crate::model::skiing::{Event, Plan, State};
 use crate::network::skiing::SkiingNetwork;
 
@@ -21,11 +22,12 @@ const MAX_DETOUR: u64 = 2;
 pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub micros: &'a u128,
-    pub plans: &'a mut HashMap<usize, Plan>,
+    pub skiers: &'a HashMap<usize, Skier>,
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
     pub costs: &'a HashMap<usize, Costs>,
+    pub plans: &'a mut HashMap<usize, Plan>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub planning_queue: &'a mut HashVec<usize>,
 }
@@ -34,11 +36,12 @@ pub fn run(
     Parameters {
         terrain,
         micros,
-        plans,
+        skiers,
         locations,
         targets,
         pistes,
         costs,
+        plans,
         reservations,
         planning_queue,
     }: Parameters<'_>,
@@ -47,6 +50,10 @@ pub fn run(
 
     planning_queue.retain(|id| {
         let Some(current_plan) = plans.get_mut(id) else {
+            return false;
+        };
+
+        let Some(Skier { ability, .. }) = skiers.get(id) else {
             return false;
         };
 
@@ -61,10 +68,17 @@ pub fn run(
         free(id, current_plan, reservations);
 
         let from = last_state(current_plan);
-        *current_plan = match get_target_and_costs(id, locations, targets, costs) {
-            Some((target, costs)) => {
-                new_plan(terrain, micros, from, piste, reservations, target, costs)
-            }
+        *current_plan = match get_target_and_costs(id, *ability, locations, targets, costs) {
+            Some((target, costs)) => new_plan(PathfindingParameters {
+                ability: *ability,
+                terrain,
+                micros,
+                from,
+                piste,
+                reservations,
+                target,
+                costs,
+            }),
             _ => brake(*from),
         };
         reserve(id, current_plan, reservations);
@@ -152,6 +166,7 @@ fn last_state(plan: &Plan) -> &State {
 
 fn get_target_and_costs<'a>(
     id: &usize,
+    ability: Ability,
     locations: &HashMap<usize, usize>,
     targets: &'a HashMap<usize, usize>,
     costs: &'a HashMap<usize, Costs>,
@@ -159,42 +174,50 @@ fn get_target_and_costs<'a>(
     let location = locations.get(id)?;
     let target = targets.get(id)?;
     let costs = costs.get(location)?;
-    Some((target, costs.costs(*target, Ability::Expert)?))
+    Some((target, costs.costs(*target, ability)?))
 }
 
-fn new_plan(
-    terrain: &Grid<f32>,
-    micros: &u128,
-    from: &State,
-    piste: &Piste,
-    reservations: &Grid<HashMap<usize, Reservation>>,
-    target: &usize,
-    costs: &HashMap<State, u64>,
-) -> Plan {
-    match find_path(terrain, micros, from, piste, reservations, target, costs) {
+fn new_plan(params: PathfindingParameters) -> Plan {
+    let from = *params.from;
+    let micros = params.micros;
+    match find_path(params) {
         Some(edges) => {
             if edges.is_empty() {
-                brake(*from)
+                brake(from)
             } else {
                 Plan::Moving(events(micros, edges))
             }
         }
-        None => brake(*from),
+        None => brake(from),
     }
 }
 
+struct PathfindingParameters<'a> {
+    ability: Ability,
+    terrain: &'a Grid<f32>,
+    micros: &'a u128,
+    from: &'a State,
+    piste: &'a Piste,
+    reservations: &'a Grid<HashMap<usize, Reservation>>,
+    target: &'a usize,
+    costs: &'a HashMap<State, u64>,
+}
+
 fn find_path(
-    terrain: &Grid<f32>,
-    micros: &u128,
-    from: &State,
-    piste: &Piste,
-    reservations: &Grid<HashMap<usize, Reservation>>,
-    target: &usize,
-    costs: &HashMap<State, u64>,
+    PathfindingParameters {
+        ability,
+        terrain,
+        micros,
+        from,
+        piste,
+        reservations,
+        target,
+        costs,
+    }: PathfindingParameters<'_>,
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
-        ability: &Ability::Expert,
+        ability,
         is_accessible_fn: &|position| {
             !reservations[position]
                 .iter()

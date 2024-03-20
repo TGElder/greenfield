@@ -577,11 +577,12 @@ impl EventHandler for Game {
         planner::run(systems::planner::Parameters {
             terrain: &self.components.terrain,
             micros: &self.components.services.clock.get_micros(),
-            plans: &mut self.components.plans,
+            skiers: &mut self.components.skiers,
             locations: &self.components.locations,
             targets: &self.components.targets,
             pistes: &self.components.pistes,
             costs: &self.components.costs,
+            plans: &mut self.components.plans,
             reservations: &mut self.components.reservations,
             planning_queue: &mut self.components.planning_queue,
         });
