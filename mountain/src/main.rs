@@ -559,13 +559,16 @@ impl EventHandler for Game {
             &self.components.piste_map,
             &mut self.components.locations,
         );
-        target_setter::run(
-            &self.components.plans,
-            &self.components.locations,
-            &self.components.costs,
-            &self.components.open,
-            &mut self.components.targets,
-        );
+        target_setter::run(target_setter::Parameters {
+            skiers: &self.components.skiers,
+            plans: &self.components.plans,
+            locations: &self.components.locations,
+            costs: &self.components.costs,
+            open: &self.components.open,
+            exits: &self.components.exits,
+            abilities: &self.components.abilities,
+            targets: &mut self.components.targets,
+        });
 
         entrance::run(
             &self.components.plans,

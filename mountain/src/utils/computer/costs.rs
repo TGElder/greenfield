@@ -45,6 +45,7 @@ fn compute_costs(
     for Exit {
         id: exit_id,
         positions: targets,
+        ..
     } in exits
     {
         let min_z = targets

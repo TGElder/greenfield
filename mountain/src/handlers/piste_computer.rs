@@ -74,7 +74,7 @@ impl Handler {
         let current_speed = clock.speed();
         clock.set_speed(0.0);
 
-        computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
+        computer::exit::compute_piste(&piste_id, pistes, piste_map, lifts, entrances, exits);
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
         computer::piste_ability::compute_piste(
             &piste_id, pistes, costs, exits, lifts, entrances, abilities,
