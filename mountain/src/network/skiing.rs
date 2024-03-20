@@ -23,7 +23,7 @@ const POLING_MAX_VELOCITY: f32 = 1.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
-    pub ability: &'a Ability,
+    pub ability: Ability,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }

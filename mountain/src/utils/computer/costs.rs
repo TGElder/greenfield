@@ -55,7 +55,7 @@ fn compute_costs(
         for ability in ABILITIES {
             let network = SkiingNetwork {
                 terrain,
-                ability: &ability,
+                ability,
                 is_accessible_fn: &|position| {
                     terrain[position] >= min_z
                         && !reservations[position]
