@@ -81,5 +81,7 @@ impl Handler {
                 },
             },
         );
+
+        println!("{} skiers", skiers.len());
     }
 }
