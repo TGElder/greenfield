@@ -1,8 +1,8 @@
 use commons::color::Rgb;
 
+use engine::graphics::elements::Triangle;
 use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
-use engine::graphics::Graphics;
 
 use crate::draw;
 use crate::draw::model::{self, chair, skier};
@@ -22,7 +22,7 @@ lazy_static! {
         model::chair::model();
 }
 
-pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
+pub fn draw(frame: &Frame) -> Vec<Triangle<Rgb<f32>>> {
     let transformation = transformation_matrix(Transformation {
         translation: Some(frame.position),
         yaw: Some(frame.yaw),
@@ -49,8 +49,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, frame: &Frame) {
         Model::Chair => CHAIR_MODEL.quads.clone(),
     };
     let transformed_quads = quads.transform(&transformation);
-    let triangles = triangles_from_quads(&transformed_quads);
-    graphics.draw_triangles(index, &triangles).unwrap();
+    triangles_from_quads(&transformed_quads)
 }
 
 fn get_rgb(clothes: &Clothes<Rgb<f32>>, color: &model::skier::Color) -> Rgb<f32> {

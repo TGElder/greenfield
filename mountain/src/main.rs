@@ -51,7 +51,7 @@ use crate::model::skiing;
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, entrance, entrance_artist, frame_wiper, lift_artist, model_artist,
+    carousel, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper, lift_artist,
     piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
     tree_artist,
 };
@@ -608,7 +608,7 @@ impl EventHandler for Game {
             &self.components.clothes,
             &mut self.components.frames,
         );
-        model_artist::run(
+        frame_artist::run(
             graphics,
             &self.components.frames,
             &mut self.components.drawings,
