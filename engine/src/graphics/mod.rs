@@ -30,6 +30,8 @@ pub trait Graphics {
 
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
+    fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError>;
+
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
 
     fn create_instanced_triangles(
@@ -44,6 +46,12 @@ pub trait Graphics {
         &mut self,
         index: &usize,
         triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), DrawError>;
+
+    fn update_dynamic_triangles(
+        &mut self,
+        index: &usize,
+        triangles: Option<&[Triangle<Rgb<f32>>]>,
     ) -> Result<(), DrawError>;
 
     fn update_instanced_triangles(

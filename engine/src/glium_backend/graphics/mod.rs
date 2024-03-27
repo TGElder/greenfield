@@ -17,7 +17,7 @@ use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
-use glium::glutin;
+use glium::{glutin, VertexBuffer};
 use nalgebra::Matrix4;
 use programs::*;
 use vertices::*;
@@ -60,6 +60,7 @@ pub struct GliumGraphics {
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
+    dynamic_primitives: Vec<DynamicPrimitive>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     instanced_primitives: Vec<Option<InstancedPrimitives>>,
     billboards: Vec<Option<Billboard>>,
@@ -123,6 +124,7 @@ impl GliumGraphics {
             screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
             textures: vec![],
             primitives: vec![],
+            dynamic_primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
             instanced_primitives: vec![],
@@ -166,6 +168,29 @@ impl GliumGraphics {
                 &uniforms,
                 &self.draw_parameters,
             )?;
+        }
+        Ok(())
+    }
+
+    fn render_dynamic_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let uniforms = glium::uniform! {
+            transform: self.projection.projection(),
+            light_direction: self.light_direction
+        };
+
+        for primitive in self.dynamic_primitives.iter() {
+            if primitive.visible {
+                surface.draw(
+                    &primitive.vertex_buffer,
+                    INDICES,
+                    &self.programs.primitive,
+                    &uniforms,
+                    &self.draw_parameters,
+                )?;
+            }
         }
         Ok(())
     }
@@ -377,49 +402,22 @@ impl GliumGraphics {
         Ok(self.primitives.len() - 1)
     }
 
-    fn add_triangles_unsafe(
+    fn create_dynamic_triangles_unsafe(
         &mut self,
-        index: &usize,
-        triangles: &[Triangle<Rgb<f32>>],
-    ) -> Result<(), Box<dyn Error>> {
-        if *index >= self.primitives.len() {
-            return Err(format!(
-                "Trying to draw primitive #{} but there are only {} primitives",
-                index,
-                self.primitives.len()
-            )
-            .into());
+        triangles: &usize,
+    ) -> Result<usize, Box<dyn Error>> {
+        if self.dynamic_primitives.len() == isize::MAX as usize {
+            return Err("No space for more dynamic primitives".into());
         }
-
-        self.primitives[*index] = Some(self.create_primitive(triangles)?);
-
-        Ok(())
-    }
-
-    fn create_primitive(
-        &mut self,
-        triangles: &[Triangle<Rgb<f32>>],
-    ) -> Result<Primitive, Box<dyn Error>> {
-        let vertices = triangles
-            .iter()
-            .flat_map(
-                |Triangle {
-                     corners,
-                     normal,
-                     color,
-                 }| {
-                    corners.iter().map(|corner| ColoredVertex {
-                        position: (*corner).into(),
-                        normal: (*normal).into(),
-                        color: [color.r, color.g, color.b],
-                    })
-                },
-            )
-            .collect::<Vec<ColoredVertex>>();
-        let primitive = Primitive {
-            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+        let primitive = DynamicPrimitive {
+            visible: false,
+            vertex_buffer: glium::VertexBuffer::dynamic(
+                self.display.facade(),
+                &vec![ColoredVertex::default(); triangles * 3],
+            )?,
         };
-        Ok(primitive)
+        self.dynamic_primitives.push(primitive);
+        Ok(self.dynamic_primitives.len() - 1)
     }
 
     fn create_overlay_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
@@ -443,12 +441,77 @@ impl GliumGraphics {
             .map(|_| InstanceVertex::default())
             .collect::<Vec<_>>();
         let instanced_primitives = InstancedPrimitives {
-            primitive: self.create_primitive(triangles)?,
+            primitive: Primitive {
+                vertex_buffer: glium::VertexBuffer::new(
+                    self.display.facade(),
+                    &create_vertices(triangles),
+                )?,
+            },
             vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
         };
         self.instanced_primitives.push(Some(instanced_primitives));
 
         Ok(self.instanced_primitives.len() - 1)
+    }
+
+    fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.billboards.len() == isize::MAX as usize {
+            return Err("No space for more billboards".into());
+        }
+        self.billboards.push(None);
+        Ok(self.billboards.len() - 1)
+    }
+
+    fn add_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.primitives.len() {
+            return Err(format!(
+                "Trying to draw primitive #{} but there are only {} primitives",
+                index,
+                self.primitives.len()
+            )
+            .into());
+        }
+
+        let primitive = Primitive {
+            vertex_buffer: VertexBuffer::new(self.display.facade(), &create_vertices(triangles))?,
+        };
+
+        self.primitives[*index] = Some(primitive);
+
+        Ok(())
+    }
+
+    fn update_dynamic_triangles_unsafe(
+        &mut self,
+        index: &usize,
+        triangles: Option<&[Triangle<Rgb<f32>>]>,
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.dynamic_primitives.len() {
+            return Err(format!(
+                "Trying to draw dynamic primitive #{} but there are only {} dynamic primitives",
+                index,
+                self.dynamic_primitives.len()
+            )
+            .into());
+        }
+
+        let primitive = &mut self.dynamic_primitives[*index];
+
+        match triangles {
+            Some(triangles) => {
+                primitive.visible = true;
+                primitive.vertex_buffer.write(&create_vertices(triangles));
+            }
+            None => {
+                primitive.visible = false;
+            }
+        }
+
+        Ok(())
     }
 
     fn add_overlay_triangles_unsafe(
@@ -528,14 +591,6 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn create_billboards_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.billboards.len() == isize::MAX as usize {
-            return Err("No space for more billboards".into());
-        }
-        self.billboards.push(None);
-        Ok(self.billboards.len() - 1)
-    }
-
     fn add_billboard_unsafe(
         &mut self,
         index: &usize,
@@ -591,6 +646,7 @@ impl GliumGraphics {
         let mut canvas = canvas.frame(self.display.facade())?;
 
         self.render_primitives_to_canvas(&mut canvas)?;
+        self.render_dynamic_primitives_to_canvas(&mut canvas)?;
         self.render_overlay_primitives_to_canvas(&mut canvas)?;
         self.render_instanced_primitives_to_canvas(&mut canvas)?;
         self.render_billboards_to_canvas(&mut canvas)?;
@@ -640,6 +696,10 @@ impl Graphics for GliumGraphics {
         Ok(self.create_triangles_unsafe()?)
     }
 
+    fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError> {
+        Ok(self.create_dynamic_triangles_unsafe(triangles)?)
+    }
+
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError> {
         Ok(self.create_overlay_triangles_unsafe()?)
     }
@@ -662,6 +722,14 @@ impl Graphics for GliumGraphics {
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError> {
         Ok(self.add_triangles_unsafe(index, triangles)?)
+    }
+
+    fn update_dynamic_triangles(
+        &mut self,
+        index: &usize,
+        triangles: Option<&[Triangle<Rgb<f32>>]>,
+    ) -> Result<(), DrawError> {
+        Ok(self.update_dynamic_triangles_unsafe(index, triangles)?)
     }
 
     fn draw_overlay_triangles(
@@ -745,6 +813,11 @@ struct Primitive {
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
+struct DynamicPrimitive {
+    visible: bool,
+    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
+}
+
 struct OverlayPrimitive {
     base_texture: usize,
     overlay_texture: usize,
@@ -759,4 +832,23 @@ struct InstancedPrimitives {
 struct Billboard {
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
+}
+
+fn create_vertices(triangles: &[Triangle<Rgb<f32>>]) -> Vec<ColoredVertex> {
+    triangles
+        .iter()
+        .flat_map(
+            |Triangle {
+                 corners,
+                 normal,
+                 color,
+             }| {
+                corners.iter().map(|corner| ColoredVertex {
+                    position: (*corner).into(),
+                    normal: (*normal).into(),
+                    color: [color.r, color.g, color.b],
+                })
+            },
+        )
+        .collect::<Vec<ColoredVertex>>()
 }

@@ -107,6 +107,87 @@ fn render_cube() {
 }
 
 #[test]
+fn render_cube_dynamic() {
+    // given
+    let mut graphics = GliumGraphics::headless(graphics::Parameters {
+        name: "Test".to_string(),
+        width: 256,
+        height: 256,
+        projection: Box::new(isometric::Projection::new(isometric::Parameters {
+            projection: isometric::ProjectionParameters {
+                pitch: PI / 4.0,
+                yaw: PI * (5.0 / 8.0),
+            },
+            scale: isometric::ScaleParameters {
+                zoom: 256.0,
+                z_max: 1.0,
+                viewport: Rectangle {
+                    width: 256,
+                    height: 256,
+                },
+            },
+        })),
+        light_direction: xyz(-1.0, 0.0, 0.0),
+    })
+    .unwrap();
+
+    // when
+    let triangles = cube_triangles();
+    let index = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    graphics
+        .update_dynamic_triangles(&index, Some(&triangles))
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube_dynamic.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    let scale: Matrix4<f32> = [
+        [2.0, 0.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0, 0.0],
+        [0.0, 0.0, 2.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+
+    let triangles = triangles.transform(&scale);
+    graphics
+        .update_dynamic_triangles(&index, Some(&triangles))
+        .unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube_dynamic_updated.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    graphics.update_dynamic_triangles(&index, None).unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_cube_dynamic_invisible.png").unwrap();
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn instanced_cubes() {
     // given
     let mut graphics = GliumGraphics::headless(graphics::Parameters {
