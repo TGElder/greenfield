@@ -2,10 +2,12 @@ mod canvas;
 mod programs;
 #[cfg(test)]
 mod tests;
+mod utils;
 mod vertices;
 
 use std::error::Error;
 
+use crate::glium_backend::graphics::utils::colored_vertices_from_triangles;
 use crate::graphics::elements::{self, OverlayTriangles, TexturedPosition, Triangle};
 use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
@@ -440,11 +442,12 @@ impl GliumGraphics {
         let vertices = (0..*max_instances)
             .map(|_| InstanceVertex::default())
             .collect::<Vec<_>>();
+        let primitive_vertices = colored_vertices_from_triangles(triangles);
         let instanced_primitives = InstancedPrimitives {
             primitive: Primitive {
                 vertex_buffer: glium::VertexBuffer::new(
                     self.display.facade(),
-                    &create_vertices(triangles),
+                    &primitive_vertices,
                 )?,
             },
             vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
@@ -476,8 +479,9 @@ impl GliumGraphics {
             .into());
         }
 
+        let vertices = colored_vertices_from_triangles(triangles);
         let primitive = Primitive {
-            vertex_buffer: VertexBuffer::new(self.display.facade(), &create_vertices(triangles))?,
+            vertex_buffer: VertexBuffer::new(self.display.facade(), &vertices)?,
         };
 
         self.primitives[*index] = Some(primitive);
@@ -503,8 +507,9 @@ impl GliumGraphics {
 
         match triangles {
             Some(triangles) => {
+                let vertices = colored_vertices_from_triangles(triangles);
                 primitive.visible = true;
-                primitive.vertex_buffer.write(&create_vertices(triangles));
+                primitive.vertex_buffer.write(&vertices);
             }
             None => {
                 primitive.visible = false;
@@ -832,23 +837,4 @@ struct InstancedPrimitives {
 struct Billboard {
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
-}
-
-fn create_vertices(triangles: &[Triangle<Rgb<f32>>]) -> Vec<ColoredVertex> {
-    triangles
-        .iter()
-        .flat_map(
-            |Triangle {
-                 corners,
-                 normal,
-                 color,
-             }| {
-                corners.iter().map(|corner| ColoredVertex {
-                    position: (*corner).into(),
-                    normal: (*normal).into(),
-                    color: [color.r, color.g, color.b],
-                })
-            },
-        )
-        .collect::<Vec<ColoredVertex>>()
 }
