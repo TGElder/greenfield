@@ -3,7 +3,6 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
-use nalgebra::Matrix4;
 
 use crate::binding::Binding;
 use crate::engine::Engine;
@@ -14,7 +13,8 @@ use crate::graphics::models::cube;
 use crate::graphics::projections::isometric;
 use crate::graphics::transform::{Recolor, Transform};
 use crate::graphics::utils::{
-    quad_normal, textured_triangles_from_textured_quads, triangles_from_quads,
+    quad_normal, textured_triangles_from_textured_quads, transformation_matrix,
+    triangles_from_quads, Transformation,
 };
 use crate::handlers::{drag, resize, yaw, zoom};
 
@@ -73,24 +73,12 @@ fn render_cube() {
     assert_eq!(actual, expected);
 
     // when
-    let roll: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, -1.0, 0.0, 0.0],
-        [0.0, 0.0, -1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
-    let yaw: Matrix4<f32> = [
-        [0.0, -1.0, 0.0, 0.0],
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
+    let rear_facing_triangles = triangles.transform(&transformation_matrix(Transformation {
+        yaw: Some(-PI / 2.0),
+        roll: Some(PI),
+        ..Transformation::default()
+    }));
 
-    let transformation = yaw * roll;
-
-    let rear_facing_triangles = triangles.transform(&transformation);
     graphics
         .draw_triangles(&index, &rear_facing_triangles)
         .unwrap();
@@ -133,9 +121,15 @@ fn render_cube_dynamic() {
 
     // when
     let triangles = cube_triangles();
-    let index = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    let triangles = triangles.transform(&transformation_matrix(Transformation {
+        scale: Some(xyz(0.5, 0.5, 0.5)),
+        ..Transformation::default()
+    }));
+
+    let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     graphics
-        .update_dynamic_triangles(&index, Some(&triangles))
+        .update_dynamic_triangles(&index_1, Some(&triangles))
         .unwrap();
     graphics.render().unwrap();
 
@@ -149,17 +143,20 @@ fn render_cube_dynamic() {
     assert_eq!(actual, expected);
 
     // when
-    let scale: Matrix4<f32> = [
-        [0.5, 0.0, 0.0, 0.0],
-        [0.0, 0.5, 0.0, 0.0],
-        [0.0, 0.0, 0.5, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
+    let triangles_left = triangles.transform(&transformation_matrix(Transformation {
+        translation: Some(xyz(-0.5, 0.0, 0.0)),
+        ..Transformation::default()
+    }));
+    let triangles_right = triangles.transform(&transformation_matrix(Transformation {
+        translation: Some(xyz(0.5, 0.0, 0.0)),
+        ..Transformation::default()
+    }));
 
-    let triangles = triangles.transform(&scale);
     graphics
-        .update_dynamic_triangles(&index, Some(&triangles))
+        .update_dynamic_triangles(&index_1, Some(&triangles_left))
+        .unwrap();
+    graphics
+        .update_dynamic_triangles(&index_2, Some(&triangles_right))
         .unwrap();
     graphics.render().unwrap();
 
@@ -169,11 +166,12 @@ fn render_cube_dynamic() {
 
     // then
     let actual = image::open(temp_path).unwrap();
-    let expected = image::open("test_resources/graphics/render_cube_dynamic_updated.png").unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_cube_dynamic_two_cubes.png").unwrap();
     assert_eq!(actual, expected);
 
     // when
-    graphics.update_dynamic_triangles(&index, None).unwrap();
+    graphics.update_dynamic_triangles(&index_1, None).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -183,7 +181,7 @@ fn render_cube_dynamic() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected =
-        image::open("test_resources/graphics/render_cube_dynamic_invisible.png").unwrap();
+        image::open("test_resources/graphics/render_cube_dynamic_one_cube_invisible.png").unwrap();
     assert_eq!(actual, expected);
 }
 
@@ -216,36 +214,21 @@ fn instanced_cubes() {
     let triangles = cube_triangles();
     let index = graphics.create_instanced_triangles(&triangles, &2).unwrap();
 
-    let shrink: Matrix4<f32> = [
-        [0.5, 0.0, 0.0, 0.0],
-        [0.0, 0.5, 0.0, 0.0],
-        [0.0, 0.0, 0.5, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
-    let left: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [-0.5, 0.0, 0.0, 1.0],
-    ]
-    .into();
-    let right: Matrix4<f32> = [
-        [1.0, 0.0, 0.0, 0.0],
-        [0.0, 1.0, 0.0, 0.0],
-        [0.0, 0.0, 1.0, 0.0],
-        [0.5, 0.0, 0.0, 1.0],
-    ]
-    .into();
-    let identity = Matrix4::identity();
+    let left_transformation = transformation_matrix(Transformation {
+        translation: Some(xyz(-0.5, 0.0, 0.0)),
+        scale: Some(xyz(0.5, 0.5, 0.5)),
+        ..Transformation::default()
+    });
+    let right_transformation = transformation_matrix(Transformation {
+        translation: Some(xyz(0.5, 0.0, 0.0)),
+        scale: Some(xyz(0.5, 0.5, 0.5)),
+        ..Transformation::default()
+    });
 
     graphics
         .update_instanced_triangles(
             &index,
-            &[
-                Some(left * shrink * identity),  //
-                Some(right * shrink * identity), //
-            ],
+            &[Some(left_transformation), Some(right_transformation)],
         )
         .unwrap();
 
@@ -265,8 +248,8 @@ fn instanced_cubes() {
         .update_instanced_triangles(
             &index,
             &[
-                None,                            //
-                Some(right * shrink * identity), //
+                None,                       //
+                Some(right_transformation), //
             ],
         )
         .unwrap();
