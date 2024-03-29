@@ -243,9 +243,7 @@ fn find_path(
                     return None;
                 }
 
-                let Some(cost) = costs.get(&state.stationary()) else {
-                    return None;
-                };
+                let cost = costs.get(&state.stationary())?;
 
                 if *cost != 0 && is_white_tile(&state.position) {
                     return None;

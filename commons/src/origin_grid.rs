@@ -198,9 +198,7 @@ where
             },
         );
 
-        let Some((min, max)) = min_max else {
-            return None;
-        };
+        let (min, max) = min_max?;
 
         let mut out = OriginGrid {
             origin: min,
