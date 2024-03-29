@@ -104,6 +104,20 @@ fn render_cube() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
     assert_eq!(actual, expected);
+    // when
+
+    graphics.draw_triangles(&index, &[]).unwrap();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_cube_dynamic_invisible.png").unwrap();
+    assert_eq!(actual, expected);
 }
 
 #[test]
@@ -174,7 +188,6 @@ fn render_cube_dynamic() {
 
     // when
     graphics.update_dynamic_triangles(&index, None).unwrap();
-    graphics.render().unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
