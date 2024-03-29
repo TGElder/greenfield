@@ -1,5 +1,5 @@
 use commons::geometry::{xyz, XY};
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS_INVERSE};
 use engine::graphics::utils::{transformation_matrix, Transformation};
 use engine::graphics::Graphics;
 use nalgebra::Matrix4;
@@ -36,7 +36,10 @@ impl Drawing {
             .iter()
             .flat_map(|position| trees[position].as_ref().map(|tree| (position, tree)))
             .map(|(position, tree)| {
-                if piste_map[position].is_some() {
+                if terrain
+                    .offsets(position, &CORNERS_INVERSE)
+                    .any(|tile| piste_map[tile].is_some())
+                {
                     None
                 } else {
                     Some(tree_world_matrix(terrain, &position, tree))
