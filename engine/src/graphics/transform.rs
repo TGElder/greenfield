@@ -38,7 +38,7 @@ where
                 self.corners[1].transform(transformation),
                 self.corners[2].transform(transformation),
             ],
-            normal: self.normal.transform(normal_transformation),
+            normal: self.normal.transform(normal_transformation).normalize(),
             color: self.color,
         }
     }
