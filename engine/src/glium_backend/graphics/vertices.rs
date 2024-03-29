@@ -1,4 +1,4 @@
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone, Default, Debug)]
 pub struct ColoredVertex {
     pub position: [f32; 3],
     pub normal: [f32; 3],

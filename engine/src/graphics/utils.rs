@@ -50,6 +50,7 @@ pub fn quad_normal(corners: &[XYZ<f32>]) -> XYZ<f32> {
     let u = vectors[0] - vectors[2];
     let v = vectors[1] - vectors[3];
     let normal = u.cross(&v).normalize();
+    println!("{:?}", normal);
     xyz(normal.x, normal.y, normal.z)
 }
 

@@ -146,7 +146,7 @@ fn render_cube_dynamic() {
     .unwrap();
 
     // when
-    let _shrink: Matrix4<f32> = [
+    let shrink: Matrix4<f32> = [
         [0.5, 0.0, 0.0, 0.0],
         [0.0, 0.5, 0.0, 0.0],
         [0.0, 0.0, 0.5, 0.0],
@@ -169,8 +169,8 @@ fn render_cube_dynamic() {
     .into();
     let identity = Matrix4::identity();
 
-    let triangles = cube_triangles().transform(&(left * identity));
-    let triangles_2 = cube_triangles().transform(&(right * identity));
+    let triangles = cube_triangles().transform(&(left * shrink * identity));
+    let triangles_2 = cube_triangles().transform(&(right * shrink * identity));
     let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     graphics
