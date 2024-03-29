@@ -146,10 +146,38 @@ fn render_cube_dynamic() {
     .unwrap();
 
     // when
-    let triangles = cube_triangles();
-    let index = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    let _shrink: Matrix4<f32> = [
+        [0.5, 0.0, 0.0, 0.0],
+        [0.0, 0.5, 0.0, 0.0],
+        [0.0, 0.0, 0.5, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let left: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [-0.5, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let right: Matrix4<f32> = [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.5, 0.0, 0.0, 1.0],
+    ]
+    .into();
+    let identity = Matrix4::identity();
+
+    let triangles = cube_triangles().transform(&(left * identity));
+    let triangles_2 = cube_triangles().transform(&(right * identity));
+    let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     graphics
-        .update_dynamic_triangles(&index, Some(&triangles))
+        .update_dynamic_triangles(&index_1, Some(&triangles))
+        .unwrap();
+    graphics
+        .update_dynamic_triangles(&index_2, Some(&triangles_2))
         .unwrap();
     graphics.render().unwrap();
 
@@ -163,18 +191,7 @@ fn render_cube_dynamic() {
     assert_eq!(actual, expected);
 
     // when
-    let scale: Matrix4<f32> = [
-        [2.0, 0.0, 0.0, 0.0],
-        [0.0, 2.0, 0.0, 0.0],
-        [0.0, 0.0, 2.0, 0.0],
-        [0.0, 0.0, 0.0, 1.0],
-    ]
-    .into();
-
-    let triangles = triangles.transform(&scale);
-    graphics
-        .update_dynamic_triangles(&index, Some(&triangles))
-        .unwrap();
+    graphics.update_dynamic_triangles(&index_2, None).unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -184,20 +201,6 @@ fn render_cube_dynamic() {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_cube_dynamic_updated.png").unwrap();
-    assert_eq!(actual, expected);
-
-    // when
-    graphics.update_dynamic_triangles(&index, None).unwrap();
-    graphics.render().unwrap();
-
-    let temp_path = temp_dir().join("test.png");
-    let temp_path = temp_path.to_str().unwrap();
-    graphics.screenshot(temp_path).unwrap();
-
-    // then
-    let actual = image::open(temp_path).unwrap();
-    let expected =
-        image::open("test_resources/graphics/render_cube_dynamic_invisible.png").unwrap();
     assert_eq!(actual, expected);
 }
 
