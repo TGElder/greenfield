@@ -41,9 +41,7 @@ impl Colors {
         terrain: &Grid<f32>,
         selection: &selection::Handler,
     ) -> Option<Rgba<u8>> {
-        let Some(grid) = &selection.grid else {
-            return None;
-        };
+        let grid = selection.grid.as_ref()?;
 
         if grid.in_bounds(xy) && grid[xy] {
             let color = match cell_ability(terrain, xy) {
@@ -66,9 +64,7 @@ impl Colors {
         highlights: &HashSet<usize>,
         abilities: &HashMap<usize, Ability>,
     ) -> Option<Rgba<u8>> {
-        let Some(piste_id) = piste_map[position] else {
-            return None;
-        };
+        let piste_id = piste_map[position]?;
 
         let colors = if highlights.contains(&piste_id) {
             &self.highlight
