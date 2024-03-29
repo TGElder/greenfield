@@ -175,6 +175,7 @@ fn render_cube_dynamic() {
     // when
     graphics.update_dynamic_triangles(&index, None).unwrap();
     graphics.render().unwrap();
+    graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
     let temp_path = temp_path.to_str().unwrap();
