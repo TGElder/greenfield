@@ -265,6 +265,28 @@ fn instanced_cubes() {
     let expected =
         image::open("test_resources/graphics/instance_cubes_with_invisible_cube.png").unwrap();
     assert_eq!(actual, expected);
+
+    // when
+    graphics
+        .update_instanced_triangles(
+            &index,
+            &[
+                Some(right_transformation), //
+            ],
+        )
+        .unwrap();
+
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/instance_cubes_with_single_cube.png").unwrap();
+    assert_eq!(actual, expected);
 }
 
 #[test]
