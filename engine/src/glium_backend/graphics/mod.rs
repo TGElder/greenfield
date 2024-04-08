@@ -579,7 +579,7 @@ impl GliumGraphics {
             return Ok(());
         };
 
-        let vertices = world_matrices
+        let instances = world_matrices
             .iter()
             .flat_map(|matrix| {
                 if let Some(matrix) = matrix {
@@ -593,11 +593,12 @@ impl GliumGraphics {
             })
             .collect::<Vec<_>>();
 
-        if mem::size_of_val(vertices.as_slice()) == instanced_primitives.vertex_buffer.get_size() {
-            instanced_primitives.vertex_buffer.write(&vertices);
+        if mem::size_of_val(instances.as_slice()) == instanced_primitives.vertex_buffer.get_size() {
+            instanced_primitives.vertex_buffer.write(&instances);
         } else {
+            // expensive recreation of vertex buffer, keep number of instances the same where possible
             instanced_primitives.vertex_buffer =
-                glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?;
+                glium::VertexBuffer::dynamic(self.display.facade(), &instances)?;
         }
 
         Ok(())
