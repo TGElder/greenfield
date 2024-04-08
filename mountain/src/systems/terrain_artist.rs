@@ -93,12 +93,12 @@ impl Colors {
 }
 
 pub struct Parameters<'a> {
-    pub graphics: &'a mut dyn Graphics,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub highlights: &'a HashSet<usize>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub selection: &'a selection::Handler,
+    pub graphics: &'a mut dyn Graphics,
 }
 
 impl System {

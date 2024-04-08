@@ -9,7 +9,7 @@ pub struct Skier {
     pub ability: Ability,
 }
 
-#[derive(Clone, Copy, Default, Serialize, Deserialize)]
+#[derive(Clone, Copy, Default, Debug, Serialize, Deserialize)]
 pub struct Clothes<T> {
     pub skis: T,
     pub trousers: T,

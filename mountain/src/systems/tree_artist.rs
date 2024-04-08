@@ -50,10 +50,10 @@ impl System {
 
     pub fn run(
         &mut self,
-        graphics: &mut dyn Graphics,
         trees: &Grid<Option<Tree>>,
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
+        graphics: &mut dyn Graphics,
     ) {
         if self.visible && self.update {
             if let Some(drawing) = &mut self.drawing {

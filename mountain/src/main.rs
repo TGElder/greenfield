@@ -51,9 +51,9 @@ use crate::model::skiing;
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper, lift_artist,
-    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
-    tree_artist,
+    carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
+    lift_artist, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
+    terrain_artist, tree_artist,
 };
 
 fn main() {
@@ -223,6 +223,7 @@ fn main() {
             },
             systems: Systems {
                 carousel: carousel::System::new(),
+                chair_artist: chair_artist::System::new(),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
                         intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -391,6 +392,7 @@ struct Handlers {
 
 struct Systems {
     carousel: carousel::System,
+    chair_artist: chair_artist::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
@@ -405,6 +407,7 @@ pub struct Services {
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         let terrain = &self.components.terrain;
+        self.systems.chair_artist.init(graphics);
         self.systems.terrain_artist.init(graphics, terrain);
         self.systems
             .tree_artist
@@ -638,21 +641,23 @@ impl EventHandler for Game {
             });
 
         self.systems
+            .chair_artist
+            .run(&self.components.frames, graphics);
+        self.systems
             .terrain_artist
             .run(systems::terrain_artist::Parameters {
-                graphics,
                 terrain: &self.components.terrain,
                 piste_map: &self.components.piste_map,
                 highlights: &self.components.highlights,
                 abilities: &self.components.abilities,
                 selection: &self.handlers.selection,
+                graphics,
             });
-
         self.systems.tree_artist.run(
-            graphics,
             &self.components.trees,
             &self.components.terrain,
             &self.components.piste_map,
+            graphics,
         );
     }
 }

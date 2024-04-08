@@ -12,7 +12,7 @@ pub struct Frame {
     pub model: Model,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum Model {
     Standing {
         skis: bool,
