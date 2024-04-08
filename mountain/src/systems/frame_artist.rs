@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use engine::graphics::Graphics;
 
 use crate::draw::frame;
-use crate::model::frame::Frame;
+use crate::model::frame::{Frame, Model};
 
 pub fn run(
     graphics: &mut dyn Graphics,
@@ -13,6 +13,9 @@ pub fn run(
     for (id, frame) in frames {
         match frame {
             Some(frame) => {
+                if matches!(frame.model, Model::Chair) {
+                    continue;
+                }
                 let triangles = frame::draw(frame);
                 let index = drawings.entry(*id).or_insert_with(|| {
                     graphics.create_dynamic_triangles(&triangles.len()).unwrap()

@@ -1,3 +1,4 @@
+pub mod chairs;
 pub mod entrance;
 pub mod frame;
 pub mod line;

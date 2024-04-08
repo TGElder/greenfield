@@ -46,7 +46,9 @@ pub fn draw(frame: &Frame) -> Vec<Triangle<Rgb<f32>>> {
         Model::Sitting { clothes } => SKIER_SITTING_MODEL
             .quads
             .recolor(&|color| get_rgb(&clothes, color)),
-        Model::Chair => CHAIR_MODEL.quads.clone(),
+        unsupported => {
+            panic!("Cannot draw model {:?}", unsupported);
+        }
     };
     let transformed_quads = quads.transform(&transformation);
     triangles_from_quads(&transformed_quads)
