@@ -643,7 +643,6 @@ impl EventHandler for Game {
         self.systems
             .chair_artist
             .run(&self.components.frames, graphics);
-
         self.systems
             .terrain_artist
             .run(systems::terrain_artist::Parameters {
@@ -654,7 +653,6 @@ impl EventHandler for Game {
                 selection: &self.handlers.selection,
                 graphics,
             });
-
         self.systems.tree_artist.run(
             &self.components.trees,
             &self.components.terrain,
