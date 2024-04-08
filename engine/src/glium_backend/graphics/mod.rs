@@ -6,6 +6,7 @@ mod utils;
 mod vertices;
 
 use std::error::Error;
+use std::mem;
 
 use crate::glium_backend::graphics::utils::colored_vertices_from_triangles;
 use crate::graphics::elements::{self, OverlayTriangles, TexturedPosition, Triangle};
@@ -591,7 +592,13 @@ impl GliumGraphics {
                 }
             })
             .collect::<Vec<_>>();
-        instanced_primitives.vertex_buffer.write(&vertices);
+
+        if mem::size_of_val(vertices.as_slice()) == instanced_primitives.vertex_buffer.get_size() {
+            instanced_primitives.vertex_buffer.write(&vertices);
+        } else {
+            instanced_primitives.vertex_buffer =
+                glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?;
+        }
 
         Ok(())
     }
