@@ -79,6 +79,13 @@ impl Handler {
         computer::piste_ability::compute_piste(
             &piste_id, pistes, costs, exits, lifts, entrances, abilities,
         );
+        computer::piste_network::compute_piste_network(
+            piste_map,
+            lifts,
+            entrances,
+            costs,
+            Ability::Advanced,
+        );
 
         if let Some(piste) = pistes.get(&piste_id) {
             let grid = &piste.grid;
