@@ -5,6 +5,7 @@ use std::iter::empty;
 use commons::grid::{Grid, CORNERS_INVERSE};
 use network::model::{Edge, OutNetwork};
 
+use crate::handlers::lift_builder::LIFT_VELOCITY;
 use crate::model::ability::Ability;
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
@@ -57,10 +58,12 @@ impl<'a> OutNetwork<usize> for PisteNetwork<'a> {
                 };
                 let targets = costs
                     .targets_reachable_from_state(&state, &self.ability)
+                    .copied()
+                    .filter(|target| target != from)
                     .collect::<HashSet<_>>();
                 for target in targets {
-                    let cost = costs.costs(*target, self.ability).unwrap()[&state];
-                    match target_to_costs.entry(*target) {
+                    let cost = costs.costs(target, self.ability).unwrap()[&state];
+                    match target_to_costs.entry(target) {
                         Entry::Occupied(mut value) => {
                             let value = value.get_mut();
                             *value = cost.max(*value);
@@ -81,13 +84,29 @@ impl<'a> OutNetwork<usize> for PisteNetwork<'a> {
 
         let position_count = positions.len();
 
+        let lift_cost = self
+            .lifts
+            .get(from)
+            .map(|lift| {
+                println!("Ride length = {}", lift.ride_length());
+                lift.ride_length() / LIFT_VELOCITY
+            }) // TODO lookup from carousel
+            .map(|seconds| seconds * 1_000_000.0)
+            .map(|micros| micros as u32)
+            .unwrap_or(0);
+
+        println!("Lift cost = {:?}", lift_cost);
+
         let iter = targets_to_costs_vec
             .into_iter()
             .filter(move |(_, costs)| costs.len() == position_count)
-            .map(|(to, costs)| Edge {
-                from: *from,
-                to,
-                cost: costs.into_iter().max().unwrap().try_into().unwrap(),
+            .map(move |(to, costs)| {
+                let cost: u32 = costs.into_iter().max().unwrap().try_into().unwrap();
+                Edge {
+                    from: *from,
+                    to,
+                    cost: (lift_cost + cost) / 1000,
+                }
             });
 
         Box::new(iter)

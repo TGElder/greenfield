@@ -11,6 +11,13 @@ pub struct Lift {
     pub drop_off: Portal,
 }
 
+impl Lift {
+    pub fn ride_length(&self) -> f32 {
+        // TODO handle case where pick up is after drop off?
+        self.segments[self.pick_up.segment].length_meters
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Segment {
     pub from: XYZ<f32>,
