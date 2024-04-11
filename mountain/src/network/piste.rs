@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use std::iter::empty;
 
 use commons::grid::{Grid, CORNERS_INVERSE};
-use network::model::{Edge, OutNetwork};
+use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::handlers::lift_builder::LIFT_VELOCITY;
 use crate::model::ability::Ability;
@@ -110,14 +110,33 @@ impl<'a> OutNetwork<usize> for PisteNetwork<'a> {
             });
 
         Box::new(iter)
+    }
+}
 
-        // If lift, find all pistes at drop off
-        // If entrance, we know the piste
+pub struct PisteInNetwork {
+    // TODO make generic helper in network crate?
+    pub edges: HashMap<usize, Vec<Edge<usize>>>,
+}
 
-        // Now we have (piste + positions)
+impl PisteInNetwork {
+    pub fn new(network: &dyn OutNetwork<usize>, nodes: &[usize]) -> PisteInNetwork {
+        let mut edges = HashMap::with_capacity(nodes.len());
 
-        // Find targets accessible from all positions
+        for node in nodes {
+            for edge in network.edges_out(node) {
+                edges.entry(edge.to).or_insert_with(Vec::new).push(edge);
+            }
+        }
 
-        // Target setter should run over all pistes? Piste adopotion as part of target setting
+        PisteInNetwork { edges }
+    }
+}
+
+impl InNetwork<usize> for PisteInNetwork {
+    fn edges_in<'a>(&'a self, to: &'a usize) -> Box<dyn Iterator<Item = Edge<usize>> + 'a> {
+        match self.edges.get(to) {
+            Some(edges) => Box::new(edges.iter().copied()),
+            None => Box::new(empty()),
+        }
     }
 }
