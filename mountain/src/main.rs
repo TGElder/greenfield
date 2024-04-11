@@ -47,7 +47,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
-use crate::model::skiing;
+use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
@@ -322,6 +322,7 @@ fn new_components() -> Components {
         terrain,
         trees,
         planning_queue: HashVec::new(),
+        target_costs: Costs::new(),
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -347,7 +348,7 @@ pub struct Components {
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    costs: HashMap<usize, Costs>,
+    costs: HashMap<usize, Costs<State>>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
@@ -364,6 +365,8 @@ pub struct Components {
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
+    #[serde(skip)] // TODO remove
+    target_costs: Costs<usize>,
     services: Services,
 }
 
@@ -541,6 +544,7 @@ impl EventHandler for Game {
                 abilities: &mut self.components.abilities,
                 clock: &mut self.components.services.clock,
                 terrain_artist: &mut self.systems.terrain_artist,
+                target_costs: &mut self.components.target_costs,
                 graphics,
             });
 
@@ -571,6 +575,7 @@ impl EventHandler for Game {
             exits: &self.components.exits,
             abilities: &self.components.abilities,
             targets: &mut self.components.targets,
+            target_costs: &mut self.components.target_costs,
         });
 
         entrance::run(

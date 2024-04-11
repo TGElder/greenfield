@@ -13,15 +13,15 @@ use crate::model::lift::Lift;
 use crate::model::piste::Costs;
 use crate::model::skiing::State;
 
-pub struct PisteNetwork<'a> {
+pub struct PisteOutNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub entrances: &'a HashMap<usize, Entrance>,
-    pub costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs<State>>,
     pub ability: Ability,
 }
 
-impl<'a> OutNetwork<usize> for PisteNetwork<'a> {
+impl<'a> OutNetwork<usize> for PisteOutNetwork<'a> {
     fn edges_out<'b>(
         &'b self,
         from: &'b usize,
@@ -87,15 +87,10 @@ impl<'a> OutNetwork<usize> for PisteNetwork<'a> {
         let lift_cost = self
             .lifts
             .get(from)
-            .map(|lift| {
-                println!("Ride length = {}", lift.ride_length());
-                lift.ride_length() / LIFT_VELOCITY
-            }) // TODO lookup from carousel
+            .map(|lift| lift.ride_length() / LIFT_VELOCITY) // TODO lookup from carousel
             .map(|seconds| seconds * 1_000_000.0)
             .map(|micros| micros as u32)
             .unwrap_or(0);
-
-        println!("Lift cost = {:?}", lift_cost);
 
         let iter = targets_to_costs_vec
             .into_iter()

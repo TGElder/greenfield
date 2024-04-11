@@ -4,7 +4,7 @@ use commons::origin_grid::OriginGrid;
 use serde::{Deserialize, Serialize};
 
 use crate::model::ability::Ability;
-use crate::model::skiing::State;
+use std::hash::Hash;
 
 #[derive(Serialize, Deserialize)]
 pub struct Piste {
@@ -17,23 +17,30 @@ struct Key {
     ability: Ability,
 }
 
-#[derive(Serialize, Deserialize)]
-pub struct Costs {
-    target_to_costs: HashMap<Key, HashMap<State, u64>>,
+#[derive(Default, Serialize, Deserialize)]
+pub struct Costs<T>
+// TODO move out of piste mod
+where
+    T: Eq + Hash,
+{
+    target_to_costs: HashMap<Key, HashMap<T, u64>>,
 }
 
-impl Costs {
-    pub fn new() -> Costs {
+impl<T> Costs<T>
+where
+    T: Eq + Hash,
+{
+    pub fn new() -> Costs<T> {
         Costs {
             target_to_costs: HashMap::new(),
         }
     }
 
-    pub fn costs(&self, target: usize, ability: Ability) -> Option<&HashMap<State, u64>> {
+    pub fn costs(&self, target: usize, ability: Ability) -> Option<&HashMap<T, u64>> {
         self.target_to_costs.get(&Key { target, ability })
     }
 
-    pub fn set_costs(&mut self, target: usize, ability: Ability, costs: HashMap<State, u64>) {
+    pub fn set_costs(&mut self, target: usize, ability: Ability, costs: HashMap<T, u64>) {
         self.target_to_costs.insert(Key { target, ability }, costs);
     }
 
@@ -43,7 +50,7 @@ impl Costs {
 
     pub fn targets_reachable_from_state<'a>(
         &'a self,
-        state: &'a State,
+        state: &'a T,
         ability: &'a Ability,
     ) -> impl Iterator<Item = &usize> + 'a {
         self.target_to_costs
@@ -53,7 +60,7 @@ impl Costs {
             .map(|(Key { target, .. }, _)| target)
     }
 
-    pub fn min_ability(&self, from: &State, target: &usize) -> Option<Ability> {
+    pub fn min_ability(&self, from: &T, target: &usize) -> Option<Ability> {
         self.target_to_costs
             .iter()
             .filter(|(key, _)| key.target == *target)

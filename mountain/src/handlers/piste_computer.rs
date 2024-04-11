@@ -10,6 +10,7 @@ use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
+use crate::model::skiing::State;
 use crate::services::clock;
 use crate::systems::terrain_artist;
 use crate::utils::computer;
@@ -28,8 +29,9 @@ pub struct Parameters<'a> {
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
-    pub costs: &'a mut HashMap<usize, Costs>,
+    pub costs: &'a mut HashMap<usize, Costs<State>>,
     pub abilities: &'a mut HashMap<usize, Ability>,
+    pub target_costs: &'a mut Costs<usize>,
     pub clock: &'a mut clock::Service,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
@@ -50,6 +52,7 @@ impl Handler {
             reservations,
             costs,
             abilities,
+            target_costs,
             clock,
             terrain_artist,
             graphics,
@@ -84,7 +87,7 @@ impl Handler {
             lifts,
             entrances,
             costs,
-            Ability::Advanced,
+            target_costs,
         );
 
         if let Some(piste) = pistes.get(&piste_id) {
