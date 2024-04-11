@@ -52,8 +52,8 @@ use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
-    lift_artist, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
-    terrain_artist, tree_artist,
+    lift_artist, map_target_setter, piste_adopter, planner, skiing_framer, target_scrubber,
+    target_setter, terrain_artist, tree_artist,
 };
 
 fn main() {
@@ -304,6 +304,7 @@ fn new_components() -> Components {
         plans: HashMap::default(),
         locations: HashMap::default(),
         targets: HashMap::default(),
+        map_targets: HashMap::default(),
         frames: HashMap::default(),
         drawings: HashMap::default(),
         pistes: HashMap::default(),
@@ -343,6 +344,8 @@ pub struct Components {
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
+    #[serde(skip)]
+    map_targets: HashMap<usize, usize>,
     #[serde(skip)]
     frames: HashMap<usize, Option<Frame>>,
     #[serde(skip)]
@@ -566,6 +569,11 @@ impl EventHandler for Game {
             &self.components.piste_map,
             &mut self.components.locations,
         );
+        map_target_setter::run(
+            &self.components.skiers,
+            &self.components.targets,
+            &mut self.components.map_targets,
+        );
         target_setter::run(target_setter::Parameters {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
@@ -575,6 +583,7 @@ impl EventHandler for Game {
             exits: &self.components.exits,
             abilities: &self.components.abilities,
             targets: &mut self.components.targets,
+            map_targets: &self.components.map_targets,
             target_costs: &mut self.components.target_costs,
         });
 

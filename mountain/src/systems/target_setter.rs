@@ -6,8 +6,6 @@ use crate::model::piste::Costs;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 
-const OMNI_TARGET: usize = 1040;
-
 pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
@@ -17,6 +15,7 @@ pub struct Parameters<'a> {
     pub exits: &'a HashMap<usize, Vec<Exit>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub target_costs: &'a Costs<usize>,
+    pub map_targets: &'a HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
 
@@ -30,6 +29,7 @@ pub fn run(
         exits,
         abilities,
         target_costs,
+        map_targets,
         targets,
     }: Parameters<'_>,
 ) {
@@ -60,14 +60,17 @@ pub fn run(
             continue;
         };
 
-        let Some(target_costs) = target_costs.costs(OMNI_TARGET, *skier_ability) else {
-            return;
+        let Some(map_target) = map_targets.get(skier_id) else {
+            continue;
+        };
+
+        let Some(target_costs) = target_costs.costs(*map_target, *skier_ability) else {
+            continue;
         };
 
         let candidates = basins
             .targets_reachable_from_state(state, &Ability::Expert)
             .filter(|target| open.contains(target))
-            .filter(|target| target_costs.contains_key(target))
             .filter(|target| {
                 let Some(exit) = exits.get(target) else {
                     return false;
@@ -93,7 +96,7 @@ pub fn run(
 
         let choice = candidates
             .into_iter()
-            .min_by_key(|candidate| target_costs.get(candidate));
+            .min_by_key(|candidate| target_costs.get(candidate).unwrap_or(&u64::MAX));
 
         if let Some(choice) = choice {
             targets.insert(*skier_id, *choice);
