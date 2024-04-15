@@ -1,11 +1,12 @@
 use std::collections::HashSet;
 
-use commons::geometry::XY;
 use serde::{Deserialize, Serialize};
+
+use crate::model::skiing::State;
 
 #[derive(Serialize, Deserialize)]
 pub struct Exit {
     pub id: usize,
     pub destination: usize,
-    pub positions: HashSet<XY<u32>>,
+    pub states: HashSet<State>,
 }
