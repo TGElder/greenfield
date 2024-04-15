@@ -9,6 +9,7 @@ pub struct Lift {
     pub segments: Vec<Segment>,
     pub pick_up: Portal,
     pub drop_off: Portal,
+    pub carousel_id: usize,
 }
 
 impl Lift {
@@ -88,6 +89,7 @@ mod tests {
                 position: xy(0, 0),
                 direction: Direction::North,
             },
+            carousel_id: 0,
         };
 
         // when
@@ -117,6 +119,7 @@ mod tests {
                 position: xy(0, 0),
                 direction: Direction::North,
             },
+            carousel_id: 0,
         };
 
         // when

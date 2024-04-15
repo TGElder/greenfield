@@ -86,6 +86,7 @@ impl Handler {
 
         let to = position;
         let lift_id = id_allocator.next_id();
+        let carousel_id = id_allocator.next_id();
 
         let points = get_points(terrain, &from, &to);
         let direction = get_direction(&from, &to);
@@ -102,6 +103,7 @@ impl Handler {
                 position: to,
                 direction,
             },
+            carousel_id,
         };
 
         // opening lift
@@ -109,8 +111,6 @@ impl Handler {
         open.insert(lift_id);
 
         // setup carousel
-
-        let carousel_id = id_allocator.next_id();
 
         let new_cars =
             utils::carousel::create_cars(carousel_id, &lift.segments, &CAR_INTERVAL_METERS);
