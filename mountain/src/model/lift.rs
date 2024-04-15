@@ -11,6 +11,18 @@ pub struct Lift {
     pub drop_off: Portal,
 }
 
+impl Lift {
+    fn _ride_length_meters(&self) -> f32 {
+        let mut segment = self.pick_up.segment;
+        let mut out = 0.0;
+        while segment != self.drop_off.segment {
+            out += self.segments[segment].length_meters;
+            segment = (segment + 1) % self.segments.len();
+        }
+        out
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Segment {
     pub from: XYZ<f32>,
@@ -47,5 +59,70 @@ impl Segment {
 
     pub fn length_meters(&self) -> &f32 {
         &self.length_meters
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use commons::geometry::{xy, xyz};
+
+    use super::*;
+
+    #[test]
+    fn test_ride_length_meters_pick_up_before_drop_off() {
+        // given
+        let lift = Lift {
+            segments: Segment::segments(&[
+                xyz(0.0, 0.0, 0.0),
+                xyz(2.0, 0.0, 0.0),
+                xyz(2.0, 1.0, 0.0),
+                xyz(0.0, 1.0, 0.0),
+            ]),
+            pick_up: Portal {
+                segment: 0,
+                position: xy(0, 0),
+                direction: Direction::North,
+            },
+            drop_off: Portal {
+                segment: 2,
+                position: xy(0, 0),
+                direction: Direction::North,
+            },
+        };
+
+        // when
+        let result = lift._ride_length_meters();
+
+        // then
+        assert_eq!(result, 3.0);
+    }
+
+    #[test]
+    fn test_ride_length_meters_pick_up_after_drop_off() {
+        // given
+        let lift = Lift {
+            segments: Segment::segments(&[
+                xyz(0.0, 1.0, 0.0),
+                xyz(0.0, 0.0, 0.0),
+                xyz(2.0, 0.0, 0.0),
+                xyz(2.0, 1.0, 0.0),
+            ]),
+            pick_up: Portal {
+                segment: 1,
+                position: xy(0, 0),
+                direction: Direction::North,
+            },
+            drop_off: Portal {
+                segment: 0,
+                position: xy(0, 0),
+                direction: Direction::North,
+            },
+        };
+
+        // when
+        let result = lift._ride_length_meters();
+
+        // then
+        assert_eq!(result, 3.0);
     }
 }
