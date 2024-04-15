@@ -5,7 +5,6 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::{Costs, Piste};
 use crate::model::reservation::Reservation;
-use crate::model::skiing::State;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
 use commons::grid::Grid;
@@ -44,13 +43,14 @@ fn compute_costs(
 
     for Exit {
         id: exit_id,
-        positions: targets,
+        states,
         ..
     } in exits
     {
-        let min_z = targets
+        let min_z = states
             .iter()
-            .map(|target| terrain[target])
+            .map(|state| state.position)
+            .map(|position| terrain[position])
             .min_by(unsafe_ordering)
             .unwrap();
         for ability in ABILITIES {
@@ -69,7 +69,10 @@ fn compute_costs(
             };
             let network = StationaryNetwork::for_positions(&network, &piste_positions(piste));
 
-            let costs = compute_costs_for_targets(&network, targets);
+            let costs = {
+                let network = &network;
+                network.costs_to_targets(states, None)
+            };
             let coverage =
                 costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
             println!(
@@ -89,25 +92,4 @@ fn piste_positions(piste: &Piste) -> HashSet<XY<u32>> {
         .iter()
         .filter(|position| piste.grid[position])
         .collect::<HashSet<_>>()
-}
-
-fn compute_costs_for_targets(
-    network: &StationaryNetwork,
-    targets: &HashSet<XY<u32>>,
-) -> HashMap<State, u64> {
-    network.costs_to_targets(
-        &targets
-            .iter()
-            .flat_map(|target| states_for_position(*target))
-            .collect(),
-        None,
-    )
-}
-
-fn states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
-    DIRECTIONS.into_iter().map(move |travel_direction| State {
-        position,
-        velocity: 0,
-        travel_direction,
-    })
 }
