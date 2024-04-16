@@ -31,7 +31,7 @@ impl Handler {
             .lifts
             .iter()
             .filter(|(_, lift)| {
-                lift.pick_up.position == position || lift.drop_off.position == position
+                lift.pick_up.state.position == position || lift.drop_off.state.position == position
             })
             .map(|(lift_id, _)| *lift_id)
             .collect::<Vec<_>>();
@@ -92,7 +92,7 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     let lift = components.lifts.remove(lift_id);
 
     if let Some(lift) = lift {
-        components.reservations[lift.pick_up.position].remove(lift_id);
+        components.reservations[lift.pick_up.state.position].remove(lift_id);
     }
 
     for carousel_id in carousel_ids {

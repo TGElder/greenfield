@@ -140,6 +140,7 @@ mod tests {
 
     use crate::model::direction::Direction;
     use crate::model::lift;
+    use crate::model::skiing::State;
 
     use super::*;
 
@@ -217,13 +218,19 @@ mod tests {
         let lift = Lift {
             pick_up: lift::Portal {
                 segment: 0,
-                position: xy(0, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(0, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             drop_off: lift::Portal {
                 segment: 1,
-                position: xy(1, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(1, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),
@@ -300,13 +307,19 @@ mod tests {
         let lift = Lift {
             pick_up: lift::Portal {
                 segment: 0,
-                position: xy(0, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(0, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             drop_off: lift::Portal {
                 segment: 1,
-                position: xy(1, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(1, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             segments: Segment::segments(&[
                 xyz(0.0, 0.0, 0.0),

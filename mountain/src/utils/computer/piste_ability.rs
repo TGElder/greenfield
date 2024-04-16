@@ -46,20 +46,24 @@ fn compute_ability(
 ) -> Option<Ability> {
     let grid = &piste.grid;
 
-    let lifts_iter = lifts.values().map(|lift| lift.drop_off.position);
+    let lifts_iter = lifts.values().map(|lift| lift.drop_off.state);
 
     let entrances_iter = entrances
         .values()
         .filter(|entrance| entrance.piste == *piste_id)
-        .flat_map(|entrance| entrance.footprint.iter());
-
-    let entrances = lifts_iter
-        .chain(entrances_iter)
-        .filter(|position| grid.in_bounds(position) && grid[position])
+        .flat_map(|entrance| entrance.footprint.iter())
         .map(|position| State {
             position,
             velocity: 0,
             travel_direction: Direction::North,
+        });
+
+    let entrances = lifts_iter
+        .chain(entrances_iter)
+        .filter(|State { position, .. }| grid.in_bounds(position) && grid[position])
+        .map(|state| State {
+            velocity: 0,
+            ..state
         })
         .collect::<HashSet<_>>();
 
