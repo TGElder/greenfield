@@ -32,6 +32,11 @@ impl Drawing {
             .map(transformation_matrix)
             .map(Some)
             .collect::<Vec<_>>();
+
+        if world_matrices.is_empty() {
+            return;
+        }
+
         graphics
             .update_instanced_triangles(&self.index, &world_matrices)
             .unwrap();
