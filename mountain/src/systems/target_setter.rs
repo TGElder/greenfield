@@ -60,6 +60,7 @@ pub fn run(
 
         let candidates = basins
             .targets_reachable_from_state(state, &Ability::Expert)
+            .map(|(target, _)| target)
             .filter(|target| open.contains(target))
             .filter(|target| {
                 let Some(exit) = exits.get(target) else {

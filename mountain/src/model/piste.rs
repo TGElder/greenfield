@@ -45,12 +45,13 @@ impl Costs {
         &'a self,
         state: &'a State,
         ability: &'a Ability,
-    ) -> impl Iterator<Item = &usize> + 'a {
+    ) -> impl Iterator<Item = (&usize, &u64)> + 'a {
         self.target_to_costs
             .iter()
             .filter(|(key, _)| key.ability == *ability)
-            .filter(move |(_, costs)| costs.contains_key(state))
-            .map(|(Key { target, .. }, _)| target)
+            .flat_map(move |(Key { target, .. }, costs)| {
+                costs.get(state).map(|cost| (target, cost))
+            })
     }
 
     pub fn min_ability(&self, from: &State, target: &usize) -> Option<Ability> {
