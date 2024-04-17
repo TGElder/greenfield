@@ -11,6 +11,8 @@ use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::lift::{self, Lift, Segment};
 use crate::model::reservation::Reservation;
+use crate::model::skiing::State;
+use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
 use crate::utils;
 
@@ -89,19 +91,25 @@ impl Handler {
         let carousel_id = id_allocator.next_id();
 
         let points = get_points(terrain, &from, &to);
-        let direction = get_direction(&from, &to);
+        let travel_direction = get_direction(&from, &to);
 
         let lift = Lift {
             segments: Segment::segments(&points),
             pick_up: lift::Portal {
                 segment: 0,
-                position: from,
-                direction,
+                state: State {
+                    position: from,
+                    travel_direction,
+                    velocity: 0,
+                },
             },
             drop_off: lift::Portal {
                 segment: 1,
-                position: to,
-                direction,
+                state: State {
+                    position: to,
+                    travel_direction,
+                    velocity: encode_velocity(&LIFT_VELOCITY).unwrap_or(VELOCITY_LEVELS - 1),
+                },
             },
             carousel_id,
         };
@@ -134,7 +142,7 @@ impl Handler {
 
         // reserve pick up position
 
-        reservations[lift.pick_up.position].insert(lift_id, Reservation::Structure);
+        reservations[lift.pick_up.state.position].insert(lift_id, Reservation::Structure);
 
         // clear from position
 

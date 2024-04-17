@@ -41,8 +41,8 @@ fn exits_for_piste(
     let lifts_iter = lifts.iter().flat_map(|(lift_id, lift)| {
         Some(Exit {
             id: *lift_id,
-            destination: piste_map[lift.drop_off.position]?,
-            states: states_for_position(lift.pick_up.position).collect(),
+            destination: piste_map[lift.drop_off.state.position]?,
+            states: HashSet::from([lift.pick_up.state]),
         })
     });
 

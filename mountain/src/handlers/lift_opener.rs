@@ -29,7 +29,7 @@ impl Handler {
         let position = xy(x.round() as u32, y.round() as u32);
 
         for (lift_id, lift) in lifts {
-            if lift.pick_up.position == position || lift.drop_off.position == position {
+            if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
                 if open.remove(lift_id) {
                     println!("Lift {} is closed", lift_id);
                 } else {

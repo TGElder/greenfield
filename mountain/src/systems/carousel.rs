@@ -5,8 +5,7 @@ use commons::grid::Grid;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
 use crate::model::reservation::{Reservation, ReservationPeriod};
-use crate::model::skiing::{Plan, State};
-use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
+use crate::model::skiing::Plan;
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
 
 pub struct System {
@@ -79,7 +78,7 @@ impl System {
 
             let occupied_locations = locations.values().collect::<HashSet<_>>();
 
-            if reservations[lift.drop_off.position]
+            if reservations[lift.drop_off.state.position]
                 .values()
                 .any(|reservation| reservation.includes(micros))
             {
@@ -112,12 +111,12 @@ impl System {
                             if !matches!(targets.get(plan_id), Some(&target) if target == carousel.lift_id) {
                                 return true;
                             }
-                            if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.pick_up.position) {
+                            if !matches!(plan, Plan::Stationary(state) if *state == lift.pick_up.state) {
                                 return true;
                             }
                             targets.remove(plan_id);
                             locations.insert(*plan_id, *car_id);
-                            reservations[lift.pick_up.position].remove(plan_id);
+                            reservations[lift.pick_up.state.position].remove(plan_id);
                             false
                         });
                     }
@@ -126,16 +125,8 @@ impl System {
                             if *location != *car_id {
                                 return true;
                             }
-                            plans.insert(
-                                *location_id,
-                                Plan::Stationary(State {
-                                    position: lift.drop_off.position,
-                                    velocity: encode_velocity(&carousel.velocity)
-                                        .unwrap_or(VELOCITY_LEVELS - 1),
-                                    travel_direction: lift.drop_off.direction,
-                                }),
-                            );
-                            reservations[lift.drop_off.position].insert(
+                            plans.insert(*location_id, Plan::Stationary(lift.drop_off.state));
+                            reservations[lift.drop_off.state.position].insert(
                                 *location_id,
                                 Reservation::Mobile(ReservationPeriod::Permanent),
                             );

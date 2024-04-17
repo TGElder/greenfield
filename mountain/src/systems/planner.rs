@@ -239,13 +239,17 @@ fn find_path(
         .find_best_within_steps(
             HashSet::from([*from]),
             &mut |_, state| {
+                let cost = costs.get(&state.stationary())?;
+
+                if *cost == 0 {
+                    return Some(Score { cost: 0 });
+                }
+
                 if state.position == from.position {
                     return None;
                 }
 
-                let cost = costs.get(&state.stationary())?;
-
-                if *cost != 0 && is_white_tile(&state.position) {
+                if is_white_tile(&state.position) {
                     return None;
                 }
 

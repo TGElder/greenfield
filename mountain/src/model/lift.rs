@@ -1,8 +1,8 @@
-use commons::geometry::{XY, XYZ};
+use commons::geometry::XYZ;
 use nalgebra::Point3;
 use serde::{Deserialize, Serialize};
 
-use crate::model::direction::Direction;
+use crate::model::skiing::State;
 
 #[derive(Serialize, Deserialize)]
 pub struct Lift {
@@ -34,8 +34,7 @@ pub struct Segment {
 #[derive(Serialize, Deserialize)]
 pub struct Portal {
     pub segment: usize,
-    pub position: XY<u32>,
-    pub direction: Direction,
+    pub state: State,
 }
 
 impl Segment {
@@ -67,6 +66,8 @@ impl Segment {
 mod tests {
     use commons::geometry::{xy, xyz};
 
+    use crate::model::direction::Direction;
+
     use super::*;
 
     #[test]
@@ -78,16 +79,23 @@ mod tests {
                 xyz(2.0, 0.0, 0.0),
                 xyz(2.0, 1.0, 0.0),
                 xyz(0.0, 1.0, 0.0),
+                xyz(0.0, 0.0, 0.0),
             ]),
             pick_up: Portal {
                 segment: 0,
-                position: xy(0, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(0, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             drop_off: Portal {
                 segment: 2,
-                position: xy(0, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(2, 1),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             carousel_id: 0,
         };
@@ -104,20 +112,27 @@ mod tests {
         // given
         let lift = Lift {
             segments: Segment::segments(&[
+                xyz(2.0, 1.0, 0.0),
                 xyz(0.0, 1.0, 0.0),
                 xyz(0.0, 0.0, 0.0),
                 xyz(2.0, 0.0, 0.0),
                 xyz(2.0, 1.0, 0.0),
             ]),
             pick_up: Portal {
-                segment: 1,
-                position: xy(0, 0),
-                direction: Direction::North,
+                segment: 2,
+                state: State {
+                    position: xy(0, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             drop_off: Portal {
                 segment: 0,
-                position: xy(0, 0),
-                direction: Direction::North,
+                state: State {
+                    position: xy(0, 0),
+                    travel_direction: Direction::North,
+                    velocity: 0,
+                },
             },
             carousel_id: 0,
         };
