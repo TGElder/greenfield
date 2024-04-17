@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
 use crate::model::reservation::{Reservation, ReservationPeriod};
-use crate::model::skiing::{Plan, State};
+use crate::model::skiing::Plan;
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
 
 pub struct System {
@@ -111,7 +111,7 @@ impl System {
                             if !matches!(targets.get(plan_id), Some(&target) if target == carousel.lift_id) {
                                 return true;
                             }
-                            if !matches!(plan, Plan::Stationary(State { position, ..}) if *position == lift.pick_up.state.position) {
+                            if !matches!(plan, Plan::Stationary(state) if *state == lift.pick_up.state) {
                                 return true;
                             }
                             targets.remove(plan_id);

@@ -79,6 +79,7 @@ mod tests {
                 xyz(2.0, 0.0, 0.0),
                 xyz(2.0, 1.0, 0.0),
                 xyz(0.0, 1.0, 0.0),
+                xyz(0.0, 0.0, 0.0),
             ]),
             pick_up: Portal {
                 segment: 0,
@@ -115,6 +116,7 @@ mod tests {
                 xyz(0.0, 1.0, 0.0),
                 xyz(0.0, 0.0, 0.0),
                 xyz(2.0, 0.0, 0.0),
+                xyz(2.0, 1.0, 0.0),
             ]),
             pick_up: Portal {
                 segment: 2,
