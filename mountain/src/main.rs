@@ -25,6 +25,7 @@ use engine::engine::Engine;
 use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use engine::glium_backend;
 
+use ::network::model::OutNetwork;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
@@ -49,6 +50,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing;
 use crate::model::tree::Tree;
+use crate::network::target::TargetNetwork;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
@@ -659,5 +661,33 @@ impl EventHandler for Game {
             &self.components.piste_map,
             graphics,
         );
+
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::K),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            let network = TargetNetwork {
+                piste_map: &self.components.piste_map,
+                lifts: &self.components.lifts,
+                carousels: &self.components.carousels,
+                entrances: &self.components.entrances,
+                costs: &self.components.costs,
+                ability: Ability::Advanced,
+            };
+            for lift in self.components.lifts.keys() {
+                println!("Lift {}", lift);
+                for edge in network.edges_out(lift) {
+                    println!("{:?}", edge);
+                }
+            }
+            for entrance in self.components.entrances.keys() {
+                println!("Entrance {}", entrance);
+                for edge in network.edges_out(entrance) {
+                    println!("{:?}", edge);
+                }
+            }
+        }
     }
 }
