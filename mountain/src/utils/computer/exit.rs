@@ -56,7 +56,7 @@ fn exits_for_piste(
                 .footprint
                 .iter()
                 .filter(|position| grid.in_bounds(position))
-                .flat_map(states_for_position)
+                .flat_map(stationary_states_for_position)
                 .collect::<HashSet<_>>(),
         });
 
@@ -78,7 +78,7 @@ fn exits_for_piste(
         .collect()
 }
 
-fn states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
+fn stationary_states_for_position(position: XY<u32>) -> impl Iterator<Item = State> {
     DIRECTIONS.into_iter().map(move |travel_direction| State {
         position,
         velocity: 0,

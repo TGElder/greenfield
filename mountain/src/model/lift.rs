@@ -13,7 +13,7 @@ pub struct Lift {
 }
 
 impl Lift {
-    fn _ride_length_meters(&self) -> f32 {
+    pub fn ride_length_meters(&self) -> f32 {
         let mut segment = self.pick_up.segment;
         let mut out = 0.0;
         while segment != self.drop_off.segment {
@@ -101,7 +101,7 @@ mod tests {
         };
 
         // when
-        let result = lift._ride_length_meters();
+        let result = lift.ride_length_meters();
 
         // then
         assert_eq!(result, 3.0);
@@ -138,7 +138,7 @@ mod tests {
         };
 
         // when
-        let result = lift._ride_length_meters();
+        let result = lift.ride_length_meters();
 
         // then
         assert_eq!(result, 3.0);
