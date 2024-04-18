@@ -1,9 +1,10 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::model::ability::ABILITIES;
+use crate::model::costs::Costs;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
-use crate::model::piste::{Costs, Piste};
+use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;

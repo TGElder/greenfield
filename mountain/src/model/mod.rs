@@ -1,5 +1,6 @@
 pub mod ability;
 pub mod carousel;
+pub mod costs;
 pub mod direction;
 pub mod entrance;
 pub mod exit;

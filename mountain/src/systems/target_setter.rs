@@ -3,8 +3,8 @@ use std::collections::{HashMap, HashSet};
 use rand::seq::SliceRandom;
 
 use crate::model::ability::Ability;
+use crate::model::costs::Costs;
 use crate::model::exit::Exit;
-use crate::model::piste::Costs;
 use crate::model::skier::Skier;
 use crate::model::skiing::Plan;
 
