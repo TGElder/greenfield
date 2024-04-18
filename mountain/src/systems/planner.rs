@@ -7,8 +7,9 @@ use network::model::Edge;
 use rand::Rng;
 
 use crate::model::ability::Ability;
+use crate::model::costs::Costs;
 use crate::model::hash_vec::HashVec;
-use crate::model::piste::{Costs, Piste};
+use crate::model::piste::Piste;
 use crate::model::reservation::{Reservation, ReservationPeriod};
 use crate::model::skier::Skier;
 use crate::model::skiing::{Event, Plan, State};

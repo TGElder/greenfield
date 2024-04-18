@@ -1,11 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
 use crate::model::ability::Ability;
+use crate::model::costs::Costs;
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
-use crate::model::piste::{Costs, Piste};
+use crate::model::piste::Piste;
 use crate::model::skiing::State;
 
 pub fn compute_piste(

@@ -8,10 +8,10 @@ use network::model::{Edge, OutNetwork};
 
 use crate::model::ability::Ability;
 use crate::model::carousel::Carousel;
+use crate::model::costs::Costs;
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
-use crate::model::piste::Costs;
 use crate::model::skiing::State;
 
 pub struct TargetNetwork<'a> {

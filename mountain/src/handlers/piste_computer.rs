@@ -5,10 +5,11 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::model::ability::Ability;
+use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
-use crate::model::piste::{Costs, Piste};
+use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::services::clock;
 use crate::systems::terrain_artist;
