@@ -49,7 +49,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
-use crate::model::skiing;
+use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::network::target::TargetNetwork;
 use crate::services::id_allocator;
@@ -350,7 +350,7 @@ pub struct Components {
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
     pistes: HashMap<usize, Piste>,
-    costs: HashMap<usize, Costs>,
+    costs: HashMap<usize, Costs<State>>,
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,

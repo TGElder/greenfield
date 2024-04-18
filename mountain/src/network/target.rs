@@ -19,7 +19,7 @@ pub struct TargetNetwork<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
-    pub costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub ability: Ability,
 }
@@ -112,7 +112,7 @@ impl<'a> OutNetwork<usize> for TargetNetwork<'a> {
                     continue;
                 };
                 costs
-                    .targets_reachable_from_state(from_state, &self.ability)
+                    .targets_reachable_from_node(from_state, &self.ability)
                     .filter(|&(target, _)| target != from)
                     .for_each(|(&target, &cost)| match target_to_cost.entry(target) {
                         Entry::Occupied(mut value) => {

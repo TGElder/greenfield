@@ -6,13 +6,13 @@ use crate::model::ability::Ability;
 use crate::model::costs::Costs;
 use crate::model::exit::Exit;
 use crate::model::skier::Skier;
-use crate::model::skiing::Plan;
+use crate::model::skiing::{Plan, State};
 
 pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
-    pub costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs<State>>,
     pub open: &'a HashSet<usize>,
     pub exits: &'a HashMap<usize, Vec<Exit>>,
     pub abilities: &'a HashMap<usize, Ability>,
@@ -59,7 +59,7 @@ pub fn run(
         };
 
         let candidates = basins
-            .targets_reachable_from_state(state, &Ability::Expert)
+            .targets_reachable_from_node(state, &Ability::Expert)
             .map(|(target, _)| target)
             .filter(|target| open.contains(target))
             .filter(|target| {

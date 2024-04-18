@@ -6,6 +6,7 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
 use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
+use crate::model::skiing::State;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
 use commons::grid::Grid;
@@ -18,7 +19,7 @@ pub fn compute_piste(
     terrain: &Grid<f32>,
     exits: &HashMap<usize, Vec<Exit>>,
     reservations: &Grid<HashMap<usize, Reservation>>,
-    costs: &mut HashMap<usize, Costs>,
+    costs: &mut HashMap<usize, Costs<State>>,
 ) {
     costs.remove(piste_id);
 
@@ -39,7 +40,7 @@ fn compute_costs(
     piste: &Piste,
     exits: &[Exit],
     reservations: &Grid<HashMap<usize, Reservation>>,
-) -> Costs {
+) -> Costs<State> {
     let mut out = Costs::new();
 
     for Exit {
