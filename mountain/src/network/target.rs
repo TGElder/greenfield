@@ -20,6 +20,7 @@ pub struct TargetNetwork<'a> {
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub costs: &'a HashMap<usize, Costs>,
+    pub abilities: &'a HashMap<usize, Ability>,
     pub ability: Ability,
 }
 
@@ -46,6 +47,7 @@ impl<'a> TargetNetwork<'a> {
         self.piste_map
             .offsets(position, &CORNERS_INVERSE)
             .flat_map(|corner| self.piste_map[corner])
+            .filter(|piste_id| self.abilities[piste_id] <= self.ability)
             .collect::<HashSet<_>>()
     }
 
