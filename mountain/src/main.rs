@@ -674,6 +674,7 @@ impl EventHandler for Game {
                 carousels: &self.components.carousels,
                 entrances: &self.components.entrances,
                 costs: &self.components.costs,
+                abilities: &self.components.abilities,
                 ability: Ability::Advanced,
             };
             for lift in self.components.lifts.keys() {
