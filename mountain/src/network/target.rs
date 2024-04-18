@@ -47,7 +47,12 @@ impl<'a> TargetNetwork<'a> {
         self.piste_map
             .offsets(position, &CORNERS_INVERSE)
             .flat_map(|corner| self.piste_map[corner])
-            .filter(|piste_id| self.abilities[piste_id] <= self.ability)
+            .filter(|piste_id| {
+                self.abilities
+                    .get(piste_id)
+                    .map(|&piste_ability| piste_ability <= self.ability)
+                    .unwrap_or_default()
+            })
             .collect::<HashSet<_>>()
     }
 
