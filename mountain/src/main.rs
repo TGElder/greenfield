@@ -562,6 +562,8 @@ impl EventHandler for Game {
         piste_adopter::run(
             &self.components.plans,
             &self.components.piste_map,
+            &self.components.skiers,
+            &self.components.abilities,
             &mut self.components.locations,
         );
         target_setter::run(target_setter::Parameters {
