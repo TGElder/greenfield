@@ -1,4 +1,4 @@
 pub mod distance;
+pub mod global;
 pub mod skiing;
-pub mod target;
 pub mod velocity_encoding;

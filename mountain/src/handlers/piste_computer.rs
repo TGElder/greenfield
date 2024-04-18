@@ -5,6 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::model::ability::Ability;
+use crate::model::carousel::Carousel;
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -27,10 +28,12 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
+    pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs<State>>,
+    pub global_costs: &'a mut Costs<usize>,
     pub abilities: &'a mut HashMap<usize, Ability>,
     pub clock: &'a mut clock::Service,
     pub terrain_artist: &'a mut terrain_artist::System,
@@ -47,10 +50,12 @@ impl Handler {
             pistes,
             piste_map,
             lifts,
+            carousels,
             entrances,
             exits,
             reservations,
             costs,
+            global_costs,
             abilities,
             clock,
             terrain_artist,
@@ -80,6 +85,15 @@ impl Handler {
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
         computer::piste_ability::compute_piste(
             &piste_id, pistes, costs, exits, lifts, entrances, abilities,
+        );
+        computer::global_costs::compute_global_costs(
+            piste_map,
+            lifts,
+            carousels,
+            entrances,
+            costs,
+            abilities,
+            global_costs,
         );
 
         if let Some(piste) = pistes.get(&piste_id) {

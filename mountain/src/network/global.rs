@@ -14,7 +14,7 @@ use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
 use crate::model::skiing::State;
 
-pub struct TargetNetwork<'a> {
+pub struct GlobalNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
@@ -24,7 +24,7 @@ pub struct TargetNetwork<'a> {
     pub ability: Ability,
 }
 
-impl<'a> TargetNetwork<'a> {
+impl<'a> GlobalNetwork<'a> {
     fn get_from_states(&self, from: &usize) -> Option<Vec<State>> {
         self.lift_states(from)
             .or_else(|| self.entrance_states(from))
@@ -87,7 +87,7 @@ fn stationary_states_for_position(position: XY<u32>) -> impl Iterator<Item = Sta
 }
 
 // this gets the other lifts or entrances reachable from a given lift or entrance
-impl<'a> OutNetwork<usize> for TargetNetwork<'a> {
+impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
     fn edges_out<'b>(
         &'b self,
         from: &'b usize,
