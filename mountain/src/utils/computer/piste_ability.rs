@@ -12,7 +12,7 @@ use crate::model::skiing::State;
 pub fn compute_piste(
     piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
-    costs: &HashMap<usize, Costs>,
+    costs: &HashMap<usize, Costs<State>>,
     exits: &HashMap<usize, Vec<Exit>>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
@@ -40,7 +40,7 @@ pub fn compute_piste(
 fn compute_ability(
     piste_id: &usize,
     piste: &Piste,
-    costs: &Costs,
+    costs: &Costs<State>,
     exits: &[Exit],
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,

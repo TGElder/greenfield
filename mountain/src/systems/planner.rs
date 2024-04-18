@@ -27,7 +27,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub pistes: &'a HashMap<usize, Piste>,
-    pub costs: &'a HashMap<usize, Costs>,
+    pub costs: &'a HashMap<usize, Costs<State>>,
     pub plans: &'a mut HashMap<usize, Plan>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub planning_queue: &'a mut HashVec<usize>,
@@ -170,7 +170,7 @@ fn get_target_and_costs<'a>(
     ability: Ability,
     locations: &HashMap<usize, usize>,
     targets: &'a HashMap<usize, usize>,
-    costs: &'a HashMap<usize, Costs>,
+    costs: &'a HashMap<usize, Costs<State>>,
 ) -> Option<(&'a usize, &'a HashMap<State, u64>)> {
     let location = locations.get(id)?;
     let target = targets.get(id)?;
