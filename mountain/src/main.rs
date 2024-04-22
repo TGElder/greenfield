@@ -32,7 +32,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
-    piste_builder, piste_computer, piste_highlighter, piste_visibility, save, tree_visibility,
+    lift_targeter, piste_builder, piste_computer, piste_highlighter, piste_visibility, save,
+    tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -144,6 +145,12 @@ fn main() {
                 lift_remover: lift_remover::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::X),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                lift_targeter: lift_targeter::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::G),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -305,6 +312,7 @@ fn new_components() -> Components {
         plans: HashMap::default(),
         locations: HashMap::default(),
         targets: HashMap::default(),
+        global_targets: HashMap::default(),
         frames: HashMap::default(),
         drawings: HashMap::default(),
         pistes: HashMap::default(),
@@ -344,6 +352,7 @@ pub struct Components {
     plans: HashMap<usize, skiing::Plan>,
     locations: HashMap<usize, usize>,
     targets: HashMap<usize, usize>,
+    global_targets: HashMap<usize, usize>,
     #[serde(skip)]
     frames: HashMap<usize, Option<Frame>>,
     #[serde(skip)]
@@ -380,6 +389,7 @@ struct Handlers {
     lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
     lift_remover: lift_remover::Handler,
+    lift_targeter: lift_targeter::Handler,
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
@@ -509,6 +519,14 @@ impl EventHandler for Game {
             &self.mouse_xy,
             &self.components.entrances,
             &mut self.components.open,
+            graphics,
+        );
+        self.handlers.lift_targeter.handle(
+            event,
+            &self.mouse_xy,
+            &self.components.lifts,
+            &self.components.skiers,
+            &mut self.components.global_targets,
             graphics,
         );
         self.handlers.save.handle(event, &mut self.components);
