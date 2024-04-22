@@ -19,9 +19,9 @@ pub fn compute_global_costs(
     entrances: &HashMap<usize, Entrance>,
     costs: &HashMap<usize, Costs<State>>,
     abilities: &HashMap<usize, Ability>,
-    target_costs: &mut Costs<usize>,
+    global_costs: &mut Costs<usize>,
 ) {
-    *target_costs = Costs::new();
+    *global_costs = Costs::new();
 
     let targets = lifts
         .keys()
@@ -48,7 +48,7 @@ pub fn compute_global_costs(
                 "Global costs to {:?} @ {}: costs from {:?}",
                 ability, target, costs
             );
-            target_costs.set_costs(*target, ability, costs)
+            global_costs.set_costs(*target, ability, costs)
         }
     }
 }
