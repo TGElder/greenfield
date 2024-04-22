@@ -10,15 +10,27 @@ pub struct Handler {
     pub binding: Binding,
 }
 
+pub struct Parameters<'a> {
+    pub mouse_xy: &'a Option<XY<u32>>,
+    pub lifts: &'a HashMap<usize, Lift>,
+    pub skiers: &'a HashMap<usize, Skier>,
+    pub targets: &'a mut HashMap<usize, usize>,
+    pub global_targets: &'a mut HashMap<usize, usize>,
+    pub graphics: &'a mut dyn engine::graphics::Graphics,
+}
+
 impl Handler {
     pub fn handle(
         &self,
         event: &engine::events::Event,
-        mouse_xy: &Option<XY<u32>>,
-        lifts: &HashMap<usize, Lift>,
-        skiers: &HashMap<usize, Skier>,
-        global_targets: &mut HashMap<usize, usize>,
-        graphics: &mut dyn engine::graphics::Graphics,
+        Parameters {
+            mouse_xy,
+            lifts,
+            skiers,
+            targets,
+            global_targets,
+            graphics,
+        }: Parameters<'_>,
     ) {
         if !self.binding.binds_event(event) {
             return;
@@ -35,6 +47,7 @@ impl Handler {
                 global_targets.clear();
 
                 for &skier_id in skiers.keys() {
+                    targets.remove(&skier_id);
                     global_targets.insert(skier_id, lift_id);
                 }
 

@@ -523,11 +523,14 @@ impl EventHandler for Game {
         );
         self.handlers.lift_targeter.handle(
             event,
-            &self.mouse_xy,
-            &self.components.lifts,
-            &self.components.skiers,
-            &mut self.components.global_targets,
-            graphics,
+            lift_targeter::Parameters {
+                mouse_xy: &self.mouse_xy,
+                lifts: &self.components.lifts,
+                skiers: &self.components.skiers,
+                targets: &mut self.components.targets,
+                global_targets: &mut self.components.global_targets,
+                graphics,
+            },
         );
         self.handlers.save.handle(event, &mut self.components);
         self.handlers.selection.handle(
