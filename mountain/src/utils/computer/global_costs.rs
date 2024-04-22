@@ -44,10 +44,6 @@ pub fn compute_global_costs(
 
         for target in targets.iter() {
             let costs = network.costs_to_targets(&HashSet::from([*target]), None);
-            println!(
-                "Global costs to {:?} @ {}: costs from {:?}",
-                ability, target, costs
-            );
             global_costs.set_costs(*target, ability, costs)
         }
     }

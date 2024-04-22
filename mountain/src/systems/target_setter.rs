@@ -1,7 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use rand::seq::SliceRandom;
-
 use crate::model::ability::Ability;
 use crate::model::costs::Costs;
 use crate::model::exit::Exit;
@@ -12,10 +10,12 @@ pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
+    pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub open: &'a HashSet<usize>,
     pub exits: &'a HashMap<usize, Vec<Exit>>,
     pub abilities: &'a HashMap<usize, Ability>,
+    pub global_targets: &'a HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
 
@@ -24,10 +24,12 @@ pub fn run(
         skiers,
         plans,
         locations,
+        global_costs,
         costs,
         open,
         exits,
         abilities,
+        global_targets,
         targets,
     }: Parameters<'_>,
 ) {
@@ -58,6 +60,14 @@ pub fn run(
             continue;
         };
 
+        let Some(global_target) = global_targets.get(skier_id) else {
+            continue;
+        };
+
+        let Some(global_costs) = global_costs.costs(*global_target, *skier_ability) else {
+            continue;
+        };
+
         let candidates = basins
             .targets_reachable_from_node(state, &Ability::Expert)
             .map(|(target, _)| target)
@@ -85,10 +95,14 @@ pub fn run(
             }
         }
 
-        let choice = candidates.choose(&mut rand::thread_rng());
+        let choice = candidates
+            .into_iter()
+            .flat_map(|candidate| global_costs.get(candidate).map(|cost| (candidate, cost)))
+            .min_by_key(|&(_, cost)| *cost)
+            .map(|(candidate, _)| candidate);
 
         if let Some(choice) = choice {
-            targets.insert(*skier_id, **choice);
+            targets.insert(*skier_id, *choice);
         }
     }
 }
