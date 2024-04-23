@@ -597,8 +597,6 @@ impl EventHandler for Game {
             global_costs: &self.components.global_costs,
             costs: &self.components.costs,
             open: &self.components.open,
-            exits: &self.components.exits,
-            abilities: &self.components.abilities,
             global_targets: &self.components.global_targets,
             targets: &mut self.components.targets,
         });

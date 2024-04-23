@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use crate::model::ability::Ability;
 use crate::model::costs::Costs;
-use crate::model::exit::Exit;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 
@@ -13,8 +12,6 @@ pub struct Parameters<'a> {
     pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub open: &'a HashSet<usize>,
-    pub exits: &'a HashMap<usize, Vec<Exit>>,
-    pub abilities: &'a HashMap<usize, Ability>,
     pub global_targets: &'a HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
@@ -27,18 +24,10 @@ pub fn run(
         global_costs,
         costs,
         open,
-        exits,
-        abilities,
         global_targets,
         targets,
     }: Parameters<'_>,
 ) {
-    let exits = exits
-        .values()
-        .flatten()
-        .map(|exit| (exit.id, exit))
-        .collect::<HashMap<_, _>>();
-
     for (skier_id, plan) in plans {
         let Plan::Stationary(state) = plan else {
             continue;
@@ -72,15 +61,6 @@ pub fn run(
             .targets_reachable_from_node(state, &Ability::Expert)
             .map(|(target, _)| target)
             .filter(|target| open.contains(target))
-            .filter(|target| {
-                let Some(exit) = exits.get(target) else {
-                    return false;
-                };
-                let Some(piste_ability) = abilities.get(&exit.destination) else {
-                    return false;
-                };
-                piste_ability <= skier_ability
-            })
             .collect::<Vec<_>>();
 
         if let Some(current_target) = targets.get(skier_id) {
