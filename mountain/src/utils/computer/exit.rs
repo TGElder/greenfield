@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use commons::geometry::XY;
-use commons::grid::Grid;
 
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
@@ -13,7 +12,6 @@ use crate::model::skiing::State;
 pub fn compute_piste(
     piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
-    piste_map: &Grid<Option<usize>>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
     exits: &mut HashMap<usize, Vec<Exit>>,
@@ -24,7 +22,7 @@ pub fn compute_piste(
         return;
     };
 
-    let exits_for_piste = exits_for_piste(piste_id, piste, piste_map, lifts, entrances);
+    let exits_for_piste = exits_for_piste(piste_id, piste, lifts, entrances);
 
     exits.insert(*piste_id, exits_for_piste);
 }
@@ -32,7 +30,6 @@ pub fn compute_piste(
 fn exits_for_piste(
     piste_id: &usize,
     piste: &Piste,
-    piste_map: &Grid<Option<usize>>,
     lifts: &HashMap<usize, Lift>,
     entrances: &HashMap<usize, Entrance>,
 ) -> Vec<Exit> {
@@ -41,7 +38,6 @@ fn exits_for_piste(
     let lifts_iter = lifts.iter().flat_map(|(lift_id, lift)| {
         Some(Exit {
             id: *lift_id,
-            destination: piste_map[lift.drop_off.state.position]?,
             states: HashSet::from([lift.pick_up.state]),
         })
     });
@@ -51,7 +47,6 @@ fn exits_for_piste(
         .filter(|(_, entrance)| entrance.piste != *piste_id)
         .map(|(entrance_id, entrance)| Exit {
             id: *entrance_id,
-            destination: entrance.piste,
             states: entrance
                 .footprint
                 .iter()
