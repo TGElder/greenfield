@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
@@ -21,6 +22,7 @@ pub struct Parameters<'a> {
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
+    pub global_targets: &'a mut HashMap<usize, usize>,
     pub cars: &'a mut HashMap<usize, Car>,
 }
 
@@ -40,6 +42,7 @@ impl System {
             plans,
             locations,
             targets,
+            global_targets,
             cars,
         }: Parameters<'_>,
     ) {
@@ -115,6 +118,11 @@ impl System {
                                 return true;
                             }
                             targets.remove(plan_id);
+                            if let Entry::Occupied(entry) = global_targets.entry(*plan_id) {
+                                if *entry.get() == carousel.lift_id {
+                                    entry.remove();
+                                }
+                            }
                             locations.insert(*plan_id, *car_id);
                             reservations[lift.pick_up.state.position].remove(plan_id);
                             false
