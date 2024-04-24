@@ -54,8 +54,8 @@ use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
-    lift_artist, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
-    terrain_artist, tree_artist,
+    global_target_setter, lift_artist, piste_adopter, planner, skiing_framer, target_scrubber,
+    target_setter, terrain_artist, tree_artist,
 };
 
 fn main() {
@@ -579,6 +579,7 @@ impl EventHandler for Game {
             plans: &mut self.components.plans,
             locations: &mut self.components.locations,
             targets: &mut self.components.targets,
+            global_targets: &mut self.components.global_targets,
             cars: &mut self.components.cars,
         });
 
@@ -590,6 +591,15 @@ impl EventHandler for Game {
             &self.components.abilities,
             &mut self.components.locations,
         );
+        global_target_setter::run(global_target_setter::Parameters {
+            skiers: &self.components.skiers,
+            plans: &self.components.plans,
+            locations: &self.components.locations,
+            costs: &self.components.costs,
+            global_costs: &self.components.global_costs,
+            lifts: &self.components.lifts,
+            global_targets: &mut self.components.global_targets,
+        });
         target_setter::run(target_setter::Parameters {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
@@ -606,6 +616,7 @@ impl EventHandler for Game {
             &self.components.entrances,
             &self.components.open,
             &mut self.components.targets,
+            &mut self.components.global_targets,
             &mut self.components.locations,
         );
         planner::run(systems::planner::Parameters {

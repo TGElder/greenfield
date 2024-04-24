@@ -5,6 +5,7 @@ pub mod entrance;
 pub mod entrance_artist;
 pub mod frame_artist;
 pub mod frame_wiper;
+pub mod global_target_setter;
 pub mod lift_artist;
 pub mod piste_adopter;
 pub mod planner;
