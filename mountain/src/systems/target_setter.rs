@@ -11,7 +11,7 @@ pub struct Parameters<'a> {
     pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub open: &'a HashSet<usize>,
-    pub global_targets: &'a HashMap<usize, usize>,
+    pub global_targets: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
 
@@ -58,32 +58,20 @@ pub fn run(
 
         let stationary_state = state.stationary();
 
-        let candidates = costs
+        let target = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
             .map(|(target, _)| target)
             .filter(|target| open.contains(target))
-            .collect::<Vec<_>>();
-
-        if let Some(current_target) = targets.get(skier_id) {
-            if !candidates.contains(&current_target) {
-                println!(
-                    "INFO: Removing invalid target {} from {}",
-                    current_target, skier_id
-                );
-                targets.remove(skier_id);
-            } else {
-                continue;
-            }
-        }
-
-        let choice = candidates
-            .into_iter()
             .flat_map(|candidate| global_costs.get(candidate).map(|cost| (candidate, cost)))
             .min_by_key(|&(_, cost)| *cost)
             .map(|(candidate, _)| candidate);
 
-        if let Some(choice) = choice {
-            targets.insert(*skier_id, *choice);
+        if let Some(target) = target {
+            targets.insert(*skier_id, *target);
+        } else {
+            println!("Resetting target for {}", skier_id);
+            targets.remove(skier_id);
+            global_targets.remove(skier_id);
         }
     }
 }
