@@ -1,6 +1,5 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::model::ability::Ability;
 use crate::model::costs::Costs;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
@@ -45,7 +44,7 @@ pub fn run(
             continue;
         };
 
-        let Some(basins) = costs.get(location_id) else {
+        let Some(costs) = costs.get(location_id) else {
             continue;
         };
 
@@ -57,8 +56,10 @@ pub fn run(
             continue;
         };
 
-        let candidates = basins
-            .targets_reachable_from_node(state, &Ability::Expert)
+        let stationary_state = state.stationary();
+
+        let candidates = costs
+            .targets_reachable_from_node(&stationary_state, skier_ability)
             .map(|(target, _)| target)
             .filter(|target| open.contains(target))
             .collect::<Vec<_>>();
