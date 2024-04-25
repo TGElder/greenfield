@@ -17,4 +17,5 @@ pub mod piste_visibility;
 pub mod save;
 pub mod selection;
 pub mod skier_colors;
+pub mod skier_debugger;
 pub mod tree_visibility;
