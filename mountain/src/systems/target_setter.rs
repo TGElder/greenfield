@@ -71,7 +71,6 @@ pub fn run(
         if let Some(target) = target {
             targets.insert(*skier_id, *target);
         } else {
-            println!("Resetting target for {}", skier_id);
             targets.remove(skier_id);
             global_targets.remove(skier_id);
         }

@@ -12,20 +12,35 @@ use crate::model::lift::Lift;
 use crate::model::skiing::State;
 use crate::network::global::GlobalNetwork;
 
+pub struct Parameters<'a> {
+    pub piste_map: &'a Grid<Option<usize>>,
+    pub lifts: &'a HashMap<usize, Lift>,
+    pub carousels: &'a HashMap<usize, Carousel>,
+    pub entrances: &'a HashMap<usize, Entrance>,
+    pub costs: &'a HashMap<usize, Costs<State>>,
+    pub abilities: &'a HashMap<usize, Ability>,
+    pub open: &'a HashSet<usize>,
+    pub global_costs: &'a mut Costs<usize>,
+}
+
 pub fn compute_global_costs(
-    piste_map: &Grid<Option<usize>>,
-    lifts: &HashMap<usize, Lift>,
-    carousels: &HashMap<usize, Carousel>,
-    entrances: &HashMap<usize, Entrance>,
-    costs: &HashMap<usize, Costs<State>>,
-    abilities: &HashMap<usize, Ability>,
-    global_costs: &mut Costs<usize>,
+    Parameters {
+        piste_map,
+        lifts,
+        carousels,
+        entrances,
+        costs,
+        abilities,
+        open,
+        global_costs,
+    }: Parameters<'_>,
 ) {
     *global_costs = Costs::new();
 
     let targets = lifts
         .keys()
         .chain(entrances.keys())
+        .filter(|target| open.contains(target))
         .copied()
         .collect::<HashSet<_>>();
 

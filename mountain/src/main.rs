@@ -54,9 +54,10 @@ use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
     carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
-    global_target_setter, lift_artist, piste_adopter, planner, skiing_framer, target_scrubber,
-    target_setter, terrain_artist, tree_artist,
+    global_computer, global_target_setter, lift_artist, piste_adopter, planner, skiing_framer,
+    target_scrubber, target_setter, terrain_artist, tree_artist,
 };
+use crate::utils::computer;
 
 fn main() {
     let components = get_components();
@@ -232,6 +233,7 @@ fn main() {
             systems: Systems {
                 carousel: carousel::System::new(),
                 chair_artist: chair_artist::System::new(),
+                global_computer: global_computer::System::new(),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
                         intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -406,6 +408,7 @@ struct Handlers {
 struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
+    global_computer: global_computer::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
@@ -512,6 +515,7 @@ impl EventHandler for Game {
             &self.mouse_xy,
             &self.components.lifts,
             &mut self.components.open,
+            &mut self.systems.global_computer,
             graphics,
         );
         self.handlers.entrance_opener.handle(
@@ -519,6 +523,7 @@ impl EventHandler for Game {
             &self.mouse_xy,
             &self.components.entrances,
             &mut self.components.open,
+            &mut self.systems.global_computer,
             graphics,
         );
         self.handlers.lift_targeter.handle(
@@ -558,16 +563,28 @@ impl EventHandler for Game {
                 pistes: &self.components.pistes,
                 piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
-                carousels: &self.components.carousels,
                 entrances: &self.components.entrances,
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
-                global_costs: &mut self.components.global_costs,
                 abilities: &mut self.components.abilities,
                 clock: &mut self.components.services.clock,
+                global_computer: &mut self.systems.global_computer,
                 terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
+            });
+
+        self.systems
+            .global_computer
+            .run(computer::global_costs::Parameters {
+                piste_map: &self.components.piste_map,
+                lifts: &self.components.lifts,
+                carousels: &self.components.carousels,
+                entrances: &self.components.entrances,
+                costs: &self.components.costs,
+                abilities: &self.components.abilities,
+                open: &self.components.open,
+                global_costs: &mut self.components.global_costs,
             });
 
         self.systems.carousel.run(systems::carousel::Parameters {

@@ -4,6 +4,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
 use crate::model::entrance::Entrance;
+use crate::systems::global_computer;
 
 pub struct Handler {
     pub binding: Binding,
@@ -16,6 +17,7 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         entrances: &HashMap<usize, Entrance>,
         open: &mut HashSet<usize>,
+        global_computer: &mut global_computer::System,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if !self.binding.binds_event(event) {
@@ -40,6 +42,8 @@ impl Handler {
                     open.insert(*entrance_id);
                     println!("Entrance {} is open", entrance_id);
                 }
+
+                global_computer.update();
             }
         }
     }
