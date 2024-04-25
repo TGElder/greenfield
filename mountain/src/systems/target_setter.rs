@@ -27,6 +27,8 @@ pub fn run(
         targets,
     }: Parameters<'_>,
 ) {
+    let default_global_costs = HashMap::default();
+
     for (skier_id, plan) in plans {
         let Plan::Stationary(state) = plan else {
             continue;
@@ -52,9 +54,9 @@ pub fn run(
             continue;
         };
 
-        let Some(global_costs) = global_costs.costs(*global_target, *skier_ability) else {
-            continue;
-        };
+        let global_costs = global_costs
+            .costs(*global_target, *skier_ability)
+            .unwrap_or(&default_global_costs);
 
         let stationary_state = state.stationary();
 
