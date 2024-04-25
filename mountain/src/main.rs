@@ -182,6 +182,12 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
+                skier_debugger: handlers::skier_debugger::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::I),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::T),
@@ -400,6 +406,7 @@ struct Handlers {
     save: save::Handler,
     selection: selection::Handler,
     skier_colors: handlers::skier_colors::Handler,
+    skier_debugger: handlers::skier_debugger::Handler,
     tree_visibility: tree_visibility::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
@@ -573,6 +580,18 @@ impl EventHandler for Game {
                 terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
+
+        self.handlers.skier_debugger.handle(
+            event,
+            handlers::skier_debugger::Parameters {
+                mouse_xy: &self.mouse_xy,
+                reservations: &self.components.reservations,
+                plans: &self.components.plans,
+                targets: &self.components.targets,
+                global_targets: &self.components.global_targets,
+                graphics,
+            },
+        );
 
         self.systems
             .global_computer
