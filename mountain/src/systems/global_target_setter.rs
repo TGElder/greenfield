@@ -54,9 +54,10 @@ pub fn run(
         let Some(costs) = costs.get(location) else {
             continue;
         };
+        let stationary_state = state.stationary();
 
         let candidates = costs
-            .targets_reachable_from_node(state, skier_ability)
+            .targets_reachable_from_node(&stationary_state, skier_ability)
             .flat_map(|(piste_target, _)| {
                 global_costs
                     .targets_reachable_from_node(piste_target, skier_ability)
@@ -65,9 +66,10 @@ pub fn run(
                     .filter(move |(new_target, _)| {
                         // will not get stuck
                         global_costs
-                            .costs(*piste_target, *skier_ability)
-                            .map(|costs| costs.contains_key(new_target))
-                            .unwrap_or_default()
+                            .targets_reachable_from_node(new_target, skier_ability)
+                            .filter(|&(_, cost)| *cost != 0)
+                            .count()
+                            != 0
                     })
             })
             .map(|(global_target, _)| global_target)
