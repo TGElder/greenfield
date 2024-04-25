@@ -4,6 +4,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
 use crate::model::lift::Lift;
+use crate::systems::global_computer;
 
 pub struct Handler {
     pub binding: Binding,
@@ -16,6 +17,7 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         lifts: &HashMap<usize, Lift>,
         open: &mut HashSet<usize>,
+        global_computer: &mut global_computer::System,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if !self.binding.binds_event(event) {
@@ -36,6 +38,8 @@ impl Handler {
                     open.insert(*lift_id);
                     println!("Lift {} is open", lift_id);
                 }
+
+                global_computer.update();
             }
         }
     }
