@@ -14,6 +14,8 @@ use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
 use crate::model::skiing::State;
 
+pub const GLOBAL_COST_DIVISOR: u64 = 1000;
+
 pub struct GlobalNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
@@ -144,7 +146,9 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
                 Edge {
                     from: *from,
                     to,
-                    cost: ((lift_travel_time + cost) / 1000).try_into().unwrap(), // divide by 1000 to avoid exceeding u32 limit
+                    cost: ((lift_travel_time + cost) / GLOBAL_COST_DIVISOR)
+                        .try_into()
+                        .unwrap(), // to avoid exceeding u32 limit
                 }
             });
 
