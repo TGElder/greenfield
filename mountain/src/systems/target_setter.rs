@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use crate::model::costs::Costs;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
+use crate::network::global::GLOBAL_COST_DIVISOR;
 
 pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
@@ -62,10 +63,13 @@ pub fn run(
 
         let target = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
-            .map(|(target, _)| target)
-            .filter(|target| open.contains(target))
-            .flat_map(|candidate| global_costs.get(candidate).map(|cost| (candidate, cost)))
-            .min_by_key(|&(_, cost)| *cost)
+            .filter(|(target, _)| open.contains(target))
+            .flat_map(|(target, cost)| {
+                global_costs
+                    .get(target)
+                    .map(|global_cost| (target, cost + (global_cost * GLOBAL_COST_DIVISOR)))
+            })
+            .min_by_key(|&(_, cost)| cost)
             .map(|(candidate, _)| candidate);
 
         if let Some(target) = target {
