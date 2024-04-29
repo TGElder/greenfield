@@ -40,6 +40,7 @@ use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::costs::Costs;
+use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
 use crate::model::gate::Gate;
@@ -332,6 +333,7 @@ fn new_components() -> Components {
         reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
+        entrances: HashMap::default(),
         abilities: HashMap::default(),
         clothes: HashMap::default(),
         open: HashSet::default(),
@@ -371,6 +373,7 @@ pub struct Components {
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
     gates: HashMap<usize, Gate>,
+    entrances: HashMap<usize, Vec<Entrance>>,
     exits: HashMap<usize, Vec<Exit>>,
     abilities: HashMap<usize, Ability>,
     #[serde(skip)]
@@ -567,6 +570,7 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
                 gates: &self.components.gates,
+                entrances: &mut self.components.entrances,
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
