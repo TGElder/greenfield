@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use rand::{thread_rng, Rng};
+
 use crate::model::costs::Costs;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
@@ -28,6 +30,7 @@ pub fn run(
         targets,
     }: Parameters<'_>,
 ) {
+    let mut rng = thread_rng();
     let default_global_costs = HashMap::default();
 
     for (skier_id, plan) in plans {
@@ -69,6 +72,7 @@ pub fn run(
                     .get(target)
                     .map(|global_cost| (target, cost + (global_cost * GLOBAL_COST_DIVISOR)))
             })
+            .map(|(candidate, cost)| (candidate, rng.gen_range(cost..=cost * 2)))
             .min_by_key(|&(_, cost)| cost)
             .map(|(candidate, _)| candidate);
 
