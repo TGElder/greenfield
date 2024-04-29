@@ -6,8 +6,8 @@ use engine::binding::Binding;
 
 use crate::model::ability::Ability;
 use crate::model::costs::Costs;
-use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
+use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
@@ -27,7 +27,7 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
-    pub entrances: &'a HashMap<usize, Entrance>,
+    pub gates: &'a HashMap<usize, Gate>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs<State>>,
@@ -48,7 +48,7 @@ impl Handler {
             pistes,
             piste_map,
             lifts,
-            entrances,
+            gates,
             exits,
             reservations,
             costs,
@@ -78,10 +78,10 @@ impl Handler {
         let current_speed = clock.speed();
         clock.set_speed(0.0);
 
-        computer::exit::compute_piste(&piste_id, pistes, lifts, entrances, exits);
+        computer::exit::compute_piste(&piste_id, pistes, lifts, gates, exits);
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
         computer::piste_ability::compute_piste(
-            &piste_id, pistes, costs, exits, lifts, entrances, abilities,
+            &piste_id, pistes, costs, exits, lifts, gates, abilities,
         );
         global_computer.update();
 

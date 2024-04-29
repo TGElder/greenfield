@@ -1,6 +1,6 @@
 pub mod chairs;
-pub mod entrance;
 pub mod frame;
+pub mod gate;
 pub mod line;
 pub mod model;
 pub mod terrain;

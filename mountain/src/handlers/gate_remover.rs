@@ -3,7 +3,7 @@ use engine::binding::Binding;
 use engine::graphics::Graphics;
 
 use crate::model::ability::ABILITIES;
-use crate::model::entrance::Entrance;
+use crate::model::gate::Gate;
 use crate::Components;
 
 pub struct Handler {
@@ -28,62 +28,58 @@ impl Handler {
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
-        let entrance_ids = components
-            .entrances
+        let gate_ids = components
+            .gates
             .iter()
-            .filter(|(_, Entrance { footprint, .. })| footprint.contains(position))
-            .map(|(entrance_id, _)| *entrance_id)
+            .filter(|(_, Gate { footprint, .. })| footprint.contains(position))
+            .map(|(gate_id, _)| *gate_id)
             .collect::<Vec<_>>();
 
-        for entrance_id in entrance_ids {
-            remove_entrance(graphics, components, &entrance_id);
+        for gate_id in gate_ids {
+            remove_gate(graphics, components, &gate_id);
         }
     }
 }
 
-pub fn remove_entrance(
-    graphics: &mut dyn Graphics,
-    components: &mut Components,
-    entrance_id: &usize,
-) {
+pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gate_id: &usize) {
     // Validate
 
-    if components.open.contains(entrance_id) {
-        println!("Close entrance {} before removing it!", entrance_id);
+    if components.open.contains(gate_id) {
+        println!("Close gate {} before removing it!", gate_id);
         return;
     }
 
     if components
         .targets
         .values()
-        .any(|target_id| *target_id == *entrance_id)
+        .any(|target_id| *target_id == *gate_id)
     {
         println!(
-            "Cannot remove entrance {} while people are targeting it!",
-            entrance_id
+            "Cannot remove gate {} while people are targeting it!",
+            gate_id
         );
         return;
     }
 
     // Remove
 
-    let entrance = components.entrances.remove(entrance_id);
+    let gate = components.gates.remove(gate_id);
 
-    if let Some(entrance) = entrance {
-        entrance.footprint.iter().for_each(|position| {
-            components.reservations[position].remove(entrance_id);
+    if let Some(gate) = gate {
+        gate.footprint.iter().for_each(|position| {
+            components.reservations[position].remove(gate_id);
         });
     }
 
-    remove_drawing(graphics, components, entrance_id);
+    remove_drawing(graphics, components, gate_id);
 
     for (_, exits) in components.exits.iter_mut() {
-        exits.retain(|exit| exit.id != *entrance_id);
+        exits.retain(|exit| exit.id != *gate_id);
     }
 
     for (_, costs) in components.costs.iter_mut() {
         for ability in ABILITIES {
-            costs.remove_costs(*entrance_id, ability);
+            costs.remove_costs(*gate_id, ability);
         }
     }
 }

@@ -1,10 +1,10 @@
 pub mod carousel;
 pub mod chair_artist;
 pub mod chair_framer;
-pub mod entrance;
-pub mod entrance_artist;
 pub mod frame_artist;
 pub mod frame_wiper;
+pub mod gate;
+pub mod gate_artist;
 pub mod global_computer;
 pub mod global_target_setter;
 pub mod lift_artist;

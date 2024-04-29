@@ -3,7 +3,7 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
-use crate::model::entrance::Entrance;
+use crate::model::gate::Gate;
 use crate::systems::global_computer;
 
 pub struct Handler {
@@ -15,7 +15,7 @@ impl Handler {
         &self,
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
-        entrances: &HashMap<usize, Entrance>,
+        gates: &HashMap<usize, Gate>,
         open: &mut HashSet<usize>,
         global_computer: &mut global_computer::System,
         graphics: &mut dyn engine::graphics::Graphics,
@@ -30,17 +30,17 @@ impl Handler {
         };
         let mouse_position = xy(x.round() as u32, y.round() as u32);
 
-        for (entrance_id, entrance) in entrances {
-            if entrance
+        for (gate_id, gate) in gates {
+            if gate
                 .footprint
                 .iter()
                 .any(|position| position == mouse_position)
             {
-                if open.remove(entrance_id) {
-                    println!("Entrance {} is closed", entrance_id);
+                if open.remove(gate_id) {
+                    println!("Gate {} is closed", gate_id);
                 } else {
-                    open.insert(*entrance_id);
-                    println!("Entrance {} is open", entrance_id);
+                    open.insert(*gate_id);
+                    println!("Gate {} is open", gate_id);
                 }
 
                 global_computer.update();

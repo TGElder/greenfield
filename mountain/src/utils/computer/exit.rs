@@ -3,8 +3,8 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::XY;
 
 use crate::model::direction::DIRECTIONS;
-use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
+use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
@@ -13,7 +13,7 @@ pub fn compute_piste(
     piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
-    entrances: &HashMap<usize, Entrance>,
+    gates: &HashMap<usize, Gate>,
     exits: &mut HashMap<usize, Vec<Exit>>,
 ) {
     exits.remove(piste_id);
@@ -22,7 +22,7 @@ pub fn compute_piste(
         return;
     };
 
-    let exits_for_piste = exits_for_piste(piste_id, piste, lifts, entrances);
+    let exits_for_piste = exits_for_piste(piste_id, piste, lifts, gates);
 
     exits.insert(*piste_id, exits_for_piste);
 }
@@ -31,7 +31,7 @@ fn exits_for_piste(
     piste_id: &usize,
     piste: &Piste,
     lifts: &HashMap<usize, Lift>,
-    entrances: &HashMap<usize, Entrance>,
+    gates: &HashMap<usize, Gate>,
 ) -> Vec<Exit> {
     let grid = &piste.grid;
 
@@ -42,12 +42,12 @@ fn exits_for_piste(
         })
     });
 
-    let entrances_iter = entrances
+    let gates_iter = gates
         .iter()
-        .filter(|(_, entrance)| entrance.piste != *piste_id)
-        .map(|(entrance_id, entrance)| Exit {
-            id: *entrance_id,
-            states: entrance
+        .filter(|(_, gate)| gate.destination_piste != *piste_id)
+        .map(|(gate_id, gate)| Exit {
+            id: *gate_id,
+            states: gate
                 .footprint
                 .iter()
                 .filter(|position| grid.in_bounds(position))
@@ -56,7 +56,7 @@ fn exits_for_piste(
         });
 
     lifts_iter
-        .chain(entrances_iter)
+        .chain(gates_iter)
         .map(|exit| Exit {
             states: exit
                 .states

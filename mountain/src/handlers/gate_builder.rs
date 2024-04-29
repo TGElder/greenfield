@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::handlers::selection;
-use crate::model::entrance::Entrance;
+use crate::model::gate::Gate;
 use crate::model::reservation::Reservation;
 use crate::services::id_allocator;
 use crate::systems::terrain_artist;
@@ -20,7 +20,7 @@ pub struct Parameters<'a> {
     pub selection: &'a mut selection::Handler,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
-    pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub gates: &'a mut HashMap<usize, Gate>,
     pub open: &'a mut HashSet<usize>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
@@ -38,7 +38,7 @@ impl Handler {
             terrain_artist,
             piste_map,
             id_allocator,
-            entrances,
+            gates,
             open,
             reservations,
         }: Parameters<'_>,
@@ -59,61 +59,59 @@ impl Handler {
         selection.clear_selection();
         terrain_artist.update(rectangle);
 
-        // create entrance
+        // create gate
 
         if rectangle.width() == 0 || rectangle.height() == 0 {
             println!("WARN: Entrance must not be zero length");
             return;
         }
 
-        let maybe_entrance = get_pistes_if_valid_vertical_entrance(rectangle, piste_map)
-            .map(|[a, b]| Entrance {
+        let maybe_gate = get_pistes_if_valid_vertical_gate(rectangle, piste_map)
+            .map(|[a, b]| Gate {
                 footprint: XYRectangle {
                     from: xy(rectangle.to.x, rectangle.from.y),
                     to: xy(rectangle.to.x, rectangle.to.y + 1),
                 },
-                piste: (a + b) - piste_map[origin].unwrap(),
+                destination_piste: (a + b) - piste_map[origin].unwrap(),
             })
             .or_else(|| {
-                get_pites_if_valid_horizontal_entrance(rectangle, piste_map).map(|[a, b]| {
-                    Entrance {
-                        footprint: XYRectangle {
-                            from: xy(rectangle.from.x, rectangle.to.y),
-                            to: xy(rectangle.to.x + 1, rectangle.to.y),
-                        },
-                        piste: (a + b) - piste_map[origin].unwrap(),
-                    }
+                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| Gate {
+                    footprint: XYRectangle {
+                        from: xy(rectangle.from.x, rectangle.to.y),
+                        to: xy(rectangle.to.x + 1, rectangle.to.y),
+                    },
+                    destination_piste: (a + b) - piste_map[origin].unwrap(),
                 })
             });
 
-        let Some(entrance) = maybe_entrance else {
+        let Some(gate) = maybe_gate else {
             return;
         };
 
-        let entrance_id = id_allocator.next_id();
+        let gate_id = id_allocator.next_id();
 
         // reserving footprint
 
-        entrance.footprint.iter().for_each(|position| {
-            reservations[position].insert(entrance_id, Reservation::Structure);
+        gate.footprint.iter().for_each(|position| {
+            reservations[position].insert(gate_id, Reservation::Structure);
         });
 
-        // opening entrance
+        // opening gate
 
-        open.insert(entrance_id);
+        open.insert(gate_id);
 
-        // register entrance
+        // register gate
 
-        entrances.insert(entrance_id, entrance);
+        gates.insert(gate_id, gate);
     }
 }
 
-fn get_pistes_if_valid_vertical_entrance(
+fn get_pistes_if_valid_vertical_gate(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
 ) -> Option<[usize; 2]> {
     if rectangle.width() != 2 {
-        println!("INFO: Not vertical entrance - selection must be 2 wide");
+        println!("INFO: Not vertical gate - selection must be 2 wide");
         return None;
     }
 
@@ -123,7 +121,7 @@ fn get_pistes_if_valid_vertical_entrance(
         let value = piste_map[xy(x, rectangle.from.y)]?;
         for y in rectangle.from.y..=rectangle.to.y {
             if piste_map[xy(x, y)]? != value {
-                println!("INFO: Not vertical entrance - column does not contain piste");
+                println!("INFO: Not vertical gate - column does not contain piste");
                 return None;
             }
         }
@@ -131,19 +129,19 @@ fn get_pistes_if_valid_vertical_entrance(
     }
 
     if out[0] == out[1] {
-        println!("INFO: Not vertical entrance - same piste on both sides");
+        println!("INFO: Not vertical gate - same piste on both sides");
         return None;
     }
 
     Some(out)
 }
 
-fn get_pites_if_valid_horizontal_entrance(
+fn get_pistes_if_valid_horizontal_gate(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
 ) -> Option<[usize; 2]> {
     if rectangle.height() != 2 {
-        println!("INFO: Not horizontal entrance - selection must be 2 high");
+        println!("INFO: Not horizontal gate - selection must be 2 high");
         return None;
     }
 
@@ -153,7 +151,7 @@ fn get_pites_if_valid_horizontal_entrance(
         let value = piste_map[xy(rectangle.from.x, y)]?;
         for x in rectangle.from.x..=rectangle.to.x {
             if piste_map[xy(x, y)]? != value {
-                println!("INFO: Not horizontal entrance - row does not contain piste");
+                println!("INFO: Not horizontal gate - row does not contain piste");
                 return None;
             }
         }
@@ -161,7 +159,7 @@ fn get_pites_if_valid_horizontal_entrance(
     }
 
     if out[0] == out[1] {
-        println!("INFO: Not horizontal entrance - same piste on both sides");
+        println!("INFO: Not horizontal gate - same piste on both sides");
         return None;
     }
 
