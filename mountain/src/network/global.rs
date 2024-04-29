@@ -10,7 +10,7 @@ use crate::model::ability::Ability;
 use crate::model::carousel::Carousel;
 use crate::model::costs::Costs;
 use crate::model::direction::DIRECTIONS;
-use crate::model::entrance::Entrance;
+use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::skiing::State;
 
@@ -20,7 +20,7 @@ pub struct GlobalNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
-    pub entrances: &'a HashMap<usize, Entrance>,
+    pub gates: &'a HashMap<usize, Gate>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub ability: Ability,
@@ -28,8 +28,7 @@ pub struct GlobalNetwork<'a> {
 
 impl<'a> GlobalNetwork<'a> {
     fn get_from_states(&self, from: &usize) -> Option<Vec<State>> {
-        self.lift_states(from)
-            .or_else(|| self.entrance_states(from))
+        self.lift_states(from).or_else(|| self.gate_states(from))
     }
 
     fn lift_states(&self, target: &usize) -> Option<Vec<State>> {
@@ -41,8 +40,8 @@ impl<'a> GlobalNetwork<'a> {
         })
     }
 
-    fn entrance_states(&self, target: &usize) -> Option<Vec<State>> {
-        self.entrances.get(target).map(states_for_entrance)
+    fn gate_states(&self, target: &usize) -> Option<Vec<State>> {
+        self.gates.get(target).map(states_for_gate)
     }
 
     fn pistes_at_positon(&self, position: &XY<u32>) -> HashSet<usize> {
@@ -72,9 +71,8 @@ impl<'a> GlobalNetwork<'a> {
     }
 }
 
-fn states_for_entrance(entrance: &Entrance) -> Vec<State> {
-    entrance
-        .footprint
+fn states_for_gate(gate: &Gate) -> Vec<State> {
+    gate.footprint
         .iter()
         .flat_map(stationary_states_for_position)
         .collect()
@@ -88,13 +86,13 @@ fn stationary_states_for_position(position: XY<u32>) -> impl Iterator<Item = Sta
     })
 }
 
-// this gets the other lifts or entrances reachable from a given lift or entrance
+// this gets the other lifts or gates reachable from a given lift or gate
 impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
     fn edges_out<'b>(
         &'b self,
         from: &'b usize,
     ) -> Box<dyn Iterator<Item = network::model::Edge<usize>> + 'b> {
-        // from node (a lift drop off or entrance) may have multiple states
+        // from node (a lift drop off or gate) may have multiple states
         let Some(from_states) = self.get_from_states(from) else {
             return Box::new(empty());
         };
@@ -102,7 +100,7 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
         // we form a map of targets reachable from any from state
         // the vector contains a cost for each from state from which that target can be reached
         let mut targets_to_costs =
-            HashMap::<usize, Vec<u64>>::with_capacity(self.lifts.len() + self.entrances.len());
+            HashMap::<usize, Vec<u64>>::with_capacity(self.lifts.len() + self.gates.len());
         for from_state in from_states.iter() {
             let pistes = self.pistes_at_positon(&from_state.position);
 

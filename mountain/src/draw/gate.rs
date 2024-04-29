@@ -9,21 +9,21 @@ use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
-use crate::model::entrance::Entrance;
+use crate::model::gate::Gate;
 
 const GROUND_TO_BAR_METERS: f32 = 2.0;
 const BAR_HEIGHT: f32 = 0.5;
 const STRUCTURE_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
-const ENTRANCE_BANNER_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
+const BANNER_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
 
 pub fn draw(
     graphics: &mut dyn Graphics,
     index: &usize,
-    entrance: &Entrance,
+    gate: &Gate,
     terrain: &Grid<f32>,
     piste_map: &Grid<Option<usize>>,
 ) {
-    let Entrance { footprint, .. } = entrance;
+    let Gate { footprint, .. } = gate;
     let XYRectangle { from, to } = footprint;
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);
     let to = xyz(to.x as f32, to.y as f32, terrain[to]);
@@ -33,7 +33,7 @@ pub fn draw(
         .map(|position| terrain[position])
         .max_by(unsafe_ordering)
     else {
-        println!("WARN: Cannot draw entrance with no footprint");
+        println!("WARN: Cannot draw gate with no footprint");
         return;
     };
     let bar_bottom_z = max_ground_height + GROUND_TO_BAR_METERS;
@@ -51,10 +51,10 @@ pub fn draw(
         &|_| STRUCTURE_COLOR,
     );
 
-    let entrance_side = entrance_side(entrance, piste_map);
+    let entrance_side = entrance_side(gate, piste_map);
     let coloring = |side: &cube::Side| {
         if *side == entrance_side {
-            ENTRANCE_BANNER_COLOR
+            BANNER_COLOR
         } else {
             STRUCTURE_COLOR
         }
@@ -79,10 +79,10 @@ pub fn draw(
 }
 
 fn entrance_side(
-    Entrance {
+    Gate {
         footprint: XYRectangle { from, to },
-        piste,
-    }: &Entrance,
+        destination_piste: piste,
+    }: &Gate,
     piste_map: &Grid<Option<usize>>,
 ) -> cube::Side {
     match (from.x == to.x, piste_map[from] == Some(*piste)) {

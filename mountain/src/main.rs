@@ -31,9 +31,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, entrance_builder, entrance_opener, entrance_remover, lift_opener, lift_remover,
-    lift_targeter, piste_builder, piste_computer, piste_highlighter, piste_visibility, save,
-    tree_visibility,
+    add_skier, gate_builder, gate_opener, gate_remover, lift_opener, lift_remover, lift_targeter,
+    piste_builder, piste_computer, piste_highlighter, piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -41,9 +40,9 @@ use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::costs::Costs;
-use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
+use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
@@ -53,7 +52,7 @@ use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_artist, chair_framer, entrance, entrance_artist, frame_artist, frame_wiper,
+    carousel, chair_artist, chair_framer, frame_artist, frame_wiper, gate, gate_artist,
     global_computer, global_target_setter, lift_artist, piste_adopter, planner, skiing_framer,
     target_scrubber, target_setter, terrain_artist, tree_artist,
 };
@@ -92,17 +91,17 @@ fn main() {
                         state: ButtonState::Released,
                     },
                 }),
-                entrance_builder: entrance_builder::Handler::new(Binding::Single {
+                gate_builder: gate_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
-                entrance_opener: entrance_opener::Handler {
+                gate_opener: gate_opener::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::O),
                         state: ButtonState::Pressed,
                     },
                 },
-                entrance_remover: entrance_remover::Handler {
+                gate_remover: gate_remover::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::X),
                         state: ButtonState::Pressed,
@@ -329,7 +328,7 @@ fn new_components() -> Components {
         lifts: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
-        entrances: HashMap::default(),
+        gates: HashMap::default(),
         reservations: Grid::default(terrain.width(), terrain.height()),
         piste_map: Grid::default(terrain.width(), terrain.height()),
         exits: HashMap::default(),
@@ -371,7 +370,7 @@ pub struct Components {
     lifts: HashMap<usize, Lift>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
-    entrances: HashMap<usize, Entrance>,
+    gates: HashMap<usize, Gate>,
     exits: HashMap<usize, Vec<Exit>>,
     abilities: HashMap<usize, Ability>,
     #[serde(skip)]
@@ -391,9 +390,9 @@ struct Handlers {
     add_skier: add_skier::Handler,
     clock: handlers::clock::Handler,
     drag: drag::Handler,
-    entrance_builder: entrance_builder::Handler,
-    entrance_opener: entrance_opener::Handler,
-    entrance_remover: entrance_remover::Handler,
+    gate_builder: gate_builder::Handler,
+    gate_opener: gate_opener::Handler,
+    gate_remover: gate_remover::Handler,
     lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
     lift_remover: lift_remover::Handler,
@@ -495,25 +494,22 @@ impl EventHandler for Game {
                 reservations: &mut self.components.reservations,
                 graphics,
             });
-        self.handlers.entrance_remover.handle(
-            event,
-            &self.mouse_xy,
-            graphics,
-            &mut self.components,
-        );
+        self.handlers
+            .gate_remover
+            .handle(event, &self.mouse_xy, graphics, &mut self.components);
         self.handlers
             .lift_remover
             .handle(event, &self.mouse_xy, graphics, &mut self.components);
 
         self.handlers
-            .entrance_builder
-            .handle(handlers::entrance_builder::Parameters {
+            .gate_builder
+            .handle(handlers::gate_builder::Parameters {
                 event,
                 piste_map: &self.components.piste_map,
                 selection: &mut self.handlers.selection,
                 terrain_artist: &mut self.systems.terrain_artist,
                 id_allocator: &mut self.components.services.id_allocator,
-                entrances: &mut self.components.entrances,
+                gates: &mut self.components.gates,
                 open: &mut self.components.open,
                 reservations: &mut self.components.reservations,
             });
@@ -525,10 +521,10 @@ impl EventHandler for Game {
             &mut self.systems.global_computer,
             graphics,
         );
-        self.handlers.entrance_opener.handle(
+        self.handlers.gate_opener.handle(
             event,
             &self.mouse_xy,
-            &self.components.entrances,
+            &self.components.gates,
             &mut self.components.open,
             &mut self.systems.global_computer,
             graphics,
@@ -570,7 +566,7 @@ impl EventHandler for Game {
                 pistes: &self.components.pistes,
                 piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
-                entrances: &self.components.entrances,
+                gates: &self.components.gates,
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
@@ -599,7 +595,7 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
                 carousels: &self.components.carousels,
-                entrances: &self.components.entrances,
+                gates: &self.components.gates,
                 costs: &self.components.costs,
                 abilities: &self.components.abilities,
                 open: &self.components.open,
@@ -647,9 +643,9 @@ impl EventHandler for Game {
             targets: &mut self.components.targets,
         });
 
-        entrance::run(
+        gate::run(
             &self.components.plans,
-            &self.components.entrances,
+            &self.components.gates,
             &self.components.open,
             &mut self.components.targets,
             &mut self.components.global_targets,
@@ -696,9 +692,9 @@ impl EventHandler for Game {
             &self.components.lifts,
             &mut self.components.drawings,
         );
-        entrance_artist::run(
+        gate_artist::run(
             graphics,
-            &self.components.entrances,
+            &self.components.gates,
             &self.components.terrain,
             &self.components.piste_map,
             &mut self.components.drawings,
