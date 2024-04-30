@@ -19,22 +19,7 @@ pub fn compute_piste(
         return;
     };
 
-    let Some(exits) = exits.get(piste_id) else {
-        return;
-    };
-
-    if let Some(ability) = compute_ability(piste_id, costs, entrances, exits) {
-        abilities.insert(*piste_id, ability);
-    }
-}
-
-fn compute_ability(
-    piste_id: &usize,
-    costs: &Costs<State>,
-    entrances: &HashMap<usize, Entrance>,
-    exits: &[Exit],
-) -> Option<Ability> {
-    entrances
+    let entrances = entrances
         .values()
         .filter(
             |Entrance {
@@ -42,6 +27,24 @@ fn compute_ability(
                  ..
              }| destination_piste_id == piste_id,
         )
+        .collect::<Vec<_>>();
+
+    let Some(exits) = exits.get(piste_id) else {
+        return;
+    };
+
+    if let Some(ability) = compute_ability(costs, &entrances, exits) {
+        abilities.insert(*piste_id, ability);
+    }
+}
+
+fn compute_ability(
+    costs: &Costs<State>,
+    entrances: &[&Entrance],
+    exits: &[Exit],
+) -> Option<Ability> {
+    entrances
+        .iter()
         .flat_map(
             |Entrance {
                  stationary_states: states,
