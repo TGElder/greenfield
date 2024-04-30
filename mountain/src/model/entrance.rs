@@ -5,6 +5,6 @@ use crate::model::skiing::State;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Entrance {
-    pub id: usize,
+    pub destination_piste_id: usize,
     pub stationary_states: HashSet<State>,
 }

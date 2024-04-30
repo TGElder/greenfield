@@ -12,16 +12,15 @@ pub fn compute_piste(
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
-    entrances: &mut HashMap<usize, Vec<Entrance>>,
+    entrances: &mut HashMap<usize, Entrance>,
 ) {
-    entrances.remove(piste_id);
-
     let Some(piste) = pistes.get(piste_id) else {
         return;
     };
 
     let piste_entrances = compute_piste_entrances(piste_id, piste, lifts, gates);
-    entrances.insert(*piste_id, piste_entrances);
+
+    entrances.extend(piste_entrances);
 }
 
 fn compute_piste_entrances(
@@ -29,7 +28,7 @@ fn compute_piste_entrances(
     piste: &Piste,
     lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
-) -> Vec<Entrance> {
+) -> HashMap<usize, Entrance> {
     let piste = &piste.grid;
 
     let lifts_iter = lifts
@@ -38,29 +37,39 @@ fn compute_piste_entrances(
             let position = lift.drop_off.state.position;
             piste.in_bounds(position) && piste[position]
         })
-        .map(|(&id, lift)| Entrance {
-            id,
-            stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+        .map(|(&id, lift)| {
+            (
+                id,
+                Entrance {
+                    destination_piste_id: *piste_id,
+                    stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+                },
+            )
         });
 
     let gates_iter = gates
         .iter()
         .filter(|(_, gate)| gate.destination_piste == *piste_id)
-        .map(|(&id, gate)| Entrance {
-            id,
-            stationary_states: gate
-                .footprint
-                .iter()
-                .filter(|position| piste.in_bounds(position) && piste[position])
-                .flat_map(|position| {
-                    DIRECTIONS.iter().map(move |&travel_direction| State {
-                        position,
-                        velocity: 0,
-                        travel_direction,
-                    })
-                })
-                .collect::<HashSet<_>>(),
+        .map(|(&id, gate)| {
+            (
+                id,
+                Entrance {
+                    destination_piste_id: *piste_id,
+                    stationary_states: gate
+                        .footprint
+                        .iter()
+                        .filter(|position| piste.in_bounds(position) && piste[position])
+                        .flat_map(|position| {
+                            DIRECTIONS.iter().map(move |&travel_direction| State {
+                                position,
+                                velocity: 0,
+                                travel_direction,
+                            })
+                        })
+                        .collect::<HashSet<_>>(),
+                },
+            )
         });
 
-    lifts_iter.chain(gates_iter).collect::<Vec<_>>()
+    lifts_iter.chain(gates_iter).collect::<HashMap<_, _>>()
 }
