@@ -9,7 +9,7 @@ use crate::model::skiing::State;
 pub fn compute_piste(
     piste_id: &usize,
     costs: &HashMap<usize, Costs<State>>,
-    entrances: &HashMap<usize, Vec<Entrance>>,
+    entrances: &HashMap<usize, Entrance>,
     exits: &HashMap<usize, Vec<Exit>>,
     abilities: &mut HashMap<usize, Ability>,
 ) {
@@ -19,26 +19,29 @@ pub fn compute_piste(
         return;
     };
 
-    let Some(entrances) = entrances.get(piste_id) else {
-        return;
-    };
-
     let Some(exits) = exits.get(piste_id) else {
         return;
     };
 
-    if let Some(ability) = compute_ability(costs, entrances, exits) {
+    if let Some(ability) = compute_ability(piste_id, costs, entrances, exits) {
         abilities.insert(*piste_id, ability);
     }
 }
 
 fn compute_ability(
+    piste_id: &usize,
     costs: &Costs<State>,
-    entrances: &[Entrance],
+    entrances: &HashMap<usize, Entrance>,
     exits: &[Exit],
 ) -> Option<Ability> {
     entrances
-        .iter()
+        .values()
+        .filter(
+            |Entrance {
+                 destination_piste_id,
+                 ..
+             }| destination_piste_id == piste_id,
+        )
         .flat_map(
             |Entrance {
                  stationary_states: states,

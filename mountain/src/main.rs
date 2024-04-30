@@ -373,7 +373,7 @@ pub struct Components {
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
     gates: HashMap<usize, Gate>,
-    entrances: HashMap<usize, Vec<Entrance>>,
+    entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Vec<Exit>>,
     abilities: HashMap<usize, Ability>,
     #[serde(skip)]

@@ -29,7 +29,7 @@ pub struct Parameters<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
-    pub entrances: &'a mut HashMap<usize, Vec<Entrance>>,
+    pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Vec<Exit>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs<State>>,
