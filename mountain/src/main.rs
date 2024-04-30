@@ -599,7 +599,7 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
                 carousels: &self.components.carousels,
-                gates: &self.components.gates,
+                entrances: &self.components.entrances,
                 costs: &self.components.costs,
                 abilities: &self.components.abilities,
                 open: &self.components.open,
