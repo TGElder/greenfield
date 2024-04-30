@@ -1,13 +1,12 @@
-use std::collections::{HashMap, HashSet};
-
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
 use network::utils::MaterializedInNetwork;
+use std::collections::{HashMap, HashSet};
 
 use crate::model::ability::{Ability, ABILITIES};
 use crate::model::carousel::Carousel;
 use crate::model::costs::Costs;
-use crate::model::gate::Gate;
+use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
 use crate::model::skiing::State;
 use crate::network::global::GlobalNetwork;
@@ -16,7 +15,7 @@ pub struct Parameters<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
-    pub gates: &'a HashMap<usize, Gate>,
+    pub entrances: &'a HashMap<usize, Entrance>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub open: &'a HashSet<usize>,
@@ -28,7 +27,7 @@ pub fn compute_global_costs(
         piste_map,
         lifts,
         carousels,
-        gates,
+        entrances,
         costs,
         abilities,
         open,
@@ -37,9 +36,8 @@ pub fn compute_global_costs(
 ) {
     *global_costs = Costs::new();
 
-    let targets = lifts
+    let targets = entrances
         .keys()
-        .chain(gates.keys())
         .filter(|target| open.contains(target))
         .copied()
         .collect::<HashSet<_>>();
@@ -49,7 +47,7 @@ pub fn compute_global_costs(
             piste_map,
             lifts,
             carousels,
-            gates,
+            entrances,
             costs,
             abilities,
             ability,
