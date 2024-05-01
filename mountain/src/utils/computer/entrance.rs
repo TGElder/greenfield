@@ -1,5 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
+use commons::grid::Grid;
+
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
@@ -12,13 +14,14 @@ pub fn compute_piste(
     pistes: &HashMap<usize, Piste>,
     lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
+    terrain: &Grid<f32>,
     entrances: &mut HashMap<usize, Entrance>,
 ) {
     let Some(piste) = pistes.get(piste_id) else {
         return;
     };
 
-    let piste_entrances = compute_piste_entrances(piste_id, piste, lifts, gates);
+    let piste_entrances = compute_piste_entrances(piste_id, piste, lifts, gates, terrain);
 
     entrances.extend(piste_entrances);
 }
@@ -28,6 +31,7 @@ fn compute_piste_entrances(
     piste: &Piste,
     lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
+    terrain: &Grid<f32>,
 ) -> HashMap<usize, Entrance> {
     let piste = &piste.grid;
 
@@ -43,6 +47,7 @@ fn compute_piste_entrances(
                 Entrance {
                     destination_piste_id: *piste_id,
                     stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+                    altitude_meters: terrain[lift.drop_off.state.position],
                 },
             )
         });
@@ -67,6 +72,12 @@ fn compute_piste_entrances(
                             })
                         })
                         .collect::<HashSet<_>>(),
+                    altitude_meters: gate
+                        .footprint
+                        .iter()
+                        .map(|position| terrain[position])
+                        .sum::<f32>()
+                        / gate.footprint.iter().count() as f32,
                 },
             )
         });

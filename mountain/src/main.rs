@@ -631,9 +631,9 @@ impl EventHandler for Game {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
             locations: &self.components.locations,
+            entrances: &self.components.entrances,
             costs: &self.components.costs,
             global_costs: &self.components.global_costs,
-            lifts: &self.components.lifts,
             global_targets: &mut self.components.global_targets,
         });
         target_setter::run(target_setter::Parameters {
