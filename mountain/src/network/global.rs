@@ -46,6 +46,7 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
         let Some(Entrance {
             destination_piste_id: piste_id,
             stationary_states: from_states,
+            ..
         }) = self.entrances.get(from)
         else {
             return Box::new(empty());
