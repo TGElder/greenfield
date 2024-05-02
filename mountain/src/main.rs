@@ -587,6 +587,7 @@ impl EventHandler for Game {
                 mouse_xy: &self.mouse_xy,
                 reservations: &self.components.reservations,
                 plans: &self.components.plans,
+                locations: &self.components.locations,
                 targets: &self.components.targets,
                 global_targets: &self.components.global_targets,
                 graphics,

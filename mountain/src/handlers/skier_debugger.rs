@@ -15,6 +15,7 @@ pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub plans: &'a HashMap<usize, Plan>,
+    pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub global_targets: &'a HashMap<usize, usize>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
@@ -28,6 +29,7 @@ impl Handler {
             mouse_xy,
             reservations,
             plans,
+            locations,
             targets,
             global_targets,
             graphics,
@@ -45,6 +47,7 @@ impl Handler {
 
         for (id, _) in reservations[mouse_position].iter() {
             println!("ID = {:?}", id);
+            println!("Location = {:?}", locations.get(id));
             println!("Target = {:?}", targets.get(id));
             println!("Global target = {:?}", global_targets.get(id));
             println!("Plan = {:?}", plans.get(id));
