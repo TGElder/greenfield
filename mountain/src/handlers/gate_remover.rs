@@ -65,6 +65,8 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
 
     let gate = components.gates.remove(gate_id);
 
+    components.entrances.remove(gate_id);
+
     if let Some(gate) = gate {
         gate.footprint.iter().for_each(|position| {
             components.reservations[position].remove(gate_id);
