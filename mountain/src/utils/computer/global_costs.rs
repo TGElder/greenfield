@@ -36,12 +36,6 @@ pub fn compute_global_costs(
 ) {
     *global_costs = Costs::new();
 
-    let targets = entrances
-        .keys()
-        .filter(|target| open.contains(target))
-        .copied()
-        .collect::<HashSet<_>>();
-
     for ability in ABILITIES {
         let network = GlobalNetwork {
             piste_map,
@@ -52,6 +46,27 @@ pub fn compute_global_costs(
             abilities,
             ability,
         };
+
+        let targets = entrances
+            .iter()
+            .filter(|&(target, _)| open.contains(target))
+            .filter(
+                |&(
+                    _,
+                    Entrance {
+                        destination_piste_id,
+                        ..
+                    },
+                )| {
+                    abilities
+                        .get(destination_piste_id)
+                        .map(|&piste_ability| piste_ability <= ability)
+                        .unwrap_or_default()
+                },
+            )
+            .map(|(target, _)| target)
+            .copied()
+            .collect::<HashSet<_>>();
 
         let network = MaterializedInNetwork::from_out_network(&network, &targets);
 

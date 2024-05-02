@@ -64,16 +64,7 @@ pub fn run(
             .flat_map(|(piste_target, _)| {
                 global_costs
                     .targets_reachable_from_node(piste_target, skier_ability)
-                    .filter(|(target, _)| valid_global_targets.contains(target)) // only target lifts
-                    .filter(|&(_, cost)| *cost != 0) // global target must require moving
-                    .filter(move |(new_target, _)| {
-                        // will not get stuck
-                        global_costs
-                            .targets_reachable_from_node(new_target, skier_ability)
-                            .filter(|&(_, cost)| *cost != 0)
-                            .count()
-                            != 0
-                    })
+                    .filter(|(target, _)| valid_global_targets.contains(target))
             })
             .map(|(global_target, _)| global_target)
             .collect::<Vec<_>>();
