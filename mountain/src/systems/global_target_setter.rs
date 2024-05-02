@@ -67,6 +67,8 @@ pub fn run(
                     .filter(|(target, _)| valid_global_targets.contains(target))
             })
             .map(|(global_target, _)| global_target)
+            .collect::<HashSet<_>>()
+            .drain()
             .collect::<Vec<_>>();
 
         if let Some(&&new_target) = candidates.choose(&mut rng) {
