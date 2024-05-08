@@ -10,7 +10,7 @@ pub fn compute_piste(
     piste_id: &usize,
     costs: &HashMap<usize, Costs<State>>,
     entrances: &HashMap<usize, Entrance>,
-    exits: &HashMap<usize, Vec<Exit>>,
+    exits: &HashMap<usize, Exit>,
     abilities: &mut HashMap<usize, Ability>,
 ) {
     abilities.remove(piste_id);
@@ -29,11 +29,20 @@ pub fn compute_piste(
         )
         .collect::<Vec<_>>();
 
-    let Some(exits) = exits.get(piste_id) else {
-        return;
-    };
+    let exits = exits
+        .iter()
+        .filter(
+            |(
+                _,
+                Exit {
+                    origin_piste_id, ..
+                },
+            )| origin_piste_id == piste_id,
+        )
+        .map(|(exit_id, _)| exit_id)
+        .collect::<Vec<_>>();
 
-    if let Some(ability) = compute_ability(costs, &entrances, exits) {
+    if let Some(ability) = compute_ability(costs, &entrances, &exits) {
         abilities.insert(*piste_id, ability);
     }
 }
@@ -41,7 +50,7 @@ pub fn compute_piste(
 fn compute_ability(
     costs: &Costs<State>,
     entrances: &[&Entrance],
-    exits: &[Exit],
+    exits: &[&usize],
 ) -> Option<Ability> {
     entrances
         .iter()
@@ -54,8 +63,7 @@ fn compute_ability(
         .flat_map(|state| {
             exits
                 .iter()
-                .map(|exit| &exit.id)
-                .filter_map(|target| costs.min_ability(state, target))
+                .filter_map(|exit_id| costs.min_ability(state, exit_id))
         })
         .max()
 }

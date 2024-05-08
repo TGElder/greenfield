@@ -17,7 +17,7 @@ pub fn compute_piste(
     piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
     terrain: &Grid<f32>,
-    exits: &HashMap<usize, Vec<Exit>>,
+    exits: &HashMap<usize, Exit>,
     reservations: &Grid<HashMap<usize, Reservation>>,
     costs: &mut HashMap<usize, Costs<State>>,
 ) {
@@ -26,11 +26,19 @@ pub fn compute_piste(
     let Some(piste) = pistes.get(piste_id) else {
         return;
     };
-    let Some(exits) = exits.get(piste_id) else {
-        return;
-    };
+    let exits = exits
+        .iter()
+        .filter(
+            |(
+                _,
+                Exit {
+                    origin_piste_id, ..
+                },
+            )| origin_piste_id == piste_id,
+        )
+        .collect::<Vec<_>>();
 
-    let piste_costs = compute_costs(terrain, piste, exits, reservations);
+    let piste_costs = compute_costs(terrain, piste, &exits, reservations);
 
     costs.insert(*piste_id, piste_costs);
 }
@@ -38,16 +46,18 @@ pub fn compute_piste(
 fn compute_costs(
     terrain: &Grid<f32>,
     piste: &Piste,
-    exits: &[Exit],
+    exits: &[(&usize, &Exit)],
     reservations: &Grid<HashMap<usize, Reservation>>,
 ) -> Costs<State> {
     let mut out = Costs::new();
 
-    for Exit {
-        id: exit_id,
-        states,
-        ..
-    } in exits
+    for (
+        &exit_id,
+        Exit {
+            stationary_states: states,
+            ..
+        },
+    ) in exits
     {
         let min_z = states
             .iter()
@@ -63,7 +73,7 @@ fn compute_costs(
                     terrain[position] >= min_z
                         && !reservations[position]
                             .iter()
-                            .filter(|(id, _)| *id != exit_id)
+                            .filter(|&(&id, _)| id != exit_id)
                             .map(|(_, reservation)| reservation)
                             .any(|reservation| *reservation == Reservation::Structure)
                 },
@@ -81,7 +91,7 @@ fn compute_costs(
                 "INFO: Coverage for id {}, {:?} = {}",
                 exit_id, ability, coverage
             );
-            out.set_costs(*exit_id, ability, costs)
+            out.set_costs(exit_id, ability, costs)
         }
     }
 

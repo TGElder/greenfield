@@ -66,6 +66,7 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
     let gate = components.gates.remove(gate_id);
 
     components.entrances.remove(gate_id);
+    components.exits.remove(gate_id);
 
     if let Some(gate) = gate {
         gate.footprint.iter().for_each(|position| {
@@ -74,11 +75,6 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
     }
 
     remove_drawing(graphics, components, gate_id);
-
-    for (_, exits) in components.exits.iter_mut() {
-        exits.retain(|exit| exit.id != *gate_id);
-    }
-
     for (_, costs) in components.costs.iter_mut() {
         for ability in ABILITIES {
             costs.remove_costs(*gate_id, ability);
