@@ -72,6 +72,7 @@ impl Handler {
                     from: xy(rectangle.to.x, rectangle.from.y),
                     to: xy(rectangle.to.x, rectangle.to.y + 1),
                 },
+                origin_piste: piste_map[origin].unwrap(),
                 destination_piste: (a + b) - piste_map[origin].unwrap(),
             })
             .or_else(|| {
@@ -80,6 +81,7 @@ impl Handler {
                         from: xy(rectangle.from.x, rectangle.to.y),
                         to: xy(rectangle.to.x + 1, rectangle.to.y),
                     },
+                    origin_piste: piste_map[origin].unwrap(),
                     destination_piste: (a + b) - piste_map[origin].unwrap(),
                 })
             });

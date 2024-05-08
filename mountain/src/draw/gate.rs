@@ -82,6 +82,7 @@ fn entrance_side(
     Gate {
         footprint: XYRectangle { from, to },
         destination_piste: piste,
+        ..
     }: &Gate,
     piste_map: &Grid<Option<usize>>,
 ) -> cube::Side {

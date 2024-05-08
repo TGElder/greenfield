@@ -54,12 +54,11 @@ fn compute_costs(
     for (
         &exit_id,
         Exit {
-            stationary_states: states,
-            ..
+            stationary_states, ..
         },
     ) in exits
     {
-        let min_z = states
+        let min_z = stationary_states
             .iter()
             .map(|state| state.position)
             .map(|position| terrain[position])
@@ -83,7 +82,7 @@ fn compute_costs(
 
             let costs = {
                 let network = &network;
-                network.costs_to_targets(states, None)
+                network.costs_to_targets(stationary_states, None)
             };
             let coverage =
                 costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;

@@ -42,14 +42,14 @@ fn compute_piste_exits(
                 id,
                 Exit {
                     origin_piste_id: *piste_id,
-                    stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+                    stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
                 },
             )
         });
 
     let gates_iter = gates
         .iter()
-        .filter(|(_, gate)| gate.destination_piste == *piste_id)
+        .filter(|(_, gate)| gate.origin_piste == *piste_id)
         .map(|(&id, gate)| {
             (
                 id,
