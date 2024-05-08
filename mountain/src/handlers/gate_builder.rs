@@ -67,22 +67,28 @@ impl Handler {
         }
 
         let maybe_gate = get_pistes_if_valid_vertical_gate(rectangle, piste_map)
-            .map(|[a, b]| Gate {
-                footprint: XYRectangle {
-                    from: xy(rectangle.to.x, rectangle.from.y),
-                    to: xy(rectangle.to.x, rectangle.to.y + 1),
-                },
-                origin_piste: piste_map[origin].unwrap(),
-                destination_piste: (a + b) - piste_map[origin].unwrap(),
+            .map(|[a, b]| {
+                let origin_piste = piste_map[origin].unwrap();
+                Gate {
+                    footprint: XYRectangle {
+                        from: xy(rectangle.to.x, rectangle.from.y),
+                        to: xy(rectangle.to.x, rectangle.to.y + 1),
+                    },
+                    origin_piste,
+                    destination_piste: (a + b) - origin_piste,
+                }
             })
             .or_else(|| {
-                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| Gate {
-                    footprint: XYRectangle {
-                        from: xy(rectangle.from.x, rectangle.to.y),
-                        to: xy(rectangle.to.x + 1, rectangle.to.y),
-                    },
-                    origin_piste: piste_map[origin].unwrap(),
-                    destination_piste: (a + b) - piste_map[origin].unwrap(),
+                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| {
+                    let origin_piste = piste_map[origin].unwrap();
+                    Gate {
+                        footprint: XYRectangle {
+                            from: xy(rectangle.from.x, rectangle.to.y),
+                            to: xy(rectangle.to.x + 1, rectangle.to.y),
+                        },
+                        origin_piste,
+                        destination_piste: (a + b) - origin_piste,
+                    }
                 })
             });
 

@@ -29,7 +29,7 @@ pub fn compute_piste(
         )
         .collect::<Vec<_>>();
 
-    let exits = exits
+    let exit_ids = exits
         .iter()
         .filter(
             |(
@@ -42,7 +42,7 @@ pub fn compute_piste(
         .map(|(exit_id, _)| exit_id)
         .collect::<Vec<_>>();
 
-    if let Some(ability) = compute_ability(costs, &entrances, &exits) {
+    if let Some(ability) = compute_ability(costs, &entrances, &exit_ids) {
         abilities.insert(*piste_id, ability);
     }
 }
@@ -50,18 +50,13 @@ pub fn compute_piste(
 fn compute_ability(
     costs: &Costs<State>,
     entrances: &[&Entrance],
-    exits: &[&usize],
+    exit_ids: &[&usize],
 ) -> Option<Ability> {
     entrances
         .iter()
-        .flat_map(
-            |Entrance {
-                 stationary_states: states,
-                 ..
-             }| states,
-        )
+        .flat_map(|entrance| &entrance.stationary_states)
         .flat_map(|state| {
-            exits
+            exit_ids
                 .iter()
                 .filter_map(|exit_id| costs.min_ability(state, exit_id))
         })

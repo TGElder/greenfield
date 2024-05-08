@@ -18,9 +18,9 @@ pub fn compute_piste(
         return;
     };
 
-    let piste_entrances = compute_piste_exits(piste_id, piste, lifts, gates);
+    let piste_exits = compute_piste_exits(piste_id, piste, lifts, gates);
 
-    exits.extend(piste_entrances);
+    exits.extend(piste_exits);
 }
 
 fn compute_piste_exits(
