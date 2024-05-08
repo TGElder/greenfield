@@ -374,7 +374,7 @@ pub struct Components {
     carousels: HashMap<usize, Carousel>,
     gates: HashMap<usize, Gate>,
     entrances: HashMap<usize, Entrance>,
-    exits: HashMap<usize, Vec<Exit>>,
+    exits: HashMap<usize, Exit>,
     abilities: HashMap<usize, Ability>,
     #[serde(skip)]
     clothes: HashMap<usize, Clothes<Rgb<f32>>>,

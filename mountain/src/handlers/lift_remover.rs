@@ -92,6 +92,7 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     let lift = components.lifts.remove(lift_id);
 
     components.entrances.remove(lift_id);
+    components.exits.remove(lift_id);
 
     if let Some(lift) = lift {
         components.reservations[lift.pick_up.state.position].remove(lift_id);
@@ -101,10 +102,6 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
         remove_carousel(graphics, components, &carousel_id);
     }
     remove_drawing(graphics, components, lift_id);
-
-    for (_, exits) in components.exits.iter_mut() {
-        exits.retain(|exit| exit.id != *lift_id);
-    }
 
     for (_, costs) in components.costs.iter_mut() {
         for ability in ABILITIES {

@@ -30,7 +30,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
-    pub exits: &'a mut HashMap<usize, Vec<Exit>>,
+    pub exits: &'a mut HashMap<usize, Exit>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs<State>>,
     pub abilities: &'a mut HashMap<usize, Ability>,
