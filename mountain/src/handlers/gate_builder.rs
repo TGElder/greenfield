@@ -5,8 +5,12 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::handlers::selection;
+use crate::model::direction::DIRECTIONS;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::gate::Gate;
 use crate::model::reservation::Reservation;
+use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::terrain_artist;
 
@@ -16,11 +20,14 @@ pub struct Handler {
 
 pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
+    pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub selection: &'a mut selection::Handler,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub gates: &'a mut HashMap<usize, Gate>,
+    pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub exits: &'a mut HashMap<usize, Exit>,
     pub open: &'a mut HashSet<usize>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
@@ -34,11 +41,14 @@ impl Handler {
         &mut self,
         Parameters {
             event,
+            terrain,
+            piste_map,
             selection,
             terrain_artist,
-            piste_map,
             id_allocator,
             gates,
+            entrances,
+            exits,
             open,
             reservations,
         }: Parameters<'_>,
@@ -103,6 +113,40 @@ impl Handler {
         gate.footprint.iter().for_each(|position| {
             reservations[position].insert(gate_id, Reservation::Structure);
         });
+
+        // creating entrance and exit
+
+        let stationary_states = gate
+            .footprint
+            .iter()
+            .flat_map(|position| {
+                DIRECTIONS.iter().map(move |&travel_direction| State {
+                    position,
+                    velocity: 0,
+                    travel_direction,
+                })
+            })
+            .collect::<HashSet<_>>();
+        entrances.insert(
+            gate_id,
+            Entrance {
+                destination_piste_id: gate.destination_piste,
+                stationary_states: stationary_states.clone(),
+                altitude_meters: gate
+                    .footprint
+                    .iter()
+                    .map(|position| terrain[position])
+                    .sum::<f32>()
+                    / gate.footprint.iter().count() as f32,
+            },
+        );
+        exits.insert(
+            gate_id,
+            Exit {
+                origin_piste_id: gate.origin_piste,
+                stationary_states,
+            },
+        );
 
         // opening gate
 

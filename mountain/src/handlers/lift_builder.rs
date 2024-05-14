@@ -4,7 +4,7 @@ use std::iter::once;
 
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS};
 use engine::binding::Binding;
 
 use crate::model::carousel::{Car, Carousel};
@@ -171,7 +171,7 @@ impl Handler {
             exit_id,
             Exit {
                 origin_piste_id: from_piste,
-                stationary_states: HashSet::from([lift.pick_up.state]),
+                stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
             },
         );
 
@@ -182,14 +182,18 @@ impl Handler {
             entrance_id,
             Entrance {
                 destination_piste_id: to_piste,
-                stationary_states: HashSet::from([lift.drop_off.state]),
-                altitude_meters: terrain[to],
+                stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+                altitude_meters: terrain
+                    .offsets(to, &CORNERS)
+                    .map(|corner| terrain[corner])
+                    .sum::<f32>()
+                    / terrain.offsets(to, &CORNERS).count() as f32,
             },
         );
 
         // reserve pick up position
 
-        reservations[lift.pick_up.state.position].insert(lift_id, Reservation::Structure);
+        reservations[lift.pick_up.state.position].insert(exit_id, Reservation::Structure);
 
         // clear from position
 

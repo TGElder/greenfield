@@ -512,10 +512,13 @@ impl EventHandler for Game {
             .handle(handlers::gate_builder::Parameters {
                 event,
                 piste_map: &self.components.piste_map,
+                terrain: &self.components.terrain,
                 selection: &mut self.handlers.selection,
                 terrain_artist: &mut self.systems.terrain_artist,
                 id_allocator: &mut self.components.services.id_allocator,
                 gates: &mut self.components.gates,
+                entrances: &mut self.components.entrances,
+                exits: &mut self.components.exits,
                 open: &mut self.components.open,
                 reservations: &mut self.components.reservations,
             });
@@ -571,7 +574,6 @@ impl EventHandler for Game {
                 terrain: &self.components.terrain,
                 pistes: &self.components.pistes,
                 piste_map: &self.components.piste_map,
-                gates: &self.components.gates,
                 entrances: &mut self.components.entrances,
                 exits: &mut self.components.exits,
                 reservations: &self.components.reservations,

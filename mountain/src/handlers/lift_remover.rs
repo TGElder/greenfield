@@ -97,7 +97,7 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
         components.entrances.remove(&lift.exit_id);
         components.open.remove(&lift.entrance_id);
         components.open.remove(&lift.exit_id);
-        components.reservations[lift.pick_up.state.position].remove(lift_id);
+        components.reservations[lift.pick_up.state.position].remove(&lift.exit_id);
     }
 
     for carousel_id in carousel_ids {

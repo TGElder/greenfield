@@ -8,7 +8,6 @@ use crate::model::ability::Ability;
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
-use crate::model::gate::Gate;
 use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
@@ -26,7 +25,6 @@ pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub pistes: &'a HashMap<usize, Piste>,
     pub piste_map: &'a Grid<Option<usize>>,
-    pub gates: &'a HashMap<usize, Gate>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
@@ -47,7 +45,6 @@ impl Handler {
             terrain,
             pistes,
             piste_map,
-            gates,
             entrances,
             exits,
             reservations,
@@ -78,8 +75,6 @@ impl Handler {
         let current_speed = clock.speed();
         clock.set_speed(0.0);
 
-        computer::entrance::compute_piste(&piste_id, pistes, gates, terrain, entrances);
-        computer::exit::compute_piste(&piste_id, pistes, gates, exits);
         computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
         computer::piste_ability::compute_piste(&piste_id, costs, entrances, exits, abilities);
         global_computer.update();
