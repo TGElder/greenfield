@@ -7,6 +7,7 @@ use crate::model::ability::{Ability, ABILITIES};
 use crate::model::carousel::Carousel;
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::lift::Lift;
 use crate::model::skiing::State;
 use crate::network::global::GlobalNetwork;
@@ -16,6 +17,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
+    pub exits: &'a HashMap<usize, Exit>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub open: &'a HashSet<usize>,
@@ -28,6 +30,7 @@ pub fn compute_global_costs(
         lifts,
         carousels,
         entrances,
+        exits,
         costs,
         abilities,
         open,
@@ -54,23 +57,9 @@ pub fn compute_global_costs(
         };
 
         let targets = entrances
-            .iter()
-            .filter(|&(target, _)| open.contains(target))
-            .filter(
-                |&(
-                    _,
-                    Entrance {
-                        destination_piste_id,
-                        ..
-                    },
-                )| {
-                    abilities
-                        .get(destination_piste_id)
-                        .map(|&piste_ability| piste_ability <= ability)
-                        .unwrap_or_default()
-                },
-            )
-            .map(|(target, _)| target)
+            .keys()
+            .chain(exits.keys())
+            .filter(|target| open.contains(target))
             .copied()
             .collect::<HashSet<_>>();
 

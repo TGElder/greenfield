@@ -605,6 +605,7 @@ impl EventHandler for Game {
                 lifts: &self.components.lifts,
                 carousels: &self.components.carousels,
                 entrances: &self.components.entrances,
+                exits: &self.components.exits,
                 costs: &self.components.costs,
                 abilities: &self.components.abilities,
                 open: &self.components.open,

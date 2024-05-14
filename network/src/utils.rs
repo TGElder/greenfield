@@ -4,6 +4,7 @@ use std::iter;
 
 use crate::model::{Edge, InNetwork, OutNetwork};
 
+#[derive(Debug)]
 pub struct MaterializedInNetwork<T> {
     pub edges_in: HashMap<T, Vec<Edge<T>>>,
 }
