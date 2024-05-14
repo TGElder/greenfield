@@ -238,6 +238,8 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             carousel_id: 0,
+            exit_id: 0,
+            entrance_id: 0,
         };
         let cars = vec![
             &Car {
@@ -327,6 +329,8 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             carousel_id: 0,
+            exit_id: 0,
+            entrance_id: 0,
         };
         let cars = vec![&Car {
             carousel_id: 7,

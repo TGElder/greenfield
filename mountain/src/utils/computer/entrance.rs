@@ -5,14 +5,12 @@ use commons::grid::Grid;
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
-use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
 
 pub fn compute_piste(
     piste_id: &usize,
     pistes: &HashMap<usize, Piste>,
-    lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
     terrain: &Grid<f32>,
     entrances: &mut HashMap<usize, Entrance>,
@@ -21,7 +19,7 @@ pub fn compute_piste(
         return;
     };
 
-    let piste_entrances = compute_piste_entrances(piste_id, piste, lifts, gates, terrain);
+    let piste_entrances = compute_piste_entrances(piste_id, piste, gates, terrain);
 
     entrances.extend(piste_entrances);
 }
@@ -29,30 +27,12 @@ pub fn compute_piste(
 fn compute_piste_entrances(
     piste_id: &usize,
     piste: &Piste,
-    lifts: &HashMap<usize, Lift>,
     gates: &HashMap<usize, Gate>,
     terrain: &Grid<f32>,
 ) -> HashMap<usize, Entrance> {
     let piste = &piste.grid;
 
-    let lifts_iter = lifts
-        .iter()
-        .filter(|(_, lift)| {
-            let position = lift.drop_off.state.position;
-            piste.in_bounds(position) && piste[position]
-        })
-        .map(|(&id, lift)| {
-            (
-                id,
-                Entrance {
-                    destination_piste_id: *piste_id,
-                    stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
-                    altitude_meters: terrain[lift.drop_off.state.position],
-                },
-            )
-        });
-
-    let gates_iter = gates
+    gates
         .iter()
         .filter(|(_, gate)| gate.destination_piste == *piste_id)
         .map(|(&id, gate)| {
@@ -80,7 +60,6 @@ fn compute_piste_entrances(
                         / gate.footprint.iter().count() as f32,
                 },
             )
-        });
-
-    lifts_iter.chain(gates_iter).collect::<HashMap<_, _>>()
+        })
+        .collect::<HashMap<_, _>>()
 }

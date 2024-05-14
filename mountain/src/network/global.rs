@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::iter::empty;
+use std::iter::{empty, once};
 
 use commons::grid::Grid;
 use network::model::{Edge, OutNetwork};
@@ -16,6 +16,7 @@ pub const GLOBAL_COST_DIVISOR: u64 = 1000;
 pub struct GlobalNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
+    pub lift_exit_to_lift: &'a HashMap<usize, usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub costs: &'a HashMap<usize, Costs<State>>,
@@ -34,6 +35,7 @@ impl<'a> GlobalNetwork<'a> {
             })
             .map(|seconds| seconds * 1_000_000.0)
             .map(|micros| micros as u64)
+            .map(|micros| micros / GLOBAL_COST_DIVISOR)
             .unwrap_or(0)
     }
 }
@@ -43,6 +45,15 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
         &'b self,
         from: &'b usize,
     ) -> Box<dyn Iterator<Item = network::model::Edge<usize>> + 'b> {
+        // lift edge
+        if let Some(lift_id) = self.lift_exit_to_lift.get(from) {
+            return Box::new(once(Edge {
+                from: *from,
+                to: self.lifts[lift_id].entrance_id,
+                cost: self.lift_travel_micros(from).try_into().unwrap(),
+            }));
+        }
+
         let Some(Entrance {
             destination_piste_id: piste_id,
             stationary_states: from_states,
@@ -78,7 +89,6 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
                 });
         }
 
-        let lift_travel_time = self.lift_travel_micros(from);
         let edges = target_to_costs
             .into_iter()
             .filter(move |(_, costs)| costs.len() == from_states.len()) // we only want targets reachable by all from states
@@ -87,9 +97,7 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
                 Edge {
                     from: *from,
                     to,
-                    cost: ((lift_travel_time + cost) / GLOBAL_COST_DIVISOR)
-                        .try_into()
-                        .unwrap(), // to avoid exceeding u32 limit
+                    cost: (cost / GLOBAL_COST_DIVISOR).try_into().unwrap(), // to avoid exceeding u32 limit
                 }
             });
 

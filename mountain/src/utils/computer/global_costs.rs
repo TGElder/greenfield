@@ -36,10 +36,16 @@ pub fn compute_global_costs(
 ) {
     *global_costs = Costs::new();
 
+    let lift_exit_to_lift = &lifts
+        .iter()
+        .map(|(lift_id, Lift { exit_id, .. })| (*exit_id, *lift_id))
+        .collect::<HashMap<_, _>>();
+
     for ability in ABILITIES {
         let network = GlobalNetwork {
             piste_map,
             lifts,
+            lift_exit_to_lift,
             carousels,
             entrances,
             costs,

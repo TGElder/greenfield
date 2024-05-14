@@ -64,6 +64,7 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
     // Remove
 
     let gate = components.gates.remove(gate_id);
+    components.open.remove(gate_id);
 
     components.entrances.remove(gate_id);
     components.exits.remove(gate_id);

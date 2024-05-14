@@ -90,11 +90,13 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     // Remove
 
     let lift = components.lifts.remove(lift_id);
-
-    components.entrances.remove(lift_id);
-    components.exits.remove(lift_id);
+    components.open.remove(lift_id);
 
     if let Some(lift) = lift {
+        components.exits.remove(&lift.entrance_id);
+        components.entrances.remove(&lift.exit_id);
+        components.open.remove(&lift.entrance_id);
+        components.open.remove(&lift.exit_id);
         components.reservations[lift.pick_up.state.position].remove(lift_id);
     }
 

@@ -10,6 +10,8 @@ pub struct Lift {
     pub pick_up: Portal,
     pub drop_off: Portal,
     pub carousel_id: usize,
+    pub exit_id: usize,     // exit from piste, entrance to lift
+    pub entrance_id: usize, // entrance to piste, exit from lift
 }
 
 impl Lift {
@@ -98,6 +100,8 @@ mod tests {
                 },
             },
             carousel_id: 0,
+            exit_id: 0,
+            entrance_id: 0,
         };
 
         // when
@@ -135,6 +139,8 @@ mod tests {
                 },
             },
             carousel_id: 0,
+            exit_id: 0,
+            entrance_id: 0,
         };
 
         // when

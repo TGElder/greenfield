@@ -9,6 +9,8 @@ use engine::binding::Binding;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::lift::{self, Lift, Segment};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
@@ -32,11 +34,14 @@ pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
+    pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a mut HashMap<usize, Lift>,
     pub open: &'a mut HashSet<usize>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
+    pub exits: &'a mut HashMap<usize, Exit>,
+    pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -55,11 +60,14 @@ impl Handler {
             event,
             mouse_xy,
             terrain,
+            piste_map,
             lifts,
             open,
             id_allocator,
             carousels,
             cars,
+            exits,
+            entrances,
             reservations,
             graphics,
         }: Parameters<'_>,
@@ -87,8 +95,20 @@ impl Handler {
         // create lift
 
         let to = position;
+
+        let Some(from_piste) = piste_map[from] else {
+            println!("No piste at from position");
+            return;
+        };
+        let Some(to_piste) = piste_map[to] else {
+            println!("No piste at to position");
+            return;
+        };
+
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
+        let exit_id = id_allocator.next_id();
+        let entrance_id = id_allocator.next_id();
 
         let points = get_points(terrain, &from, &to);
         let travel_direction = get_direction(&from, &to);
@@ -112,11 +132,15 @@ impl Handler {
                 },
             },
             carousel_id,
+            exit_id,
+            entrance_id,
         };
 
         // opening lift
 
         open.insert(lift_id);
+        open.insert(exit_id);
+        open.insert(entrance_id);
 
         // setup carousel
 
@@ -137,6 +161,29 @@ impl Handler {
                 lift_id,
                 velocity: LIFT_VELOCITY,
                 car_ids,
+            },
+        );
+
+        // setup exit
+        // exit from piste, entrance to lift
+
+        exits.insert(
+            exit_id,
+            Exit {
+                origin_piste_id: from_piste,
+                stationary_states: HashSet::from([lift.pick_up.state]),
+            },
+        );
+
+        // setup entrance
+        // entrance to piste, exit from lift
+
+        entrances.insert(
+            entrance_id,
+            Entrance {
+                destination_piste_id: to_piste,
+                stationary_states: HashSet::from([lift.drop_off.state]),
+                altitude_meters: terrain[to],
             },
         );
 
