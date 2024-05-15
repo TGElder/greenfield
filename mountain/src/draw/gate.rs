@@ -9,6 +9,7 @@ use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
+use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
 
 const GROUND_TO_BAR_METERS: f32 = 2.0;
@@ -20,6 +21,7 @@ pub fn draw(
     graphics: &mut dyn Graphics,
     index: &usize,
     gate: &Gate,
+    entrance: &Entrance,
     terrain: &Grid<f32>,
     piste_map: &Grid<Option<usize>>,
 ) {
@@ -51,7 +53,7 @@ pub fn draw(
         &|_| STRUCTURE_COLOR,
     );
 
-    let entrance_side = entrance_side(gate, piste_map);
+    let entrance_side = entrance_side(gate, entrance, piste_map);
     let coloring = |side: &cube::Side| {
         if *side == entrance_side {
             BANNER_COLOR
@@ -81,9 +83,12 @@ pub fn draw(
 fn entrance_side(
     Gate {
         footprint: XYRectangle { from, to },
-        destination_piste_id,
         ..
     }: &Gate,
+    Entrance {
+        destination_piste_id,
+        ..
+    }: &Entrance,
     piste_map: &Grid<Option<usize>>,
 ) -> cube::Side {
     match (

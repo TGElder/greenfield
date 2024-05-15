@@ -75,28 +75,29 @@ impl Handler {
             println!("INFO: Entrance must not be zero length");
             return;
         }
-        let origin_piste_id = piste_map[origin].unwrap();
-        let maybe_gate = get_pistes_if_valid_vertical_gate(rectangle, piste_map)
-            .map(|[a, b]| Gate {
+        let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
+            .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
+
+        let Some(configuration) = maybe_configuration else {
+            return;
+        };
+
+        let gate = match configuration.orientation {
+            Orientation::Vertical => Gate {
                 footprint: XYRectangle {
                     from: xy(rectangle.to.x, rectangle.from.y),
                     to: xy(rectangle.to.x, rectangle.to.y + 1),
                 },
-                destination_piste_id: (a + b) - origin_piste_id,
-            })
-            .or_else(|| {
-                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| Gate {
-                    footprint: XYRectangle {
-                        from: xy(rectangle.from.x, rectangle.to.y),
-                        to: xy(rectangle.to.x + 1, rectangle.to.y),
-                    },
-                    destination_piste_id: (a + b) - origin_piste_id,
-                })
-            });
-
-        let Some(gate) = maybe_gate else {
-            return;
+            },
+            Orientation::Horizontal => Gate {
+                footprint: XYRectangle {
+                    from: xy(rectangle.from.x, rectangle.to.y),
+                    to: xy(rectangle.to.x + 1, rectangle.to.y),
+                },
+            },
         };
+
+        // creating gate
 
         let gate_id = id_allocator.next_id();
 
@@ -107,6 +108,10 @@ impl Handler {
         });
 
         // creating entrance and exit
+
+        let origin_piste_id = piste_map[origin].unwrap();
+        let destination_piste_id =
+            (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
 
         let stationary_states = gate
             .footprint
@@ -122,7 +127,7 @@ impl Handler {
         entrances.insert(
             gate_id,
             Entrance {
-                destination_piste_id: gate.destination_piste_id,
+                destination_piste_id,
                 stationary_states: stationary_states.clone(),
                 altitude_meters: gate
                     .footprint
@@ -144,22 +149,22 @@ impl Handler {
 
         open.insert(gate_id);
 
-        // register gate
+        // inserting gate
 
         gates.insert(gate_id, gate);
     }
 }
 
-fn get_pistes_if_valid_vertical_gate(
+fn try_get_vertical_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
-) -> Option<[usize; 2]> {
+) -> Option<Configuration> {
     if rectangle.width() != 2 {
         println!("INFO: Not vertical gate - selection must be 2 wide");
         return None;
     }
 
-    let mut out = [0; 2];
+    let mut pistes = [0; 2];
 
     for (index, x) in (rectangle.from.x..=rectangle.to.x).enumerate() {
         let value = piste_map[xy(x, rectangle.from.y)]?;
@@ -169,27 +174,30 @@ fn get_pistes_if_valid_vertical_gate(
                 return None;
             }
         }
-        out[index] = value;
+        pistes[index] = value;
     }
 
-    if out[0] == out[1] {
+    if pistes[0] == pistes[1] {
         println!("INFO: Not vertical gate - same piste on both sides");
         return None;
     }
 
-    Some(out)
+    Some(Configuration {
+        orientation: Orientation::Vertical,
+        pistes,
+    })
 }
 
-fn get_pistes_if_valid_horizontal_gate(
+fn try_get_horizontal_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
-) -> Option<[usize; 2]> {
+) -> Option<Configuration> {
     if rectangle.height() != 2 {
         println!("INFO: Not horizontal gate - selection must be 2 high");
         return None;
     }
 
-    let mut out = [0; 2];
+    let mut pistes = [0; 2];
 
     for (index, y) in (rectangle.from.y..=rectangle.to.y).enumerate() {
         let value = piste_map[xy(rectangle.from.x, y)]?;
@@ -199,13 +207,26 @@ fn get_pistes_if_valid_horizontal_gate(
                 return None;
             }
         }
-        out[index] = value;
+        pistes[index] = value;
     }
 
-    if out[0] == out[1] {
+    if pistes[0] == pistes[1] {
         println!("INFO: Not horizontal gate - same piste on both sides");
         return None;
     }
 
-    Some(out)
+    Some(Configuration {
+        orientation: Orientation::Horizontal,
+        pistes,
+    })
+}
+
+struct Configuration {
+    orientation: Orientation,
+    pistes: [usize; 2],
+}
+
+enum Orientation {
+    Vertical,
+    Horizontal,
 }

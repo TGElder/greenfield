@@ -656,6 +656,7 @@ impl EventHandler for Game {
         gate::run(
             &self.components.plans,
             &self.components.gates,
+            &self.components.entrances,
             &self.components.open,
             &mut self.components.targets,
             &mut self.components.global_targets,
@@ -705,6 +706,7 @@ impl EventHandler for Game {
         gate_artist::run(
             graphics,
             &self.components.gates,
+            &self.components.entrances,
             &self.components.terrain,
             &self.components.piste_map,
             &mut self.components.drawings,
