@@ -66,6 +66,12 @@ pub fn run(
                     .targets_reachable_from_node(piste_target, skier_ability)
                     .filter(|(target, _)| valid_global_targets.contains(target))
             })
+            .filter(|(global_target, _)| {
+                global_costs
+                    .targets_reachable_from_node(global_target, skier_ability)
+                    .count()
+                    > 1
+            })
             .map(|(global_target, _)| global_target)
             .collect::<HashSet<_>>()
             .drain()

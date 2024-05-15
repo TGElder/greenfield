@@ -90,12 +90,15 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     // Remove
 
     let lift = components.lifts.remove(lift_id);
-
-    components.entrances.remove(lift_id);
-    components.exits.remove(lift_id);
+    components.open.remove(lift_id);
 
     if let Some(lift) = lift {
-        components.reservations[lift.pick_up.state.position].remove(lift_id);
+        components.exits.remove(&lift.pick_up.id);
+        components.open.remove(&lift.pick_up.id);
+        components.reservations[lift.pick_up.state.position].remove(&lift.pick_up.id);
+
+        components.entrances.remove(&lift.drop_off.id);
+        components.open.remove(&lift.drop_off.id);
     }
 
     for carousel_id in carousel_ids {

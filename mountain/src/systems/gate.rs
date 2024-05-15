@@ -1,12 +1,14 @@
 use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
+use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
 use crate::model::skiing::{Plan, State};
 
 pub fn run(
     plans: &HashMap<usize, Plan>,
     gates: &HashMap<usize, Gate>,
+    entrances: &HashMap<usize, Entrance>,
     open: &HashSet<usize>,
     targets: &mut HashMap<usize, usize>,
     global_targets: &mut HashMap<usize, usize>,
@@ -29,6 +31,10 @@ pub fn run(
             continue;
         };
 
+        let Some(entrance) = entrances.get(&target_id) else {
+            continue;
+        };
+
         if !open.contains(&target_id) {
             continue;
         }
@@ -44,7 +50,7 @@ pub fn run(
                     entry.remove();
                 }
             }
-            locations.insert(*plan_id, gate.destination_piste);
+            locations.insert(*plan_id, entrance.destination_piste_id);
         }
     }
 }

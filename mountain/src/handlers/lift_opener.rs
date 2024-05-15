@@ -34,9 +34,17 @@ impl Handler {
             if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
                 if open.remove(lift_id) {
                     println!("Lift {} is closed", lift_id);
+                    open.remove(&lift.pick_up.id);
+                    println!("Pick up {} is closed", lift.pick_up.id);
+                    open.remove(&lift.drop_off.id);
+                    println!("Drop off {} is closed", lift.drop_off.id);
                 } else {
                     open.insert(*lift_id);
                     println!("Lift {} is open", lift_id);
+                    open.insert(lift.pick_up.id);
+                    println!("Pick up {} is open", lift.pick_up.id);
+                    open.insert(lift.drop_off.id);
+                    println!("Drop off {} is open", lift.drop_off.id);
                 }
 
                 global_computer.update();

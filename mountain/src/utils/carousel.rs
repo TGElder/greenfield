@@ -217,6 +217,7 @@ mod tests {
         // given
         let lift = Lift {
             pick_up: lift::Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -225,6 +226,7 @@ mod tests {
                 },
             },
             drop_off: lift::Portal {
+                id: 0,
                 segment: 1,
                 state: State {
                     position: xy(1, 0),
@@ -306,6 +308,7 @@ mod tests {
         // given
         let lift = Lift {
             pick_up: lift::Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -314,6 +317,7 @@ mod tests {
                 },
             },
             drop_off: lift::Portal {
+                id: 0,
                 segment: 1,
                 state: State {
                     position: xy(1, 0),

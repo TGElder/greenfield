@@ -33,6 +33,7 @@ pub struct Segment {
 
 #[derive(Serialize, Deserialize)]
 pub struct Portal {
+    pub id: usize,
     pub segment: usize,
     pub state: State,
 }
@@ -82,6 +83,7 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             pick_up: Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -90,6 +92,7 @@ mod tests {
                 },
             },
             drop_off: Portal {
+                id: 0,
                 segment: 2,
                 state: State {
                     position: xy(2, 1),
@@ -119,6 +122,7 @@ mod tests {
                 xyz(2.0, 1.0, 0.0),
             ]),
             pick_up: Portal {
+                id: 0,
                 segment: 2,
                 state: State {
                     position: xy(0, 0),
@@ -127,6 +131,7 @@ mod tests {
                 },
             },
             drop_off: Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),

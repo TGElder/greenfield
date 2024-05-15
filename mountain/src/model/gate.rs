@@ -4,6 +4,4 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Gate {
     pub footprint: XYRectangle<u32>,
-    pub origin_piste: usize,
-    pub destination_piste: usize,
 }

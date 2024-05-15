@@ -4,11 +4,13 @@ use std::iter::once;
 
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
-use commons::grid::Grid;
+use commons::grid::{Grid, CORNERS};
 use engine::binding::Binding;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::lift::{self, Lift, Segment};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
@@ -32,11 +34,14 @@ pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
+    pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a mut HashMap<usize, Lift>,
     pub open: &'a mut HashSet<usize>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
+    pub exits: &'a mut HashMap<usize, Exit>,
+    pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -55,11 +60,14 @@ impl Handler {
             event,
             mouse_xy,
             terrain,
+            piste_map,
             lifts,
             open,
             id_allocator,
             carousels,
             cars,
+            exits,
+            entrances,
             reservations,
             graphics,
         }: Parameters<'_>,
@@ -87,6 +95,18 @@ impl Handler {
         // create lift
 
         let to = position;
+
+        let Some(from_piste) = piste_map[from] else {
+            println!("INFO: No piste at from position");
+            self.from = None;
+            return;
+        };
+        let Some(to_piste) = piste_map[to] else {
+            self.from = None;
+            println!("INFO: No piste at to position");
+            return;
+        };
+
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
 
@@ -96,6 +116,7 @@ impl Handler {
         let lift = Lift {
             segments: Segment::segments(&points),
             pick_up: lift::Portal {
+                id: id_allocator.next_id(),
                 segment: 0,
                 state: State {
                     position: from,
@@ -104,6 +125,7 @@ impl Handler {
                 },
             },
             drop_off: lift::Portal {
+                id: id_allocator.next_id(),
                 segment: 1,
                 state: State {
                     position: to,
@@ -117,6 +139,8 @@ impl Handler {
         // opening lift
 
         open.insert(lift_id);
+        open.insert(lift.pick_up.id);
+        open.insert(lift.drop_off.id);
 
         // setup carousel
 
@@ -140,9 +164,34 @@ impl Handler {
             },
         );
 
+        // setup exit
+
+        exits.insert(
+            lift.pick_up.id,
+            Exit {
+                origin_piste_id: from_piste,
+                stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
+            },
+        );
+
+        // setup entrance
+
+        entrances.insert(
+            lift.drop_off.id,
+            Entrance {
+                destination_piste_id: to_piste,
+                stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
+                altitude_meters: terrain
+                    .offsets(to, &CORNERS)
+                    .map(|corner| terrain[corner])
+                    .sum::<f32>()
+                    / terrain.offsets(to, &CORNERS).count() as f32,
+            },
+        );
+
         // reserve pick up position
 
-        reservations[lift.pick_up.state.position].insert(lift_id, Reservation::Structure);
+        reservations[lift.pick_up.state.position].insert(lift.pick_up.id, Reservation::Structure);
 
         // clear from position
 

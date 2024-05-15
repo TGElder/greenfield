@@ -107,35 +107,40 @@ impl System {
                 let car_id = car_ids[car_index];
                 match action {
                     RevolveAction::PickUp => {
-                        if !open.contains(&carousel.lift_id) {
+                        if !open.contains(&lift.pick_up.id) {
                             continue;
                         }
-                        plans.retain(|plan_id, plan| {
-                            if !matches!(targets.get(plan_id), Some(&target) if target == carousel.lift_id) {
+                        plans.retain(|skier_id, plan| {
+                            if !matches!(targets.get(skier_id), Some(&target) if target == lift.pick_up.id) {
                                 return true;
                             }
                             if !matches!(plan, Plan::Stationary(state) if *state == lift.pick_up.state) {
                                 return true;
                             }
-                            targets.remove(plan_id);
-                            if let Entry::Occupied(entry) = global_targets.entry(*plan_id) {
-                                if *entry.get() == carousel.lift_id {
+                            targets.remove(skier_id);
+                            if let Entry::Occupied(entry) = global_targets.entry(*skier_id) {
+                                if *entry.get() == lift.pick_up.id {
                                     entry.remove();
                                 }
                             }
-                            locations.insert(*plan_id, *car_id);
-                            reservations[lift.pick_up.state.position].remove(plan_id);
+                            locations.insert(*skier_id, *car_id);
+                            reservations[lift.pick_up.state.position].remove(skier_id);
                             false
                         });
                     }
                     RevolveAction::DropOff => {
-                        locations.retain(|location_id, location| {
+                        locations.retain(|skier_id, location| {
                             if *location != *car_id {
                                 return true;
                             }
-                            plans.insert(*location_id, Plan::Stationary(lift.drop_off.state));
+                            if let Entry::Occupied(entry) = global_targets.entry(*skier_id) {
+                                if *entry.get() == lift.drop_off.id {
+                                    entry.remove();
+                                }
+                            }
+                            plans.insert(*skier_id, Plan::Stationary(lift.drop_off.state));
                             reservations[lift.drop_off.state.position].insert(
-                                *location_id,
+                                *skier_id,
                                 Reservation::Mobile(ReservationPeriod::Permanent),
                             );
                             false
