@@ -97,18 +97,18 @@ impl Handler {
         let to = position;
 
         let Some(from_piste) = piste_map[from] else {
-            println!("No piste at from position");
+            println!("INFO: No piste at from position");
+            self.from = None;
             return;
         };
         let Some(to_piste) = piste_map[to] else {
-            println!("No piste at to position");
+            self.from = None;
+            println!("INFO: No piste at to position");
             return;
         };
 
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
-        let exit_id = id_allocator.next_id();
-        let entrance_id = id_allocator.next_id();
 
         let points = get_points(terrain, &from, &to);
         let travel_direction = get_direction(&from, &to);
@@ -116,6 +116,7 @@ impl Handler {
         let lift = Lift {
             segments: Segment::segments(&points),
             pick_up: lift::Portal {
+                id: id_allocator.next_id(),
                 segment: 0,
                 state: State {
                     position: from,
@@ -124,6 +125,7 @@ impl Handler {
                 },
             },
             drop_off: lift::Portal {
+                id: id_allocator.next_id(),
                 segment: 1,
                 state: State {
                     position: to,
@@ -132,15 +134,13 @@ impl Handler {
                 },
             },
             carousel_id,
-            exit_id,
-            entrance_id,
         };
 
         // opening lift
 
         open.insert(lift_id);
-        open.insert(exit_id);
-        open.insert(entrance_id);
+        open.insert(lift.pick_up.id);
+        open.insert(lift.drop_off.id);
 
         // setup carousel
 
@@ -165,10 +165,9 @@ impl Handler {
         );
 
         // setup exit
-        // exit from piste, entrance to lift
 
         exits.insert(
-            exit_id,
+            lift.pick_up.id,
             Exit {
                 origin_piste_id: from_piste,
                 stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
@@ -176,10 +175,9 @@ impl Handler {
         );
 
         // setup entrance
-        // entrance to piste, exit from lift
 
         entrances.insert(
-            entrance_id,
+            lift.drop_off.id,
             Entrance {
                 destination_piste_id: to_piste,
                 stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
@@ -193,7 +191,7 @@ impl Handler {
 
         // reserve pick up position
 
-        reservations[lift.pick_up.state.position].insert(exit_id, Reservation::Structure);
+        reservations[lift.pick_up.state.position].insert(lift.pick_up.id, Reservation::Structure);
 
         // clear from position
 

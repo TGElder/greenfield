@@ -217,6 +217,7 @@ mod tests {
         // given
         let lift = Lift {
             pick_up: lift::Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -225,6 +226,7 @@ mod tests {
                 },
             },
             drop_off: lift::Portal {
+                id: 0,
                 segment: 1,
                 state: State {
                     position: xy(1, 0),
@@ -238,8 +240,6 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             carousel_id: 0,
-            exit_id: 0,
-            entrance_id: 0,
         };
         let cars = vec![
             &Car {
@@ -308,6 +308,7 @@ mod tests {
         // given
         let lift = Lift {
             pick_up: lift::Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -316,6 +317,7 @@ mod tests {
                 },
             },
             drop_off: lift::Portal {
+                id: 0,
                 segment: 1,
                 state: State {
                     position: xy(1, 0),
@@ -329,8 +331,6 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             carousel_id: 0,
-            exit_id: 0,
-            entrance_id: 0,
         };
         let cars = vec![&Car {
             carousel_id: 7,

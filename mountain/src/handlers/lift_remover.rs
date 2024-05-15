@@ -93,11 +93,12 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     components.open.remove(lift_id);
 
     if let Some(lift) = lift {
-        components.exits.remove(&lift.entrance_id);
-        components.entrances.remove(&lift.exit_id);
-        components.open.remove(&lift.entrance_id);
-        components.open.remove(&lift.exit_id);
-        components.reservations[lift.pick_up.state.position].remove(&lift.exit_id);
+        components.exits.remove(&lift.pick_up.id);
+        components.open.remove(&lift.pick_up.id);
+        components.reservations[lift.pick_up.state.position].remove(&lift.pick_up.id);
+
+        components.entrances.remove(&lift.drop_off.id);
+        components.open.remove(&lift.drop_off.id);
     }
 
     for carousel_id in carousel_ids {

@@ -81,12 +81,15 @@ pub fn draw(
 fn entrance_side(
     Gate {
         footprint: XYRectangle { from, to },
-        destination_piste: piste,
+        destination_piste_id,
         ..
     }: &Gate,
     piste_map: &Grid<Option<usize>>,
 ) -> cube::Side {
-    match (from.x == to.x, piste_map[from] == Some(*piste)) {
+    match (
+        from.x == to.x,
+        piste_map[from] == Some(*destination_piste_id),
+    ) {
         (true, true) => cube::Side::Left,
         (true, false) => cube::Side::Right,
         (false, true) => cube::Side::Back,

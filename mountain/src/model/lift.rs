@@ -10,8 +10,6 @@ pub struct Lift {
     pub pick_up: Portal,
     pub drop_off: Portal,
     pub carousel_id: usize,
-    pub exit_id: usize,     // exit from piste, entrance to lift
-    pub entrance_id: usize, // entrance to piste, exit from lift
 }
 
 impl Lift {
@@ -35,6 +33,7 @@ pub struct Segment {
 
 #[derive(Serialize, Deserialize)]
 pub struct Portal {
+    pub id: usize,
     pub segment: usize,
     pub state: State,
 }
@@ -84,6 +83,7 @@ mod tests {
                 xyz(0.0, 0.0, 0.0),
             ]),
             pick_up: Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -92,6 +92,7 @@ mod tests {
                 },
             },
             drop_off: Portal {
+                id: 0,
                 segment: 2,
                 state: State {
                     position: xy(2, 1),
@@ -100,8 +101,6 @@ mod tests {
                 },
             },
             carousel_id: 0,
-            exit_id: 0,
-            entrance_id: 0,
         };
 
         // when
@@ -123,6 +122,7 @@ mod tests {
                 xyz(2.0, 1.0, 0.0),
             ]),
             pick_up: Portal {
+                id: 0,
                 segment: 2,
                 state: State {
                     position: xy(0, 0),
@@ -131,6 +131,7 @@ mod tests {
                 },
             },
             drop_off: Portal {
+                id: 0,
                 segment: 0,
                 state: State {
                     position: xy(0, 0),
@@ -139,8 +140,6 @@ mod tests {
                 },
             },
             carousel_id: 0,
-            exit_id: 0,
-            entrance_id: 0,
         };
 
         // when

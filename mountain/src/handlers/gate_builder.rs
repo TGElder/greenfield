@@ -72,33 +72,25 @@ impl Handler {
         // create gate
 
         if rectangle.width() == 0 || rectangle.height() == 0 {
-            println!("WARN: Entrance must not be zero length");
+            println!("INFO: Entrance must not be zero length");
             return;
         }
-
+        let origin_piste_id = piste_map[origin].unwrap();
         let maybe_gate = get_pistes_if_valid_vertical_gate(rectangle, piste_map)
-            .map(|[a, b]| {
-                let origin_piste = piste_map[origin].unwrap();
-                Gate {
-                    footprint: XYRectangle {
-                        from: xy(rectangle.to.x, rectangle.from.y),
-                        to: xy(rectangle.to.x, rectangle.to.y + 1),
-                    },
-                    origin_piste,
-                    destination_piste: (a + b) - origin_piste,
-                }
+            .map(|[a, b]| Gate {
+                footprint: XYRectangle {
+                    from: xy(rectangle.to.x, rectangle.from.y),
+                    to: xy(rectangle.to.x, rectangle.to.y + 1),
+                },
+                destination_piste_id: (a + b) - origin_piste_id,
             })
             .or_else(|| {
-                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| {
-                    let origin_piste = piste_map[origin].unwrap();
-                    Gate {
-                        footprint: XYRectangle {
-                            from: xy(rectangle.from.x, rectangle.to.y),
-                            to: xy(rectangle.to.x + 1, rectangle.to.y),
-                        },
-                        origin_piste,
-                        destination_piste: (a + b) - origin_piste,
-                    }
+                get_pistes_if_valid_horizontal_gate(rectangle, piste_map).map(|[a, b]| Gate {
+                    footprint: XYRectangle {
+                        from: xy(rectangle.from.x, rectangle.to.y),
+                        to: xy(rectangle.to.x + 1, rectangle.to.y),
+                    },
+                    destination_piste_id: (a + b) - origin_piste_id,
                 })
             });
 
@@ -130,7 +122,7 @@ impl Handler {
         entrances.insert(
             gate_id,
             Entrance {
-                destination_piste_id: gate.destination_piste,
+                destination_piste_id: gate.destination_piste_id,
                 stationary_states: stationary_states.clone(),
                 altitude_meters: gate
                     .footprint
@@ -143,7 +135,7 @@ impl Handler {
         exits.insert(
             gate_id,
             Exit {
-                origin_piste_id: gate.origin_piste,
+                origin_piste_id,
                 stationary_states,
             },
         );

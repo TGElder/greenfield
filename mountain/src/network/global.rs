@@ -16,7 +16,7 @@ pub const GLOBAL_COST_DIVISOR: u64 = 1000;
 pub struct GlobalNetwork<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
-    pub lift_exit_to_lift: &'a HashMap<usize, usize>,
+    pub pick_up_to_lift: &'a HashMap<usize, usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub costs: &'a HashMap<usize, Costs<State>>,
@@ -35,7 +35,7 @@ impl<'a> GlobalNetwork<'a> {
             })
             .map(|seconds| seconds * 1_000_000.0)
             .map(|micros| micros as u64)
-            .map(|micros| micros / GLOBAL_COST_DIVISOR)
+            .map(|micros| micros / GLOBAL_COST_DIVISOR) // to avoid exceeding u32 limit
             .unwrap_or(0)
     }
 }
@@ -46,10 +46,10 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
         from: &'b usize,
     ) -> Box<dyn Iterator<Item = network::model::Edge<usize>> + 'b> {
         // lift edge
-        if let Some(lift_id) = self.lift_exit_to_lift.get(from) {
+        if let Some(lift_id) = self.pick_up_to_lift.get(from) {
             return Box::new(once(Edge {
                 from: *from,
-                to: self.lifts[lift_id].entrance_id,
+                to: self.lifts[lift_id].drop_off.id,
                 cost: self.lift_travel_micros(from).try_into().unwrap(),
             }));
         }

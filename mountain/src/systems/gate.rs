@@ -44,7 +44,7 @@ pub fn run(
                     entry.remove();
                 }
             }
-            locations.insert(*plan_id, gate.destination_piste);
+            locations.insert(*plan_id, gate.destination_piste_id);
         }
     }
 }

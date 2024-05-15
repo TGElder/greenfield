@@ -111,7 +111,7 @@ impl System {
                             continue;
                         }
                         plans.retain(|plan_id, plan| {
-                            if !matches!(targets.get(plan_id), Some(&target) if target == lift.exit_id) {
+                            if !matches!(targets.get(plan_id), Some(&target) if target == lift.pick_up.id) {
                                 return true;
                             }
                             if !matches!(plan, Plan::Stationary(state) if *state == lift.pick_up.state) {
