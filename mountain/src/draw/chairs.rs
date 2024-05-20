@@ -14,7 +14,7 @@ impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let quads = model::chair::model().quads;
         let triangles = triangles_from_quads(&quads);
-        let index = graphics.create_instanced_triangles(&triangles, &0).unwrap();
+        let index = graphics.create_instanced_triangles(&triangles).unwrap();
         Drawing { index }
     }
 
@@ -32,10 +32,6 @@ impl Drawing {
             .map(transformation_matrix)
             .map(Some)
             .collect::<Vec<_>>();
-
-        if world_matrices.is_empty() {
-            return;
-        }
 
         graphics
             .update_instanced_triangles(&self.index, &world_matrices)

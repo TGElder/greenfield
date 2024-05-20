@@ -294,6 +294,9 @@ impl GliumGraphics {
             vertex_buffer,
         } in self.instanced_primitives.iter().flatten()
         {
+            let Some(vertex_buffer) = vertex_buffer else {
+                continue;
+            };
             surface.draw(
                 (
                     &primitive.vertex_buffer,
@@ -434,15 +437,11 @@ impl GliumGraphics {
     fn create_instanced_triangles_unsafe(
         &mut self,
         triangles: &[Triangle<Rgb<f32>>],
-        max_instances: &usize,
     ) -> Result<usize, Box<dyn Error>> {
         if self.instanced_primitives.len() == isize::MAX as usize {
             return Err("No space for more instanced_primitives".into());
         }
 
-        let vertices = (0..*max_instances)
-            .map(|_| InstanceVertex::default())
-            .collect::<Vec<_>>();
         let primitive_vertices = colored_vertices_from_triangles(triangles);
         let instanced_primitives = InstancedPrimitives {
             primitive: Primitive {
@@ -451,7 +450,7 @@ impl GliumGraphics {
                     &primitive_vertices,
                 )?,
             },
-            vertex_buffer: glium::VertexBuffer::dynamic(self.display.facade(), &vertices)?,
+            vertex_buffer: None,
         };
         self.instanced_primitives.push(Some(instanced_primitives));
 
@@ -593,12 +592,21 @@ impl GliumGraphics {
             })
             .collect::<Vec<_>>();
 
-        if mem::size_of_val(instances.as_slice()) == instanced_primitives.vertex_buffer.get_size() {
-            instanced_primitives.vertex_buffer.write(&instances);
-        } else {
-            // expensive recreation of vertex buffer, keep number of instances the same where possible
-            instanced_primitives.vertex_buffer =
-                glium::VertexBuffer::dynamic(self.display.facade(), &instances)?;
+        match (instances.as_slice(), &instanced_primitives.vertex_buffer) {
+            ([], _) => instanced_primitives.vertex_buffer = None,
+            // reusing buffer
+            (instances, Some(vertex_buffer))
+                if (mem::size_of_val(instances) == vertex_buffer.get_size()) =>
+            {
+                vertex_buffer.write(instances)
+            }
+            // reallocating (expensive - keep number of instances the same where possible)
+            _ => {
+                instanced_primitives.vertex_buffer = Some(glium::VertexBuffer::dynamic(
+                    self.display.facade(),
+                    &instances,
+                )?)
+            }
         }
 
         Ok(())
@@ -720,9 +728,8 @@ impl Graphics for GliumGraphics {
     fn create_instanced_triangles(
         &mut self,
         triangles: &[Triangle<Rgb<f32>>],
-        max_instances: &usize,
     ) -> Result<usize, IndexError> {
-        Ok(self.create_instanced_triangles_unsafe(triangles, max_instances)?)
+        Ok(self.create_instanced_triangles_unsafe(triangles)?)
     }
 
     fn create_billboards(&mut self) -> Result<usize, IndexError> {
@@ -839,7 +846,7 @@ struct OverlayPrimitive {
 
 struct InstancedPrimitives {
     primitive: Primitive,
-    vertex_buffer: glium::VertexBuffer<InstanceVertex>,
+    vertex_buffer: Option<glium::VertexBuffer<InstanceVertex>>,
 }
 
 struct Billboard {

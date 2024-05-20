@@ -18,8 +18,8 @@ impl System {
             visible: true,
         }
     }
-    pub fn init(&mut self, graphics: &mut dyn Graphics, trees: &Grid<Option<Tree>>) {
-        self.drawing = Some(Drawing::init(graphics, trees))
+    pub fn init(&mut self, graphics: &mut dyn Graphics) {
+        self.drawing = Some(Drawing::init(graphics))
     }
 
     pub fn update(&mut self) {

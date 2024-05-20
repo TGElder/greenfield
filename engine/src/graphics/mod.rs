@@ -37,7 +37,6 @@ pub trait Graphics {
     fn create_instanced_triangles(
         &mut self,
         triangles: &[Triangle<Rgb<f32>>],
-        max_instances: &usize,
     ) -> Result<usize, IndexError>;
 
     fn create_billboards(&mut self) -> Result<usize, IndexError>;

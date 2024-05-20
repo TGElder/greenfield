@@ -434,9 +434,7 @@ impl Game {
         let terrain = &self.components.terrain;
         self.systems.chair_artist.init(graphics);
         self.systems.terrain_artist.init(graphics, terrain);
-        self.systems
-            .tree_artist
-            .init(graphics, &self.components.trees);
+        self.systems.tree_artist.init(graphics);
         graphics.look_at(
             &xyz(
                 terrain.width() as f32 / 2.0,

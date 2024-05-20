@@ -212,7 +212,7 @@ fn instanced_cubes() {
 
     // when
     let triangles = cube_triangles();
-    let index = graphics.create_instanced_triangles(&triangles, &2).unwrap();
+    let index = graphics.create_instanced_triangles(&triangles).unwrap();
 
     let left_transformation = transformation_matrix(Transformation {
         translation: Some(xyz(-0.5, 0.0, 0.0)),
