@@ -9,20 +9,13 @@ use crate::model::tree::Tree;
 
 pub struct Drawing {
     pub index: usize,
-    pub tree_count: usize,
 }
 
 impl Drawing {
-    pub fn init(graphics: &mut dyn Graphics, trees: &Grid<Option<Tree>>) -> Drawing {
+    pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let triangles = tree::model();
-        let tree_count = trees
-            .iter()
-            .filter(|position| trees[position].is_some())
-            .count();
-        let index = graphics
-            .create_instanced_triangles(&triangles, &tree_count)
-            .unwrap();
-        Drawing { index, tree_count }
+        let index = graphics.create_instanced_triangles(&triangles).unwrap();
+        Drawing { index }
     }
 
     pub fn draw(
@@ -52,7 +45,7 @@ impl Drawing {
     }
 
     pub fn hide(&self, graphics: &mut dyn Graphics) {
-        let world_matrices = vec![None; self.tree_count];
+        let world_matrices = vec![];
         graphics
             .update_instanced_triangles(&self.index, &world_matrices)
             .unwrap();
