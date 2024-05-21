@@ -4,7 +4,7 @@ use crate::model::ability::ABILITIES;
 use crate::model::costs::Costs;
 use crate::model::direction::DIRECTIONS;
 use crate::model::exit::Exit;
-use crate::model::piste::Piste;
+use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
@@ -67,9 +67,10 @@ fn compute_costs(
         for ability in ABILITIES {
             let network = SkiingNetwork {
                 terrain,
+                class: piste.class,
                 ability,
                 is_accessible_fn: &|position| {
-                    terrain[position] >= min_z
+                    (terrain[position] >= min_z || piste.class == piste::Class::Path)
                         && !reservations[position]
                             .iter()
                             .filter(|&(&id, _)| id != exit_id)

@@ -6,6 +6,7 @@ use rand::thread_rng;
 
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
+use crate::model::piste::{self, Piste};
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 
@@ -14,6 +15,7 @@ pub struct Parameters<'a> {
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
     pub entrances: &'a HashMap<usize, Entrance>,
+    pub pistes: &'a HashMap<usize, Piste>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub global_costs: &'a Costs<usize>,
     pub global_targets: &'a mut HashMap<usize, usize>,
@@ -25,6 +27,7 @@ pub fn run(
         plans,
         locations,
         entrances,
+        pistes,
         costs,
         global_costs,
         global_targets,
@@ -32,7 +35,7 @@ pub fn run(
 ) {
     let mut rng = thread_rng();
 
-    let valid_global_targets = valid_global_targets(entrances);
+    let valid_global_targets = valid_global_targets(entrances, pistes);
 
     for (
         skier_id,
@@ -83,7 +86,10 @@ pub fn run(
     }
 }
 
-fn valid_global_targets(entrances: &HashMap<usize, Entrance>) -> HashSet<&usize> {
+fn valid_global_targets<'a>(
+    entrances: &'a HashMap<usize, Entrance>,
+    pistes: &'a HashMap<usize, Piste>,
+) -> HashSet<&'a usize> {
     let mut piste_to_highest_entrance: HashMap<usize, (&usize, &Entrance)> = HashMap::new();
     for (entrance_id, entrance) in entrances {
         match piste_to_highest_entrance.entry(entrance.destination_piste_id) {
@@ -98,7 +104,13 @@ fn valid_global_targets(entrances: &HashMap<usize, Entrance>) -> HashSet<&usize>
         }
     }
     piste_to_highest_entrance
-        .values()
-        .map(|&(entrance_id, _)| entrance_id)
+        .iter()
+        .filter(|(piste_id, _)| {
+            pistes
+                .get(piste_id)
+                .map(|piste| piste.class == piste::Class::Piste)
+                .unwrap_or_default()
+        })
+        .map(|(_, &(entrance_id, _))| entrance_id)
         .collect::<HashSet<_>>()
 }
