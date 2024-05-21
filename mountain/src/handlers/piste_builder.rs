@@ -7,12 +7,13 @@ use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
 use crate::handlers::selection;
-use crate::model::piste::Piste;
+use crate::model::piste::{self, Piste};
 use crate::services::id_allocator;
 use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Handler {
     pub bindings: Bindings,
+    pub class: piste::Class,
 }
 
 pub struct Bindings {
@@ -89,7 +90,10 @@ impl Handler {
                 entry.get_mut().grid = entry.get().grid.paste(&point_grid);
             }
             Entry::Vacant(entry) => {
-                entry.insert(Piste { grid: point_grid });
+                entry.insert(Piste {
+                    class: self.class,
+                    grid: point_grid,
+                });
             }
         }
 

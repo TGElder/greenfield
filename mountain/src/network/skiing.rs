@@ -7,6 +7,7 @@ use network::model::{Edge, InNetwork, OutNetwork};
 
 use crate::model::ability::Ability;
 use crate::model::direction::{Direction, DIRECTIONS};
+use crate::model::piste;
 use crate::model::skiing::State;
 use crate::utils::ability::exposure;
 use crate::{
@@ -15,6 +16,8 @@ use crate::{
 };
 
 const TURNING_DURATION: Duration = Duration::from_secs(1);
+const WALK_DURATION: Duration = Duration::from_micros(1_000_000);
+const WALK_DIAGONAL_DURATION: Duration = Duration::from_micros(1_414_214);
 
 const BRAKING_FRICTION: f32 = 1.0;
 
@@ -23,6 +26,7 @@ const POLING_MAX_VELOCITY: f32 = 1.0;
 
 pub struct SkiingNetwork<'a> {
     pub terrain: &'a Grid<f32>,
+    pub class: piste::Class,
     pub ability: Ability,
     pub is_accessible_fn: &'a dyn Fn(&XY<u32>) -> bool,
     pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
@@ -33,21 +37,36 @@ impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
         &'b self,
         from: &'b State,
     ) -> Box<dyn Iterator<Item = ::network::model::Edge<State>> + 'b> {
-        Box::new(
-            self.poling_edges(from)
-                .chain(self.skiing_edges(from))
-                .chain(self.braking_edges(from))
-                .filter(|edge| {
-                    exposure(self.terrain, &edge.to.position) <= self.ability.max_exposure()
-                })
-                .chain(self.turning_edges(from))
-                .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
-                .chain(self.stop_edge(from)),
-        )
+        match self.class {
+            piste::Class::Piste => Box::new(self.piste_edges(from)),
+            piste::Class::Path => Box::new(self.path_edges(from)),
+        }
     }
 }
 
 impl<'a> SkiingNetwork<'a> {
+    fn piste_edges<'b>(
+        &'b self,
+        from: &'b State,
+    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'b {
+        self.poling_edges(from)
+            .chain(self.skiing_edges(from))
+            .chain(self.braking_edges(from))
+            .filter(|edge| exposure(self.terrain, &edge.to.position) <= self.ability.max_exposure())
+            .chain(self.turning_edges(from))
+            .filter(|edge| (self.is_valid_edge_fn)(&edge.from, &edge.to))
+            .chain(self.stop_edge(from))
+    }
+
+    fn path_edges<'b>(
+        &'b self,
+        from: &'b State,
+    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'b {
+        self.walking_edges(from)
+            .chain(self.turning_edges(from))
+            .chain(self.stop_edge(from))
+    }
+
     fn skiing_edges(
         &'a self,
         from: &'a State,
@@ -206,6 +225,43 @@ impl<'a> SkiingNetwork<'a> {
     fn get_to_position(&self, position: &XY<u32>, travel_direction: &Direction) -> Option<XY<u32>> {
         let offset = travel_direction.offset();
         self.terrain.offset(position, offset)
+    }
+
+    fn walking_edges<'b>(
+        &'b self,
+        from: &'b State,
+    ) -> impl Iterator<Item = ::network::model::Edge<State>> + 'b {
+        once(from)
+            .filter(|from| from.velocity == 0)
+            .flat_map(|from| {
+                DIRECTIONS
+                    .iter()
+                    .flat_map(|direction| {
+                        self.terrain
+                            .offset(from.position, direction.offset())
+                            .map(|neighbour| (direction, neighbour))
+                    })
+                    .filter(|(_, neighbour)| (self.is_accessible_fn)(neighbour))
+                    .map(|(&direction, neighbour)| Edge {
+                        from: *from,
+                        to: State {
+                            position: neighbour,
+                            travel_direction: direction,
+                            velocity: 0,
+                        },
+                        cost: walk_duration(direction).as_micros().try_into().unwrap(),
+                    })
+            })
+    }
+}
+
+fn walk_duration(direction: Direction) -> Duration {
+    match direction {
+        Direction::North | Direction::East | Direction::South | Direction::West => WALK_DURATION,
+        Direction::NorthEast
+        | Direction::SouthEast
+        | Direction::SouthWest
+        | Direction::NorthWest => WALK_DIAGONAL_DURATION,
     }
 }
 

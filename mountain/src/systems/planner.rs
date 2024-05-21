@@ -9,7 +9,7 @@ use rand::Rng;
 use crate::model::ability::Ability;
 use crate::model::costs::Costs;
 use crate::model::hash_vec::HashVec;
-use crate::model::piste::Piste;
+use crate::model::piste::{self, Piste};
 use crate::model::reservation::{Reservation, ReservationPeriod};
 use crate::model::skier::Skier;
 use crate::model::skiing::{Event, Plan, State};
@@ -72,6 +72,7 @@ pub fn run(
         *current_plan = match get_target_and_costs(id, *ability, locations, targets, costs) {
             Some((target, costs)) => new_plan(PathfindingParameters {
                 ability: *ability,
+                class: piste.class,
                 terrain,
                 micros,
                 from,
@@ -195,6 +196,7 @@ fn new_plan(params: PathfindingParameters) -> Plan {
 
 struct PathfindingParameters<'a> {
     ability: Ability,
+    class: piste::Class,
     terrain: &'a Grid<f32>,
     micros: &'a u128,
     from: &'a State,
@@ -207,6 +209,7 @@ struct PathfindingParameters<'a> {
 fn find_path(
     PathfindingParameters {
         ability,
+        class,
         terrain,
         micros,
         from,
@@ -218,6 +221,7 @@ fn find_path(
 ) -> Option<Vec<Edge<State>>> {
     let network = SkiingNetwork {
         terrain,
+        class,
         ability,
         is_accessible_fn: &|position| {
             !reservations[position]

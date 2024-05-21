@@ -46,7 +46,7 @@ use crate::model::frame::Frame;
 use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
-use crate::model::piste::Piste;
+use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
@@ -108,7 +108,21 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
+                path_builder: piste_builder::Handler {
+                    class: piste::Class::Path,
+                    bindings: piste_builder::Bindings {
+                        add: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::H),
+                            state: ButtonState::Pressed,
+                        },
+                        subtract: Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::X),
+                            state: ButtonState::Pressed,
+                        },
+                    },
+                },
                 piste_builder: piste_builder::Handler {
+                    class: piste::Class::Piste,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
                             button: Button::Keyboard(KeyboardKey::V),
@@ -400,6 +414,7 @@ struct Handlers {
     lift_opener: lift_opener::Handler,
     lift_remover: lift_remover::Handler,
     lift_targeter: lift_targeter::Handler,
+    path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
@@ -470,6 +485,17 @@ impl EventHandler for Game {
         self.handlers
             .clock
             .handle(event, &mut self.components.services.clock);
+        self.handlers
+            .path_builder
+            .handle(handlers::piste_builder::Parameters {
+                event,
+                pistes: &mut self.components.pistes,
+                piste_map: &mut self.components.piste_map,
+                selection: &mut self.handlers.selection,
+                terrain_artist: &mut self.systems.terrain_artist,
+                tree_artist: &mut self.systems.tree_artist,
+                id_allocator: &mut self.components.services.id_allocator,
+            });
         self.handlers
             .piste_builder
             .handle(handlers::piste_builder::Parameters {
@@ -636,6 +662,7 @@ impl EventHandler for Game {
             plans: &self.components.plans,
             locations: &self.components.locations,
             entrances: &self.components.entrances,
+            pistes: &self.components.pistes,
             costs: &self.components.costs,
             global_costs: &self.components.global_costs,
             global_targets: &mut self.components.global_targets,
