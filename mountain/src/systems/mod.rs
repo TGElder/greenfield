@@ -1,3 +1,4 @@
+pub mod building_artist;
 pub mod carousel;
 pub mod chair_artist;
 pub mod chair_framer;

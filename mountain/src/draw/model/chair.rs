@@ -6,10 +6,10 @@ use engine::graphics::elements::Quad;
 
 use crate::draw::model::Model;
 
-const GREY: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
+const COLOR: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
 
 const POLE_FRONT: Quad<Rgb<f32>> = Quad {
-    color: GREY,
+    color: COLOR,
     corners: [
         xyz(0.0, -0.05, -1.0),
         xyz(0.0, 0.05, -1.0),
@@ -19,7 +19,7 @@ const POLE_FRONT: Quad<Rgb<f32>> = Quad {
 };
 
 const POLE_BACK: Quad<Rgb<f32>> = Quad {
-    color: GREY,
+    color: COLOR,
     corners: [
         xyz(0.0, -0.05, -0.0),
         xyz(0.0, 0.05, -0.0),
@@ -29,7 +29,7 @@ const POLE_BACK: Quad<Rgb<f32>> = Quad {
 };
 
 const CHAIR_REST_FRONT: Quad<Rgb<f32>> = Quad {
-    color: GREY,
+    color: COLOR,
     corners: [
         xyz(0.0, -0.75, -1.5),
         xyz(0.0, 0.75, -1.5),
@@ -39,7 +39,7 @@ const CHAIR_REST_FRONT: Quad<Rgb<f32>> = Quad {
 };
 
 const CHAIR_REST_BACK: Quad<Rgb<f32>> = Quad {
-    color: GREY,
+    color: COLOR,
     corners: [
         xyz(0.0, -0.75, -1.0),
         xyz(0.0, 0.75, -1.0),
@@ -49,7 +49,7 @@ const CHAIR_REST_BACK: Quad<Rgb<f32>> = Quad {
 };
 
 const CHAIR_SEAT: Quad<Rgb<f32>> = Quad {
-    color: GREY,
+    color: COLOR,
     corners: [
         xyz(0.5, -0.75, -1.5),
         xyz(0.5, 0.75, -1.5),

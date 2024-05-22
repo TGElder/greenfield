@@ -2,6 +2,7 @@ use engine::events::Event;
 use engine::graphics::Graphics;
 
 pub mod add_skier;
+pub mod building_builder;
 pub mod clock;
 pub mod gate_builder;
 pub mod gate_opener;
