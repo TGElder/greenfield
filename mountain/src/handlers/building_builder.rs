@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use commons::geometry::{xy, XYRectangle};
 use engine::binding::Binding;
 
 use crate::handlers::selection;
@@ -42,14 +43,15 @@ impl Handler {
             }
         }
 
-        let Ok(rectangle) = grid.rectangle() else {
-            return;
+        let rectangle = XYRectangle {
+            from: *grid.origin(),
+            to: *grid.origin() + xy(grid.width() + 1, grid.height() + 1),
         };
 
         let id = id_allocator.next_id();
         let building = Building {
             footprint: rectangle,
-            height: 1,
+            height: 6,
         };
 
         buildings.insert(id, building);

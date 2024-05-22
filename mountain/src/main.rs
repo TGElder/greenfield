@@ -55,9 +55,9 @@ use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
-    carousel, chair_artist, chair_framer, frame_artist, frame_wiper, gate, gate_artist,
-    global_computer, global_target_setter, lift_artist, piste_adopter, planner, skiing_framer,
-    target_scrubber, target_setter, terrain_artist, tree_artist,
+    building_artist, carousel, chair_artist, chair_framer, frame_artist, frame_wiper, gate,
+    gate_artist, global_computer, global_target_setter, lift_artist, piste_adopter, planner,
+    skiing_framer, target_scrubber, target_setter, terrain_artist, tree_artist,
 };
 use crate::utils::computer;
 
@@ -312,7 +312,7 @@ fn main() {
                     },
                 },
             })),
-            light_direction: xyz(0.577_350_26, 0.577_350_26, -0.577_350_26),
+            light_direction: xyz(0.707_106_77, 0.424_264_07, -0.565_685_45),
         },
     )
     .unwrap();
@@ -737,6 +737,12 @@ impl EventHandler for Game {
             &self.components.locations,
             &self.components.clothes,
             &mut self.components.frames,
+        );
+        building_artist::run(
+            graphics,
+            &self.components.buildings,
+            &self.components.terrain,
+            &mut self.components.drawings,
         );
         frame_artist::run(
             graphics,
