@@ -31,13 +31,15 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, gate_builder, gate_opener, gate_remover, lift_opener, lift_remover, lift_targeter,
-    piste_builder, piste_computer, piste_highlighter, piste_visibility, save, tree_visibility,
+    add_skier, building_builder, gate_builder, gate_opener, gate_remover, lift_opener,
+    lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
+    piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
+use crate::model::building::Building;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
@@ -69,6 +71,12 @@ fn main() {
                 add_skier: add_skier::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::F),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                building_builder: building_builder::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::B),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -350,6 +358,7 @@ fn new_components() -> Components {
         entrances: HashMap::default(),
         abilities: HashMap::default(),
         clothes: HashMap::default(),
+        buildings: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -392,6 +401,7 @@ pub struct Components {
     abilities: HashMap<usize, Ability>,
     #[serde(skip)]
     clothes: HashMap<usize, Clothes<Rgb<f32>>>,
+    buildings: HashMap<usize, Building>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -405,6 +415,7 @@ pub struct Components {
 
 struct Handlers {
     add_skier: add_skier::Handler,
+    building_builder: building_builder::Handler,
     clock: handlers::clock::Handler,
     drag: drag::Handler,
     gate_builder: gate_builder::Handler,
@@ -525,11 +536,13 @@ impl EventHandler for Game {
                 graphics,
             });
         self.handlers
-            .gate_remover
-            .handle(event, &self.mouse_xy, graphics, &mut self.components);
-        self.handlers
-            .lift_remover
-            .handle(event, &self.mouse_xy, graphics, &mut self.components);
+            .building_builder
+            .handle(handlers::building_builder::Parameters {
+                event,
+                selection: &mut self.handlers.selection,
+                id_allocator: &mut self.components.services.id_allocator,
+                buildings: &mut self.components.buildings,
+            });
 
         self.handlers
             .gate_builder
@@ -546,6 +559,13 @@ impl EventHandler for Game {
                 open: &mut self.components.open,
                 reservations: &mut self.components.reservations,
             });
+        self.handlers
+            .gate_remover
+            .handle(event, &self.mouse_xy, graphics, &mut self.components);
+        self.handlers
+            .lift_remover
+            .handle(event, &self.mouse_xy, graphics, &mut self.components);
+
         self.handlers.lift_opener.handle(
             event,
             &self.mouse_xy,
