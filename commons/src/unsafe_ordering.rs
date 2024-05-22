@@ -4,7 +4,7 @@ pub fn unsafe_ordering<T: PartialOrd>(a: &T, b: &T) -> Ordering {
     a.partial_cmp(b).unwrap()
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug)]
 pub struct UnsafeOrderable<T> {
     pub value: T,
 }
