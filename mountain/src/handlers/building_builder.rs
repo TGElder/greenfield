@@ -55,5 +55,7 @@ impl Handler {
         };
 
         buildings.insert(id, building);
+
+        selection.clear_selection();
     }
 }
