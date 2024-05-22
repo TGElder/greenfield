@@ -2,7 +2,7 @@ use commons::color::Rgb;
 use commons::geometry::{xyz, XYRectangle, XYZ};
 
 use commons::grid::Grid;
-use commons::unsafe_ordering::unsafe_ordering;
+use commons::unsafe_ordering::UnsafeOrderable;
 use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
@@ -19,21 +19,22 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);
     let to = xyz(to.x as f32, to.y as f32, terrain[to]);
 
-    if footprint.iter().count() == 0 {
-        println!("WARN: Cannot draw building with no footprint");
+    let Some((
+        UnsafeOrderable {
+            value: min_ground_height,
+        },
+        UnsafeOrderable {
+            value: max_ground_height,
+        },
+    )) = min_max(
+        footprint
+            .iter()
+            .map(|position| terrain[position])
+            .map(|value| UnsafeOrderable { value }),
+    )
+    else {
         return;
-    }
-
-    let min_ground_height = footprint
-        .iter()
-        .map(|position| terrain[position])
-        .min_by(unsafe_ordering)
-        .unwrap();
-    let max_ground_height = footprint
-        .iter()
-        .map(|position| terrain[position])
-        .max_by(unsafe_ordering)
-        .unwrap();
+    };
     let total_height = (max_ground_height - min_ground_height) + (*height as f32);
 
     let origin = xyz(from.x, from.y, min_ground_height);
@@ -42,6 +43,28 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
 
     let triangles = triangles_from_quads(&quads);
     graphics.draw_triangles(index, &triangles).unwrap();
+}
+
+fn min_max<T>(iter: impl Iterator<Item = T>) -> Option<(T, T)>
+where
+    T: Copy + Ord,
+{
+    let mut min: Option<T> = None;
+    let mut max: Option<T> = None;
+    iter.for_each(|value| {
+        match min {
+            Some(min_value) => min = Some(min_value.min(value)),
+            None => min = Some(value),
+        }
+        match max {
+            Some(max_value) => max = Some(max_value.max(value)),
+            None => max = Some(value),
+        }
+    });
+    match (min, max) {
+        (Some(min), Some(max)) => Some((min, max)),
+        _ => None,
+    }
 }
 
 fn translated_and_scaled_cube(
