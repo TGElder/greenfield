@@ -40,22 +40,21 @@ impl Handler {
             return;
         }
 
-        let Some(rectangle) = &selection.grid else {
+        let Some(grid) = &selection.grid else {
             return;
         };
-
-        if rectangle.width() != 1 || rectangle.height() != 1 {
+        if grid.width() != 1 || grid.height() != 1 {
+            println!("WARN: Door must be 1x1");
             selection.clear_selection();
             return;
         }
-
-        let footprint = XYRectangle {
-            from: *rectangle.origin(),
-            to: *rectangle.origin() + xy(rectangle.width(), rectangle.height()),
+        let rectangle = XYRectangle {
+            from: *grid.origin(),
+            to: *grid.origin() + xy(grid.width(), grid.height()),
         };
 
         let Some((building_id, building)) = buildings.iter().find(|(_building_id, building)| {
-            footprint
+            rectangle
                 .iter()
                 .filter(|position| building.footprint.contains(position))
                 .count()
@@ -66,15 +65,15 @@ impl Handler {
             return;
         };
 
-        let piste_points = footprint
+        let piste_points = rectangle
             .iter()
             .filter(|position| !building.footprint.contains(position))
             .collect::<HashSet<_>>();
-
         let Some((piste_id, _)) = pistes.iter().find(|(_, piste)| {
+            let grid = &piste.grid;
             piste_points
                 .iter()
-                .all(|position| piste.grid.in_bounds(position) && piste.grid[position])
+                .all(|position| grid.in_bounds(position) && grid[position])
         }) else {
             println!("WARN: Door must contain two points from the same piste");
             selection.clear_selection();
@@ -87,7 +86,7 @@ impl Handler {
             Door {
                 building_id: *building_id,
                 piste_id: *piste_id,
-                footprint,
+                footprint: rectangle,
                 aperture: piste_points,
             },
         );
