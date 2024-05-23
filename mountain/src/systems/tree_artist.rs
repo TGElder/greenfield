@@ -1,7 +1,10 @@
+use std::collections::HashMap;
+
 use commons::grid::Grid;
 use engine::graphics::Graphics;
 
 use crate::draw::trees::Drawing;
+use crate::model::building::Building;
 use crate::model::tree::Tree;
 
 pub struct System {
@@ -53,11 +56,13 @@ impl System {
         trees: &Grid<Option<Tree>>,
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
+        buildings: &HashMap<usize, Building>,
         graphics: &mut dyn Graphics,
     ) {
+        let buildings = buildings.values().collect::<Vec<_>>();
         if self.visible && self.update {
             if let Some(drawing) = &mut self.drawing {
-                drawing.draw(graphics, trees, terrain, piste_map);
+                drawing.draw(graphics, trees, terrain, piste_map, &buildings);
             }
             self.update = false;
         }

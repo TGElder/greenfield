@@ -5,6 +5,7 @@ use engine::graphics::Graphics;
 use nalgebra::Matrix4;
 
 use crate::draw::model::tree;
+use crate::model::building::Building;
 use crate::model::tree::Tree;
 
 pub struct Drawing {
@@ -24,6 +25,7 @@ impl Drawing {
         trees: &Grid<Option<Tree>>,
         terrain: &Grid<f32>,
         piste_map: &Grid<Option<usize>>,
+        buildings: &[&Building],
     ) {
         let world_matrices = trees
             .iter()
@@ -32,6 +34,9 @@ impl Drawing {
                 if terrain
                     .offsets(position, &CORNERS_INVERSE)
                     .any(|tile| piste_map[tile].is_some())
+                    || buildings
+                        .iter()
+                        .any(|building| building.footprint.contains(position))
                 {
                     None
                 } else {

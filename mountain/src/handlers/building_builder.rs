@@ -10,6 +10,7 @@ use crate::model::ability::Ability;
 use crate::model::building::Building;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
+use crate::systems::tree_artist;
 
 pub const CUBIC_METERS_PER_SKIER: u32 = 27;
 
@@ -47,6 +48,7 @@ pub struct Parameters<'a> {
     pub buildings: &'a mut HashMap<usize, Building>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub skiers: &'a mut HashMap<usize, Skier>,
+    pub tree_artist: &'a mut tree_artist::System,
 }
 
 impl Handler {
@@ -59,6 +61,7 @@ impl Handler {
             buildings,
             locations,
             skiers,
+            tree_artist,
         }: Parameters<'_>,
     ) {
         if !self.binding.binds_event(event) {
@@ -118,6 +121,10 @@ impl Handler {
                 },
             );
         }
+
+        // updating art
+
+        tree_artist.update();
 
         // clearing selection
 
