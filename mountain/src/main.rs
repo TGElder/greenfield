@@ -556,6 +556,7 @@ impl EventHandler for Game {
                 buildings: &mut self.components.buildings,
                 locations: &mut self.components.locations,
                 skiers: &mut self.components.skiers,
+                tree_artist: &mut self.systems.tree_artist,
             });
         self.handlers
             .door_builder
@@ -827,6 +828,7 @@ impl EventHandler for Game {
             &self.components.trees,
             &self.components.terrain,
             &self.components.piste_map,
+            &self.components.buildings,
             graphics,
         );
     }
