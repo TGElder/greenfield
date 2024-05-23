@@ -2,6 +2,7 @@ pub mod building_artist;
 pub mod carousel;
 pub mod chair_artist;
 pub mod chair_framer;
+pub mod door_artist;
 pub mod frame_artist;
 pub mod frame_wiper;
 pub mod gate;

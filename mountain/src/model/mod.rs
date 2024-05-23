@@ -3,6 +3,7 @@ pub mod building;
 pub mod carousel;
 pub mod costs;
 pub mod direction;
+pub mod door;
 pub mod entrance;
 pub mod exit;
 pub mod frame;
