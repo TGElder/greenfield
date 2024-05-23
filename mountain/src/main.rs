@@ -552,6 +552,8 @@ impl EventHandler for Game {
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
+                locations: &mut self.components.locations,
+                skiers: &mut self.components.skiers,
             });
         self.handlers
             .door_builder
