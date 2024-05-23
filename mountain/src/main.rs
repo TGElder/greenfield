@@ -55,10 +55,12 @@ use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
+use crate::systems::door::Parameters;
 use crate::systems::{
-    building_artist, carousel, chair_artist, chair_framer, door_artist, frame_artist, frame_wiper,
-    gate, gate_artist, global_computer, global_target_setter, lift_artist, piste_adopter, planner,
-    skiing_framer, target_scrubber, target_setter, terrain_artist, tree_artist,
+    building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
+    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
+    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
+    tree_artist,
 };
 use crate::utils::computer;
 
@@ -720,6 +722,12 @@ impl EventHandler for Game {
             targets: &mut self.components.targets,
         });
 
+        door::run(Parameters {
+            doors: &self.components.doors,
+            reservations: &mut self.components.reservations,
+            locations: &mut self.components.locations,
+            plans: &mut self.components.plans,
+        });
         gate::run(
             &self.components.plans,
             &self.components.gates,
