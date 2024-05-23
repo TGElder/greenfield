@@ -45,7 +45,7 @@ impl Handler {
 
         let rectangle = XYRectangle {
             from: *grid.origin(),
-            to: *grid.origin() + xy(grid.width() + 1, grid.height() + 1),
+            to: *grid.origin() + xy(grid.width(), grid.height()),
         };
 
         let id = id_allocator.next_id();
