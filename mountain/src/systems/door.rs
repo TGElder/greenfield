@@ -10,16 +10,16 @@ use crate::model::skiing::{Plan, State};
 pub struct Parameters<'a> {
     pub doors: &'a HashMap<usize, Door>,
     pub locations: &'a mut HashMap<usize, usize>,
-    pub plans: &'a mut HashMap<usize, Plan>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub plans: &'a mut HashMap<usize, Plan>,
 }
 
 pub fn run(
     Parameters {
         doors,
         locations,
-        plans,
         reservations,
+        plans,
     }: Parameters<'_>,
 ) {
     for door in doors.values() {
@@ -38,6 +38,8 @@ pub fn run(
                 let skier_id = skiers_to_spawn.pop().unwrap();
 
                 locations.remove(&skier_id);
+                reservations[position]
+                    .insert(skier_id, Reservation::Mobile(ReservationPeriod::Permanent));
                 plans.insert(
                     skier_id,
                     Plan::Stationary(State {
@@ -46,8 +48,6 @@ pub fn run(
                         travel_direction: Direction::North,
                     }),
                 );
-                reservations[position]
-                    .insert(skier_id, Reservation::Mobile(ReservationPeriod::Permanent));
             }
         }
     }

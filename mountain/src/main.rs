@@ -692,12 +692,6 @@ impl EventHandler for Game {
             global_targets: &mut self.components.global_targets,
             cars: &mut self.components.cars,
         });
-        door::run(Parameters {
-            doors: &self.components.doors,
-            locations: &mut self.components.locations,
-            plans: &mut self.components.plans,
-            reservations: &mut self.components.reservations,
-        });
 
         target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(
@@ -728,6 +722,12 @@ impl EventHandler for Game {
             targets: &mut self.components.targets,
         });
 
+        door::run(Parameters {
+            doors: &self.components.doors,
+            reservations: &mut self.components.reservations,
+            locations: &mut self.components.locations,
+            plans: &mut self.components.plans,
+        });
         gate::run(
             &self.components.plans,
             &self.components.gates,
