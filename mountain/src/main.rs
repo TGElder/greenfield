@@ -31,8 +31,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, building_builder, gate_builder, gate_opener, gate_remover, lift_opener,
-    lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
+    add_skier, building_builder, door_builder, gate_builder, gate_opener, gate_remover,
+    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
     piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
@@ -42,6 +42,7 @@ use crate::model::ability::Ability;
 use crate::model::building::Building;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::costs::Costs;
+use crate::model::door::Door;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::frame::Frame;
@@ -55,8 +56,8 @@ use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
 use crate::services::id_allocator;
 use crate::systems::{
-    building_artist, carousel, chair_artist, chair_framer, frame_artist, frame_wiper, gate,
-    gate_artist, global_computer, global_target_setter, lift_artist, piste_adopter, planner,
+    building_artist, carousel, chair_artist, chair_framer, door_artist, frame_artist, frame_wiper,
+    gate, gate_artist, global_computer, global_target_setter, lift_artist, piste_adopter, planner,
     skiing_framer, target_scrubber, target_setter, terrain_artist, tree_artist,
 };
 use crate::utils::computer;
@@ -90,6 +91,12 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
+                door_builder: door_builder::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::R),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 drag: drag::Handler::new(drag::Bindings {
                     start_dragging: Binding::Single {
                         button: Button::Mouse(MouseButton::Left),
@@ -359,6 +366,7 @@ fn new_components() -> Components {
         abilities: HashMap::default(),
         clothes: HashMap::default(),
         buildings: HashMap::default(),
+        doors: HashMap::default(),
         open: HashSet::default(),
         highlights: HashSet::default(),
         terrain,
@@ -402,6 +410,7 @@ pub struct Components {
     #[serde(skip)]
     clothes: HashMap<usize, Clothes<Rgb<f32>>>,
     buildings: HashMap<usize, Building>,
+    doors: HashMap<usize, Door>,
     open: HashSet<usize>,
     #[serde(skip)]
     highlights: HashSet<usize>,
@@ -417,6 +426,7 @@ struct Handlers {
     add_skier: add_skier::Handler,
     building_builder: building_builder::Handler,
     clock: handlers::clock::Handler,
+    door_builder: door_builder::Handler,
     drag: drag::Handler,
     gate_builder: gate_builder::Handler,
     gate_opener: gate_opener::Handler,
@@ -542,6 +552,16 @@ impl EventHandler for Game {
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
+            });
+        self.handlers
+            .door_builder
+            .handle(handlers::door_builder::Parameters {
+                event,
+                pistes: &self.components.pistes,
+                buildings: &self.components.buildings,
+                selection: &mut self.handlers.selection,
+                id_allocator: &mut self.components.services.id_allocator,
+                doors: &mut self.components.doors,
             });
 
         self.handlers
@@ -741,6 +761,12 @@ impl EventHandler for Game {
         building_artist::run(
             graphics,
             &self.components.buildings,
+            &self.components.terrain,
+            &mut self.components.drawings,
+        );
+        door_artist::run(
+            graphics,
+            &self.components.doors,
             &self.components.terrain,
             &mut self.components.drawings,
         );

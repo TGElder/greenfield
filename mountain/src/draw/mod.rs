@@ -1,5 +1,6 @@
 pub mod building;
 pub mod chairs;
+pub mod door;
 pub mod frame;
 pub mod gate;
 pub mod line;
