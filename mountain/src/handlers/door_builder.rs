@@ -1,11 +1,12 @@
 use std::collections::{HashMap, HashSet};
 
-use commons::geometry::{xy, XYRectangle};
+use commons::geometry::{xy, XYRectangle, XY};
 use engine::binding::Binding;
 
 use crate::handlers::selection;
 use crate::model::building::Building;
 
+use crate::model::direction::Direction;
 use crate::model::door::Door;
 
 use crate::model::piste::Piste;
@@ -60,22 +61,21 @@ impl Handler {
                 .count()
                 == 2
         }) else {
-            println!("WARN: Door must contain two points from the same building");
+            println!("WARN: Door must contain two postions from the same building");
             selection.clear_selection();
             return;
         };
 
-        let piste_points = rectangle
+        let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
             .iter()
-            .filter(|position| !building.footprint.contains(position))
-            .collect::<HashSet<_>>();
+            .partition(|position| building.footprint.contains(position));
         let Some((piste_id, _)) = pistes.iter().find(|(_, piste)| {
             let grid = &piste.grid;
-            piste_points
+            piste_positions
                 .iter()
                 .all(|position| grid.in_bounds(position) && grid[position])
         }) else {
-            println!("WARN: Door must contain two points from the same piste");
+            println!("WARN: Door must contain two postions from the same piste");
             selection.clear_selection();
             return;
         };
@@ -87,9 +87,21 @@ impl Handler {
                 building_id: *building_id,
                 piste_id: *piste_id,
                 footprint: rectangle,
-                aperture: piste_points,
+                direction: direction(&piste_positions, &building_positions),
+                aperture: HashSet::from_iter(piste_positions),
             },
         );
         selection.clear_selection();
     }
+}
+
+fn direction(piste_positions: &[XY<u32>], building_positions: &[XY<u32>]) -> Direction {
+    let vector = xy(
+        (piste_positions[0].x as f32 + piste_positions[1].x as f32)
+            - (building_positions[0].x as f32 + building_positions[1].x as f32),
+        (piste_positions[0].y as f32 + piste_positions[1].y as f32)
+            - (building_positions[0].y as f32 + building_positions[1].y as f32),
+    );
+    let angle = vector.angle();
+    Direction::snap_to_direction(angle)
 }

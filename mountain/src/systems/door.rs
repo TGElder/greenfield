@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use commons::grid::Grid;
 
-use crate::model::direction::Direction;
 use crate::model::door::Door;
 use crate::model::reservation::{Reservation, ReservationPeriod};
 use crate::model::skiing::{Plan, State};
@@ -45,7 +44,7 @@ pub fn run(
                     Plan::Stationary(State {
                         position: *position,
                         velocity: 0,
-                        travel_direction: Direction::North,
+                        travel_direction: door.direction,
                     }),
                 );
             }
