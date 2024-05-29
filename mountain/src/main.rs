@@ -77,12 +77,10 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                building_builder: building_builder::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::B),
-                        state: ButtonState::Pressed,
-                    },
-                },
+                building_builder: building_builder::Handler::new(Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::B),
+                    state: ButtonState::Pressed,
+                }),
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::Comma),
@@ -551,6 +549,7 @@ impl EventHandler for Game {
             .building_builder
             .handle(handlers::building_builder::Parameters {
                 event,
+                mouse_xy: &self.mouse_xy,
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
