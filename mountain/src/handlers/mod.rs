@@ -2,6 +2,7 @@ use engine::events::Event;
 use engine::graphics::Graphics;
 
 pub mod building_builder;
+pub mod building_remover;
 pub mod clock;
 pub mod door_builder;
 pub mod gate_builder;

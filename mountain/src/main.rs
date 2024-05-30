@@ -31,8 +31,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    building_builder, door_builder, gate_builder, gate_opener, gate_remover, lift_opener,
-    lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
+    building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
+    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
     piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
@@ -89,6 +89,12 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
+                building_remover: building_remover::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::X),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::Comma),
@@ -406,6 +412,8 @@ pub struct Components {
     frames: HashMap<usize, Option<Frame>>,
     #[serde(skip)]
     drawings: HashMap<usize, usize>,
+    #[serde(skip)]
+    clothes: HashMap<usize, Clothes<Rgb<f32>>>,
     pistes: HashMap<usize, Piste>,
     costs: HashMap<usize, Costs<State>>,
     global_costs: Costs<usize>,
@@ -416,8 +424,6 @@ pub struct Components {
     entrances: HashMap<usize, Entrance>,
     exits: HashMap<usize, Exit>,
     abilities: HashMap<usize, Ability>,
-    #[serde(skip)]
-    clothes: HashMap<usize, Clothes<Rgb<f32>>>,
     buildings: HashMap<usize, Building>,
     doors: HashMap<usize, Door>,
     open: HashSet<usize>,
@@ -433,6 +439,7 @@ pub struct Components {
 
 struct Handlers {
     building_builder: building_builder::Handler,
+    building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
     door_builder: door_builder::Handler,
     drag: drag::Handler,
@@ -584,6 +591,12 @@ impl EventHandler for Game {
                 open: &mut self.components.open,
                 reservations: &mut self.components.reservations,
             });
+        self.handlers.building_remover.handle(
+            event,
+            &self.mouse_xy,
+            graphics,
+            &mut self.components,
+        );
         self.handlers
             .gate_remover
             .handle(event, &self.mouse_xy, graphics, &mut self.components);
