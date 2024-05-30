@@ -77,9 +77,23 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                building_builder: building_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::B),
-                    state: ButtonState::Pressed,
+                building_builder: building_builder::Handler::new(building_builder::Bindings {
+                    start_building: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::B),
+                        state: ButtonState::Pressed,
+                    },
+                    finish_building: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::B),
+                        state: ButtonState::Pressed,
+                    },
+                    decrease_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::BracketLeft),
+                        state: ButtonState::Pressed,
+                    },
+                    increase_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::BracketRight),
+                        state: ButtonState::Pressed,
+                    },
                 }),
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
