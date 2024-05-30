@@ -77,6 +77,9 @@ pub enum KeyboardKey {
     Comma,
     Period,
 
+    BracketLeft,
+    BracketRight,
+
     Unknown,
 }
 
