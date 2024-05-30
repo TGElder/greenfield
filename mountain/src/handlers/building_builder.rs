@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XYRectangle, XY};
+use commons::geometry::{xy, XYRectangle};
 use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -10,7 +10,7 @@ use crate::model::ability::Ability;
 use crate::model::building::Building;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
-use crate::systems::tree_artist;
+use crate::systems::{building_artist, tree_artist};
 
 pub const CUBIC_METERS_PER_SKIER: u32 = 27;
 
@@ -61,12 +61,12 @@ pub enum State {
 
 pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
-    pub mouse_xy: &'a Option<XY<u32>>,
     pub selection: &'a mut selection::Handler,
     pub id_allocator: &'a mut id_allocator::Service,
     pub buildings: &'a mut HashMap<usize, Building>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub skiers: &'a mut HashMap<usize, Skier>,
+    pub building_artist: &'a mut building_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
 }
 
@@ -145,6 +145,7 @@ impl Handler {
             buildings,
             locations,
             skiers,
+            building_artist,
             ..
         }: Parameters<'_>,
     ) -> State {
@@ -185,9 +186,11 @@ impl Handler {
             State::Selecting
         } else if self.bindings.decrease_height.binds_event(event) {
             building.height = (building.height.saturating_sub(HEIGHT_INTERVAL)).max(HEIGHT_MIN);
+            building_artist.redraw(building_id);
             self.state
         } else if self.bindings.increase_height.binds_event(event) {
             building.height = (building.height.saturating_add(HEIGHT_INTERVAL)).min(HEIGHT_MAX);
+            building_artist.redraw(building_id);
             self.state
         } else {
             self.state

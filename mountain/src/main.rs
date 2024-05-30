@@ -280,6 +280,7 @@ fn main() {
                 }),
             },
             systems: Systems {
+                building_artist: building_artist::System::new(),
                 carousel: carousel::System::new(),
                 chair_artist: chair_artist::System::new(),
                 global_computer: global_computer::System::new(),
@@ -465,6 +466,7 @@ struct Handlers {
 }
 
 struct Systems {
+    building_artist: building_artist::System,
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
@@ -563,12 +565,12 @@ impl EventHandler for Game {
             .building_builder
             .handle(handlers::building_builder::Parameters {
                 event,
-                mouse_xy: &self.mouse_xy,
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
                 locations: &mut self.components.locations,
                 skiers: &mut self.components.skiers,
+                building_artist: &mut self.systems.building_artist,
                 tree_artist: &mut self.systems.tree_artist,
             });
         self.handlers
@@ -782,7 +784,7 @@ impl EventHandler for Game {
             &self.components.clothes,
             &mut self.components.frames,
         );
-        building_artist::run(
+        self.systems.building_artist.run(
             graphics,
             &self.components.buildings,
             &self.components.terrain,
