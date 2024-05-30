@@ -82,8 +82,9 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
     }
 }
 
-fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, drawing_id: &usize) {
-    if let Some(drawing_id) = components.drawings.get(drawing_id) {
+fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
+    if let Some(drawing_id) = components.drawings.get(id) {
         let _ = graphics.draw_triangles(drawing_id, &[]);
     }
+    components.drawings.remove(id);
 }

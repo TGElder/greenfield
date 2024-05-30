@@ -150,7 +150,7 @@ impl Handler {
         }: Parameters<'_>,
     ) -> State {
         let Some(building) = buildings.get_mut(&building_id) else {
-            return self.state;
+            return State::Selecting;
         };
 
         if self.bindings.finish_building.binds_event(event) {
@@ -183,6 +183,8 @@ impl Handler {
                     },
                 );
             }
+
+            println!("INFO: {} total skiers", skiers.len());
 
             State::Selecting
         } else if self.bindings.decrease_height.binds_event(event) {
