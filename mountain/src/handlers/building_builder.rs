@@ -179,6 +179,7 @@ impl Handler {
                             jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
                             helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
                         },
+                        hotel_id: building_id,
                     },
                 );
             }

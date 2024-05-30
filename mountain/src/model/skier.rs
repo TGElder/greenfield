@@ -7,6 +7,7 @@ use crate::model::ability::Ability;
 pub struct Skier {
     pub clothes: Clothes<Color>,
     pub ability: Ability,
+    pub hotel_id: usize,
 }
 
 #[derive(Clone, Copy, Default, Debug, Serialize, Deserialize)]
