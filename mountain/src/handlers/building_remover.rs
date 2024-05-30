@@ -3,7 +3,7 @@ use engine::binding::Binding;
 use engine::graphics::Graphics;
 
 use crate::model::building::Building;
-use crate::Components;
+use crate::{Components, Systems};
 
 pub struct Handler {
     pub binding: Binding,
@@ -16,6 +16,7 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
         components: &mut Components,
+        systems: &mut Systems,
     ) {
         if !self.binding.binds_event(event) {
             return;
@@ -35,7 +36,7 @@ impl Handler {
             .collect::<Vec<_>>();
 
         for building_id in building_ids {
-            remove_building(graphics, components, &building_id);
+            remove_building(graphics, components, systems, &building_id);
         }
     }
 }
@@ -43,6 +44,7 @@ impl Handler {
 pub fn remove_building(
     graphics: &mut dyn Graphics,
     components: &mut Components,
+    systems: &mut Systems,
     building_id: &usize,
 ) {
     // removing skiers
@@ -92,6 +94,10 @@ pub fn remove_building(
 
     components.buildings.remove(building_id);
     remove_drawing(graphics, components, building_id);
+
+    // updating art
+
+    systems.tree_artist.update();
 }
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {

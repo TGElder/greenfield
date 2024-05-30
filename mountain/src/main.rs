@@ -596,6 +596,7 @@ impl EventHandler for Game {
             &self.mouse_xy,
             graphics,
             &mut self.components,
+            &mut self.systems,
         );
         self.handlers
             .gate_remover
