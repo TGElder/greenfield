@@ -77,12 +77,24 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                building_builder: building_builder::Handler {
-                    binding: Binding::Single {
+                building_builder: building_builder::Handler::new(building_builder::Bindings {
+                    start_building: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::B),
                         state: ButtonState::Pressed,
                     },
-                },
+                    finish_building: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::B),
+                        state: ButtonState::Pressed,
+                    },
+                    decrease_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::BracketLeft),
+                        state: ButtonState::Pressed,
+                    },
+                    increase_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::BracketRight),
+                        state: ButtonState::Pressed,
+                    },
+                }),
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::Comma),
@@ -268,6 +280,7 @@ fn main() {
                 }),
             },
             systems: Systems {
+                building_artist: building_artist::System::new(),
                 carousel: carousel::System::new(),
                 chair_artist: chair_artist::System::new(),
                 global_computer: global_computer::System::new(),
@@ -453,6 +466,7 @@ struct Handlers {
 }
 
 struct Systems {
+    building_artist: building_artist::System,
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
@@ -556,6 +570,7 @@ impl EventHandler for Game {
                 buildings: &mut self.components.buildings,
                 locations: &mut self.components.locations,
                 skiers: &mut self.components.skiers,
+                building_artist: &mut self.systems.building_artist,
                 tree_artist: &mut self.systems.tree_artist,
             });
         self.handlers
@@ -769,7 +784,7 @@ impl EventHandler for Game {
             &self.components.clothes,
             &mut self.components.frames,
         );
-        building_artist::run(
+        self.systems.building_artist.run(
             graphics,
             &self.components.buildings,
             &self.components.terrain,
