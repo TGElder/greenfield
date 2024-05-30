@@ -31,8 +31,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    add_skier, building_builder, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
+    building_builder, door_builder, gate_builder, gate_opener, gate_remover, lift_opener,
+    lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
     piste_visibility, save, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
@@ -71,12 +71,6 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
-                add_skier: add_skier::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::F),
-                        state: ButtonState::Pressed,
-                    },
-                },
                 building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::B),
@@ -438,7 +432,6 @@ pub struct Components {
 }
 
 struct Handlers {
-    add_skier: add_skier::Handler,
     building_builder: building_builder::Handler,
     clock: handlers::clock::Handler,
     door_builder: door_builder::Handler,
@@ -511,14 +504,6 @@ impl EventHandler for Game {
         self.handlers.yaw.handle(event, engine, graphics);
         self.handlers.zoom.handle(event, engine, graphics);
 
-        self.handlers.add_skier.handle(
-            event,
-            &self.mouse_xy,
-            &mut self.components.plans,
-            &mut self.components.skiers,
-            &mut self.components.services.id_allocator,
-            graphics,
-        );
         self.handlers
             .clock
             .handle(event, &mut self.components.services.clock);
