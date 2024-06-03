@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use commons::geometry::XYZ;
 use engine::graphics::elements::Quad;
 
+pub mod building;
 pub mod chair;
+pub mod prism;
 pub mod pyramid;
 pub mod skier;
 pub mod skier_sitting;
