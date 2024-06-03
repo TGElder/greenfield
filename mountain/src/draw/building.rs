@@ -3,15 +3,17 @@ use commons::geometry::{xyz, XYRectangle, XYZ};
 
 use commons::grid::Grid;
 use commons::unsafe_ordering::UnsafeOrderable;
-use engine::graphics::elements::Quad;
-use engine::graphics::models::cube;
+use engine::graphics::elements::Triangle;
 use engine::graphics::transform::{Recolor, Transform};
-use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
+use engine::graphics::utils::{transformation_matrix, Transformation};
 use engine::graphics::Graphics;
 
+use crate::draw::model::building;
 use crate::model::building::Building;
 
-const COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const WALL_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
+const ROOF_HEIGHT: f32 = 0.5;
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, terrain: &Grid<f32>) {
     let Building { footprint, height } = building;
@@ -39,9 +41,8 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
 
     let origin = xyz(from.x, from.y, min_ground_height);
     let scale = xyz(to.x - from.x, to.y - from.y, total_height);
-    let quads = translated_and_scaled_cube(origin + scale / 2.0, scale, COLOR).collect::<Vec<_>>();
+    let triangles = translated_and_scaled_building(origin + scale / 2.0, scale).collect::<Vec<_>>();
 
-    let triangles = triangles_from_quads(&quads);
     graphics.draw_triangles(index, &triangles).unwrap();
 }
 
@@ -67,19 +68,22 @@ where
     }
 }
 
-fn translated_and_scaled_cube(
+fn translated_and_scaled_building(
     translation: XYZ<f32>,
     scale: XYZ<f32>,
-    color: Rgb<f32>,
-) -> impl Iterator<Item = Quad<Rgb<f32>>> {
+) -> impl Iterator<Item = Triangle<Rgb<f32>>> {
     let transformation = transformation_matrix(Transformation {
         translation: Some(translation),
         scale: Some(scale),
         ..Transformation::default()
     });
 
-    cube::model()
+    building::model(ROOF_HEIGHT)
         .transform(&transformation)
-        .recolor(&|_| color)
+        .recolor(&|color| match color {
+            building::Color::Wall(_) => WALL_COLOR,
+            building::Color::GableEnd => WALL_COLOR,
+            building::Color::Roof => ROOF_COLOR,
+        })
         .into_iter()
 }
