@@ -1,9 +1,8 @@
 use commons::color::Rgb;
-use commons::geometry::{xyz, XYRectangle, XYZ};
+use commons::geometry::{xyz, XYRectangle};
 
 use commons::grid::Grid;
 use commons::unsafe_ordering::UnsafeOrderable;
-use engine::graphics::elements::Triangle;
 use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, Transformation};
 use engine::graphics::Graphics;
@@ -41,7 +40,20 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
 
     let origin = xyz(from.x, from.y, min_ground_height);
     let scale = xyz(to.x - from.x, to.y - from.y, total_height);
-    let triangles = translated_and_scaled_building(origin + scale / 2.0, scale).collect::<Vec<_>>();
+
+    let triangles = building::model(ROOF_HEIGHT, 0.0)
+        .transform(&transformation_matrix(Transformation {
+            translation: Some(origin + scale / 2.0),
+            scale: Some(scale),
+            ..Transformation::default()
+        }))
+        .recolor(&|color| match color {
+            building::Color::Wall(_) => WALL_COLOR,
+            building::Color::GableEnd => WALL_COLOR,
+            building::Color::Roof => ROOF_COLOR,
+        })
+        .into_iter()
+        .collect::<Vec<_>>();
 
     graphics.draw_triangles(index, &triangles).unwrap();
 }
@@ -66,24 +78,4 @@ where
         (Some(min), Some(max)) => Some((min, max)),
         _ => None,
     }
-}
-
-fn translated_and_scaled_building(
-    translation: XYZ<f32>,
-    scale: XYZ<f32>,
-) -> impl Iterator<Item = Triangle<Rgb<f32>>> {
-    let transformation = transformation_matrix(Transformation {
-        translation: Some(translation),
-        scale: Some(scale),
-        ..Transformation::default()
-    });
-
-    building::model(ROOF_HEIGHT)
-        .transform(&transformation)
-        .recolor(&|color| match color {
-            building::Color::Wall(_) => WALL_COLOR,
-            building::Color::GableEnd => WALL_COLOR,
-            building::Color::Roof => ROOF_COLOR,
-        })
-        .into_iter()
 }

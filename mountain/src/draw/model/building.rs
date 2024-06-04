@@ -13,7 +13,7 @@ pub enum Color {
     Roof,
 }
 
-pub fn model(peak_height: f32) -> Vec<Triangle<Color>> {
+pub fn model(peak_height: f32, roof_yaw: f32) -> Vec<Triangle<Color>> {
     triangles_from_quads(&cube::model().recolor(&|&side| Color::Wall(side)))
         .drain(..)
         .chain(
@@ -25,6 +25,7 @@ pub fn model(peak_height: f32) -> Vec<Triangle<Color>> {
                 .transform(&transformation_matrix(Transformation {
                     scale: Some(xyz(1.0, 1.0, peak_height)),
                     translation: Some(xyz(0.0, 0.0, 0.5)),
+                    yaw: Some(roof_yaw),
                     ..Transformation::default()
                 })),
         )
