@@ -8,6 +8,8 @@ use crate::draw::model::tree;
 use crate::model::building::Building;
 use crate::model::tree::Tree;
 
+const BUILDING_MARGIN: u32 = 2;
+
 pub struct Drawing {
     pub index: usize,
 }
@@ -34,9 +36,12 @@ impl Drawing {
                 if terrain
                     .offsets(position, &CORNERS_INVERSE)
                     .any(|tile| piste_map[tile].is_some())
-                    || buildings
-                        .iter()
-                        .any(|building| building.footprint.contains(position))
+                    || buildings.iter().any(|building| {
+                        building
+                            .footprint
+                            .expand(BUILDING_MARGIN)
+                            .contains(position)
+                    })
                 {
                     None
                 } else {
