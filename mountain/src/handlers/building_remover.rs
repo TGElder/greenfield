@@ -87,6 +87,7 @@ pub fn remove_building(
 
     for door_id in doors_to_remove.iter() {
         components.doors.remove(door_id);
+        components.entrances.remove(door_id);
         remove_drawing(graphics, components, door_id);
     }
 
