@@ -3,7 +3,7 @@ use std::f32::consts::PI;
 use std::fmt::Display;
 use std::ops::{Add, Div, Mul, Sub};
 
-use num::{Float, One};
+use num::{Float, One, Saturating};
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
@@ -267,6 +267,40 @@ where
     }
 }
 
+impl<T> XYRectangle<T>
+where
+    T: PartialOrd,
+{
+    pub fn contains<B>(&self, position: B) -> bool
+    where
+        B: Borrow<XY<T>>,
+    {
+        let position = position.borrow();
+        !(position.x < self.from.x
+            || position.x > self.to.x
+            || position.y < self.from.y
+            || position.y > self.to.y)
+    }
+}
+
+impl<T> XYRectangle<T>
+where
+    T: Copy + Add<Output = T> + Sub<Output = T> + Saturating,
+{
+    pub fn expand(&self, cell_count: T) -> XYRectangle<T> {
+        XYRectangle {
+            from: xy(
+                self.from.x.saturating_sub(cell_count),
+                self.from.y.saturating_sub(cell_count),
+            ),
+            to: xy(
+                self.to.x.saturating_add(cell_count),
+                self.to.y.saturating_add(cell_count),
+            ),
+        }
+    }
+}
+
 impl XYRectangle<u32> {
     pub fn iter(&self) -> impl Iterator<Item = XY<u32>> + '_ {
         (self.from.x..=self.to.x)
@@ -285,22 +319,6 @@ impl XYRectangle<usize> {
     pub fn iter(&self) -> impl Iterator<Item = XY<usize>> + '_ {
         (self.from.x..=self.to.x)
             .flat_map(move |x| (self.from.y..=self.to.y).map(move |y| XY { x, y }))
-    }
-}
-
-impl<T> XYRectangle<T>
-where
-    T: PartialOrd,
-{
-    pub fn contains<B>(&self, position: B) -> bool
-    where
-        B: Borrow<XY<T>>,
-    {
-        let position = position.borrow();
-        !(position.x < self.from.x
-            || position.x > self.to.x
-            || position.y < self.from.y
-            || position.y > self.to.y)
     }
 }
 
@@ -607,6 +625,24 @@ mod tests {
         assert!(!rectangle.contains(xy(4, 3)));
         assert!(!rectangle.contains(xy(2, 1)));
         assert!(!rectangle.contains(xy(2, 6)));
+    }
+
+    #[test]
+    fn test_xy_rectangle_expand() {
+        // given
+        let rectangle: XYRectangle<u32> = XYRectangle {
+            from: xy(1, 2),
+            to: xy(3, 5),
+        };
+
+        // then
+        assert_eq!(
+            rectangle.expand(2),
+            XYRectangle {
+                from: xy(0, 0),
+                to: xy(5, 7),
+            }
+        );
     }
 
     #[test]
