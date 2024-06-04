@@ -571,9 +571,11 @@ impl EventHandler for Game {
                 event,
                 pistes: &self.components.pistes,
                 buildings: &self.components.buildings,
+                terrain: &self.components.terrain,
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 doors: &mut self.components.doors,
+                entrances: &mut self.components.entrances,
             });
 
         self.handlers
