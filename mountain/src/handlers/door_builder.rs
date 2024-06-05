@@ -73,6 +73,12 @@ impl Handler {
             return;
         };
 
+        if building.under_construction {
+            println!("WARN: Door cannot be added to building under construction");
+            selection.clear_selection();
+            return;
+        }
+
         let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
             .iter()
             .partition(|position| building.footprint.contains(position));
