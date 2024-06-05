@@ -243,6 +243,8 @@ impl From<glutin::event::VirtualKeyCode> for Button {
             glutin::event::VirtualKeyCode::Period => KeyboardKey::Period,
             glutin::event::VirtualKeyCode::LBracket => KeyboardKey::BracketLeft,
             glutin::event::VirtualKeyCode::RBracket => KeyboardKey::BracketRight,
+            glutin::event::VirtualKeyCode::Slash => KeyboardKey::Slash,
+            glutin::event::VirtualKeyCode::Backslash => KeyboardKey::Backslash,
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)
