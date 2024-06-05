@@ -14,6 +14,7 @@ use crate::model::building::{Building, Roof};
 
 const WALL_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
+const UNDER_CONSTRUCTION_COLOR: Rgb<f32> = Rgb::new(0.933, 0.298, 0.008);
 const ROOF_HEIGHT: f32 = 0.5;
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, terrain: &Grid<f32>) {
@@ -21,6 +22,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
         footprint,
         height,
         roof,
+        under_construction,
     } = building;
     let XYRectangle { from, to } = footprint;
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);
@@ -57,10 +59,16 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
             scale: Some(scale),
             ..Transformation::default()
         }))
-        .recolor(&|color| match color {
-            building::Color::Wall(_) => WALL_COLOR,
-            building::Color::GableEnd => WALL_COLOR,
-            building::Color::Roof => ROOF_COLOR,
+        .recolor(&|color| {
+            if *under_construction {
+                UNDER_CONSTRUCTION_COLOR
+            } else {
+                match color {
+                    building::Color::Wall(_) => WALL_COLOR,
+                    building::Color::GableEnd => WALL_COLOR,
+                    building::Color::Roof => ROOF_COLOR,
+                }
+            }
         })
         .into_iter()
         .collect::<Vec<_>>();
