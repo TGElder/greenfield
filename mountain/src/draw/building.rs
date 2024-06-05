@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use commons::color::Rgb;
 use commons::geometry::{xyz, XYRectangle};
 
@@ -8,14 +10,18 @@ use engine::graphics::utils::{transformation_matrix, Transformation};
 use engine::graphics::Graphics;
 
 use crate::draw::model::building;
-use crate::model::building::Building;
+use crate::model::building::{Building, Roof};
 
 const WALL_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 const ROOF_HEIGHT: f32 = 0.5;
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, terrain: &Grid<f32>) {
-    let Building { footprint, height } = building;
+    let Building {
+        footprint,
+        height,
+        roof,
+    } = building;
     let XYRectangle { from, to } = footprint;
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);
     let to = xyz(to.x as f32, to.y as f32, terrain[to]);
@@ -40,8 +46,12 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
 
     let origin = xyz(from.x, from.y, min_ground_height);
     let scale = xyz(to.x - from.x, to.y - from.y, total_height);
+    let roof_yaw = match roof {
+        Roof::Default => 0.0,
+        Roof::Rotated => PI / 2.0,
+    };
 
-    let triangles = building::model(ROOF_HEIGHT, 0.0)
+    let triangles = building::model(ROOF_HEIGHT, roof_yaw)
         .transform(&transformation_matrix(Transformation {
             translation: Some(origin + scale / 2.0),
             scale: Some(scale),

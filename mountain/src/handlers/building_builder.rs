@@ -7,7 +7,7 @@ use rand::thread_rng;
 
 use crate::handlers::selection;
 use crate::model::ability::Ability;
-use crate::model::building::Building;
+use crate::model::building::{Building, Roof};
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist};
@@ -51,6 +51,7 @@ pub struct Bindings {
     pub finish_building: Binding,
     pub decrease_height: Binding,
     pub increase_height: Binding,
+    pub toggle_roof: Binding,
 }
 
 #[derive(Clone, Copy)]
@@ -121,6 +122,7 @@ impl Handler {
         let building = Building {
             footprint: rectangle,
             height: HEIGHT_MIN,
+            roof: Roof::Default,
         };
 
         buildings.insert(building_id, building);
@@ -193,6 +195,13 @@ impl Handler {
             self.state
         } else if self.bindings.increase_height.binds_event(event) {
             building.height = (building.height.saturating_add(HEIGHT_INTERVAL)).min(HEIGHT_MAX);
+            building_artist.redraw(building_id);
+            self.state
+        } else if self.bindings.toggle_roof.binds_event(event) {
+            building.roof = match building.roof {
+                Roof::Default => Roof::Rotated,
+                Roof::Rotated => Roof::Default,
+            };
             building_artist.redraw(building_id);
             self.state
         } else {
