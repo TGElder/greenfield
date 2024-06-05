@@ -123,6 +123,7 @@ impl Handler {
             footprint: rectangle,
             height: HEIGHT_MIN,
             roof: Roof::Default,
+            under_construction: true,
         };
 
         buildings.insert(building_id, building);
@@ -188,6 +189,8 @@ impl Handler {
 
             println!("INFO: {} total skiers", skiers.len());
 
+            building.under_construction = false;
+            building_artist.redraw(building_id);
             State::Selecting
         } else if self.bindings.decrease_height.binds_event(event) {
             building.height = (building.height.saturating_sub(HEIGHT_INTERVAL)).max(HEIGHT_MIN);

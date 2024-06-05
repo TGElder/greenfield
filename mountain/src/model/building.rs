@@ -12,4 +12,5 @@ pub struct Building {
     pub footprint: XYRectangle<u32>,
     pub height: u32,
     pub roof: Roof,
+    pub under_construction: bool,
 }
