@@ -80,6 +80,9 @@ pub enum KeyboardKey {
     BracketLeft,
     BracketRight,
 
+    Slash,
+    Backslash,
+
     Unknown,
 }
 
