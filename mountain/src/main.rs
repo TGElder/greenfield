@@ -88,6 +88,10 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::BracketRight),
                         state: ButtonState::Pressed,
                     },
+                    toggle_roof: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::J),
+                        state: ButtonState::Pressed,
+                    },
                 }),
                 building_remover: building_remover::Handler {
                     binding: Binding::Single {
