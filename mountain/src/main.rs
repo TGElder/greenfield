@@ -89,7 +89,7 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                     toggle_roof: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::J),
+                        button: Button::Keyboard(KeyboardKey::Slash),
                         state: ButtonState::Pressed,
                     },
                 }),
