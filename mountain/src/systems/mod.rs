@@ -19,3 +19,4 @@ pub mod target_scrubber;
 pub mod target_setter;
 pub mod terrain_artist;
 pub mod tree_artist;
+pub mod window_artist;

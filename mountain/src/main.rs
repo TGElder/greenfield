@@ -60,7 +60,7 @@ use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
     piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
-    tree_artist,
+    tree_artist, window_artist,
 };
 use crate::utils::computer;
 
@@ -313,6 +313,7 @@ fn main() {
                     cliff: Rgba::new(6, 6, 6, 128),
                 }),
                 tree_artist: tree_artist::System::new(),
+                window_artist: window_artist::System::new(),
             },
             mouse_xy: None,
             components,
@@ -477,6 +478,7 @@ struct Systems {
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
+    window_artist: window_artist::System,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -491,6 +493,7 @@ impl Game {
         self.systems.chair_artist.init(graphics);
         self.systems.terrain_artist.init(graphics, terrain);
         self.systems.tree_artist.init(graphics);
+        self.systems.window_artist.init(graphics);
         graphics.look_at(
             &xyz(
                 terrain.width() as f32 / 2.0,
@@ -561,6 +564,7 @@ impl EventHandler for Game {
             .building_builder
             .handle(handlers::building_builder::Parameters {
                 event,
+                terrain: &self.components.terrain,
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
@@ -568,6 +572,7 @@ impl EventHandler for Game {
                 skiers: &mut self.components.skiers,
                 building_artist: &mut self.systems.building_artist,
                 tree_artist: &mut self.systems.tree_artist,
+                window_artist: &mut self.systems.window_artist,
             });
         self.handlers
             .door_builder
@@ -851,5 +856,8 @@ impl EventHandler for Game {
             &self.components.buildings,
             graphics,
         );
+        self.systems
+            .window_artist
+            .run(&self.components.buildings, graphics);
     }
 }
