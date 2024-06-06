@@ -1,12 +1,8 @@
-use commons::color::Rgb;
-use commons::geometry::xyz;
-use engine::graphics::elements::Quad;
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
+use crate::draw::model::window::MODEL;
 use crate::model::building::Building;
-
-const COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 
 pub struct Drawing {
     pub index: usize,
@@ -14,16 +10,7 @@ pub struct Drawing {
 
 impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
-        let quad = Quad {
-            corners: [
-                xyz(-0.5, -0.01, -0.5),
-                xyz(0.5, -0.01, -0.5),
-                xyz(0.5, -0.01, 0.5),
-                xyz(-0.5, -0.01, 0.5),
-            ],
-            color: COLOR,
-        };
-        let triangles = triangles_from_quads(&[quad]);
+        let triangles = triangles_from_quads(&[MODEL]);
         let index = graphics.create_instanced_triangles(&triangles).unwrap();
         Drawing { index }
     }

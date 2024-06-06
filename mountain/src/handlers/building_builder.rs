@@ -239,20 +239,25 @@ pub fn windows(terrain: &Grid<f32>, footprint: &XYRectangle<u32>, height: u32) -
         return vec![];
     };
 
-    let floors = height / HEIGHT_INTERVAL;
+    let floor_count = height / HEIGHT_INTERVAL;
 
     (0..4)
-        .flat_map(|i| {
-            (0..floors)
-                .map(|floor| floor * HEIGHT_INTERVAL)
-                .flat_map(move |floor_height| {
-                    wall_windows(&corners[i], &corners[(i + 1) % 4], base_z, floor_height)
-                })
-        })
+        .flat_map(|i| window_wall(&corners[i], &corners[(i + 1) % 4], base_z, floor_count))
         .collect()
 }
 
-pub fn wall_windows(
+pub fn window_wall<'a>(
+    from: &'a XY<u32>,
+    to: &'a XY<u32>,
+    base_z: f32,
+    floor_count: u32,
+) -> impl Iterator<Item = Window> + 'a {
+    (0..floor_count)
+        .map(|floor| floor * HEIGHT_INTERVAL)
+        .flat_map(move |floor_height| window_row(from, to, base_z, floor_height))
+}
+
+pub fn window_row(
     from: &XY<u32>,
     to: &XY<u32>,
     base_z: f32,
@@ -268,17 +273,13 @@ pub fn wall_windows(
     let margin = length - (window_count as f32 * WINDOW_INTERVAL);
     let offset = (WINDOW_INTERVAL + margin) / 2.0;
 
+    let z = base_z + HEIGHT_INTERVAL as f32 / 2.0 + floor_height as f32;
+
     (0..window_count)
-        .map(move |w| offset + w as f32 * WINDOW_INTERVAL)
+        .map(move |w| offset + (w as f32 * WINDOW_INTERVAL))
         .map(move |distance| distance / length)
         .map(move |p| from * (1.0 - p) + to * p)
-        .map(move |XY { x, y }| {
-            xyz(
-                x,
-                y,
-                base_z + HEIGHT_INTERVAL as f32 / 2.0 + floor_height as f32,
-            )
-        })
+        .map(move |XY { x, y }| xyz(x, y, z))
         .map(move |position| Window {
             position,
             direction: Direction::snap_to_direction(angle),

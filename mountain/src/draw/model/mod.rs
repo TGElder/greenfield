@@ -11,6 +11,7 @@ pub mod skier;
 pub mod skier_sitting;
 pub mod skier_standing;
 pub mod tree;
+pub mod window;
 
 pub struct Model<T, U> {
     pub quads: Vec<Quad<T>>,
