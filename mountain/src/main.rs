@@ -803,6 +803,7 @@ impl EventHandler for Game {
         door_artist::run(
             graphics,
             &self.components.doors,
+            &self.components.buildings,
             &self.components.terrain,
             &mut self.components.drawings,
         );

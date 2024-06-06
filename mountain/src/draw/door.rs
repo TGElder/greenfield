@@ -7,21 +7,29 @@ use commons::grid::Grid;
 use commons::unsafe_ordering::UnsafeOrderable;
 use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
-use engine::graphics::utils::{transformation_matrix, Transformation};
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
 use crate::draw::model::building;
+use crate::model::building::{Building, Roof};
 use crate::model::direction::Direction;
 use crate::model::door::Door;
 
-const WALL_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const WOOD_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.5, 0.5, 0.5);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 const DOORWAY_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 
 const HEIGHT: f32 = 2.0;
 const ROOF_HEIGHT: f32 = 0.5;
 
-pub fn draw(graphics: &mut dyn Graphics, index: &usize, door: &Door, terrain: &Grid<f32>) {
+pub fn draw(
+    graphics: &mut dyn Graphics,
+    index: &usize,
+    door: &Door,
+    building: &Building,
+    terrain: &Grid<f32>,
+) {
     let Door { footprint, .. } = door;
     let XYRectangle { from, to } = footprint;
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);
@@ -48,17 +56,25 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, door: &Door, terrain: &G
     let origin = xyz(from.x, from.y, min_ground_height);
     let scale = xyz(to.x - from.x, to.y - from.y, total_height);
 
-    let triangles = building::model(ROOF_HEIGHT, roof_yaw(door))
+    let peaked_coloring = |&color: &_| match color {
+        building::Color::Wall(side) => cube_coloring(&side, door, &WOOD_COLOR),
+        building::Color::GableEnd => WOOD_COLOR,
+        building::Color::Roof => ROOF_COLOR,
+    };
+    let flat_coloring = |&side: &_| cube_coloring(&side, door, &CONCRETE_COLOR);
+    let model = match building.roof {
+        Roof::Peaked | Roof::PeakedRotated => {
+            building::model(ROOF_HEIGHT, roof_yaw(door)).recolor(&peaked_coloring)
+        }
+        Roof::Flat => triangles_from_quads(&cube::model()).recolor(&flat_coloring),
+    };
+
+    let triangles = model
         .transform(&transformation_matrix(Transformation {
             translation: Some(origin + scale / 2.0),
             scale: Some(scale),
             ..Transformation::default()
         }))
-        .recolor(&|color| match color {
-            building::Color::Wall(side) => cube_coloring(side, door),
-            building::Color::GableEnd => WALL_COLOR,
-            building::Color::Roof => ROOF_COLOR,
-        })
         .into_iter()
         .collect::<Vec<_>>();
 
@@ -94,11 +110,11 @@ fn roof_yaw(door: &Door) -> f32 {
     }
 }
 
-fn cube_coloring(side: &cube::Side, door: &Door) -> Rgb<f32> {
+fn cube_coloring(side: &cube::Side, door: &Door, wall_color: &Rgb<f32>) -> Rgb<f32> {
     if aperture_side(door.direction) == Some(*side) {
         DOORWAY_COLOR
     } else {
-        WALL_COLOR
+        *wall_color
     }
 }
 

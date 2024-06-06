@@ -129,7 +129,7 @@ impl Handler {
         let building = Building {
             footprint: rectangle,
             height: HEIGHT_MIN,
-            roof: Roof::Default,
+            roof: Roof::Peaked,
             under_construction: true,
             windows: vec![],
         };
@@ -211,8 +211,9 @@ impl Handler {
             self.state
         } else if self.bindings.toggle_roof.binds_event(event) {
             building.roof = match building.roof {
-                Roof::Default => Roof::Rotated,
-                Roof::Rotated => Roof::Default,
+                Roof::Peaked => Roof::PeakedRotated,
+                Roof::PeakedRotated => Roof::Flat,
+                Roof::Flat => Roof::Peaked,
             };
             building_artist.redraw(building_id);
             self.state
