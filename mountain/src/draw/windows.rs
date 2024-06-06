@@ -16,10 +16,10 @@ impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let quad = Quad {
             corners: [
-                xyz(-0.5, 0.0, -0.5),
-                xyz(0.5, 0.0, -0.5),
-                xyz(0.5, 0.0, 0.5),
-                xyz(-0.5, 0.0, 0.5),
+                xyz(-0.5, -0.01, -0.5),
+                xyz(0.5, -0.01, -0.5),
+                xyz(0.5, -0.01, 0.5),
+                xyz(-0.5, -0.01, 0.5),
             ],
             color: COLOR,
         };

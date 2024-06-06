@@ -18,6 +18,10 @@ impl System {
         }
     }
 
+    pub fn update(&mut self) {
+        self.update = true;
+    }
+
     pub fn init(&mut self, graphics: &mut dyn Graphics) {
         self.drawing = Some(Drawing::init(graphics));
     }

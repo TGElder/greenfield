@@ -1,22 +1,28 @@
 use std::collections::HashMap;
+use std::vec;
 
-use commons::geometry::{xy, XYRectangle};
+use commons::geometry::{xy, xyz, XYRectangle, XY};
+use commons::grid::Grid;
+use commons::unsafe_ordering::unsafe_ordering;
 use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::handlers::selection;
 use crate::model::ability::Ability;
-use crate::model::building::{Building, Roof};
+use crate::model::building::{Building, Roof, Window};
+use crate::model::direction::Direction;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
-use crate::systems::{building_artist, tree_artist};
+use crate::systems::{building_artist, tree_artist, window_artist};
 
 pub const CUBIC_METERS_PER_SKIER: u32 = 27;
 
 pub const HEIGHT_MIN: u32 = 3;
 pub const HEIGHT_MAX: u32 = 36;
 pub const HEIGHT_INTERVAL: u32 = 3;
+
+pub const WINDOW_INTERVAL: f32 = 3.0;
 
 const ABILITIES: [Ability; 3] = [Ability::Intermediate, Ability::Advanced, Ability::Expert];
 
@@ -62,6 +68,7 @@ pub enum State {
 
 pub struct Parameters<'a> {
     pub event: &'a engine::events::Event,
+    pub terrain: &'a Grid<f32>,
     pub selection: &'a mut selection::Handler,
     pub id_allocator: &'a mut id_allocator::Service,
     pub buildings: &'a mut HashMap<usize, Building>,
@@ -69,6 +76,7 @@ pub struct Parameters<'a> {
     pub skiers: &'a mut HashMap<usize, Skier>,
     pub building_artist: &'a mut building_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
+    pub window_artist: &'a mut window_artist::System,
 }
 
 impl Handler {
@@ -145,11 +153,13 @@ impl Handler {
         building_id: usize,
         Parameters {
             event,
+            terrain,
             id_allocator,
             buildings,
             locations,
             skiers,
             building_artist,
+            window_artist,
             ..
         }: Parameters<'_>,
     ) -> State {
@@ -191,7 +201,9 @@ impl Handler {
             println!("INFO: {} total skiers", skiers.len());
 
             building.under_construction = false;
+            building.windows = windows(terrain, &building.footprint, building.height);
             building_artist.redraw(building_id);
+            window_artist.update();
             State::Selecting
         } else if self.bindings.decrease_height.binds_event(event) {
             building.height = (building.height.saturating_sub(HEIGHT_INTERVAL)).max(HEIGHT_MIN);
@@ -212,4 +224,66 @@ impl Handler {
             self.state
         }
     }
+}
+
+pub fn windows(terrain: &Grid<f32>, footprint: &XYRectangle<u32>, height: u32) -> Vec<Window> {
+    let corners = [
+        footprint.from,
+        xy(footprint.from.x, footprint.to.y),
+        footprint.to,
+        xy(footprint.to.x, footprint.from.y),
+    ];
+
+    let Some(base_z) = corners
+        .iter()
+        .filter(|&corner| terrain.in_bounds(corner))
+        .map(|corner| terrain[corner])
+        .max_by(unsafe_ordering)
+    else {
+        return vec![];
+    };
+
+    let floors = height / HEIGHT_INTERVAL;
+
+    (0..4)
+        .flat_map(|i| {
+            (0..floors)
+                .map(|floor| floor * HEIGHT_INTERVAL)
+                .flat_map(move |floor_height| {
+                    wall_windows(&corners[i], &corners[(i + 1) % 4], base_z, floor_height)
+                })
+        })
+        .collect()
+}
+
+pub fn wall_windows(
+    from: &XY<u32>,
+    to: &XY<u32>,
+    base_z: f32,
+    floor_height: u32,
+) -> impl Iterator<Item = Window> {
+    let from = xy(from.x as f32, from.y as f32);
+    let to = xy(to.x as f32, to.y as f32);
+    let vector = from - to;
+    let length = vector.magnitude();
+    let angle = vector.angle();
+    let window_count = (length / WINDOW_INTERVAL).floor() as u32;
+    let margin = length - (window_count as f32 * WINDOW_INTERVAL);
+    let offset = (WINDOW_INTERVAL + margin) / 2.0;
+
+    (0..window_count)
+        .map(move |w| offset + w as f32 * WINDOW_INTERVAL)
+        .map(move |distance| distance / length)
+        .map(move |p| from * (1.0 - p) + to * p)
+        .map(move |XY { x, y }| {
+            xyz(
+                x,
+                y,
+                base_z + HEIGHT_INTERVAL as f32 / 2.0 + floor_height as f32,
+            )
+        })
+        .map(move |position| Window {
+            position,
+            direction: Direction::snap_to_direction(angle),
+        })
 }

@@ -564,6 +564,7 @@ impl EventHandler for Game {
             .building_builder
             .handle(handlers::building_builder::Parameters {
                 event,
+                terrain: &self.components.terrain,
                 selection: &mut self.handlers.selection,
                 id_allocator: &mut self.components.services.id_allocator,
                 buildings: &mut self.components.buildings,
@@ -571,6 +572,7 @@ impl EventHandler for Game {
                 skiers: &mut self.components.skiers,
                 building_artist: &mut self.systems.building_artist,
                 tree_artist: &mut self.systems.tree_artist,
+                window_artist: &mut self.systems.window_artist,
             });
         self.handlers
             .door_builder
