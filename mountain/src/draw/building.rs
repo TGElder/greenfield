@@ -23,6 +23,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
         height,
         roof,
         under_construction,
+        ..
     } = building;
     let XYRectangle { from, to } = footprint;
     let from = xyz(from.x as f32, from.y as f32, terrain[from]);

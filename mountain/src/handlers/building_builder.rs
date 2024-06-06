@@ -124,6 +124,7 @@ impl Handler {
             height: HEIGHT_MIN,
             roof: Roof::Default,
             under_construction: true,
+            windows: vec![],
         };
 
         buildings.insert(building_id, building);
