@@ -5,14 +5,16 @@ use commons::geometry::{xyz, XYRectangle};
 
 use commons::grid::Grid;
 use commons::unsafe_ordering::UnsafeOrderable;
+use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
-use engine::graphics::utils::{transformation_matrix, Transformation};
+use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
 use engine::graphics::Graphics;
 
 use crate::draw::model::building;
 use crate::model::building::{Building, Roof};
 
-const WALL_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const WOOD_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
+const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.5, 0.5, 0.5);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 const UNDER_CONSTRUCTION_COLOR: Rgb<f32> = Rgb::new(0.933, 0.298, 0.008);
 const ROOF_HEIGHT: f32 = 0.5;
@@ -49,28 +51,37 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
 
     let origin = xyz(from.x, from.y, min_ground_height);
     let scale = xyz(to.x - from.x, to.y - from.y, total_height);
-    let roof_yaw = match roof {
-        Roof::Default => 0.0,
-        Roof::Rotated => PI / 2.0,
+
+    let peaked_coloring = |&color: &_| {
+        if *under_construction {
+            UNDER_CONSTRUCTION_COLOR
+        } else {
+            match color {
+                building::Color::Wall(_) => WOOD_COLOR,
+                building::Color::GableEnd => WOOD_COLOR,
+                building::Color::Roof => ROOF_COLOR,
+            }
+        }
+    };
+    let flat_coloring = |&_: &_| {
+        if *under_construction {
+            UNDER_CONSTRUCTION_COLOR
+        } else {
+            CONCRETE_COLOR
+        }
+    };
+    let model = match roof {
+        Roof::Peaked => building::model(ROOF_HEIGHT, 0.0).recolor(&peaked_coloring),
+        Roof::PeakedRotated => building::model(ROOF_HEIGHT, PI / 2.0).recolor(&peaked_coloring),
+        Roof::Flat => triangles_from_quads(&cube::model()).recolor(&flat_coloring),
     };
 
-    let triangles = building::model(ROOF_HEIGHT, roof_yaw)
+    let triangles = model
         .transform(&transformation_matrix(Transformation {
             translation: Some(origin + scale / 2.0),
             scale: Some(scale),
             ..Transformation::default()
         }))
-        .recolor(&|color| {
-            if *under_construction {
-                UNDER_CONSTRUCTION_COLOR
-            } else {
-                match color {
-                    building::Color::Wall(_) => WALL_COLOR,
-                    building::Color::GableEnd => WALL_COLOR,
-                    building::Color::Roof => ROOF_COLOR,
-                }
-            }
-        })
         .into_iter()
         .collect::<Vec<_>>();
 

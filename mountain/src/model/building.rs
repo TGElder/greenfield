@@ -14,8 +14,9 @@ pub struct Building {
 
 #[derive(Serialize, Deserialize)]
 pub enum Roof {
-    Default,
-    Rotated,
+    Peaked,
+    PeakedRotated,
+    Flat,
 }
 
 #[derive(Serialize, Deserialize)]
