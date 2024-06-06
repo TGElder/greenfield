@@ -16,13 +16,12 @@ use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist, window_artist};
 
-pub const CUBIC_METERS_PER_SKIER: u32 = 27;
-
 pub const HEIGHT_MIN: u32 = 3;
 pub const HEIGHT_MAX: u32 = 36;
 pub const HEIGHT_INTERVAL: u32 = 3;
 
 pub const WINDOW_INTERVAL: f32 = 3.0;
+pub const WINDOW_FREE_LENGTH: f32 = 2.0;
 
 const ABILITIES: [Ability; 3] = [Ability::Intermediate, Ability::Advanced, Ability::Expert];
 
@@ -170,11 +169,9 @@ impl Handler {
         if self.bindings.finish_building.binds_event(event) {
             // creating skiers
 
-            let volume_cubic_meters = ((building.footprint.width() - 1)
-                * (building.footprint.height() - 1))
-                * building.height;
-            let capacity = volume_cubic_meters / CUBIC_METERS_PER_SKIER;
+            building.windows = windows(terrain, &building.footprint, building.height);
 
+            let capacity = building.windows.len();
             println!("INFO: Spawing {} skiers", capacity);
 
             let mut rng = thread_rng();
@@ -201,7 +198,6 @@ impl Handler {
             println!("INFO: {} total skiers", skiers.len());
 
             building.under_construction = false;
-            building.windows = windows(terrain, &building.footprint, building.height);
             building_artist.redraw(building_id);
             window_artist.update();
             State::Selecting
@@ -267,7 +263,8 @@ pub fn wall_windows(
     let vector = from - to;
     let length = vector.magnitude();
     let angle = vector.angle();
-    let window_count = (length / WINDOW_INTERVAL).floor() as u32;
+    let available_length = (length - WINDOW_FREE_LENGTH).max(0.0);
+    let window_count = (available_length / WINDOW_INTERVAL).floor() as u32;
     let margin = length - (window_count as f32 * WINDOW_INTERVAL);
     let offset = (WINDOW_INTERVAL + margin) / 2.0;
 
