@@ -14,6 +14,7 @@ use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
+use crate::systems::window_artist;
 
 pub struct Handler {
     pub binding: Binding,
@@ -28,6 +29,7 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
     pub doors: &'a mut HashMap<usize, Door>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub window_artist: &'a mut window_artist::System,
 }
 
 impl Handler {
@@ -42,6 +44,7 @@ impl Handler {
             id_allocator,
             doors,
             entrances,
+            window_artist,
         }: Parameters<'_>,
     ) {
         if !self.binding.binds_event(event) {
@@ -134,6 +137,8 @@ impl Handler {
                 altitude_meters: altitude_meters(terrain, &piste_positions),
             },
         );
+
+        window_artist.update();
 
         selection.clear_selection();
     }

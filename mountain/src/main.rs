@@ -585,6 +585,7 @@ impl EventHandler for Game {
                 id_allocator: &mut self.components.services.id_allocator,
                 doors: &mut self.components.doors,
                 entrances: &mut self.components.entrances,
+                window_artist: &mut self.systems.window_artist,
             });
 
         self.handlers
@@ -857,8 +858,11 @@ impl EventHandler for Game {
             &self.components.buildings,
             graphics,
         );
-        self.systems
-            .window_artist
-            .run(&self.components.buildings, graphics);
+        self.systems.window_artist.run(
+            &self.components.terrain,
+            &self.components.buildings,
+            &self.components.doors,
+            graphics,
+        );
     }
 }
