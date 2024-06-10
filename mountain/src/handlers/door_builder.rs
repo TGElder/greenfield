@@ -51,24 +51,36 @@ impl Handler {
         let Some(grid) = &selection.grid else {
             return;
         };
-        if grid.width() != 1 || grid.height() != 1 {
-            println!("WARN: Door must be 1x1");
+        if grid.width() != 1 && grid.height() != 1 {
+            println!("WARN: Door must be 1 wide or 1 high");
             selection.clear_selection();
             return;
         }
+
+        let longest_side_cell_count = grid.width().max(grid.height());
+        if longest_side_cell_count < 2 {
+            println!("WARN: Door must be at least 2 wide or 2 high");
+            selection.clear_selection();
+            return;
+        }
+
         let rectangle = XYRectangle {
             from: *grid.origin(),
             to: *grid.origin() + xy(grid.width(), grid.height()),
         };
 
+        let longest_side_position_count = longest_side_cell_count as usize + 1;
         let Some((building_id, building)) = buildings.iter().find(|(_building_id, building)| {
             rectangle
                 .iter()
                 .filter(|position| building.footprint.contains(position))
                 .count()
-                == 2
+                == longest_side_position_count
         }) else {
-            println!("WARN: Door must contain two postions from the same building");
+            println!(
+                "WARN: Door must contain {} postions from the same building",
+                longest_side_position_count
+            );
             selection.clear_selection();
             return;
         };
@@ -88,11 +100,20 @@ impl Handler {
                 .iter()
                 .all(|position| grid.in_bounds(position) && grid[position])
         }) else {
-            println!("WARN: Door must contain two postions from the same piste");
+            println!(
+                "WARN: Door must contain {} postions from the same piste",
+                longest_side_position_count
+            );
             selection.clear_selection();
             return;
         };
 
+        let aperture = piste_positions
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i != 0 && i != piste_positions.len() - 1) // removing first and last position
+            .map(|(_, position)| *position)
+            .collect();
         let door_id = id_allocator.next_id();
         doors.insert(
             door_id,
@@ -101,7 +122,7 @@ impl Handler {
                 piste_id: *piste_id,
                 footprint: rectangle,
                 direction: direction(&piste_positions, &building_positions),
-                aperture: piste_positions.iter().copied().collect(),
+                aperture,
             },
         );
 
