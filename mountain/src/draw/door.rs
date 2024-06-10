@@ -20,8 +20,8 @@ const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.5, 0.5, 0.5);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 const DOORWAY_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 
-const HEIGHT: f32 = 2.0;
-const ROOF_HEIGHT: f32 = 0.5;
+pub const HEIGHT: f32 = 2.0;
+pub const ROOF_HEIGHT: f32 = 0.5;
 
 pub fn draw(
     graphics: &mut dyn Graphics,
