@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
     lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
-    piste_visibility, save, tree_visibility,
+    piste_visibility, save, terrain_editor, tree_visibility,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -232,6 +232,12 @@ fn main() {
                 skier_debugger: handlers::skier_debugger::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::I),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                terrain_editor: terrain_editor::Handler {
+                    binding: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::F),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -465,6 +471,7 @@ struct Handlers {
     selection: selection::Handler,
     skier_colors: handlers::skier_colors::Handler,
     skier_debugger: handlers::skier_debugger::Handler,
+    terrain_editor: terrain_editor::Handler,
     tree_visibility: tree_visibility::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
@@ -615,6 +622,14 @@ impl EventHandler for Game {
         self.handlers
             .lift_remover
             .handle(event, &self.mouse_xy, graphics, &mut self.components);
+
+        self.handlers.terrain_editor.handle(
+            event,
+            &mut self.handlers.selection,
+            &mut self.components.terrain,
+            &mut self.systems.terrain_artist,
+            graphics,
+        );
 
         self.handlers.lift_opener.handle(
             event,

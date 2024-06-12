@@ -20,4 +20,5 @@ pub mod save;
 pub mod selection;
 pub mod skier_colors;
 pub mod skier_debugger;
+pub mod terrain_editor;
 pub mod tree_visibility;
