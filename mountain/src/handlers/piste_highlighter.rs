@@ -71,7 +71,7 @@ fn update_terrain_artist(
     if let Some(selected_piste) = selected_piste {
         if let Some(piste) = pistes.get(&selected_piste) {
             let grid = &piste.grid;
-            terrain_artist.update(XYRectangle {
+            terrain_artist.update_overlay(XYRectangle {
                 from: *grid.origin(),
                 to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
             });

@@ -13,6 +13,6 @@ impl Handler {
         }
 
         overlay.toggle_show_pistes();
-        overlay.update_all();
+        overlay.update_whole_overlay();
     }
 }

@@ -99,7 +99,7 @@ impl Handler {
 
         // updating art
 
-        terrain_artist.update(rectangle);
+        terrain_artist.update_overlay(rectangle);
         tree_artist.update();
 
         // clearing selection
