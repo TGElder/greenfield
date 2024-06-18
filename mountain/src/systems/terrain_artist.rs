@@ -15,7 +15,7 @@ pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
 
 pub struct System {
     drawing: Option<Drawing>,
-    updates: Vec<XYRectangle<u32>>,
+    overlay_updates: Vec<XYRectangle<u32>>,
     show_pistes: bool,
     colors: Colors,
 }
@@ -105,24 +105,26 @@ impl System {
     pub fn new(colors: Colors) -> System {
         System {
             drawing: None,
-            updates: vec![],
+            overlay_updates: vec![],
             show_pistes: true,
             colors,
         }
     }
 
     pub fn init(&mut self, graphics: &mut dyn Graphics, terrain: &Grid<f32>) {
-        self.drawing = Some(Drawing::init(graphics, terrain));
-        self.update_all();
+        let drawing = Drawing::init(graphics, terrain);
+        drawing.draw_geometry(graphics, terrain);
+        self.drawing = Some(drawing);
+        self.update_whole_overlay();
     }
 
-    pub fn update(&mut self, update: XYRectangle<u32>) {
-        self.updates.push(update);
+    pub fn update_overlay(&mut self, update: XYRectangle<u32>) {
+        self.overlay_updates.push(update);
     }
 
-    pub fn update_all(&mut self) {
+    pub fn update_whole_overlay(&mut self) {
         if let Some(drawing) = &self.drawing {
-            self.updates.push(XYRectangle {
+            self.overlay_updates.push(XYRectangle {
                 from: xy(0, 0),
                 to: xy(drawing.width() - 1, drawing.height() - 1), // -1 because rectangle is inclusive
             });
@@ -146,7 +148,7 @@ impl System {
     ) {
         let Some(drawing) = &self.drawing else { return };
 
-        for update in self.updates.drain(..) {
+        for update in self.overlay_updates.drain(..) {
             let mut image = OriginGrid::from_rectangle(update, CLEAR);
 
             for position in update.iter() {

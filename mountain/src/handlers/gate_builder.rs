@@ -67,7 +67,7 @@ impl Handler {
         // clearing selection
 
         selection.clear_selection();
-        terrain_artist.update(rectangle);
+        terrain_artist.update_overlay(rectangle);
 
         // create gate
 

@@ -81,7 +81,7 @@ impl Handler {
 
         if let Some(piste) = pistes.get(&piste_id) {
             let grid = &piste.grid;
-            terrain_artist.update(XYRectangle {
+            terrain_artist.update_overlay(XYRectangle {
                 from: *grid.origin(),
                 to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
             });

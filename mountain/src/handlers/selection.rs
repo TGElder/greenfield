@@ -59,7 +59,7 @@ impl Handler {
                 .iter()
                 .chain(new_grid.iter())
                 .flat_map(|grid| grid.rectangle())
-                .for_each(|rectangle| terrain_artist.update(rectangle));
+                .for_each(|rectangle| terrain_artist.update_overlay(rectangle));
         }
     }
 
