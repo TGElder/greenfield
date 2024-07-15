@@ -14,12 +14,14 @@ use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::fs::File;
 use std::io::BufReader;
+use std::path::Path;
 use std::time::Duration;
 
 use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, Rectangle, XY};
 
 use commons::grid::Grid;
+use commons::unsafe_ordering::unsafe_ordering;
 use engine::binding::Binding;
 use engine::engine::Engine;
 use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
@@ -29,7 +31,9 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
+use tiff::decoder::{Decoder, DecodingResult};
 
+use crate::draw::terrain;
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
     lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
@@ -327,7 +331,7 @@ fn main() {
             height: 512,
             projection: Box::new(isometric::Projection::new(isometric::Parameters {
                 projection: isometric::ProjectionParameters {
-                    pitch: PI / 4.0,
+                    pitch: PI / 3.0,
                     yaw: PI * (5.0 / 8.0),
                 },
                 scale: isometric::ScaleParameters {
@@ -362,8 +366,19 @@ fn load_components(path: &str) -> Option<Components> {
 
 fn new_components() -> Components {
     let power = 11;
-    let terrain = generate_heightmap(power);
-    let trees = generate_trees(power, &terrain);
+    let path = Path::new("prudhoe.tif");
+    let img_file = File::open(path).unwrap();
+    let mut decoder = Decoder::new(img_file).expect("Cannot create decoder");
+    decoder = decoder.with_limits(tiff::decoder::Limits::unlimited());
+    let dimensions = decoder.dimensions().unwrap();
+    let DecodingResult::F32(data) = decoder.read_image().unwrap() else {
+        panic!("Cannot read band data")
+    };
+    let terrain = Grid::from_vec(dimensions.0, dimensions.1, data);
+    
+    let terrain = terrain.map(|_, value| value.max(0.0));
+    let terrain = terrain.map(|XY{x, y}, _| terrain[xy(x, terrain.height() - (y + 1))]);
+    let trees = terrain.map(|_, _| None);
     Components {
         skiers: HashMap::default(),
         plans: HashMap::default(),

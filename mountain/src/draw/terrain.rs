@@ -21,7 +21,7 @@ pub struct Drawing {
 
 impl Drawing {
     pub fn init(graphics: &mut dyn Graphics, terrain: &Grid<f32>) -> Drawing {
-        let slab_size = 256;
+        let slab_size = 128;
         let slabs = Grid::from_fn(
             (terrain.width() / slab_size) + 1,
             (terrain.height() / slab_size) + 1,

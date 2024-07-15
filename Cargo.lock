@@ -1001,6 +1001,7 @@ dependencies = [
  "rand",
  "serde",
  "terrain_gen",
+ "tiff",
 ]
 
 [[package]]
