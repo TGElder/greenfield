@@ -98,6 +98,18 @@ impl GliumGraphics {
             .with_title(&parameters.name)
             .build(event_loop);
 
+            let devices = glium::glutin::api::egl::device::Device::query_devices().expect("Failed to query devices").collect::<Vec<_>>();
+
+            for (index, device) in devices.iter().enumerate() {
+                println!(
+                    "Device {}: Name: {} Vendor: {}",
+                    index,
+                    device.name().unwrap_or("UNKNOWN"),
+                    device.vendor().unwrap_or("UNKNOWN"),
+                );
+            }
+    
+
         Self::new(parameters, Display::Headful { _window, display })
     }
 
