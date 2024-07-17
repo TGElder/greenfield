@@ -20,7 +20,8 @@ use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
-use glium::{glutin, VertexBuffer};
+use glium::glutin::surface::WindowSurface;
+use glium::VertexBuffer;
 use nalgebra::Matrix4;
 use programs::*;
 use vertices::*;
@@ -82,42 +83,41 @@ pub struct Parameters {
 impl GliumGraphics {
     pub fn headful<T>(
         parameters: Parameters,
-        event_loop: &glutin::event_loop::EventLoop<T>,
+        event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
         Ok(Self::headful_unsafe(parameters, event_loop)?)
     }
 
     fn headful_unsafe<T>(
         parameters: Parameters,
-        event_loop: &glutin::event_loop::EventLoop<T>,
+        event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, Box<dyn Error>> {
-        let window_builder = glutin::window::WindowBuilder::new()
-            .with_inner_size(glutin::dpi::PhysicalSize::new(
-                parameters.width,
-                parameters.height,
-            ))
-            .with_title(&parameters.name);
-        let context_builder = glutin::ContextBuilder::new().with_depth_buffer(24);
-        let display = glium::Display::new(window_builder, context_builder, event_loop)?;
-        Self::new(parameters, Display::Headful(display))
+        let (_window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
+            .set_window_builder(winit::window::WindowBuilder::new().with_resizable(true))
+            .with_inner_size(parameters.width, parameters.height)
+            .with_title(&parameters.name)
+            .build(event_loop);
+
+        Self::new(parameters, Display::Headful { _window, display })
     }
 
-    pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
-        Ok(Self::headless_unsafe(parameters)?)
-    }
+    // pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
+    //     Ok(Self::headless_unsafe(parameters)?)
+    // }
 
-    fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
-        let ctx = glutin::platform::unix::HeadlessContextExt::build_osmesa(
-            glutin::ContextBuilder::new(),
-            glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
-        )?;
-        let renderer = glium::HeadlessRenderer::new(ctx)?;
-        let display = Display::Headless {
-            renderer,
-            dimensions: (parameters.width, parameters.height),
-        };
-        Self::new(parameters, display)
-    }
+    // fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
+    //     let ctx = glutin::platform::::unix::HeadlessContextExt::build_osmesa(
+    //         glutin::ContextBuilder::new(),
+    //         glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
+    //     )?;
+    //     glium::Surface
+    //     let renderer = glium::HeadlessRenderer::new(ctx)?;
+    //     let display = Display::Headless {
+    //         renderer,
+    //         dimensions: (parameters.width, parameters.height),
+    //     };
+    //     Self::new(parameters, display)
+    // }
 
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
@@ -661,10 +661,15 @@ impl GliumGraphics {
 
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
         let mut frame = self.display.frame();
-
         self.canvas = Some(self.canvas(&self.display.canvas_dimensions())?);
         let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = canvas.frame(self.display.facade())?;
+        let mut canvas = match canvas.frame(self.display.facade()) {
+            Ok(canvas) => canvas,
+            Err(e) => {
+                frame.finish()?;
+                return Err(e);
+            }
+        };
 
         self.render_primitives_to_canvas(&mut canvas)?;
         self.render_dynamic_primitives_to_canvas(&mut canvas)?;
@@ -777,7 +782,10 @@ impl Graphics for GliumGraphics {
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
-        Ok(self.render_unsafe()?)
+        if let Err(e) = self.render_unsafe() {
+            dbg!(e);
+        };
+        Ok(())
     }
 
     fn screenshot(&self, path: &str) -> Result<(), ScreenshotError> {
@@ -799,32 +807,35 @@ impl Graphics for GliumGraphics {
 }
 
 enum Display {
-    Headful(glium::Display),
-    Headless {
-        renderer: glium::HeadlessRenderer,
-        dimensions: (u32, u32),
+    Headful {
+        display: glium::Display<WindowSurface>,
+        _window: winit::window::Window, // if we drop this then the display breaks
     },
+    // Headless {
+    //     renderer: glium::HeadlessRenderer,
+    //     dimensions: (u32, u32),
+    // },
 }
 
 impl Display {
     fn facade(&self) -> &dyn glium::backend::Facade {
         match self {
-            Display::Headful(display) => display,
-            Display::Headless { renderer, .. } => renderer,
+            Display::Headful { display, .. } => display,
+            // Display::Headless { renderer, .. } => renderer,
         }
     }
 
     fn frame(&self) -> glium::Frame {
         match self {
-            Display::Headful(display) => display.draw(),
-            Display::Headless { renderer, .. } => renderer.draw(),
+            Display::Headful { display, .. } => display.draw(),
+            // Display::Headless { renderer, .. } => renderer.draw(),
         }
     }
 
     fn canvas_dimensions(&self) -> (u32, u32) {
         match self {
-            Display::Headful(display) => display.get_framebuffer_dimensions(),
-            Display::Headless { dimensions, .. } => *dimensions,
+            Display::Headful { display, .. } => display.get_framebuffer_dimensions(),
+            // Display::Headless { dimensions, .. } => *dimensions,
         }
     }
 }

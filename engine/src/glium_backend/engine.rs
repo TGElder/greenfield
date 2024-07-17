@@ -2,8 +2,6 @@ use std::error::Error;
 use std::time::Duration;
 
 use commons::geometry::{xy, Rectangle};
-use glium::glutin;
-use glium::glutin::event::MouseScrollDelta;
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
@@ -12,7 +10,7 @@ use crate::glium_backend::graphics::{self, GliumGraphics};
 use crate::graphics::Graphics;
 
 pub struct GliumEngine<E, G> {
-    event_loop: glutin::event_loop::EventLoop<()>,
+    event_loop: winit::event_loop::EventLoop<()>,
     event_handler: E,
     graphics: G,
     state: State,
@@ -54,7 +52,7 @@ where
         parameters: Parameters,
         graphics_parameters: graphics::Parameters,
     ) -> Result<GliumEngine<E, GliumGraphics>, Box<dyn Error>> {
-        let event_loop = glutin::event_loop::EventLoop::new();
+        let event_loop = winit::event_loop::EventLoopBuilder::new().build().unwrap();
         Ok(GliumEngine {
             graphics: GliumGraphics::headful(graphics_parameters, &event_loop)?,
             event_loop,
@@ -68,16 +66,18 @@ where
         self.event_handler
             .handle(&Event::Init, &mut self.state, &mut self.graphics);
 
-        let mut cursor_position: Option<glutin::dpi::PhysicalPosition<f64>> = None;
+        let mut cursor_position: Option<winit::dpi::PhysicalPosition<f64>> = None;
 
         self.event_loop
-            .run(move |event, _, control_flow| match event {
-                glutin::event::Event::NewEvents(cause) => match cause {
-                    glutin::event::StartCause::Init
-                    | glutin::event::StartCause::ResumeTimeReached { .. } => {
+            .run(move |event, window_target| match event {
+                winit::event::Event::NewEvents(cause) => match cause {
+                    winit::event::StartCause::Init
+                    | winit::event::StartCause::ResumeTimeReached { .. } => {
                         let next_frame_time =
                             std::time::Instant::now() + self.parameters.frame_duration;
-                        *control_flow = glutin::event_loop::ControlFlow::WaitUntil(next_frame_time);
+                        window_target.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
+                            next_frame_time,
+                        ));
 
                         if let Some(position) = cursor_position {
                             let (x, y) = position.into();
@@ -101,14 +101,14 @@ where
                     }
                     _ => (),
                 },
-                glutin::event::Event::WindowEvent { event, .. } => match event {
-                    glutin::event::WindowEvent::CloseRequested => {
-                        *control_flow = glutin::event_loop::ControlFlow::Exit;
+                winit::event::Event::WindowEvent { event, .. } => match event {
+                    winit::event::WindowEvent::CloseRequested => {
+                        window_target.exit();
                     }
-                    glutin::event::WindowEvent::CursorMoved { position, .. } => {
+                    winit::event::WindowEvent::CursorMoved { position, .. } => {
                         cursor_position = Some(position);
                     }
-                    glutin::event::WindowEvent::MouseInput { button, state, .. } => {
+                    winit::event::WindowEvent::MouseInput { button, state, .. } => {
                         self.event_handler.handle(
                             &Event::Button {
                                 button: button.into(),
@@ -118,8 +118,8 @@ where
                             &mut self.graphics,
                         );
                     }
-                    glutin::event::WindowEvent::MouseWheel {
-                        delta: MouseScrollDelta::LineDelta(_, y),
+                    winit::event::WindowEvent::MouseWheel {
+                        delta: winit::event::MouseScrollDelta::LineDelta(_, y),
                         ..
                     } => {
                         if y > 0.0 {
@@ -142,10 +142,10 @@ where
                             );
                         }
                     }
-                    glutin::event::WindowEvent::KeyboardInput {
-                        input:
-                            glutin::event::KeyboardInput {
-                                virtual_keycode: Some(keycode),
+                    winit::event::WindowEvent::KeyboardInput {
+                        event:
+                            winit::event::KeyEvent {
+                                physical_key: keycode,
                                 state,
                                 ..
                             },
@@ -160,7 +160,7 @@ where
                             &mut self.graphics,
                         );
                     }
-                    glutin::event::WindowEvent::Resized(glutin::dpi::PhysicalSize {
+                    winit::event::WindowEvent::Resized(winit::dpi::PhysicalSize {
                         width,
                         height,
                     }) => {
@@ -173,78 +173,115 @@ where
                     _ => (),
                 },
                 _ => (),
-            });
+            })
+            .unwrap();
     }
 }
 
-impl From<glutin::event::ElementState> for ButtonState {
-    fn from(state: glutin::event::ElementState) -> Self {
+impl From<winit::event::ElementState> for ButtonState {
+    fn from(state: winit::event::ElementState) -> Self {
         match state {
-            glutin::event::ElementState::Pressed => ButtonState::Pressed,
-            glutin::event::ElementState::Released => ButtonState::Released,
+            winit::event::ElementState::Pressed => ButtonState::Pressed,
+            winit::event::ElementState::Released => ButtonState::Released,
         }
     }
 }
 
-impl From<glutin::event::MouseButton> for Button {
-    fn from(button: glutin::event::MouseButton) -> Self {
+impl From<winit::event::MouseButton> for Button {
+    fn from(button: winit::event::MouseButton) -> Self {
         let mouse_button = match button {
-            glutin::event::MouseButton::Left => MouseButton::Left,
-            glutin::event::MouseButton::Right => MouseButton::Right,
-            glutin::event::MouseButton::Middle => MouseButton::Middle,
-            glutin::event::MouseButton::Other(_) => MouseButton::Unknown,
+            winit::event::MouseButton::Left => MouseButton::Left,
+            winit::event::MouseButton::Right => MouseButton::Right,
+            winit::event::MouseButton::Middle => MouseButton::Middle,
+            _ => MouseButton::Unknown,
         };
         Button::Mouse(mouse_button)
     }
 }
 
-impl From<glutin::event::VirtualKeyCode> for Button {
-    fn from(keycode: glutin::event::VirtualKeyCode) -> Self {
+impl From<winit::keyboard::PhysicalKey> for Button {
+    fn from(keycode: winit::keyboard::PhysicalKey) -> Self {
         let key = match keycode {
-            glutin::event::VirtualKeyCode::Key1 => KeyboardKey::Key1,
-            glutin::event::VirtualKeyCode::Key2 => KeyboardKey::Key2,
-            glutin::event::VirtualKeyCode::Key3 => KeyboardKey::Key3,
-            glutin::event::VirtualKeyCode::Key4 => KeyboardKey::Key4,
-            glutin::event::VirtualKeyCode::Key5 => KeyboardKey::Key5,
-            glutin::event::VirtualKeyCode::Key6 => KeyboardKey::Key6,
-            glutin::event::VirtualKeyCode::Key7 => KeyboardKey::Key7,
-            glutin::event::VirtualKeyCode::Key8 => KeyboardKey::Key8,
-            glutin::event::VirtualKeyCode::Key9 => KeyboardKey::Key9,
-            glutin::event::VirtualKeyCode::Key0 => KeyboardKey::Key0,
-            glutin::event::VirtualKeyCode::A => KeyboardKey::A,
-            glutin::event::VirtualKeyCode::B => KeyboardKey::B,
-            glutin::event::VirtualKeyCode::C => KeyboardKey::C,
-            glutin::event::VirtualKeyCode::D => KeyboardKey::D,
-            glutin::event::VirtualKeyCode::E => KeyboardKey::E,
-            glutin::event::VirtualKeyCode::F => KeyboardKey::F,
-            glutin::event::VirtualKeyCode::G => KeyboardKey::G,
-            glutin::event::VirtualKeyCode::H => KeyboardKey::H,
-            glutin::event::VirtualKeyCode::I => KeyboardKey::I,
-            glutin::event::VirtualKeyCode::J => KeyboardKey::J,
-            glutin::event::VirtualKeyCode::K => KeyboardKey::K,
-            glutin::event::VirtualKeyCode::L => KeyboardKey::L,
-            glutin::event::VirtualKeyCode::M => KeyboardKey::M,
-            glutin::event::VirtualKeyCode::N => KeyboardKey::N,
-            glutin::event::VirtualKeyCode::O => KeyboardKey::O,
-            glutin::event::VirtualKeyCode::P => KeyboardKey::P,
-            glutin::event::VirtualKeyCode::Q => KeyboardKey::Q,
-            glutin::event::VirtualKeyCode::R => KeyboardKey::R,
-            glutin::event::VirtualKeyCode::S => KeyboardKey::S,
-            glutin::event::VirtualKeyCode::T => KeyboardKey::T,
-            glutin::event::VirtualKeyCode::U => KeyboardKey::U,
-            glutin::event::VirtualKeyCode::V => KeyboardKey::V,
-            glutin::event::VirtualKeyCode::W => KeyboardKey::W,
-            glutin::event::VirtualKeyCode::X => KeyboardKey::X,
-            glutin::event::VirtualKeyCode::Y => KeyboardKey::Y,
-            glutin::event::VirtualKeyCode::Z => KeyboardKey::Z,
-            glutin::event::VirtualKeyCode::Plus => KeyboardKey::Plus,
-            glutin::event::VirtualKeyCode::Minus => KeyboardKey::Minus,
-            glutin::event::VirtualKeyCode::Comma => KeyboardKey::Comma,
-            glutin::event::VirtualKeyCode::Period => KeyboardKey::Period,
-            glutin::event::VirtualKeyCode::LBracket => KeyboardKey::BracketLeft,
-            glutin::event::VirtualKeyCode::RBracket => KeyboardKey::BracketRight,
-            glutin::event::VirtualKeyCode::Slash => KeyboardKey::Slash,
-            glutin::event::VirtualKeyCode::Backslash => KeyboardKey::Backslash,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit1) => {
+                KeyboardKey::Key1
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit2) => {
+                KeyboardKey::Key2
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit3) => {
+                KeyboardKey::Key3
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit4) => {
+                KeyboardKey::Key4
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit5) => {
+                KeyboardKey::Key5
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit6) => {
+                KeyboardKey::Key6
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit7) => {
+                KeyboardKey::Key7
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit8) => {
+                KeyboardKey::Key8
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit9) => {
+                KeyboardKey::Key9
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit0) => {
+                KeyboardKey::Key0
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyA) => KeyboardKey::A,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyB) => KeyboardKey::B,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyC) => KeyboardKey::C,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyD) => KeyboardKey::D,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyE) => KeyboardKey::E,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyF) => KeyboardKey::F,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyG) => KeyboardKey::G,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyH) => KeyboardKey::H,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyI) => KeyboardKey::I,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyJ) => KeyboardKey::J,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyK) => KeyboardKey::K,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyL) => KeyboardKey::L,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyM) => KeyboardKey::M,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyN) => KeyboardKey::N,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyO) => KeyboardKey::O,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyP) => KeyboardKey::P,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyQ) => KeyboardKey::Q,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyR) => KeyboardKey::R,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyS) => KeyboardKey::S,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyT) => KeyboardKey::T,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyU) => KeyboardKey::U,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyV) => KeyboardKey::V,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyW) => KeyboardKey::W,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyX) => KeyboardKey::X,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyY) => KeyboardKey::Y,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyZ) => KeyboardKey::Z,
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Equal) => {
+                KeyboardKey::Equal
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Minus) => {
+                KeyboardKey::Minus
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Comma) => {
+                KeyboardKey::Comma
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Period) => {
+                KeyboardKey::Period
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::BracketLeft) => {
+                KeyboardKey::BracketLeft
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::BracketRight) => {
+                KeyboardKey::BracketRight
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Slash) => {
+                KeyboardKey::Slash
+            }
+            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Backslash) => {
+                KeyboardKey::Backslash
+            }
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)

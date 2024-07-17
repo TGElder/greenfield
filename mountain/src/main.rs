@@ -262,7 +262,7 @@ fn main() {
                     bindings: zoom::Bindings {
                         plus: Binding::Multi(vec![
                             Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::Plus),
+                                button: Button::Keyboard(KeyboardKey::Equal),
                                 state: ButtonState::Pressed,
                             },
                             Binding::Single {
