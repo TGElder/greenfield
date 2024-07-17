@@ -695,7 +695,6 @@ impl EventHandler for Game {
         self.systems
             .global_computer
             .run(computer::global_costs::Parameters {
-                piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
                 carousels: &self.components.carousels,
                 entrances: &self.components.entrances,

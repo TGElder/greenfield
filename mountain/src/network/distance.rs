@@ -1,14 +1,12 @@
 use std::iter::empty;
 
 use commons::geometry::XY;
-use commons::grid::Grid;
 use commons::grid::OFFSETS_8;
 use network::model::{Edge, InNetwork};
 
 use crate::model::piste::Piste;
 
 pub struct DistanceNetwork<'a> {
-    pub terrain: &'a Grid<f32>,
     pub piste: &'a Piste,
     pub can_visit: &'a dyn Fn(&XY<u32>) -> bool,
 }

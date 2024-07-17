@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 use std::iter::{empty, once};
 
-use commons::grid::Grid;
 use network::model::{Edge, OutNetwork};
 
 use crate::model::ability::Ability;
@@ -14,7 +13,6 @@ use crate::model::skiing::State;
 pub const GLOBAL_COST_DIVISOR: u64 = 1000;
 
 pub struct GlobalNetwork<'a> {
-    pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub pick_up_to_lift: &'a HashMap<usize, usize>,
     pub carousels: &'a HashMap<usize, Carousel>,

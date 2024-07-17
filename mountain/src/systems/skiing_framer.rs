@@ -59,7 +59,6 @@ fn frame_from_skiing_state(
         position: xyz(position.x as f32, position.y as f32, terrain[position]),
         yaw: travel_direction.angle(),
         pitch: 0.0,
-        model_offset: None,
         model: frame::Model::Standing {
             skis: true,
             clothes: *clothes,
@@ -100,7 +99,6 @@ fn blend(
         yaw: to.yaw,
         pitch,
         model: from.model,
-        model_offset: None,
     }
 }
 

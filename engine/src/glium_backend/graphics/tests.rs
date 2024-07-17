@@ -22,6 +22,14 @@ use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;
 
+fn event_loop() -> EventLoop<()> {
+    let event_loop: EventLoop<()> = winit::event_loop::EventLoopBuilder::new()
+        .with_any_thread(true)
+        .build()
+        .unwrap();
+    event_loop
+}
+
 fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
     let quads = cube::model().recolor(&|side| match side {
         cube::Side::Left => Rgb::new(1.0, 1.0, 0.0),
@@ -34,166 +42,175 @@ fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
     triangles_from_quads(&quads)
 }
 
-// #[test]
-// fn render_cube() {
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+#[test]
+fn render_cube() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     // when
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.render().unwrap();
+    // when
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.render().unwrap();
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/render_cube.png").unwrap();
-//     assert_eq!(actual, expected);
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     // when
-//     let rear_facing_triangles = triangles.transform(&transformation_matrix(Transformation {
-//         yaw: Some(-PI / 2.0),
-//         roll: Some(PI),
-//         ..Transformation::default()
-//     }));
+    // when
+    let rear_facing_triangles = triangles.transform(&transformation_matrix(Transformation {
+        yaw: Some(-PI / 2.0),
+        roll: Some(PI),
+        ..Transformation::default()
+    }));
 
-//     graphics
-//         .draw_triangles(&index, &rear_facing_triangles)
-//         .unwrap();
-//     graphics.render().unwrap();
+    graphics
+        .draw_triangles(&index, &rear_facing_triangles)
+        .unwrap();
+    graphics.render().unwrap();
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
+    assert_eq!(actual, expected);
 
-// #[test]
-// fn render_cube_dynamic() {
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    event_loop.exit();
+}
 
-//     // when
-//     let triangles = cube_triangles();
-//     let triangles = triangles.transform(&transformation_matrix(Transformation {
-//         scale: Some(xyz(0.5, 0.5, 0.5)),
-//         ..Transformation::default()
-//     }));
+#[test]
+fn render_cube_dynamic() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
-//     let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
-//     graphics
-//         .update_dynamic_triangles(&index_1, Some(&triangles))
-//         .unwrap();
-//     graphics.render().unwrap();
+    // when
+    let triangles = cube_triangles();
+    let triangles = triangles.transform(&transformation_matrix(Transformation {
+        scale: Some(xyz(0.5, 0.5, 0.5)),
+        ..Transformation::default()
+    }));
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
+    graphics
+        .update_dynamic_triangles(&index_1, Some(&triangles))
+        .unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/render_cube_dynamic.png").unwrap();
-//     assert_eq!(actual, expected);
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // when
-//     let triangles_left = triangles.transform(&transformation_matrix(Transformation {
-//         translation: Some(xyz(-0.5, 0.0, 0.0)),
-//         ..Transformation::default()
-//     }));
-//     let triangles_right = triangles.transform(&transformation_matrix(Transformation {
-//         translation: Some(xyz(0.5, 0.0, 0.0)),
-//         ..Transformation::default()
-//     }));
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_cube_dynamic.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     graphics
-//         .update_dynamic_triangles(&index_1, Some(&triangles_left))
-//         .unwrap();
-//     graphics
-//         .update_dynamic_triangles(&index_2, Some(&triangles_right))
-//         .unwrap();
-//     graphics.render().unwrap();
+    // when
+    let triangles_left = triangles.transform(&transformation_matrix(Transformation {
+        translation: Some(xyz(-0.5, 0.0, 0.0)),
+        ..Transformation::default()
+    }));
+    let triangles_right = triangles.transform(&transformation_matrix(Transformation {
+        translation: Some(xyz(0.5, 0.0, 0.0)),
+        ..Transformation::default()
+    }));
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    graphics
+        .update_dynamic_triangles(&index_1, Some(&triangles_left))
+        .unwrap();
+    graphics
+        .update_dynamic_triangles(&index_2, Some(&triangles_right))
+        .unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected =
-//         image::open("test_resources/graphics/render_cube_dynamic_two_cubes.png").unwrap();
-//     assert_eq!(actual, expected);
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // when
-//     graphics.update_dynamic_triangles(&index_1, None).unwrap();
-//     graphics.render().unwrap();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_cube_dynamic_two_cubes.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    // when
+    graphics.update_dynamic_triangles(&index_1, None).unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected =
-//         image::open("test_resources/graphics/render_cube_dynamic_one_cube_invisible.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_cube_dynamic_one_cube_invisible.png").unwrap();
+    assert_eq!(actual, expected);
+
+    event_loop.exit();
+}
 
 #[test]
 fn instanced_cubes() {
     // given
-    let event_loop: EventLoop<()> = winit::event_loop::EventLoopBuilder::with_user_event()
-        .with_any_thread(true)
-        .build()
-        .unwrap();
+    let event_loop = event_loop();
     let mut graphics = GliumGraphics::headful(
         graphics::Parameters {
             name: "Test".to_string(),
@@ -296,600 +313,643 @@ fn instanced_cubes() {
     let expected =
         image::open("test_resources/graphics/instance_cubes_with_single_cube.png").unwrap();
     assert_eq!(actual, expected);
+
     event_loop.exit();
 }
 
-// #[test]
-// fn render_billboard() {
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+#[test]
+fn render_billboard() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     // when
-//     let texture = graphics
-//         .load_texture_from_file("test_resources/graphics/crab.png")
-//         .unwrap();
-//     let billboard = elements::Billboard {
-//         position: xyz(0.0, 0.0, 0.0),
-//         dimensions: Rectangle {
-//             width: 1.0,
-//             height: 1.0,
-//         },
-//         texture,
-//     };
-//     let index = graphics.create_billboards().unwrap();
-//     graphics.draw_billboard(&index, &billboard).unwrap();
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = triangles_from_quads(&[Quad {
-//         corners: [
-//             xyz(-0.5, -0.5, 0.0),
-//             xyz(0.5, -0.5, 0.0),
-//             xyz(0.5, 0.5, 0.0),
-//             xyz(-0.5, 0.5, 0.0),
-//         ],
-//         color: Rgb::new(0.0, 0.0, 1.0),
-//     }]);
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.render().unwrap();
+    // when
+    let texture = graphics
+        .load_texture_from_file("test_resources/graphics/crab.png")
+        .unwrap();
+    let billboard = elements::Billboard {
+        position: xyz(0.0, 0.0, 0.0),
+        dimensions: Rectangle {
+            width: 1.0,
+            height: 1.0,
+        },
+        texture,
+    };
+    let index = graphics.create_billboards().unwrap();
+    graphics.draw_billboard(&index, &billboard).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = triangles_from_quads(&[Quad {
+        corners: [
+            xyz(-0.5, -0.5, 0.0),
+            xyz(0.5, -0.5, 0.0),
+            xyz(0.5, 0.5, 0.0),
+            xyz(-0.5, 0.5, 0.0),
+        ],
+        color: Rgb::new(0.0, 0.0, 1.0),
+    }]);
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.render().unwrap();
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
-//     let difference = commons::image::difference(&actual, &expected).unwrap();
-//     let max_difference = (256 * 256 * (255 * 3)) / 1000;
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_billboard.png").unwrap();
+    let difference = commons::image::difference(&actual, &expected).unwrap();
+    let max_difference = (256 * 256 * (255 * 3)) / 1000;
 
-//     assert!(difference < max_difference);
-// }
+    assert!(difference < max_difference);
 
-// #[test]
-// fn render_overlay_quads() {
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (1.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    event_loop.exit();
+}
 
-//     // when
-//     let base_texture = graphics
-//         .load_texture_from_file("test_resources/graphics/overlay_quads_base.png")
-//         .unwrap();
-//     let overlay_texture = graphics
-//         .load_texture(&Grid::from_vec(
-//             2,
-//             2,
-//             vec![
-//                 Rgba::new(255, 255, 0, 255),
-//                 Rgba::new(0, 0, 0, 0),
-//                 Rgba::new(0, 0, 0, 0),
-//                 Rgba::new(255, 255, 0, 255),
-//             ],
-//         ))
-//         .unwrap();
+#[test]
+fn render_overlay_quads() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (1.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     fn textured_position(position: XYZ<f32>, normal: XYZ<f32>) -> TexturedPosition {
-//         TexturedPosition {
-//             position,
-//             normal,
-//             texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
-//         }
-//     }
+    // when
+    let base_texture = graphics
+        .load_texture_from_file("test_resources/graphics/overlay_quads_base.png")
+        .unwrap();
+    let overlay_texture = graphics
+        .load_texture(&Grid::from_vec(
+            2,
+            2,
+            vec![
+                Rgba::new(255, 255, 0, 255),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(0, 0, 0, 0),
+                Rgba::new(255, 255, 0, 255),
+            ],
+        ))
+        .unwrap();
 
-//     let aa = xyz(-0.5, -0.5, 0.0);
-//     let ba = xyz(0.0, -0.5, 0.0);
-//     let ca = xyz(0.5, -0.5, 0.0);
-//     let ab = xyz(-0.5, 0.0, 0.0);
-//     let bb = xyz(0.0, 0.0, 0.5);
-//     let cb = xyz(0.5, 0.0, 0.0);
-//     let ac = xyz(-0.5, 0.5, 0.0);
-//     let bc = xyz(0.0, 0.5, 0.0);
-//     let cc = xyz(0.5, 0.5, 0.0);
-//     let quads = [
-//         [aa, ba, bb, ab],
-//         [ba, ca, cb, bb],
-//         [ab, bb, bc, ac],
-//         [bb, cb, cc, bc],
-//     ]
-//     .into_iter()
-//     .map(|quad| {
-//         let normal = quad_normal(&quad);
-//         [
-//             textured_position(quad[0], normal),
-//             textured_position(quad[1], normal),
-//             textured_position(quad[2], normal),
-//             textured_position(quad[3], normal),
-//         ]
-//     })
-//     .collect::<Vec<_>>();
+    fn textured_position(position: XYZ<f32>, normal: XYZ<f32>) -> TexturedPosition {
+        TexturedPosition {
+            position,
+            normal,
+            texture_coordinates: xy(position.x + 0.5, position.y + 0.5),
+        }
+    }
 
-//     let overlay_triangles = OverlayTriangles {
-//         base_texture,
-//         overlay_texture,
-//         triangles: textured_triangles_from_textured_quads(&quads),
-//     };
-//     let index = graphics.create_overlay_triangles().unwrap();
-//     graphics
-//         .draw_overlay_triangles(&index, &overlay_triangles)
-//         .unwrap();
-//     graphics.render().unwrap();
+    let aa = xyz(-0.5, -0.5, 0.0);
+    let ba = xyz(0.0, -0.5, 0.0);
+    let ca = xyz(0.5, -0.5, 0.0);
+    let ab = xyz(-0.5, 0.0, 0.0);
+    let bb = xyz(0.0, 0.0, 0.5);
+    let cb = xyz(0.5, 0.0, 0.0);
+    let ac = xyz(-0.5, 0.5, 0.0);
+    let bc = xyz(0.0, 0.5, 0.0);
+    let cc = xyz(0.5, 0.5, 0.0);
+    let quads = [
+        [aa, ba, bb, ab],
+        [ba, ca, cb, bb],
+        [ab, bb, bc, ac],
+        [bb, cb, cc, bc],
+    ]
+    .into_iter()
+    .map(|quad| {
+        let normal = quad_normal(&quad);
+        [
+            textured_position(quad[0], normal),
+            textured_position(quad[1], normal),
+            textured_position(quad[2], normal),
+            textured_position(quad[3], normal),
+        ]
+    })
+    .collect::<Vec<_>>();
 
-//     let temp_dir = temp_dir();
-//     let temp_path = temp_dir.join("render_overlay_quads.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let overlay_triangles = OverlayTriangles {
+        base_texture,
+        overlay_texture,
+        triangles: textured_triangles_from_textured_quads(&quads),
+    };
+    let index = graphics.create_overlay_triangles().unwrap();
+    graphics
+        .draw_overlay_triangles(&index, &overlay_triangles)
+        .unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/render_overlay_quads.png").unwrap();
-//     assert_eq!(actual, expected);
+    let temp_dir = temp_dir();
+    let temp_path = temp_dir.join("render_overlay_quads.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // when
-//     graphics
-//         .modify_texture(
-//             &overlay_texture,
-//             &OriginGrid::new(
-//                 xy(0, 1),
-//                 Grid::from_vec(
-//                     2,
-//                     1,
-//                     vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
-//                 ),
-//             ),
-//         )
-//         .unwrap();
-//     graphics
-//         .modify_texture(
-//             &overlay_texture,
-//             &OriginGrid::new(
-//                 xy(0, 0),
-//                 Grid::from_vec(
-//                     1,
-//                     2,
-//                     vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
-//                 ),
-//             ),
-//         )
-//         .unwrap();
-//     graphics.render().unwrap();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/render_overlay_quads.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     let temp_path = temp_dir.join("render_overlay_quads_modified.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    // when
+    graphics
+        .modify_texture(
+            &overlay_texture,
+            &OriginGrid::new(
+                xy(0, 1),
+                Grid::from_vec(
+                    2,
+                    1,
+                    vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+                ),
+            ),
+        )
+        .unwrap();
+    graphics
+        .modify_texture(
+            &overlay_texture,
+            &OriginGrid::new(
+                xy(0, 0),
+                Grid::from_vec(
+                    1,
+                    2,
+                    vec![Rgba::new(255, 255, 0, 255), Rgba::new(255, 255, 0, 255)],
+                ),
+            ),
+        )
+        .unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected =
-//         image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    let temp_path = temp_dir.join("render_overlay_quads_modified.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-// #[test]
-// fn look_at() {
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected =
+        image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     // when
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
-//     graphics.render().unwrap();
+    event_loop.exit();
+}
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+#[test]
+fn look_at() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/look_at.png").unwrap();
-//     assert_eq!(actual, expected);
+    // when
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
+    graphics.render().unwrap();
 
-//     // when
-//     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
-//     graphics.render().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     assert_eq!(actual, expected);
-// }
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/look_at.png").unwrap();
+    assert_eq!(actual, expected);
 
-// #[test]
-// fn drag_handler() {
-//     struct MockEngine {}
+    // when
+    graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
+    graphics.render().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     impl Engine for MockEngine {
-//         fn shutdown(&mut self) {}
-//     }
+    // then
+    let actual = image::open(temp_path).unwrap();
+    assert_eq!(actual, expected);
 
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    event_loop.exit();
+}
 
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.render().unwrap();
+#[test]
+fn drag_handler() {
+    struct MockEngine {}
 
-//     let mut drag_handler = drag::Handler::new(drag::Bindings {
-//         start_dragging: Binding::Single {
-//             button: Button::Mouse(MouseButton::Left),
-//             state: ButtonState::Pressed,
-//         },
-//         stop_dragging: Binding::Single {
-//             button: Button::Mouse(MouseButton::Left),
-//             state: ButtonState::Released,
-//         },
-//     });
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
 
-//     // when
-//     drag_handler.handle(
-//         &Event::MouseMoved(xy(100, 150)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     drag_handler.handle(
-//         &Event::Button {
-//             button: Button::Mouse(MouseButton::Left),
-//             state: ButtonState::Pressed,
-//         },
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     drag_handler.handle(
-//         &Event::MouseMoved(xy(80, 170)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    let mut drag_handler = drag::Handler::new(drag::Bindings {
+        start_dragging: Binding::Single {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Pressed,
+        },
+        stop_dragging: Binding::Single {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Released,
+        },
+    });
 
-// #[test]
-// fn yaw_handler() {
-//     struct MockEngine {}
+    // when
+    drag_handler.handle(
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::Button {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    drag_handler.handle(
+        &Event::MouseMoved(xy(80, 170)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
 
-//     impl Engine for MockEngine {
-//         fn shutdown(&mut self) {}
-//     }
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.render().unwrap();
+    event_loop.exit();
+}
 
-//     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
-//         initial_angle: 5,
-//         angles: 16,
-//         bindings: yaw::Bindings {
-//             plus: Binding::Single {
-//                 button: Button::Keyboard(KeyboardKey::Plus),
-//                 state: ButtonState::Pressed,
-//             },
-//             minus: Binding::Single {
-//                 button: Button::Keyboard(KeyboardKey::Minus),
-//                 state: ButtonState::Pressed,
-//             },
-//         },
-//     });
+#[test]
+fn yaw_handler() {
+    struct MockEngine {}
 
-//     // when
-//     yaw_handler.handle(
-//         &Event::MouseMoved(xy(100, 150)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     yaw_handler.handle(
-//         &Event::Button {
-//             button: Button::Keyboard(KeyboardKey::Plus),
-//             state: ButtonState::Pressed,
-//         },
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/yaw_handler_1.png").unwrap();
-//     assert_eq!(actual, expected);
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.render().unwrap();
 
-//     // when
-//     yaw_handler.handle(
-//         &Event::MouseMoved(xy(100, 150)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     yaw_handler.handle(
-//         &Event::Button {
-//             button: Button::Keyboard(KeyboardKey::Minus),
-//             state: ButtonState::Pressed,
-//         },
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+    let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
+        initial_angle: 5,
+        angles: 16,
+        bindings: yaw::Bindings {
+            plus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Equal),
+                state: ButtonState::Pressed,
+            },
+            minus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Minus),
+                state: ButtonState::Pressed,
+            },
+        },
+    });
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    // when
+    yaw_handler.handle(
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::Equal),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-// #[test]
-// fn zoom_handler() {
-//     struct MockEngine {}
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_1.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     impl Engine for MockEngine {
-//         fn shutdown(&mut self) {}
-//     }
+    // when
+    yaw_handler.handle(
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::Minus),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
 
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 256,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
-//     graphics.render().unwrap();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     let mut zoom_handler = zoom::Handler::new(zoom::Parameters {
-//         initial_level: 8,
-//         min_level: 7,
-//         max_level: 9,
-//         bindings: zoom::Bindings {
-//             plus: Binding::Single {
-//                 button: Button::Keyboard(KeyboardKey::Plus),
-//                 state: ButtonState::Pressed,
-//             },
-//             minus: Binding::Single {
-//                 button: Button::Keyboard(KeyboardKey::Minus),
-//                 state: ButtonState::Pressed,
-//             },
-//         },
-//     });
+    event_loop.exit();
+}
 
-//     // when
-//     zoom_handler.handle(
-//         &Event::MouseMoved(xy(100, 150)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     zoom_handler.handle(
-//         &Event::Button {
-//             button: Button::Keyboard(KeyboardKey::Plus),
-//             state: ButtonState::Pressed,
-//         },
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+#[test]
+fn zoom_handler() {
+    struct MockEngine {}
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/zoom_handler_1.png").unwrap();
-//     assert_eq!(actual, expected);
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
 
-//     // when
-//     zoom_handler.handle(
-//         &Event::MouseMoved(xy(100, 150)),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     zoom_handler.handle(
-//         &Event::Button {
-//             button: Button::Keyboard(KeyboardKey::Minus),
-//             state: ButtonState::Pressed,
-//         },
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics.render().unwrap();
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+    let mut zoom_handler = zoom::Handler::new(zoom::Parameters {
+        initial_level: 8,
+        min_level: 7,
+        max_level: 9,
+        bindings: zoom::Bindings {
+            plus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Equal),
+                state: ButtonState::Pressed,
+            },
+            minus: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Minus),
+                state: ButtonState::Pressed,
+            },
+        },
+    });
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/zoom_handler_2.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    // when
+    zoom_handler.handle(
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    zoom_handler.handle(
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::Equal),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
 
-// #[test]
-// fn resize_handler() {
-//     struct MockEngine {}
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     impl Engine for MockEngine {
-//         fn shutdown(&mut self) {}
-//     }
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/zoom_handler_1.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     // given
-//     let mut graphics = GliumGraphics::headless(graphics::Parameters {
-//         name: "Test".to_string(),
-//         width: 512,
-//         height: 256,
-//         projection: Box::new(isometric::Projection::new(isometric::Parameters {
-//             projection: isometric::ProjectionParameters {
-//                 pitch: PI / 4.0,
-//                 yaw: PI * (5.0 / 8.0),
-//             },
-//             scale: isometric::ScaleParameters {
-//                 zoom: 256.0,
-//                 z_max: 1.0,
-//                 viewport: Rectangle {
-//                     width: 256,
-//                     height: 256,
-//                 },
-//             },
-//         })),
-//         light_direction: xyz(-1.0, 0.0, 0.0),
-//     })
-//     .unwrap();
+    // when
+    zoom_handler.handle(
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    zoom_handler.handle(
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::Minus),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
 
-//     let index = graphics.create_triangles().unwrap();
-//     let triangles = cube_triangles();
-//     graphics.draw_triangles(&index, &triangles).unwrap();
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
 
-//     let mut resize_hander = resize::Handler::new();
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/zoom_handler_2.png").unwrap();
+    assert_eq!(actual, expected);
 
-//     // when
-//     resize_hander.handle(
-//         &Event::WindowResize(Rectangle {
-//             width: 512,
-//             height: 256,
-//         }),
-//         &mut MockEngine {},
-//         &mut graphics,
-//     );
-//     graphics.render().unwrap();
+    event_loop.exit();
+}
 
-//     let temp_path = temp_dir().join("test.png");
-//     let temp_path = temp_path.to_str().unwrap();
-//     graphics.screenshot(temp_path).unwrap();
+#[test]
+fn resize_handler() {
+    struct MockEngine {}
 
-//     // then
-//     let actual = image::open(temp_path).unwrap();
-//     let expected = image::open("test_resources/graphics/resize_handler.png").unwrap();
-//     assert_eq!(actual, expected);
-// }
+    impl Engine for MockEngine {
+        fn shutdown(&mut self) {}
+    }
+
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headful(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 512,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
+    .unwrap();
+
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics.draw_triangles(&index, &triangles).unwrap();
+
+    let mut resize_hander = resize::Handler::new();
+
+    // when
+    resize_hander.handle(
+        &Event::WindowResize(Rectangle {
+            width: 512,
+            height: 256,
+        }),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/resize_handler.png").unwrap();
+    assert_eq!(actual, expected);
+
+    event_loop.exit();
+}

@@ -98,38 +98,8 @@ impl GliumGraphics {
             .with_title(&parameters.name)
             .build(event_loop);
 
-            let devices = glium::glutin::api::egl::device::Device::query_devices().expect("Failed to query devices").collect::<Vec<_>>();
-
-            for (index, device) in devices.iter().enumerate() {
-                println!(
-                    "Device {}: Name: {} Vendor: {}",
-                    index,
-                    device.name().unwrap_or("UNKNOWN"),
-                    device.vendor().unwrap_or("UNKNOWN"),
-                );
-            }
-    
-
         Self::new(parameters, Display::Headful { _window, display })
     }
-
-    // pub fn headless(parameters: Parameters) -> Result<GliumGraphics, InitializationError> {
-    //     Ok(Self::headless_unsafe(parameters)?)
-    // }
-
-    // fn headless_unsafe(parameters: Parameters) -> Result<GliumGraphics, Box<dyn Error>> {
-    //     let ctx = glutin::platform::::unix::HeadlessContextExt::build_osmesa(
-    //         glutin::ContextBuilder::new(),
-    //         glutin::dpi::PhysicalSize::new(parameters.width, parameters.height),
-    //     )?;
-    //     glium::Surface
-    //     let renderer = glium::HeadlessRenderer::new(ctx)?;
-    //     let display = Display::Headless {
-    //         renderer,
-    //         dimensions: (parameters.width, parameters.height),
-    //     };
-    //     Self::new(parameters, display)
-    // }
 
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
@@ -823,31 +793,24 @@ enum Display {
         display: glium::Display<WindowSurface>,
         _window: winit::window::Window, // if we drop this then the display breaks
     },
-    // Headless {
-    //     renderer: glium::HeadlessRenderer,
-    //     dimensions: (u32, u32),
-    // },
 }
 
 impl Display {
     fn facade(&self) -> &dyn glium::backend::Facade {
         match self {
             Display::Headful { display, .. } => display,
-            // Display::Headless { renderer, .. } => renderer,
         }
     }
 
     fn frame(&self) -> glium::Frame {
         match self {
             Display::Headful { display, .. } => display.draw(),
-            // Display::Headless { renderer, .. } => renderer.draw(),
         }
     }
 
     fn canvas_dimensions(&self) -> (u32, u32) {
         match self {
             Display::Headful { display, .. } => display.get_framebuffer_dimensions(),
-            // Display::Headless { dimensions, .. } => *dimensions,
         }
     }
 }
