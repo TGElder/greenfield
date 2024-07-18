@@ -4,7 +4,7 @@ use engine::graphics::transform::Recolor;
 
 use crate::draw::model::pyramid;
 
-const LEAF_COLOR: Rgb<f32> = Rgb::new(0.0, 0.639, 0.610);
+const LEAF_COLOR: Rgb<f32> = Rgb::new(0.0, 0.373, 0.337);
 const TRUNK_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
 
 pub fn model() -> Vec<Triangle<Rgb<f32>>> {

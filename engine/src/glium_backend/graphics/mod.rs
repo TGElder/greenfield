@@ -81,14 +81,14 @@ pub struct Parameters {
 }
 
 impl GliumGraphics {
-    pub fn headful<T>(
+    pub fn headed<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
-        Ok(Self::headful_unsafe(parameters, event_loop)?)
+        Ok(Self::headed_unsafe(parameters, event_loop)?)
     }
 
-    fn headful_unsafe<T>(
+    fn headed_unsafe<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, Box<dyn Error>> {
@@ -98,7 +98,7 @@ impl GliumGraphics {
             .with_title(&parameters.name)
             .build(event_loop);
 
-        Self::new(parameters, Display::Headful { _window, display })
+        Self::new(parameters, Display::Headed { _window, display })
     }
 
     fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
@@ -645,13 +645,7 @@ impl GliumGraphics {
         let mut frame = self.display.frame();
         self.canvas = Some(self.canvas(&self.display.canvas_dimensions())?);
         let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = match canvas.frame(self.display.facade()) {
-            Ok(canvas) => canvas,
-            Err(e) => {
-                frame.finish()?;
-                return Err(e);
-            }
-        };
+        let mut canvas = canvas.frame(self.display.facade())?;
 
         self.render_primitives_to_canvas(&mut canvas)?;
         self.render_dynamic_primitives_to_canvas(&mut canvas)?;
@@ -764,10 +758,7 @@ impl Graphics for GliumGraphics {
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
-        if let Err(e) = self.render_unsafe() {
-            dbg!(e);
-        };
-        Ok(())
+        Ok(self.render_unsafe()?)
     }
 
     fn screenshot(&self, path: &str) -> Result<(), ScreenshotError> {
@@ -789,7 +780,7 @@ impl Graphics for GliumGraphics {
 }
 
 enum Display {
-    Headful {
+    Headed {
         display: glium::Display<WindowSurface>,
         _window: winit::window::Window, // if we drop this then the display breaks
     },
@@ -798,19 +789,19 @@ enum Display {
 impl Display {
     fn facade(&self) -> &dyn glium::backend::Facade {
         match self {
-            Display::Headful { display, .. } => display,
+            Display::Headed { display, .. } => display,
         }
     }
 
     fn frame(&self) -> glium::Frame {
         match self {
-            Display::Headful { display, .. } => display.draw(),
+            Display::Headed { display, .. } => display.draw(),
         }
     }
 
     fn canvas_dimensions(&self) -> (u32, u32) {
         match self {
-            Display::Headful { display, .. } => display.get_framebuffer_dimensions(),
+            Display::Headed { display, .. } => display.get_framebuffer_dimensions(),
         }
     }
 }
