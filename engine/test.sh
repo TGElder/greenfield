@@ -1,4 +1,3 @@
-# cargo test --workspace --exclude engine
 cargo test glium_backend::graphics::tests::render_cube -- --exact &&
 cargo test glium_backend::graphics::tests::render_cube_dynamic -- --exact  &&
 cargo test glium_backend::graphics::tests::instanced_cubes -- --exact &&
