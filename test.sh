@@ -1,2 +1,2 @@
-cargo test --workspace --exclude engine
+cargo test --workspace --exclude engine &&
 ./engine/test.sh
