@@ -1,14 +1,11 @@
 use std::collections::HashMap;
 
 use commons::color::Rgb;
-use commons::geometry::{xyz, XYZ};
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::frame::{Frame, Model};
 use crate::model::lift::Lift;
 use crate::model::skier::Clothes;
-
-const SITTING_OFFSET: XYZ<f32> = xyz(0.24, 0.0, -1.4);
 
 const MISSING_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 0.0);
 lazy_static! {
@@ -57,7 +54,6 @@ pub fn run(
                     position,
                     yaw,
                     pitch: 0.0,
-                    model_offset: None,
                     model: Model::Chair,
                 }),
             );
@@ -73,7 +69,6 @@ pub fn run(
                     position,
                     yaw,
                     pitch: 0.0,
-                    model_offset: Some(SITTING_OFFSET),
                     model: Model::Sitting { clothes: *clothes },
                 }),
             );

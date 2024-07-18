@@ -262,7 +262,7 @@ fn main() {
                     bindings: zoom::Bindings {
                         plus: Binding::Multi(vec![
                             Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::Plus),
+                                button: Button::Keyboard(KeyboardKey::Equal),
                                 state: ButtonState::Pressed,
                             },
                             Binding::Single {
@@ -695,7 +695,6 @@ impl EventHandler for Game {
         self.systems
             .global_computer
             .run(computer::global_costs::Parameters {
-                piste_map: &self.components.piste_map,
                 lifts: &self.components.lifts,
                 carousels: &self.components.carousels,
                 entrances: &self.components.entrances,

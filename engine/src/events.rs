@@ -71,7 +71,7 @@ pub enum KeyboardKey {
     Y,
     Z,
 
-    Plus,
+    Equal,
     Minus,
 
     Comma,
