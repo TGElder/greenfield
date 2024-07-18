@@ -2,6 +2,7 @@ use std::error::Error;
 use std::time::Duration;
 
 use commons::geometry::{xy, Rectangle};
+use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::engine::errors::InitializationError;
 use crate::engine::Engine;
@@ -199,89 +200,53 @@ impl From<winit::event::MouseButton> for Button {
     }
 }
 
-impl From<winit::keyboard::PhysicalKey> for Button {
-    fn from(keycode: winit::keyboard::PhysicalKey) -> Self {
+impl From<PhysicalKey> for Button {
+    fn from(keycode: PhysicalKey) -> Self {
         let key = match keycode {
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit1) => {
-                KeyboardKey::Key1
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit2) => {
-                KeyboardKey::Key2
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit3) => {
-                KeyboardKey::Key3
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit4) => {
-                KeyboardKey::Key4
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit5) => {
-                KeyboardKey::Key5
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit6) => {
-                KeyboardKey::Key6
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit7) => {
-                KeyboardKey::Key7
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit8) => {
-                KeyboardKey::Key8
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit9) => {
-                KeyboardKey::Key9
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Digit0) => {
-                KeyboardKey::Key0
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyA) => KeyboardKey::A,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyB) => KeyboardKey::B,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyC) => KeyboardKey::C,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyD) => KeyboardKey::D,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyE) => KeyboardKey::E,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyF) => KeyboardKey::F,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyG) => KeyboardKey::G,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyH) => KeyboardKey::H,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyI) => KeyboardKey::I,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyJ) => KeyboardKey::J,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyK) => KeyboardKey::K,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyL) => KeyboardKey::L,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyM) => KeyboardKey::M,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyN) => KeyboardKey::N,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyO) => KeyboardKey::O,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyP) => KeyboardKey::P,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyQ) => KeyboardKey::Q,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyR) => KeyboardKey::R,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyS) => KeyboardKey::S,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyT) => KeyboardKey::T,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyU) => KeyboardKey::U,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyV) => KeyboardKey::V,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyW) => KeyboardKey::W,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyX) => KeyboardKey::X,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyY) => KeyboardKey::Y,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::KeyZ) => KeyboardKey::Z,
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Equal) => {
-                KeyboardKey::Equal
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Minus) => {
-                KeyboardKey::Minus
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Comma) => {
-                KeyboardKey::Comma
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Period) => {
-                KeyboardKey::Period
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::BracketLeft) => {
-                KeyboardKey::BracketLeft
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::BracketRight) => {
-                KeyboardKey::BracketRight
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Slash) => {
-                KeyboardKey::Slash
-            }
-            winit::keyboard::PhysicalKey::Code(winit::keyboard::KeyCode::Backslash) => {
-                KeyboardKey::Backslash
-            }
+            PhysicalKey::Code(KeyCode::Digit1) => KeyboardKey::Key1,
+            PhysicalKey::Code(KeyCode::Digit2) => KeyboardKey::Key2,
+            PhysicalKey::Code(KeyCode::Digit3) => KeyboardKey::Key3,
+            PhysicalKey::Code(KeyCode::Digit4) => KeyboardKey::Key4,
+            PhysicalKey::Code(KeyCode::Digit5) => KeyboardKey::Key5,
+            PhysicalKey::Code(KeyCode::Digit6) => KeyboardKey::Key6,
+            PhysicalKey::Code(KeyCode::Digit7) => KeyboardKey::Key7,
+            PhysicalKey::Code(KeyCode::Digit8) => KeyboardKey::Key8,
+            PhysicalKey::Code(KeyCode::Digit9) => KeyboardKey::Key9,
+            PhysicalKey::Code(KeyCode::Digit0) => KeyboardKey::Key0,
+            PhysicalKey::Code(KeyCode::KeyA) => KeyboardKey::A,
+            PhysicalKey::Code(KeyCode::KeyB) => KeyboardKey::B,
+            PhysicalKey::Code(KeyCode::KeyC) => KeyboardKey::C,
+            PhysicalKey::Code(KeyCode::KeyD) => KeyboardKey::D,
+            PhysicalKey::Code(KeyCode::KeyE) => KeyboardKey::E,
+            PhysicalKey::Code(KeyCode::KeyF) => KeyboardKey::F,
+            PhysicalKey::Code(KeyCode::KeyG) => KeyboardKey::G,
+            PhysicalKey::Code(KeyCode::KeyH) => KeyboardKey::H,
+            PhysicalKey::Code(KeyCode::KeyI) => KeyboardKey::I,
+            PhysicalKey::Code(KeyCode::KeyJ) => KeyboardKey::J,
+            PhysicalKey::Code(KeyCode::KeyK) => KeyboardKey::K,
+            PhysicalKey::Code(KeyCode::KeyL) => KeyboardKey::L,
+            PhysicalKey::Code(KeyCode::KeyM) => KeyboardKey::M,
+            PhysicalKey::Code(KeyCode::KeyN) => KeyboardKey::N,
+            PhysicalKey::Code(KeyCode::KeyO) => KeyboardKey::O,
+            PhysicalKey::Code(KeyCode::KeyP) => KeyboardKey::P,
+            PhysicalKey::Code(KeyCode::KeyQ) => KeyboardKey::Q,
+            PhysicalKey::Code(KeyCode::KeyR) => KeyboardKey::R,
+            PhysicalKey::Code(KeyCode::KeyS) => KeyboardKey::S,
+            PhysicalKey::Code(KeyCode::KeyT) => KeyboardKey::T,
+            PhysicalKey::Code(KeyCode::KeyU) => KeyboardKey::U,
+            PhysicalKey::Code(KeyCode::KeyV) => KeyboardKey::V,
+            PhysicalKey::Code(KeyCode::KeyW) => KeyboardKey::W,
+            PhysicalKey::Code(KeyCode::KeyX) => KeyboardKey::X,
+            PhysicalKey::Code(KeyCode::KeyY) => KeyboardKey::Y,
+            PhysicalKey::Code(KeyCode::KeyZ) => KeyboardKey::Z,
+            PhysicalKey::Code(KeyCode::Equal) => KeyboardKey::Equal,
+            PhysicalKey::Code(KeyCode::Minus) => KeyboardKey::Minus,
+            PhysicalKey::Code(KeyCode::Comma) => KeyboardKey::Comma,
+            PhysicalKey::Code(KeyCode::Period) => KeyboardKey::Period,
+            PhysicalKey::Code(KeyCode::BracketLeft) => KeyboardKey::BracketLeft,
+            PhysicalKey::Code(KeyCode::BracketRight) => KeyboardKey::BracketRight,
+            PhysicalKey::Code(KeyCode::Slash) => KeyboardKey::Slash,
+            PhysicalKey::Code(KeyCode::Backslash) => KeyboardKey::Backslash,
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)
