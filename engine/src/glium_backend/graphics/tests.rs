@@ -3,6 +3,8 @@ use std::f32::consts::PI;
 
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
+use winit::event_loop::EventLoop;
+use winit::platform::x11::EventLoopBuilderExtX11;
 
 use crate::binding::Binding;
 use crate::engine::Engine;
@@ -20,6 +22,14 @@ use crate::handlers::{drag, resize, yaw, zoom};
 
 use super::*;
 
+fn event_loop() -> EventLoop<()> {
+    let event_loop: EventLoop<()> = winit::event_loop::EventLoopBuilder::new()
+        .with_any_thread(true)
+        .build()
+        .unwrap();
+    event_loop
+}
+
 fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
     let quads = cube::model().recolor(&|side| match side {
         cube::Side::Left => Rgb::new(1.0, 1.0, 0.0),
@@ -35,26 +45,30 @@ fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
 #[test]
 fn render_cube() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -92,31 +106,37 @@ fn render_cube() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
 fn render_cube_dynamic() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -183,31 +203,37 @@ fn render_cube_dynamic() {
     let expected =
         image::open("test_resources/graphics/render_cube_dynamic_one_cube_invisible.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
 fn instanced_cubes() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -287,31 +313,37 @@ fn instanced_cubes() {
     let expected =
         image::open("test_resources/graphics/instance_cubes_with_single_cube.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
 fn render_billboard() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -352,31 +384,37 @@ fn render_billboard() {
     let max_difference = (256 * 256 * (255 * 3)) / 1000;
 
     assert!(difference < max_difference);
+
+    event_loop.exit();
 }
 
 #[test]
 fn render_overlay_quads() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (1.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (1.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -490,31 +528,37 @@ fn render_overlay_quads() {
     let expected =
         image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
 fn look_at() {
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     // when
@@ -541,6 +585,8 @@ fn look_at() {
     // then
     let actual = image::open(temp_path).unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
@@ -552,26 +598,30 @@ fn drag_handler() {
     }
 
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     let index = graphics.create_triangles().unwrap();
@@ -619,6 +669,8 @@ fn drag_handler() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
@@ -630,26 +682,30 @@ fn yaw_handler() {
     }
 
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     let index = graphics.create_triangles().unwrap();
@@ -662,7 +718,7 @@ fn yaw_handler() {
         angles: 16,
         bindings: yaw::Bindings {
             plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Plus),
+                button: Button::Keyboard(KeyboardKey::Equal),
                 state: ButtonState::Pressed,
             },
             minus: Binding::Single {
@@ -680,7 +736,7 @@ fn yaw_handler() {
     );
     yaw_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Plus),
+            button: Button::Keyboard(KeyboardKey::Equal),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -721,6 +777,8 @@ fn yaw_handler() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
@@ -732,26 +790,30 @@ fn zoom_handler() {
     }
 
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 256,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     let index = graphics.create_triangles().unwrap();
@@ -765,7 +827,7 @@ fn zoom_handler() {
         max_level: 9,
         bindings: zoom::Bindings {
             plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Plus),
+                button: Button::Keyboard(KeyboardKey::Equal),
                 state: ButtonState::Pressed,
             },
             minus: Binding::Single {
@@ -783,7 +845,7 @@ fn zoom_handler() {
     );
     zoom_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Plus),
+            button: Button::Keyboard(KeyboardKey::Equal),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -824,6 +886,8 @@ fn zoom_handler() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/zoom_handler_2.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }
 
 #[test]
@@ -835,26 +899,30 @@ fn resize_handler() {
     }
 
     // given
-    let mut graphics = GliumGraphics::headless(graphics::Parameters {
-        name: "Test".to_string(),
-        width: 512,
-        height: 256,
-        projection: Box::new(isometric::Projection::new(isometric::Parameters {
-            projection: isometric::ProjectionParameters {
-                pitch: PI / 4.0,
-                yaw: PI * (5.0 / 8.0),
-            },
-            scale: isometric::ScaleParameters {
-                zoom: 256.0,
-                z_max: 1.0,
-                viewport: Rectangle {
-                    width: 256,
-                    height: 256,
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::headed(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 512,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
                 },
-            },
-        })),
-        light_direction: xyz(-1.0, 0.0, 0.0),
-    })
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+        },
+        &event_loop,
+    )
     .unwrap();
 
     let index = graphics.create_triangles().unwrap();
@@ -882,4 +950,6 @@ fn resize_handler() {
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/resize_handler.png").unwrap();
     assert_eq!(actual, expected);
+
+    event_loop.exit();
 }

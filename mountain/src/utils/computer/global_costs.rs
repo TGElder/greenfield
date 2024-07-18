@@ -1,4 +1,3 @@
-use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
 use network::utils::MaterializedInNetwork;
 use std::collections::{HashMap, HashSet};
@@ -13,7 +12,6 @@ use crate::model::skiing::State;
 use crate::network::global::GlobalNetwork;
 
 pub struct Parameters<'a> {
-    pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
@@ -26,7 +24,6 @@ pub struct Parameters<'a> {
 
 pub fn compute_global_costs(
     Parameters {
-        piste_map,
         lifts,
         carousels,
         entrances,
@@ -46,7 +43,6 @@ pub fn compute_global_costs(
 
     for ability in ABILITIES {
         let network = GlobalNetwork {
-            piste_map,
             lifts,
             pick_up_to_lift,
             carousels,
