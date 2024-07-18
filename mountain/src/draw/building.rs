@@ -13,10 +13,10 @@ use engine::graphics::Graphics;
 use crate::draw::model::building;
 use crate::model::building::{Building, Roof};
 
-const WOOD_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
-const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.5, 0.5, 0.5);
+const WOOD_COLOR: Rgb<f32> = Rgb::new(0.694, 0.629, 0.541);
+const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.73, 0.73, 0.73);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
-const UNDER_CONSTRUCTION_COLOR: Rgb<f32> = Rgb::new(0.933, 0.298, 0.008);
+const UNDER_CONSTRUCTION_COLOR: Rgb<f32> = Rgb::new(0.969, 0.577, 0.111);
 const ROOF_HEIGHT: f32 = 0.5;
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, terrain: &Grid<f32>) {

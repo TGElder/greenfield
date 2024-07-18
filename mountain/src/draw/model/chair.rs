@@ -6,7 +6,7 @@ use engine::graphics::elements::Quad;
 
 use crate::draw::model::Model;
 
-const COLOR: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
+const COLOR: Rgb<f32> = Rgb::new(0.389, 0.389, 0.389);
 
 const POLE_FRONT: Quad<Rgb<f32>> = Quad {
     color: COLOR,
