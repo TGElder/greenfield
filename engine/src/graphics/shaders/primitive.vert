@@ -16,7 +16,7 @@ void main() {
     vec4 position = transform * vec4(position.x, position.y, position.z, 1.0);
 
     float light_angle = acos(dot(normal, light_direction));
-    float shade = light_angle / PI;
+    float shade = pow(light_angle / PI, 1.0 / 2.2);
 
     fragment_color = color * shade;
     depth = position.z;

@@ -15,8 +15,8 @@ use crate::model::building::{Building, Roof};
 use crate::model::direction::Direction;
 use crate::model::door::Door;
 
-const WOOD_COLOR: Rgb<f32> = Rgb::new(0.447, 0.361, 0.259);
-const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.5, 0.5, 0.5);
+const WOOD_COLOR: Rgb<f32> = Rgb::new(0.694, 0.629, 0.541);
+const CONCRETE_COLOR: Rgb<f32> = Rgb::new(0.73, 0.73, 0.73);
 const ROOF_COLOR: Rgb<f32> = Rgb::new(1.0, 1.0, 1.0);
 const DOORWAY_COLOR: Rgb<f32> = Rgb::new(0.0, 0.0, 0.0);
 

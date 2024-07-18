@@ -35,13 +35,13 @@ impl Color {
     pub fn rgb(&self) -> Rgb<f32> {
         match self {
             Color::Black => Rgb::new(0.0, 0.0, 0.0),
-            Color::Grey => Rgb::new(0.22, 0.22, 0.22),
+            Color::Grey => Rgb::new(0.502, 0.502, 0.502),
             Color::White => Rgb::new(1.0, 1.0, 1.0),
-            Color::Color1 => Rgb::new(1.0, 0.0, 0.54),
+            Color::Color1 => Rgb::new(1.0, 0.0, 0.756),
             Color::Color2 => Rgb::new(0.0, 0.0, 1.0),
-            Color::Color3 => Rgb::new(0.17, 0.77, 0.0),
-            Color::Color4 => Rgb::new(0.0, 0.45, 0.88),
-            Color::Color5 => Rgb::new(0.95, 0.14, 0.58),
+            Color::Color3 => Rgb::new(0.447, 0.888, 0.0),
+            Color::Color4 => Rgb::new(0.0, 0.696, 0.944),
+            Color::Color5 => Rgb::new(0.977, 0.409, 0.781),
         }
     }
 }

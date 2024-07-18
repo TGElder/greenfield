@@ -290,9 +290,9 @@ fn main() {
                 global_computer: global_computer::System::new(),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
-                        intermedite: Rgb::new(0.01, 0.41, 0.76),
-                        advanced: Rgb::new(0.86, 0.01, 0.01),
-                        expert: Rgb::new(0.01, 0.01, 0.01),
+                        intermedite: Rgb::new(0.123, 0.667, 0.883),
+                        advanced: Rgb::new(0.934, 0.123, 0.123),
+                        expert: Rgb::new(0.123, 0.123, 0.123),
                     },
                 ),
                 terrain_artist: terrain_artist::System::new(terrain_artist::Colors {

@@ -19,7 +19,7 @@ void main() {
 
     vec3 transformed_normal = normalize((world_normal_matrix * vec4(normal, 1.0)).xyz);
     float light_angle = acos(dot(transformed_normal, light_direction));
-    float shade = light_angle / PI;
+    float shade = pow(light_angle / PI, 1.0 / 2.2);
 
     fragment_color = color * shade;
     depth = position.z;
