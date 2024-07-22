@@ -20,6 +20,7 @@ use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
+use egui_glium::egui_winit::egui::{self, ViewportId};
 use glium::glutin::surface::WindowSurface;
 use glium::VertexBuffer;
 use nalgebra::Matrix4;
@@ -70,6 +71,8 @@ pub struct GliumGraphics {
     billboards: Vec<Option<Billboard>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
+    gui: egui_glium::EguiGlium,
+    color_test: egui_demo_lib::ColorTest,
 }
 
 pub struct Parameters {
@@ -92,16 +95,29 @@ impl GliumGraphics {
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, Box<dyn Error>> {
-        let (_window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
+        let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
             .set_window_builder(winit::window::WindowBuilder::new().with_resizable(true))
             .with_inner_size(parameters.width, parameters.height)
             .with_title(&parameters.name)
             .build(event_loop);
 
-        Self::new(parameters, Display::Headed { _window, display })
+        let gui = egui_glium::EguiGlium::new(ViewportId::ROOT, &display, &window, event_loop);
+
+        Self::new(
+            parameters,
+            Display::Headed {
+                _window: window,
+                display,
+            },
+            gui,
+        )
     }
 
-    fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
+    fn new(
+        parameters: Parameters,
+        display: Display,
+        gui: egui_glium::EguiGlium,
+    ) -> Result<GliumGraphics, Box<dyn Error>> {
         Ok(GliumGraphics {
             projection: parameters.projection,
             light_direction: parameters.light_direction.into(),
@@ -124,6 +140,8 @@ impl GliumGraphics {
                 ..Default::default()
             },
             display,
+            gui,
+            color_test: egui_demo_lib::ColorTest::default(),
         })
     }
 
@@ -654,6 +672,8 @@ impl GliumGraphics {
         self.render_billboards_to_canvas(&mut canvas)?;
         self.render_canvas_to_frame(&mut frame)?;
 
+        self.gui.paint(self.display.facade(), &mut frame);
+
         frame.finish()?;
 
         Ok(())
@@ -674,6 +694,10 @@ impl GliumGraphics {
         let XY { x: gl_x, y: gl_y } = self.screen_to_gl(screen_xy);
         let gl_xyz = xyz(gl_x, gl_y, gl_z);
         Ok(self.projection.unproject(&gl_xyz))
+    }
+
+    pub fn display(&self) -> &Display {
+        &self.display
     }
 }
 
@@ -777,9 +801,48 @@ impl Graphics for GliumGraphics {
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
     }
+
+    fn gui(&mut self, window_target: &winit::event_loop::EventLoopWindowTarget<()>) {
+        self.gui.run(self.display.window(), |egui_ctx| {
+            egui::SidePanel::left("my_side_panel")
+                .exact_width(100.0)
+                .show(egui_ctx, |ui| {
+                    ui.heading("Hello World!");
+                    if ui.button("Quit").clicked() {
+                        println!("Clicked");
+                        window_target.exit();
+                    }
+                });
+
+            egui::Window::new("Hola").show(egui_ctx, |ui| {
+                if ui.button("Quit").clicked() {
+                    println!("Clicked");
+                    window_target.exit();
+                }
+            });
+
+            egui::TopBottomPanel::bottom("")
+                .exact_height(256.0)
+                .show(egui_ctx, |ui| {
+                    egui::ScrollArea::vertical().show(ui, |ui| {
+                        self.color_test.ui(ui);
+                    });
+                });
+        });
+    }
+
+    fn gui_on_event(&mut self, event: &winit::event::WindowEvent) -> egui_glium::EventResponse {
+        let event_response = self.gui.on_event(&self.display.window(), event);
+
+        if event_response.repaint {
+            self.display.window().request_redraw();
+        }
+
+        event_response
+    }
 }
 
-enum Display {
+pub enum Display {
     Headed {
         display: glium::Display<WindowSurface>,
         _window: winit::window::Window, // if we drop this then the display breaks
@@ -787,9 +850,15 @@ enum Display {
 }
 
 impl Display {
-    fn facade(&self) -> &dyn glium::backend::Facade {
+    pub fn facade(&self) -> &glium::Display<WindowSurface> {
         match self {
             Display::Headed { display, .. } => display,
+        }
+    }
+
+    pub fn window(&self) -> &winit::window::Window {
+        match self {
+            Display::Headed { _window, .. } => _window,
         }
     }
 

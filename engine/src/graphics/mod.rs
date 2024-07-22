@@ -21,6 +21,10 @@ use crate::graphics::errors::{
 };
 
 pub trait Graphics {
+    fn gui(&mut self, window_target: &winit::event_loop::EventLoopWindowTarget<()>);
+
+    fn gui_on_event(&mut self, event: &winit::event::WindowEvent) -> egui_glium::EventResponse;
+
     fn load_texture(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, InitializationError>;
 
     fn load_texture_from_file(&mut self, path: &str) -> Result<usize, InitializationError>;
