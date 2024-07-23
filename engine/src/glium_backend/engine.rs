@@ -34,7 +34,7 @@ pub struct Parameters {
 
 impl<E> GliumEngine<E, GliumGraphics>
 where
-    E: EventHandler + 'static,
+    E: EventHandler<GliumGraphics> + 'static,
 {
     pub fn new(
         event_handler: E,
@@ -71,120 +71,116 @@ where
         let mut cursor_position: Option<winit::dpi::PhysicalPosition<f64>> = None;
 
         self.event_loop
-            .run(move |event, window_target| {
-                self.graphics.gui(window_target);
+            .run(move |event, window_target| match event {
+                winit::event::Event::NewEvents(cause) => match cause {
+                    winit::event::StartCause::Init
+                    | winit::event::StartCause::ResumeTimeReached { .. } => {
+                        let next_frame_time =
+                            std::time::Instant::now() + self.parameters.frame_duration;
+                        window_target.set_control_flow(winit::event_loop::ControlFlow::WaitUntil(
+                            next_frame_time,
+                        ));
 
-                match event {
-                    winit::event::Event::NewEvents(cause) => match cause {
-                        winit::event::StartCause::Init
-                        | winit::event::StartCause::ResumeTimeReached { .. } => {
-                            let next_frame_time =
-                                std::time::Instant::now() + self.parameters.frame_duration;
-                            window_target.set_control_flow(
-                                winit::event_loop::ControlFlow::WaitUntil(next_frame_time),
-                            );
-
-                            if let Some(position) = cursor_position {
-                                let (x, y) = position.into();
-                                self.event_handler.handle(
-                                    &Event::MouseMoved(xy(x, y)),
-                                    &mut self.state,
-                                    &mut self.graphics,
-                                );
-                            }
-
+                        if let Some(position) = cursor_position {
+                            let (x, y) = position.into();
                             self.event_handler.handle(
-                                &Event::Tick,
+                                &Event::MouseMoved(xy(x, y)),
                                 &mut self.state,
                                 &mut self.graphics,
                             );
-
-                            match self.graphics.render() {
-                                Ok(_) => (),
-                                Err(err) => println!("Failed to render frame: {err}"),
-                            };
-                        }
-                        _ => (),
-                    },
-                    winit::event::Event::WindowEvent { event, .. } => {
-                        if self.graphics.gui_on_event(&event).consumed {
-                            return;
                         }
 
-                        match event {
-                            winit::event::WindowEvent::CloseRequested => {
-                                window_target.exit();
-                            }
-                            winit::event::WindowEvent::CursorMoved { position, .. } => {
-                                cursor_position = Some(position);
-                            }
-                            winit::event::WindowEvent::MouseInput { button, state, .. } => {
-                                self.event_handler.handle(
-                                    &Event::Button {
-                                        button: button.into(),
-                                        state: state.into(),
-                                    },
-                                    &mut self.state,
-                                    &mut self.graphics,
-                                );
-                            }
-                            winit::event::WindowEvent::MouseWheel {
-                                delta: winit::event::MouseScrollDelta::LineDelta(_, y),
-                                ..
-                            } => {
-                                if y > 0.0 {
-                                    self.event_handler.handle(
-                                        &Event::Button {
-                                            button: Button::Mouse(MouseButton::WheelUp),
-                                            state: ButtonState::Pressed,
-                                        },
-                                        &mut self.state,
-                                        &mut self.graphics,
-                                    );
-                                } else if y < 0.0 {
-                                    self.event_handler.handle(
-                                        &Event::Button {
-                                            button: Button::Mouse(MouseButton::WheelDown),
-                                            state: ButtonState::Pressed,
-                                        },
-                                        &mut self.state,
-                                        &mut self.graphics,
-                                    );
-                                }
-                            }
-                            winit::event::WindowEvent::KeyboardInput {
-                                event:
-                                    winit::event::KeyEvent {
-                                        physical_key: keycode,
-                                        state,
-                                        ..
-                                    },
-                                ..
-                            } => {
-                                self.event_handler.handle(
-                                    &Event::Button {
-                                        button: keycode.into(),
-                                        state: state.into(),
-                                    },
-                                    &mut self.state,
-                                    &mut self.graphics,
-                                );
-                            }
-                            winit::event::WindowEvent::Resized(winit::dpi::PhysicalSize {
-                                width,
-                                height,
-                            }) => {
-                                self.event_handler.handle(
-                                    &Event::WindowResize(Rectangle { width, height }),
-                                    &mut self.state,
-                                    &mut self.graphics,
-                                );
-                            }
-                            _ => (),
-                        }
+                        self.event_handler.handle(
+                            &Event::Tick,
+                            &mut self.state,
+                            &mut self.graphics,
+                        );
+
+                        match self.graphics.render() {
+                            Ok(_) => (),
+                            Err(err) => println!("Failed to render frame: {err}"),
+                        };
                     }
                     _ => (),
+                },
+                winit::event::Event::WindowEvent { event, .. } => {
+                    if self.graphics.handle_window_event(&event).consumed {
+                        return;
+                    }
+
+                    match event {
+                        winit::event::WindowEvent::CloseRequested => {
+                            window_target.exit();
+                        }
+                        winit::event::WindowEvent::CursorMoved { position, .. } => {
+                            cursor_position = Some(position);
+                        }
+                        winit::event::WindowEvent::MouseInput { button, state, .. } => {
+                            self.event_handler.handle(
+                                &Event::Button {
+                                    button: button.into(),
+                                    state: state.into(),
+                                },
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+                        winit::event::WindowEvent::MouseWheel {
+                            delta: winit::event::MouseScrollDelta::LineDelta(_, y),
+                            ..
+                        } => {
+                            if y > 0.0 {
+                                self.event_handler.handle(
+                                    &Event::Button {
+                                        button: Button::Mouse(MouseButton::WheelUp),
+                                        state: ButtonState::Pressed,
+                                    },
+                                    &mut self.state,
+                                    &mut self.graphics,
+                                );
+                            } else if y < 0.0 {
+                                self.event_handler.handle(
+                                    &Event::Button {
+                                        button: Button::Mouse(MouseButton::WheelDown),
+                                        state: ButtonState::Pressed,
+                                    },
+                                    &mut self.state,
+                                    &mut self.graphics,
+                                );
+                            }
+                        }
+                        winit::event::WindowEvent::KeyboardInput {
+                            event:
+                                winit::event::KeyEvent {
+                                    physical_key: keycode,
+                                    state,
+                                    ..
+                                },
+                            ..
+                        } => {
+                            self.event_handler.handle(
+                                &Event::Button {
+                                    button: keycode.into(),
+                                    state: state.into(),
+                                },
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+                        winit::event::WindowEvent::Resized(winit::dpi::PhysicalSize {
+                            width,
+                            height,
+                        }) => {
+                            self.event_handler.handle(
+                                &Event::WindowResize(Rectangle { width, height }),
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+                        _ => (),
+                    }
                 }
+                _ => (),
             })
             .unwrap();
     }

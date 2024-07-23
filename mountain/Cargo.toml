@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 bincode = { workspace = true }
 commons = { path = "../commons" }
+egui_glium = { workspace = true }
 engine = { path = "../engine" }
 lazy_static = { workspace = true }
 line_drawing = { workspace = true }

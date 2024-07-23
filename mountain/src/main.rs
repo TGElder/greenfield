@@ -25,6 +25,7 @@ use engine::engine::Engine;
 use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use engine::glium_backend;
 
+use engine::glium_backend::graphics::GliumGraphics;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
@@ -234,6 +235,7 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::I),
                         state: ButtonState::Pressed,
                     },
+                    ids: vec![],
                 },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
@@ -505,8 +507,8 @@ impl Game {
     }
 }
 
-impl EventHandler for Game {
-    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
+impl EventHandler<GliumGraphics> for Game {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut GliumGraphics) {
         match event {
             Event::Init => self.init(graphics),
             Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
@@ -684,10 +686,6 @@ impl EventHandler for Game {
             handlers::skier_debugger::Parameters {
                 mouse_xy: &self.mouse_xy,
                 reservations: &self.components.reservations,
-                plans: &self.components.plans,
-                locations: &self.components.locations,
-                targets: &self.components.targets,
-                global_targets: &self.components.global_targets,
                 graphics,
             },
         );
@@ -859,5 +857,15 @@ impl EventHandler for Game {
         self.systems
             .window_artist
             .run(&self.components.buildings, graphics);
+
+        graphics.configure_gui(|ctx| {
+            self.handlers.skier_debugger.update_gui(
+                &self.components.plans,
+                &self.components.locations,
+                &self.components.targets,
+                &self.components.global_targets,
+                ctx,
+            );
+        });
     }
 }

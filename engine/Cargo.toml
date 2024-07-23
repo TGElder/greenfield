@@ -7,7 +7,6 @@ edition = "2021"
 
 [dependencies]
 commons = { path = "../commons" }
-egui_demo_lib = { workspace = true }
 egui_glium = {workspace = true }
 image = { workspace = true }
 glium = { workspace = true }

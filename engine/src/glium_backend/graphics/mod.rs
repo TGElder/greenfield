@@ -72,7 +72,6 @@ pub struct GliumGraphics {
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
     gui: egui_glium::EguiGlium,
-    color_test: egui_demo_lib::ColorTest,
 }
 
 pub struct Parameters {
@@ -89,6 +88,24 @@ impl GliumGraphics {
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
         Ok(Self::headed_unsafe(parameters, event_loop)?)
+    }
+
+    pub fn configure_gui(&mut self, mut run_ui: impl FnMut(&egui::Context)) {
+        self.gui
+            .run(self.display.window(), |egui_ctx| run_ui(egui_ctx));
+    }
+
+    pub(crate) fn handle_window_event(
+        &mut self,
+        event: &winit::event::WindowEvent,
+    ) -> egui_glium::EventResponse {
+        let event_response = self.gui.on_event(self.display.window(), event);
+
+        if event_response.repaint {
+            self.display.window().request_redraw();
+        }
+
+        event_response
     }
 
     fn headed_unsafe<T>(
@@ -141,7 +158,6 @@ impl GliumGraphics {
             },
             display,
             gui,
-            color_test: egui_demo_lib::ColorTest::default(),
         })
     }
 
@@ -800,45 +816,6 @@ impl Graphics for GliumGraphics {
 
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
-    }
-
-    fn gui(&mut self, window_target: &winit::event_loop::EventLoopWindowTarget<()>) {
-        self.gui.run(self.display.window(), |egui_ctx| {
-            egui::SidePanel::left("my_side_panel")
-                .exact_width(100.0)
-                .show(egui_ctx, |ui| {
-                    ui.heading("Hello World!");
-                    if ui.button("Quit").clicked() {
-                        println!("Clicked");
-                        window_target.exit();
-                    }
-                });
-
-            egui::Window::new("Hola").show(egui_ctx, |ui| {
-                if ui.button("Quit").clicked() {
-                    println!("Clicked");
-                    window_target.exit();
-                }
-            });
-
-            egui::TopBottomPanel::bottom("")
-                .exact_height(256.0)
-                .show(egui_ctx, |ui| {
-                    egui::ScrollArea::vertical().show(ui, |ui| {
-                        self.color_test.ui(ui);
-                    });
-                });
-        });
-    }
-
-    fn gui_on_event(&mut self, event: &winit::event::WindowEvent) -> egui_glium::EventResponse {
-        let event_response = self.gui.on_event(&self.display.window(), event);
-
-        if event_response.repaint {
-            self.display.window().request_redraw();
-        }
-
-        event_response
     }
 }
 

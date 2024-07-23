@@ -13,8 +13,11 @@ impl Handler {
     }
 }
 
-impl EventHandler for Handler {
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+impl<G> EventHandler<G> for Handler
+where
+    G: Graphics,
+{
+    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut G) {
         if let Event::WindowResize(rectangle) = event {
             graphics.projection().set_viewport(*rectangle);
         }
