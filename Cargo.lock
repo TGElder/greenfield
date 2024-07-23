@@ -1257,7 +1257,6 @@ version = "0.1.0"
 dependencies = [
  "bincode",
  "commons",
- "egui_glium",
  "engine",
  "lazy_static",
  "line_drawing",

@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XY, XYZ};
 use commons::grid::Grid;
-use egui_glium::egui_winit::egui;
 use engine::binding::Binding;
 use engine::graphics::Graphics;
 
@@ -51,11 +50,11 @@ impl Handler {
         locations: &HashMap<usize, usize>,
         targets: &HashMap<usize, usize>,
         global_targets: &HashMap<usize, usize>,
-        ctx: &egui::Context,
+        ctx: &engine::egui::Context,
     ) {
         self.ids.retain(|id| {
             let mut open = true;
-            egui::Window::new(format!("Skier {}", id))
+            engine::egui::Window::new(format!("Skier {}", id))
                 .open(&mut open)
                 .show(ctx, |ui| {
                     ui.label(format!("Location = {:?}", locations.get(id)));

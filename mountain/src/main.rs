@@ -235,7 +235,7 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::I),
                         state: ButtonState::Pressed,
                     },
-                    ids: vec![],
+                    ids: vec![]
                 },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
