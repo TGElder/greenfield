@@ -57,7 +57,8 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 ];
 
 pub struct GliumGraphics {
-    display: Display,
+    display: glium::Display<WindowSurface>,
+    _window: winit::window::Window,
     projection: Box<dyn Projection>,
     light_direction: [f32; 3],
     canvas: Option<Canvas>,
@@ -81,50 +82,49 @@ pub struct Parameters {
 }
 
 impl GliumGraphics {
-    pub fn headed<T>(
+    pub fn new<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
-        Ok(Self::headed_unsafe(parameters, event_loop)?)
+        Ok(Self::new_unsafe(parameters, event_loop)?)
     }
 
-    fn headed_unsafe<T>(
+    fn new_unsafe<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, Box<dyn Error>> {
-        let (_window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
+        let (window, display) = glium::backend::glutin::SimpleWindowBuilder::new()
             .set_window_builder(winit::window::WindowBuilder::new().with_resizable(true))
             .with_inner_size(parameters.width, parameters.height)
             .with_title(&parameters.name)
             .build(event_loop);
 
-        Self::new(parameters, Display::Headed { _window, display })
-    }
-
-    fn new(parameters: Parameters, display: Display) -> Result<GliumGraphics, Box<dyn Error>> {
-        Ok(GliumGraphics {
-            projection: parameters.projection,
-            light_direction: parameters.light_direction.into(),
-            canvas: None,
-            screen_vertices: glium::VertexBuffer::new(display.facade(), &SCREEN_QUAD)?,
-            textures: vec![],
-            primitives: vec![],
-            dynamic_primitives: vec![],
-            overlay_primitives: vec![],
-            billboards: vec![],
-            instanced_primitives: vec![],
-            programs: Programs::new(display.facade())?,
-            draw_parameters: glium::DrawParameters {
-                depth: glium::Depth {
-                    test: glium::DepthTest::IfLess,
-                    write: true,
+        {
+            Ok(GliumGraphics {
+                projection: parameters.projection,
+                light_direction: parameters.light_direction.into(),
+                canvas: None,
+                screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
+                textures: vec![],
+                primitives: vec![],
+                dynamic_primitives: vec![],
+                overlay_primitives: vec![],
+                billboards: vec![],
+                instanced_primitives: vec![],
+                programs: Programs::new(&display)?,
+                draw_parameters: glium::DrawParameters {
+                    depth: glium::Depth {
+                        test: glium::DepthTest::IfLess,
+                        write: true,
+                        ..Default::default()
+                    },
+                    backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                     ..Default::default()
                 },
-                backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
-                ..Default::default()
-            },
-            display,
-        })
+                display,
+                _window: window,
+            })
+        }
     }
 
     fn canvas(&mut self, dimensions: &(u32, u32)) -> Result<Canvas, Box<dyn Error>> {
@@ -133,7 +133,7 @@ impl GliumGraphics {
                 return Ok(self.canvas.take().unwrap());
             }
         }
-        Canvas::new(self.display.facade(), &self.display.canvas_dimensions())
+        Canvas::new(&self.display, &self.display.get_framebuffer_dimensions())
     }
 
     fn render_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
@@ -317,7 +317,7 @@ impl GliumGraphics {
     }
 
     fn screen_to_gl(&self, XY { x, y }: &XY<u32>) -> XY<f32> {
-        let (width, height) = self.display.canvas_dimensions();
+        let (width, height) = self.display.get_framebuffer_dimensions();
 
         let x_pc = *x as f32 / width as f32;
         let y_pc = *y as f32 / height as f32;
@@ -334,7 +334,7 @@ impl GliumGraphics {
         let dimensions = (image.width(), image.height());
         let image = glium::texture::RawImage2d::from_raw_rgba(raw, dimensions);
 
-        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
+        let texture = glium::Texture2d::new(&self.display, image).unwrap();
         self.textures.push(texture);
         Ok(self.textures.len() - 1)
     }
@@ -345,7 +345,7 @@ impl GliumGraphics {
         let image =
             glium::texture::RawImage2d::from_raw_rgba_reversed(&image.into_raw(), dimensions);
 
-        let texture = glium::Texture2d::new(self.display.facade(), image).unwrap();
+        let texture = glium::Texture2d::new(&self.display, image).unwrap();
         self.textures.push(texture);
         Ok(self.textures.len() - 1)
     }
@@ -400,7 +400,7 @@ impl GliumGraphics {
         let primitive = DynamicPrimitive {
             visible: false,
             vertex_buffer: glium::VertexBuffer::dynamic(
-                self.display.facade(),
+                &self.display,
                 &vec![ColoredVertex::default(); triangles * 3],
             )?,
         };
@@ -427,10 +427,7 @@ impl GliumGraphics {
         let primitive_vertices = colored_vertices_from_triangles(triangles);
         let instanced_primitives = InstancedPrimitives {
             primitive: Primitive {
-                vertex_buffer: glium::VertexBuffer::new(
-                    self.display.facade(),
-                    &primitive_vertices,
-                )?,
+                vertex_buffer: glium::VertexBuffer::new(&self.display, &primitive_vertices)?,
             },
             vertex_buffer: None,
         };
@@ -463,7 +460,7 @@ impl GliumGraphics {
 
         let vertices = colored_vertices_from_triangles(triangles);
         let primitive = Primitive {
-            vertex_buffer: VertexBuffer::new(self.display.facade(), &vertices)?,
+            vertex_buffer: VertexBuffer::new(&self.display, &vertices)?,
         };
 
         self.primitives[*index] = Some(primitive);
@@ -536,7 +533,7 @@ impl GliumGraphics {
         self.overlay_primitives[*index] = Some(OverlayPrimitive {
             base_texture: overlay.base_texture,
             overlay_texture: overlay.overlay_texture,
-            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+            vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices)?,
         });
 
         Ok(())
@@ -584,10 +581,8 @@ impl GliumGraphics {
             }
             // reallocating (expensive - keep number of instances the same where possible)
             _ => {
-                instanced_primitives.vertex_buffer = Some(glium::VertexBuffer::dynamic(
-                    self.display.facade(),
-                    &instances,
-                )?)
+                instanced_primitives.vertex_buffer =
+                    Some(glium::VertexBuffer::dynamic(&self.display, &instances)?)
             }
         }
 
@@ -635,17 +630,17 @@ impl GliumGraphics {
 
         self.billboards[*index] = Some(Billboard {
             texture: *texture,
-            vertex_buffer: glium::VertexBuffer::new(self.display.facade(), &vertices)?,
+            vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices)?,
         });
 
         Ok(())
     }
 
     fn render_unsafe(&mut self) -> Result<(), Box<dyn Error>> {
-        let mut frame = self.display.frame();
-        self.canvas = Some(self.canvas(&self.display.canvas_dimensions())?);
+        let mut frame = self.display.draw();
+        self.canvas = Some(self.canvas(&self.display.get_framebuffer_dimensions())?);
         let canvas = self.canvas.as_ref().unwrap();
-        let mut canvas = canvas.frame(self.display.facade())?;
+        let mut canvas = canvas.frame(&self.display)?;
 
         self.render_primitives_to_canvas(&mut canvas)?;
         self.render_dynamic_primitives_to_canvas(&mut canvas)?;
@@ -776,33 +771,6 @@ impl Graphics for GliumGraphics {
 
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
-    }
-}
-
-enum Display {
-    Headed {
-        display: glium::Display<WindowSurface>,
-        _window: winit::window::Window, // if we drop this then the display breaks
-    },
-}
-
-impl Display {
-    fn facade(&self) -> &dyn glium::backend::Facade {
-        match self {
-            Display::Headed { display, .. } => display,
-        }
-    }
-
-    fn frame(&self) -> glium::Frame {
-        match self {
-            Display::Headed { display, .. } => display.draw(),
-        }
-    }
-
-    fn canvas_dimensions(&self) -> (u32, u32) {
-        match self {
-            Display::Headed { display, .. } => display.get_framebuffer_dimensions(),
-        }
     }
 }
 
