@@ -20,6 +20,7 @@ use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
+use egui_glium::egui_winit::egui::{self, ViewportId};
 use glium::glutin::surface::WindowSurface;
 use glium::VertexBuffer;
 use nalgebra::Matrix4;
@@ -57,8 +58,6 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 ];
 
 pub struct GliumGraphics {
-    display: glium::Display<WindowSurface>,
-    _window: winit::window::Window,
     projection: Box<dyn Projection>,
     light_direction: [f32; 3],
     canvas: Option<Canvas>,
@@ -71,6 +70,9 @@ pub struct GliumGraphics {
     billboards: Vec<Option<Billboard>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
+    gui: egui_glium::EguiGlium,
+    display: glium::Display<WindowSurface>,
+    window: winit::window::Window,
 }
 
 pub struct Parameters {
@@ -89,6 +91,19 @@ impl GliumGraphics {
         Ok(Self::new_unsafe(parameters, event_loop)?)
     }
 
+    pub(super) fn handle_window_event(
+        &mut self,
+        event: &winit::event::WindowEvent,
+    ) -> egui_glium::EventResponse {
+        let event_response = self.gui.on_event(&self.window, event);
+
+        if event_response.repaint {
+            self.window.request_redraw();
+        }
+
+        event_response
+    }
+
     fn new_unsafe<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
@@ -99,32 +114,35 @@ impl GliumGraphics {
             .with_title(&parameters.name)
             .build(event_loop);
 
-        {
-            Ok(GliumGraphics {
-                projection: parameters.projection,
-                light_direction: parameters.light_direction.into(),
-                canvas: None,
-                screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
-                textures: vec![],
-                primitives: vec![],
-                dynamic_primitives: vec![],
-                overlay_primitives: vec![],
-                billboards: vec![],
-                instanced_primitives: vec![],
-                programs: Programs::new(&display)?,
-                draw_parameters: glium::DrawParameters {
-                    depth: glium::Depth {
-                        test: glium::DepthTest::IfLess,
-                        write: true,
-                        ..Default::default()
-                    },
-                    backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+        let mut out = GliumGraphics {
+            projection: parameters.projection,
+            light_direction: parameters.light_direction.into(),
+            canvas: None,
+            screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
+            textures: vec![],
+            primitives: vec![],
+            dynamic_primitives: vec![],
+            overlay_primitives: vec![],
+            billboards: vec![],
+            instanced_primitives: vec![],
+            programs: Programs::new(&display)?,
+            draw_parameters: glium::DrawParameters {
+                depth: glium::Depth {
+                    test: glium::DepthTest::IfLess,
+                    write: true,
                     ..Default::default()
                 },
-                display,
-                _window: window,
-            })
-        }
+                backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+                ..Default::default()
+            },
+            gui: egui_glium::EguiGlium::new(ViewportId::ROOT, &display, &window, event_loop),
+            display,
+            window,
+        };
+
+        out.draw_gui(&mut |_| {}); // we get an error on gui.paint if we don't do this
+
+        Ok(out)
     }
 
     fn canvas(&mut self, dimensions: &(u32, u32)) -> Result<Canvas, Box<dyn Error>> {
@@ -649,6 +667,8 @@ impl GliumGraphics {
         self.render_billboards_to_canvas(&mut canvas)?;
         self.render_canvas_to_frame(&mut frame)?;
 
+        self.gui.paint(&self.display, &mut frame);
+
         frame.finish()?;
 
         Ok(())
@@ -750,6 +770,10 @@ impl Graphics for GliumGraphics {
         billboard: &elements::Billboard,
     ) -> Result<(), DrawError> {
         Ok(self.add_billboard_unsafe(index, billboard)?)
+    }
+
+    fn draw_gui(&mut self, run_ui: &mut dyn FnMut(&egui::Context)) {
+        self.gui.run(&self.window, |egui_ctx| run_ui(egui_ctx));
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
