@@ -5,4 +5,4 @@ pub mod glium_backend;
 pub mod graphics;
 pub mod handlers;
 
-pub use egui_glium::egui_winit::egui as egui;
+pub use egui_glium::egui_winit::egui;

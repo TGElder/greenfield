@@ -235,7 +235,7 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::I),
                         state: ButtonState::Pressed,
                     },
-                    ids: vec![]
+                    ids: vec![],
                 },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
@@ -858,7 +858,7 @@ impl EventHandler<GliumGraphics> for Game {
             .window_artist
             .run(&self.components.buildings, graphics);
 
-        graphics.configure_gui(|ctx| {
+        graphics.draw_gui(&mut |ctx| {
             self.handlers.skier_debugger.update_gui(
                 &self.components.plans,
                 &self.components.locations,

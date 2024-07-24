@@ -90,11 +90,6 @@ impl GliumGraphics {
         Ok(Self::headed_unsafe(parameters, event_loop)?)
     }
 
-    pub fn configure_gui(&mut self, mut run_ui: impl FnMut(&egui::Context)) {
-        self.gui
-            .run(self.display.window(), |egui_ctx| run_ui(egui_ctx));
-    }
-
     pub(crate) fn handle_window_event(
         &mut self,
         event: &winit::event::WindowEvent,
@@ -795,6 +790,11 @@ impl Graphics for GliumGraphics {
         billboard: &elements::Billboard,
     ) -> Result<(), DrawError> {
         Ok(self.add_billboard_unsafe(index, billboard)?)
+    }
+
+    fn draw_gui(&mut self, run_ui: &mut dyn FnMut(&egui::Context)) {
+        self.gui
+            .run(self.display.window(), |egui_ctx| run_ui(egui_ctx));
     }
 
     fn render(&mut self) -> Result<(), RenderError> {
