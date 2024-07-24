@@ -11,6 +11,7 @@ members = [
 
 [workspace.dependencies]
 bincode = "1"
+egui_glium = "0"
 image = "0"
 glium = "0"
 lazy_static = "1"

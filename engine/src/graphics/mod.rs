@@ -11,6 +11,7 @@ use commons::color::{Rgb, Rgba};
 use commons::geometry::{XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
+use egui_glium::egui_winit::egui;
 use nalgebra::Matrix4;
 pub use projection::Projection;
 
@@ -66,6 +67,8 @@ pub trait Graphics {
     ) -> Result<(), DrawError>;
 
     fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
+
+    fn draw_gui(&mut self, run_ui: &mut dyn FnMut(&egui::Context));
 
     fn render(&mut self) -> Result<(), RenderError>;
 

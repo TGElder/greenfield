@@ -102,77 +102,83 @@ where
                     }
                     _ => (),
                 },
-                winit::event::Event::WindowEvent { event, .. } => match event {
-                    winit::event::WindowEvent::CloseRequested => {
-                        window_target.exit();
+                winit::event::Event::WindowEvent { event, .. } => {
+                    if self.graphics.handle_window_event(&event).consumed {
+                        return;
                     }
-                    winit::event::WindowEvent::CursorMoved { position, .. } => {
-                        cursor_position = Some(position);
-                    }
-                    winit::event::WindowEvent::MouseInput { button, state, .. } => {
-                        self.event_handler.handle(
-                            &Event::Button {
-                                button: button.into(),
-                                state: state.into(),
-                            },
-                            &mut self.state,
-                            &mut self.graphics,
-                        );
-                    }
-                    winit::event::WindowEvent::MouseWheel {
-                        delta: winit::event::MouseScrollDelta::LineDelta(_, y),
-                        ..
-                    } => {
-                        if y > 0.0 {
+
+                    match event {
+                        winit::event::WindowEvent::CloseRequested => {
+                            window_target.exit();
+                        }
+                        winit::event::WindowEvent::CursorMoved { position, .. } => {
+                            cursor_position = Some(position);
+                        }
+                        winit::event::WindowEvent::MouseInput { button, state, .. } => {
                             self.event_handler.handle(
                                 &Event::Button {
-                                    button: Button::Mouse(MouseButton::WheelUp),
-                                    state: ButtonState::Pressed,
-                                },
-                                &mut self.state,
-                                &mut self.graphics,
-                            );
-                        } else if y < 0.0 {
-                            self.event_handler.handle(
-                                &Event::Button {
-                                    button: Button::Mouse(MouseButton::WheelDown),
-                                    state: ButtonState::Pressed,
+                                    button: button.into(),
+                                    state: state.into(),
                                 },
                                 &mut self.state,
                                 &mut self.graphics,
                             );
                         }
+                        winit::event::WindowEvent::MouseWheel {
+                            delta: winit::event::MouseScrollDelta::LineDelta(_, y),
+                            ..
+                        } => {
+                            if y > 0.0 {
+                                self.event_handler.handle(
+                                    &Event::Button {
+                                        button: Button::Mouse(MouseButton::WheelUp),
+                                        state: ButtonState::Pressed,
+                                    },
+                                    &mut self.state,
+                                    &mut self.graphics,
+                                );
+                            } else if y < 0.0 {
+                                self.event_handler.handle(
+                                    &Event::Button {
+                                        button: Button::Mouse(MouseButton::WheelDown),
+                                        state: ButtonState::Pressed,
+                                    },
+                                    &mut self.state,
+                                    &mut self.graphics,
+                                );
+                            }
+                        }
+                        winit::event::WindowEvent::KeyboardInput {
+                            event:
+                                winit::event::KeyEvent {
+                                    physical_key: keycode,
+                                    state,
+                                    ..
+                                },
+                            ..
+                        } => {
+                            self.event_handler.handle(
+                                &Event::Button {
+                                    button: keycode.into(),
+                                    state: state.into(),
+                                },
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+                        winit::event::WindowEvent::Resized(winit::dpi::PhysicalSize {
+                            width,
+                            height,
+                        }) => {
+                            self.event_handler.handle(
+                                &Event::WindowResize(Rectangle { width, height }),
+                                &mut self.state,
+                                &mut self.graphics,
+                            );
+                        }
+                        _ => (),
                     }
-                    winit::event::WindowEvent::KeyboardInput {
-                        event:
-                            winit::event::KeyEvent {
-                                physical_key: keycode,
-                                state,
-                                ..
-                            },
-                        ..
-                    } => {
-                        self.event_handler.handle(
-                            &Event::Button {
-                                button: keycode.into(),
-                                state: state.into(),
-                            },
-                            &mut self.state,
-                            &mut self.graphics,
-                        );
-                    }
-                    winit::event::WindowEvent::Resized(winit::dpi::PhysicalSize {
-                        width,
-                        height,
-                    }) => {
-                        self.event_handler.handle(
-                            &Event::WindowResize(Rectangle { width, height }),
-                            &mut self.state,
-                            &mut self.graphics,
-                        );
-                    }
-                    _ => (),
-                },
+                }
                 _ => (),
             })
             .unwrap();
