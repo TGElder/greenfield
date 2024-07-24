@@ -68,11 +68,8 @@ impl Handler {
         2.0f32.powi(self.level)
     }
 }
-impl<G> EventHandler<G> for Handler
-where
-    G: Graphics,
-{
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut G) {
+impl EventHandler for Handler {
+    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
         }

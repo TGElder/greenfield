@@ -16,7 +16,7 @@ pub struct Handler {
 pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
-    pub graphics: &'a mut engine::glium_backend::graphics::GliumGraphics,
+    pub graphics: &'a mut dyn Graphics,
 }
 
 impl Handler {

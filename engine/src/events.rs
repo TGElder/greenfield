@@ -3,8 +3,8 @@ use commons::geometry::{Rectangle, XY};
 use crate::engine::Engine;
 use crate::graphics::Graphics;
 
-pub trait EventHandler<G: Graphics> {
-    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut G);
+pub trait EventHandler {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics);
 }
 
 #[derive(PartialEq)]

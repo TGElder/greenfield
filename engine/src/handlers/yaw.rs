@@ -65,11 +65,8 @@ impl Handler {
         (self.angle as f32 / self.angles as f32) * PI * 2.0
     }
 }
-impl<G> EventHandler<G> for Handler
-where
-    G: Graphics,
-{
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut G) {
+impl EventHandler for Handler {
+    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
         }

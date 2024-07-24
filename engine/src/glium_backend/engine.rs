@@ -34,7 +34,7 @@ pub struct Parameters {
 
 impl<E> GliumEngine<E, GliumGraphics>
 where
-    E: EventHandler<GliumGraphics> + 'static,
+    E: EventHandler + 'static,
 {
     pub fn new(
         event_handler: E,

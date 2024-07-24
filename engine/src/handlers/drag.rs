@@ -28,11 +28,8 @@ impl Handler {
     }
 }
 
-impl<G> EventHandler<G> for Handler
-where
-    G: Graphics,
-{
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut G) {
+impl EventHandler for Handler {
+    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
             if let Some(selection) = self.selection {

@@ -25,7 +25,6 @@ use engine::engine::Engine;
 use engine::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
 use engine::glium_backend;
 
-use engine::glium_backend::graphics::GliumGraphics;
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
@@ -507,8 +506,8 @@ impl Game {
     }
 }
 
-impl EventHandler<GliumGraphics> for Game {
-    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut GliumGraphics) {
+impl EventHandler for Game {
+    fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         match event {
             Event::Init => self.init(graphics),
             Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),
