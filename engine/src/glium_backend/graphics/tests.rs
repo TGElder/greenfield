@@ -46,7 +46,7 @@ fn cube_triangles() -> Vec<Triangle<Rgb<f32>>> {
 fn render_cube() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -114,7 +114,7 @@ fn render_cube() {
 fn render_cube_dynamic() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -211,7 +211,7 @@ fn render_cube_dynamic() {
 fn instanced_cubes() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -321,7 +321,7 @@ fn instanced_cubes() {
 fn render_billboard() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -392,7 +392,7 @@ fn render_billboard() {
 fn render_overlay_quads() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -536,7 +536,7 @@ fn render_overlay_quads() {
 fn look_at() {
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -599,7 +599,7 @@ fn drag_handler() {
 
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -683,7 +683,7 @@ fn yaw_handler() {
 
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -791,7 +791,7 @@ fn zoom_handler() {
 
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 256,
@@ -900,7 +900,7 @@ fn resize_handler() {
 
     // given
     let event_loop = event_loop();
-    let mut graphics = GliumGraphics::headed(
+    let mut graphics = GliumGraphics::new(
         graphics::Parameters {
             name: "Test".to_string(),
             width: 512,

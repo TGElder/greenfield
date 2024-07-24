@@ -58,9 +58,6 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 ];
 
 pub struct GliumGraphics {
-    display: glium::Display<WindowSurface>,
-    window: winit::window::Window,
-    gui: egui_glium::EguiGlium,
     projection: Box<dyn Projection>,
     light_direction: [f32; 3],
     canvas: Option<Canvas>,
@@ -73,6 +70,9 @@ pub struct GliumGraphics {
     billboards: Vec<Option<Billboard>>,
     programs: Programs,
     draw_parameters: glium::DrawParameters<'static>,
+    gui: egui_glium::EguiGlium,
+    display: glium::Display<WindowSurface>,
+    window: winit::window::Window,
 }
 
 pub struct Parameters {
@@ -84,14 +84,14 @@ pub struct Parameters {
 }
 
 impl GliumGraphics {
-    pub fn headed<T>(
+    pub fn new<T>(
         parameters: Parameters,
         event_loop: &winit::event_loop::EventLoop<T>,
     ) -> Result<GliumGraphics, InitializationError> {
         Ok(Self::new_unsafe(parameters, event_loop)?)
     }
 
-    pub(crate) fn handle_window_event(
+    pub(super) fn handle_window_event(
         &mut self,
         event: &winit::event::WindowEvent,
     ) -> egui_glium::EventResponse {
@@ -114,9 +114,7 @@ impl GliumGraphics {
             .with_title(&parameters.name)
             .build(event_loop);
 
-        let gui = egui_glium::EguiGlium::new(ViewportId::ROOT, &display, &window, event_loop);
-
-        Ok(GliumGraphics {
+        let mut out = GliumGraphics {
             projection: parameters.projection,
             light_direction: parameters.light_direction.into(),
             canvas: None,
@@ -137,10 +135,14 @@ impl GliumGraphics {
                 backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                 ..Default::default()
             },
+            gui: egui_glium::EguiGlium::new(ViewportId::ROOT, &display, &window, event_loop),
             display,
             window,
-            gui,
-        })
+        };
+
+        out.draw_gui(&mut |_| {}); // we get an error on gui.paint if we don't do this
+
+        Ok(out)
     }
 
     fn canvas(&mut self, dimensions: &(u32, u32)) -> Result<Canvas, Box<dyn Error>> {
