@@ -54,9 +54,8 @@ where
         graphics_parameters: graphics::Parameters,
     ) -> Result<GliumEngine<E, GliumGraphics>, Box<dyn Error>> {
         let event_loop = winit::event_loop::EventLoopBuilder::new().build().unwrap();
-        let graphics = GliumGraphics::headed(graphics_parameters, &event_loop)?;
         Ok(GliumEngine {
-            graphics,
+            graphics: GliumGraphics::headed(graphics_parameters, &event_loop)?,
             event_loop,
             event_handler,
             state: State { running: true },
