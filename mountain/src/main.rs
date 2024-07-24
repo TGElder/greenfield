@@ -234,7 +234,6 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::I),
                         state: ButtonState::Pressed,
                     },
-                    ids: vec![],
                 },
                 tree_visibility: tree_visibility::Handler {
                     binding: Binding::Single {
@@ -685,6 +684,10 @@ impl EventHandler for Game {
             handlers::skier_debugger::Parameters {
                 mouse_xy: &self.mouse_xy,
                 reservations: &self.components.reservations,
+                plans: &self.components.plans,
+                locations: &self.components.locations,
+                targets: &self.components.targets,
+                global_targets: &self.components.global_targets,
                 graphics,
             },
         );
@@ -856,15 +859,5 @@ impl EventHandler for Game {
         self.systems
             .window_artist
             .run(&self.components.buildings, graphics);
-
-        graphics.draw_gui(&mut |ctx| {
-            self.handlers.skier_debugger.update_gui(
-                &self.components.plans,
-                &self.components.locations,
-                &self.components.targets,
-                &self.components.global_targets,
-                ctx,
-            );
-        });
     }
 }
