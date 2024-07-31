@@ -117,11 +117,11 @@ fn main() {
                 },
                 drag: drag::Handler::new(drag::Bindings {
                     start_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
+                        button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Pressed,
                     },
                     stop_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
+                        button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Released,
                     },
                 }),
@@ -211,15 +211,15 @@ fn main() {
                 },
                 selection: selection::Handler::new(selection::Bindings {
                     first_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                     second_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Released,
                     },
                     clear: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
+                        button: Button::Keyboard(KeyboardKey::Escape),
                         state: ButtonState::Pressed,
                     },
                 }),
