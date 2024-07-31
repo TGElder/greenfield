@@ -83,6 +83,8 @@ pub enum KeyboardKey {
     Slash,
     Backslash,
 
+    Escape,
+
     Unknown,
 }
 
