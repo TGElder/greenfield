@@ -2,6 +2,7 @@
 extern crate lazy_static;
 
 mod draw;
+mod gui;
 mod handlers;
 mod init;
 mod model;
@@ -859,5 +860,7 @@ impl EventHandler for Game {
         self.systems
             .window_artist
             .run(&self.components.buildings, graphics);
+
+        gui::run(self, engine, graphics);
     }
 }
