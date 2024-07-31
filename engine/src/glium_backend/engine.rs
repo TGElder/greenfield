@@ -253,6 +253,7 @@ impl From<PhysicalKey> for Button {
             PhysicalKey::Code(KeyCode::BracketRight) => KeyboardKey::BracketRight,
             PhysicalKey::Code(KeyCode::Slash) => KeyboardKey::Slash,
             PhysicalKey::Code(KeyCode::Backslash) => KeyboardKey::Backslash,
+            PhysicalKey::Code(KeyCode::Escape) => KeyboardKey::Escape,
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)
