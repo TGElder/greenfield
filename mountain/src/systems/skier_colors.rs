@@ -7,7 +7,7 @@ use crate::model::skier::{Clothes, Color, Skier};
 
 pub struct System {
     colors: AbilityColors,
-    pub mode: Mode,
+    show_ability: bool,
 }
 
 pub struct AbilityColors {
@@ -16,17 +16,20 @@ pub struct AbilityColors {
     pub expert: Rgb<f32>,
 }
 
-pub enum Mode {
-    Clothes,
-    Ability,
-}
-
 impl System {
     pub fn new(colors: AbilityColors) -> System {
         System {
             colors,
-            mode: Mode::Clothes,
+            show_ability: false,
         }
+    }
+
+    pub fn is_showing_ability(&self) -> bool {
+        self.show_ability
+    }
+
+    pub fn toggle_show_ability(&mut self) {
+        self.show_ability = !self.show_ability
     }
 
     pub fn run(
@@ -35,9 +38,9 @@ impl System {
         clothes: &mut HashMap<usize, Clothes<Rgb<f32>>>,
     ) {
         for (id, skier) in skiers {
-            let skier_clothes = match self.mode {
-                Mode::Clothes => Some((&skier.clothes).into()),
-                Mode::Ability => self.ability_clothes(&skier.ability),
+            let skier_clothes = match self.is_showing_ability() {
+                false => Some((&skier.clothes).into()),
+                true => self.ability_clothes(&skier.ability),
             };
             if let Some(skier_clothes) = skier_clothes {
                 clothes.insert(*id, skier_clothes);

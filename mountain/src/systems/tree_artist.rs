@@ -31,6 +31,10 @@ impl System {
         }
     }
 
+    pub fn is_visible(&self) -> bool {
+        self.visible
+    }
+
     pub fn toggle_visible(&mut self, graphics: &mut dyn Graphics) {
         if self.visible {
             self.set_invisible(graphics);

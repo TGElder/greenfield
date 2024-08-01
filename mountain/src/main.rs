@@ -34,7 +34,7 @@ use serde::{Deserialize, Serialize};
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
     lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
-    piste_visibility, save, tree_visibility,
+    save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -175,12 +175,6 @@ fn main() {
                     },
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
-                piste_visibility: piste_visibility::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Y),
-                        state: ButtonState::Pressed,
-                    },
-                },
                 lift_builder: lift_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::L),
                     state: ButtonState::Pressed,
@@ -224,21 +218,9 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
-                skier_colors: handlers::skier_colors::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::U),
-                        state: ButtonState::Pressed,
-                    },
-                },
                 skier_debugger: handlers::skier_debugger::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::I),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                tree_visibility: tree_visibility::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::T),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -460,13 +442,10 @@ struct Handlers {
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
-    piste_visibility: piste_visibility::Handler,
     resize: resize::Handler,
     save: save::Handler,
     selection: selection::Handler,
-    skier_colors: handlers::skier_colors::Handler,
     skier_debugger: handlers::skier_debugger::Handler,
-    tree_visibility: tree_visibility::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
 }
@@ -652,15 +631,6 @@ impl EventHandler for Game {
             graphics,
             &mut self.systems.terrain_artist,
         );
-        self.handlers
-            .piste_visibility
-            .handle(event, &mut self.systems.terrain_artist);
-        self.handlers
-            .skier_colors
-            .handle(event, &mut self.systems.skier_colors);
-        self.handlers
-            .tree_visibility
-            .handle(event, &mut self.systems.tree_artist, graphics);
         self.handlers
             .piste_computer
             .handle(handlers::piste_computer::Parameters {

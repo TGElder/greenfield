@@ -6,6 +6,9 @@ use crate::Game;
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
+    let mut view_pistes_clicked = false;
+    let mut view_trees_clicked = false;
+    let mut view_skier_abilities_clicked = false;
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
@@ -33,11 +36,25 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                 });
                 ui.separator();
                 ui.vertical(|ui| {
-                    ui.label("View");
+                    ui.label("View").highlight();
                     ui.horizontal(|ui| {
-                        ui.button("⛷").on_hover_text("Piste");
-                        ui.button("🌲").on_hover_text("Trees");
-                        ui.button("📊").on_hover_text("Skier Abilities");
+                        let pistes = ui.button("⛷").on_hover_text("Pistes");
+                        view_pistes_clicked = pistes.clicked();
+                        if game.systems.terrain_artist.is_showing_pistes() {
+                            pistes.highlight();
+                        }
+
+                        let trees = ui.button("🌲").on_hover_text("Trees");
+                        view_trees_clicked = trees.clicked();
+                        if game.systems.tree_artist.is_visible() {
+                            trees.highlight();
+                        }
+
+                        let skier_abilities = ui.button("📊").on_hover_text("Skier Abilities");
+                        view_skier_abilities_clicked = skier_abilities.clicked();
+                        if game.systems.skier_colors.is_showing_ability() {
+                            skier_abilities.highlight();
+                        }
                     });
                 });
             });
@@ -45,4 +62,17 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     });
 
     game.components.services.clock.set_speed(speed);
+
+    if view_pistes_clicked {
+        game.systems.terrain_artist.toggle_show_pistes();
+        game.systems.terrain_artist.update_whole_overlay();
+    }
+
+    if view_trees_clicked {
+        game.systems.tree_artist.toggle_visible(graphics);
+    }
+
+    if view_skier_abilities_clicked {
+        game.systems.skier_colors.toggle_show_ability();
+    }
 }

@@ -131,6 +131,10 @@ impl System {
         }
     }
 
+    pub fn is_showing_pistes(&self) -> bool {
+        self.show_pistes
+    }
+
     pub fn toggle_show_pistes(&mut self) {
         self.show_pistes = !self.show_pistes;
     }
