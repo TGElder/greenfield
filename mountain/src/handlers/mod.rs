@@ -1,6 +1,7 @@
 use engine::events::Event;
 use engine::graphics::Graphics;
 
+pub mod builder;
 pub mod building_builder;
 pub mod building_remover;
 pub mod clock;

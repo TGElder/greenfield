@@ -2,10 +2,15 @@ use engine::egui;
 use engine::engine::Engine;
 use engine::graphics::Graphics;
 
+use crate::handlers::builder;
 use crate::Game;
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
+
+    let build_mode = game.handlers.builder.mode();
+    let mut build_piste_clicked = false;
+
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
@@ -26,12 +31,27 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                 ui.vertical(|ui| {
                     ui.label("Build");
                     ui.horizontal(|ui| {
-                        ui.button("⛷").on_hover_text("Piste");
+                        let piste = ui.button("⛷").on_hover_text("Piste");
+                        ui.button("🚶").on_hover_text("Path");
                         ui.button("🚡").on_hover_text("Lift");
                         ui.button("🚧").on_hover_text("Gates");
                         ui.button("🏠").on_hover_text("Hotel");
                         ui.button("🚪").on_hover_text("Hotel Entrance");
                         ui.button("💣").on_hover_text("Remove");
+
+                        build_piste_clicked = piste.clicked();
+
+                        match build_mode {
+                            builder::Mode::Piste => {
+                                piste.highlight();
+                            }
+                            builder::Mode::Path => todo!(),
+                            builder::Mode::Lift => todo!(),
+                            builder::Mode::Gates => todo!(),
+                            builder::Mode::Building => todo!(),
+                            builder::Mode::Door => todo!(),
+                            builder::Mode::None => (),
+                        }
                     });
                 });
                 ui.separator();
@@ -62,6 +82,14 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     });
 
     game.components.services.clock.set_speed(speed);
+
+    if build_piste_clicked {
+        game.handlers.selection.clear_selection();
+        match build_mode {
+            builder::Mode::Piste => game.handlers.builder.set_mode(builder::Mode::None),
+            _ => game.handlers.builder.set_mode(builder::Mode::Piste),
+        };
+    }
 
     if view_pistes_clicked {
         game.systems.terrain_artist.toggle_show_pistes();
