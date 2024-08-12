@@ -44,6 +44,8 @@ impl Handler {
             id_allocator,
         }: Parameters<'_>,
     ) {
+        selection.set_enabled(true);
+
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
         if !(add || subtract) {
@@ -104,6 +106,7 @@ impl Handler {
 
         // clearing selection
 
+        selection.set_enabled(false);
         selection.clear_selection();
     }
 }

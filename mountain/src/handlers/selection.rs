@@ -1,3 +1,5 @@
+use std::f32::consts::E;
+
 use commons::geometry::{project_point_onto_line, xy, Line, XYRectangle, XY, XYZ};
 use commons::grid::{Grid, OFFSETS_4};
 use commons::origin_grid::OriginGrid;
@@ -9,6 +11,7 @@ use crate::systems::terrain_artist;
 use super::*;
 
 pub struct Handler {
+    pub enabled: bool,
     pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
     pub binding: Bindings,
@@ -23,11 +26,17 @@ pub struct Bindings {
 impl Handler {
     pub fn new(binding: Bindings) -> Handler {
         Handler {
+            enabled: false,
             cells: Vec::with_capacity(3),
             grid: None,
             binding,
         }
     }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
     pub fn handle(
         &mut self,
         event: &engine::events::Event,
@@ -36,6 +45,10 @@ impl Handler {
         graphics: &mut dyn engine::graphics::Graphics,
         terrain_artist: &mut terrain_artist::System,
     ) {
+        if !self.enabled {
+            return;
+        }
+
         if let Event::MouseMoved(mouse_xy) = event {
             self.update_last_cell(terrain, mouse_xy, graphics)
         }
