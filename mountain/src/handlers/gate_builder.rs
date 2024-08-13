@@ -52,16 +52,16 @@ impl Handler {
             open,
             reservations,
         }: Parameters<'_>,
-    ) {
+    ) -> bool {
         if !self.binding.binds_event(event) {
-            return;
+            return false;
         }
         let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return;
+            return false;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return;
+            return false;
         };
 
         // clearing selection
@@ -73,13 +73,13 @@ impl Handler {
 
         if rectangle.width() == 0 || rectangle.height() == 0 {
             println!("INFO: Entrance must not be zero length");
-            return;
+            return false;
         }
         let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
             .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
 
         let Some(configuration) = maybe_configuration else {
-            return;
+            return false;
         };
 
         let gate = match configuration.orientation {
@@ -152,6 +152,8 @@ impl Handler {
         // inserting gate
 
         gates.insert(gate_id, gate);
+
+        true
     }
 }
 

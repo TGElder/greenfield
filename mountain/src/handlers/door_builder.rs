@@ -43,25 +43,25 @@ impl Handler {
             doors,
             entrances,
         }: Parameters<'_>,
-    ) {
+    ) -> bool {
         if !self.binding.binds_event(event) {
-            return;
+            return false;
         }
 
         let Some(grid) = &selection.grid else {
-            return;
+            return false;
         };
         if grid.width() != 1 && grid.height() != 1 {
             println!("WARN: Door must be 1 wide or 1 high");
             selection.clear_selection();
-            return;
+            return false;
         }
 
         let longest_side_cell_count = grid.width().max(grid.height());
         if longest_side_cell_count < 2 {
             println!("WARN: Door must be at least 2 wide or 2 high");
             selection.clear_selection();
-            return;
+            return false;
         }
 
         let rectangle = XYRectangle {
@@ -82,13 +82,13 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return;
+            return false;
         };
 
         if building.under_construction {
             println!("WARN: Door cannot be added to building under construction");
             selection.clear_selection();
-            return;
+            return false;
         }
 
         let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
@@ -105,7 +105,7 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return;
+            return false;
         };
 
         let aperture = piste_positions
@@ -136,6 +136,8 @@ impl Handler {
         );
 
         selection.clear_selection();
+
+        true
     }
 }
 

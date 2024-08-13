@@ -59,7 +59,7 @@ pub struct Bindings {
     pub toggle_roof: Binding,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum State {
     Selecting,
     Editing { building_id: usize },
@@ -86,11 +86,13 @@ impl Handler {
         }
     }
 
-    pub fn handle(&mut self, parameters: Parameters<'_>) {
+    pub fn handle(&mut self, parameters: Parameters<'_>) -> bool {
+        let old_state = self.state;
         self.state = match self.state {
             State::Selecting => self.select(parameters),
             State::Editing { building_id } => self.edit(building_id, parameters),
-        }
+        };
+        old_state != self.state
     }
 
     pub fn select(

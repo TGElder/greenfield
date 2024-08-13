@@ -73,13 +73,13 @@ fn main() {
         Game {
             handlers: Handlers {
                 builder: builder::Handler::new(),
-                _building_builder: building_builder::Handler::new(building_builder::Bindings {
+                building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::B),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                     finish_building: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::B),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                     decrease_height: Binding::Single {
@@ -111,9 +111,9 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
-                _door_builder: door_builder::Handler {
+                door_builder: door_builder::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::R),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -127,8 +127,8 @@ fn main() {
                         state: ButtonState::Released,
                     },
                 }),
-                _gate_builder: gate_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::N),
+                gate_builder: gate_builder::Handler::new(Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
                     state: ButtonState::Pressed,
                 }),
                 gate_opener: gate_opener::Handler {
@@ -143,11 +143,11 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                _path_builder: piste_builder::Handler {
+                path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::H),
+                            button: Button::Mouse(MouseButton::Left),
                             state: ButtonState::Pressed,
                         },
                         subtract: Binding::Single {
@@ -176,8 +176,8 @@ fn main() {
                     },
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
-                _lift_builder: lift_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::L),
+                lift_builder: lift_builder::Handler::new(Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
                     state: ButtonState::Pressed,
                 }),
                 lift_opener: lift_opener::Handler {
@@ -428,19 +428,19 @@ pub struct Components {
 
 struct Handlers {
     builder: builder::Handler,
-    _building_builder: building_builder::Handler,
+    building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
-    _door_builder: door_builder::Handler,
+    door_builder: door_builder::Handler,
     drag: drag::Handler,
-    _gate_builder: gate_builder::Handler,
+    gate_builder: gate_builder::Handler,
     gate_opener: gate_opener::Handler,
     gate_remover: gate_remover::Handler,
-    _lift_builder: lift_builder::Handler,
+    lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
     lift_remover: lift_remover::Handler,
     lift_targeter: lift_targeter::Handler,
-    _path_builder: piste_builder::Handler,
+    path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
