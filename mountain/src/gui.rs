@@ -45,11 +45,11 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                             builder::Mode::Piste => {
                                 piste.highlight();
                             }
-                            builder::Mode::Path => todo!(),
-                            builder::Mode::Lift => todo!(),
-                            builder::Mode::Gates => todo!(),
-                            builder::Mode::Building => todo!(),
-                            builder::Mode::Door => todo!(),
+                            builder::Mode::_Path => todo!(),
+                            builder::Mode::_Lift => todo!(),
+                            builder::Mode::_Gates => todo!(),
+                            builder::Mode::_Building => todo!(),
+                            builder::Mode::_Door => todo!(),
                             builder::Mode::None => (),
                         }
                     });

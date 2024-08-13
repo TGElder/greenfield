@@ -73,7 +73,7 @@ fn main() {
         Game {
             handlers: Handlers {
                 builder: builder::Handler::new(),
-                building_builder: building_builder::Handler::new(building_builder::Bindings {
+                _building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::B),
                         state: ButtonState::Pressed,
@@ -111,7 +111,7 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 }),
-                door_builder: door_builder::Handler {
+                _door_builder: door_builder::Handler {
                     binding: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::R),
                         state: ButtonState::Pressed,
@@ -127,7 +127,7 @@ fn main() {
                         state: ButtonState::Released,
                     },
                 }),
-                gate_builder: gate_builder::Handler::new(Binding::Single {
+                _gate_builder: gate_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::N),
                     state: ButtonState::Pressed,
                 }),
@@ -143,7 +143,7 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                path_builder: piste_builder::Handler {
+                _path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
@@ -176,7 +176,7 @@ fn main() {
                     },
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
-                lift_builder: lift_builder::Handler::new(Binding::Single {
+                _lift_builder: lift_builder::Handler::new(Binding::Single {
                     button: Button::Keyboard(KeyboardKey::L),
                     state: ButtonState::Pressed,
                 }),
@@ -428,19 +428,19 @@ pub struct Components {
 
 struct Handlers {
     builder: builder::Handler,
-    building_builder: building_builder::Handler,
+    _building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
-    door_builder: door_builder::Handler,
+    _door_builder: door_builder::Handler,
     drag: drag::Handler,
-    gate_builder: gate_builder::Handler,
+    _gate_builder: gate_builder::Handler,
     gate_opener: gate_opener::Handler,
     gate_remover: gate_remover::Handler,
-    lift_builder: lift_builder::Handler,
+    _lift_builder: lift_builder::Handler,
     lift_opener: lift_opener::Handler,
     lift_remover: lift_remover::Handler,
     lift_targeter: lift_targeter::Handler,
-    path_builder: piste_builder::Handler,
+    _path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
@@ -548,13 +548,6 @@ impl EventHandler for Game {
             },
         );
         self.handlers.save.handle(event, &mut self.components);
-        self.handlers.selection.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.terrain,
-            graphics,
-            &mut self.systems.terrain_artist,
-        );
         self.handlers
             .piste_computer
             .handle(handlers::piste_computer::Parameters {

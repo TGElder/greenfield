@@ -43,19 +43,19 @@ impl Handler {
             tree_artist,
             id_allocator,
         }: Parameters<'_>,
-    ) {
+    ) -> bool {
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
         if !(add || subtract) {
-            return;
+            return false;
         }
 
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return;
+            return false;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return;
+            return false;
         };
 
         let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
@@ -105,5 +105,7 @@ impl Handler {
         // clearing selection
 
         selection.clear_selection();
+
+        true
     }
 }
