@@ -504,7 +504,7 @@ impl EventHandler for Game {
             .clock
             .handle(event, &mut self.components.services.clock);
 
-        handlers::builder::handle(self.handlers.builder.mode(), event, self, graphics);
+        self.handlers.builder.handle()(event, self, graphics);
 
         self.handlers.building_remover.handle(
             event,

@@ -8,7 +8,10 @@ use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::handlers::{selection, HandlerResult};
+use crate::handlers::{
+    selection,
+    HandlerResult::{self, EventConsumed, EventRetained},
+};
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
@@ -94,9 +97,9 @@ impl Handler {
         };
 
         if old_state == self.state {
-            HandlerResult::EventRetained
+            EventRetained
         } else {
-            HandlerResult::EventConsumed
+            EventConsumed
         }
     }
 

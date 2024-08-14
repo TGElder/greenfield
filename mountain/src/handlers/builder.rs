@@ -37,15 +37,45 @@ impl Handler {
     pub fn set_mode(&mut self, mode: Mode) {
         self.mode = mode;
     }
+
+    pub fn handle(
+        &self,
+    ) -> impl FnOnce(&engine::events::Event, &mut Game, &mut dyn engine::graphics::Graphics) {
+        let mode = self.mode;
+        move |event, game, graphics| handle(mode, event, game, graphics)
+    }
 }
 
-pub fn handle(
+fn handle(
     mode: Mode,
     event: &engine::events::Event,
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) {
-    let handler_result = match mode {
+    let handler_result = try_to_build(mode, event, game, graphics);
+
+    if handler_result == EventConsumed {
+        return;
+    }
+
+    if mode.has_selection() {
+        game.handlers.selection.handle(
+            event,
+            &game.mouse_xy,
+            &game.components.terrain,
+            graphics,
+            &mut game.systems.terrain_artist,
+        );
+    }
+}
+
+fn try_to_build(
+    mode: Mode,
+    event: &engine::events::Event,
+    game: &mut Game,
+    graphics: &mut dyn engine::graphics::Graphics,
+) -> handlers::HandlerResult {
+    match mode {
         Mode::Piste => game
             .handlers
             .piste_builder
@@ -134,19 +164,5 @@ pub fn handle(
                 entrances: &mut game.components.entrances,
             }),
         Mode::None => EventRetained,
-    };
-
-    if handler_result == EventConsumed {
-        return;
-    }
-
-    if mode.has_selection() {
-        game.handlers.selection.handle(
-            event,
-            &game.mouse_xy,
-            &game.components.terrain,
-            graphics,
-            &mut game.systems.terrain_artist,
-        );
     }
 }

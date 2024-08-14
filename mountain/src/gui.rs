@@ -48,7 +48,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.handlers.builder.mode();
-    let mut build_buttons_clicked = [false; 6];
+    let mut build_button_clicked = [false; 6];
 
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
@@ -72,7 +72,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                     ui.horizontal(|ui| {
                         for (i, config) in BUILD_BUTTONS.iter().enumerate() {
                             let button = ui.button(config.icon).on_hover_text(config.hover_text);
-                            build_buttons_clicked[i] = button.clicked();
+                            build_button_clicked[i] = button.clicked();
                             if build_mode == config.build_mode {
                                 button.highlight();
                             }
@@ -108,7 +108,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 
     game.components.services.clock.set_speed(speed);
 
-    for (i, &clicked) in build_buttons_clicked.iter().enumerate() {
+    for (i, &clicked) in build_button_clicked.iter().enumerate() {
         if clicked {
             game.handlers.selection.clear_selection();
             let config = &BUILD_BUTTONS[i];
