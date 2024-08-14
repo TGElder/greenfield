@@ -5,16 +5,50 @@ use engine::graphics::Graphics;
 use crate::handlers::builder;
 use crate::Game;
 
+struct BuildButton {
+    icon: &'static str,
+    hover_text: &'static str,
+    build_mode: builder::Mode,
+}
+
+const BUILD_BUTTONS: [BuildButton; 6] = [
+    BuildButton {
+        icon: "⛷",
+        hover_text: "Piste",
+        build_mode: builder::Mode::Piste,
+    },
+    BuildButton {
+        icon: "🚶",
+        hover_text: "Path",
+        build_mode: builder::Mode::Path,
+    },
+    BuildButton {
+        icon: "🚡",
+        hover_text: "Lift",
+        build_mode: builder::Mode::Lift,
+    },
+    BuildButton {
+        icon: "🚧",
+        hover_text: "Gate",
+        build_mode: builder::Mode::Gate,
+    },
+    BuildButton {
+        icon: "🏠",
+        hover_text: "Hotel",
+        build_mode: builder::Mode::Building,
+    },
+    BuildButton {
+        icon: "🚪",
+        hover_text: "Entrance",
+        build_mode: builder::Mode::Door,
+    },
+];
+
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.handlers.builder.mode();
-    let mut build_piste_clicked = false;
-    let mut build_path_clicked = false;
-    let mut build_lift_clicked = false;
-    let mut build_gate_clicked = false;
-    let mut build_hotel_clicked = false;
-    let mut build_hotel_entrance_clicked = false;
+    let mut build_buttons_clicked = [false; 6];
 
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
@@ -36,41 +70,12 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                 ui.vertical(|ui| {
                     ui.label("Build");
                     ui.horizontal(|ui| {
-                        let piste = ui.button("⛷").on_hover_text("Piste");
-                        let path = ui.button("🚶").on_hover_text("Path");
-                        let lift = ui.button("🚡").on_hover_text("Lift");
-                        let gate = ui.button("🚧").on_hover_text("Gate");
-                        let hotel = ui.button("🏠").on_hover_text("Hotel");
-                        let hotel_entrance = ui.button("🚪").on_hover_text("Hotel Entrance");
-                        ui.button("💣").on_hover_text("Remove");
-
-                        build_piste_clicked = piste.clicked();
-                        build_path_clicked = path.clicked();
-                        build_lift_clicked = lift.clicked();
-                        build_gate_clicked = gate.clicked();
-                        build_hotel_clicked = hotel.clicked();
-                        build_hotel_entrance_clicked = hotel_entrance.clicked();
-
-                        match build_mode {
-                            builder::Mode::Piste => {
-                                piste.highlight();
+                        for (i, config) in BUILD_BUTTONS.iter().enumerate() {
+                            let button = ui.button(config.icon).on_hover_text(config.hover_text);
+                            build_buttons_clicked[i] = button.clicked();
+                            if build_mode == config.build_mode {
+                                button.highlight();
                             }
-                            builder::Mode::Path => {
-                                path.highlight();
-                            }
-                            builder::Mode::Lift => {
-                                lift.highlight();
-                            }
-                            builder::Mode::Gate => {
-                                gate.highlight();
-                            }
-                            builder::Mode::Building => {
-                                hotel.highlight();
-                            }
-                            builder::Mode::Door => {
-                                hotel_entrance.highlight();
-                            }
-                            builder::Mode::None => (),
                         }
                     });
                 });
@@ -103,52 +108,16 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 
     game.components.services.clock.set_speed(speed);
 
-    if build_piste_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Piste => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Piste),
-        };
-    }
-
-    if build_path_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Path => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Path),
-        };
-    }
-
-    if build_lift_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Lift => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Lift),
-        };
-    }
-
-    if build_gate_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Gate => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Gate),
-        };
-    }
-
-    if build_hotel_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Building => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Building),
-        };
-    }
-
-    if build_hotel_entrance_clicked {
-        game.handlers.selection.clear_selection();
-        match build_mode {
-            builder::Mode::Door => game.handlers.builder.set_mode(builder::Mode::None),
-            _ => game.handlers.builder.set_mode(builder::Mode::Door),
-        };
+    for (i, &clicked) in build_buttons_clicked.iter().enumerate() {
+        if clicked {
+            game.handlers.selection.clear_selection();
+            let config = &BUILD_BUTTONS[i];
+            if build_mode == config.build_mode {
+                game.handlers.builder.set_mode(builder::Mode::None);
+            } else {
+                game.handlers.builder.set_mode(config.build_mode);
+            };
+        }
     }
 
     if view_pistes_clicked {

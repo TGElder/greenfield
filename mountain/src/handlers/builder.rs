@@ -1,7 +1,7 @@
 use crate::handlers::HandlerResult::{EventConsumed, EventRetained};
 use crate::{handlers, Game};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq)]
 pub enum Mode {
     Piste,
     Path,
