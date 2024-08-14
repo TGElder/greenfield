@@ -32,9 +32,9 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_highlighter,
-    save,
+    builder, building_builder, building_remover, door_builder, gate_builder, gate_opener,
+    gate_remover, lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer,
+    piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
@@ -72,13 +72,14 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
+                builder: builder::Handler::new(),
                 building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::B),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                     finish_building: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::B),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                     decrease_height: Binding::Single {
@@ -112,7 +113,7 @@ fn main() {
                 }),
                 door_builder: door_builder::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::R),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -127,7 +128,7 @@ fn main() {
                     },
                 }),
                 gate_builder: gate_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::N),
+                    button: Button::Mouse(MouseButton::Left),
                     state: ButtonState::Pressed,
                 }),
                 gate_opener: gate_opener::Handler {
@@ -146,7 +147,7 @@ fn main() {
                     class: piste::Class::Path,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::H),
+                            button: Button::Mouse(MouseButton::Left),
                             state: ButtonState::Pressed,
                         },
                         subtract: Binding::Single {
@@ -159,7 +160,7 @@ fn main() {
                     class: piste::Class::Piste,
                     bindings: piste_builder::Bindings {
                         add: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::V),
+                            button: Button::Mouse(MouseButton::Left),
                             state: ButtonState::Pressed,
                         },
                         subtract: Binding::Single {
@@ -176,7 +177,7 @@ fn main() {
                 },
                 piste_highlighter: piste_highlighter::Handler::default(),
                 lift_builder: lift_builder::Handler::new(Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::L),
+                    button: Button::Mouse(MouseButton::Left),
                     state: ButtonState::Pressed,
                 }),
                 lift_opener: lift_opener::Handler {
@@ -426,6 +427,7 @@ pub struct Components {
 }
 
 struct Handlers {
+    builder: builder::Handler,
     building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
@@ -501,87 +503,9 @@ impl EventHandler for Game {
         self.handlers
             .clock
             .handle(event, &mut self.components.services.clock);
-        self.handlers
-            .path_builder
-            .handle(handlers::piste_builder::Parameters {
-                event,
-                pistes: &mut self.components.pistes,
-                piste_map: &mut self.components.piste_map,
-                selection: &mut self.handlers.selection,
-                terrain_artist: &mut self.systems.terrain_artist,
-                tree_artist: &mut self.systems.tree_artist,
-                id_allocator: &mut self.components.services.id_allocator,
-            });
-        self.handlers
-            .piste_builder
-            .handle(handlers::piste_builder::Parameters {
-                event,
-                pistes: &mut self.components.pistes,
-                piste_map: &mut self.components.piste_map,
-                selection: &mut self.handlers.selection,
-                terrain_artist: &mut self.systems.terrain_artist,
-                tree_artist: &mut self.systems.tree_artist,
-                id_allocator: &mut self.components.services.id_allocator,
-            });
-        self.handlers
-            .lift_builder
-            .handle(handlers::lift_builder::Parameters {
-                event,
-                mouse_xy: &self.mouse_xy,
-                terrain: &self.components.terrain,
-                piste_map: &self.components.piste_map,
-                lifts: &mut self.components.lifts,
-                open: &mut self.components.open,
-                id_allocator: &mut self.components.services.id_allocator,
-                carousels: &mut self.components.carousels,
-                cars: &mut self.components.cars,
-                exits: &mut self.components.exits,
-                entrances: &mut self.components.entrances,
-                reservations: &mut self.components.reservations,
-                graphics,
-            });
-        self.handlers
-            .building_builder
-            .handle(handlers::building_builder::Parameters {
-                event,
-                terrain: &self.components.terrain,
-                selection: &mut self.handlers.selection,
-                id_allocator: &mut self.components.services.id_allocator,
-                buildings: &mut self.components.buildings,
-                locations: &mut self.components.locations,
-                skiers: &mut self.components.skiers,
-                building_artist: &mut self.systems.building_artist,
-                tree_artist: &mut self.systems.tree_artist,
-                window_artist: &mut self.systems.window_artist,
-            });
-        self.handlers
-            .door_builder
-            .handle(handlers::door_builder::Parameters {
-                event,
-                pistes: &self.components.pistes,
-                buildings: &self.components.buildings,
-                terrain: &self.components.terrain,
-                selection: &mut self.handlers.selection,
-                id_allocator: &mut self.components.services.id_allocator,
-                doors: &mut self.components.doors,
-                entrances: &mut self.components.entrances,
-            });
 
-        self.handlers
-            .gate_builder
-            .handle(handlers::gate_builder::Parameters {
-                event,
-                piste_map: &self.components.piste_map,
-                terrain: &self.components.terrain,
-                selection: &mut self.handlers.selection,
-                terrain_artist: &mut self.systems.terrain_artist,
-                id_allocator: &mut self.components.services.id_allocator,
-                gates: &mut self.components.gates,
-                entrances: &mut self.components.entrances,
-                exits: &mut self.components.exits,
-                open: &mut self.components.open,
-                reservations: &mut self.components.reservations,
-            });
+        self.handlers.builder.handle()(event, self, graphics);
+
         self.handlers.building_remover.handle(
             event,
             &self.mouse_xy,
@@ -624,13 +548,6 @@ impl EventHandler for Game {
             },
         );
         self.handlers.save.handle(event, &mut self.components);
-        self.handlers.selection.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.terrain,
-            graphics,
-            &mut self.systems.terrain_artist,
-        );
         self.handlers
             .piste_computer
             .handle(handlers::piste_computer::Parameters {

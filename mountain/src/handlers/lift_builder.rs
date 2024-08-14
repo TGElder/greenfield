@@ -7,6 +7,7 @@ use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::{Grid, CORNERS};
 use engine::binding::Binding;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
@@ -71,25 +72,27 @@ impl Handler {
             reservations,
             graphics,
         }: Parameters<'_>,
-    ) {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return;
+            return EventRetained;
         }
 
-        let Some(mouse_xy) = mouse_xy else { return };
+        let Some(mouse_xy) = mouse_xy else {
+            return EventRetained;
+        };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
+            return EventRetained;
         };
         let position = xy(x.round() as u32, y.round() as u32);
         if !terrain.in_bounds(position) {
-            return;
+            return EventRetained;
         }
 
         // handle case where from position is not set
 
         let Some(from) = self.from else {
             self.from = Some(position);
-            return;
+            return EventConsumed;
         };
 
         // create lift
@@ -99,12 +102,12 @@ impl Handler {
         let Some(from_piste) = piste_map[from] else {
             println!("INFO: No piste at from position");
             self.from = None;
-            return;
+            return EventRetained;
         };
         let Some(to_piste) = piste_map[to] else {
             self.from = None;
             println!("INFO: No piste at to position");
-            return;
+            return EventRetained;
         };
 
         let lift_id = id_allocator.next_id();
@@ -200,6 +203,7 @@ impl Handler {
         // register lift
 
         lifts.insert(lift_id, lift);
+        EventConsumed
     }
 }
 
