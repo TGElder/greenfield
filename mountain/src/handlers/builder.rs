@@ -1,3 +1,4 @@
+use crate::handlers::HandlerResult::{EventConsumed, EventRetained};
 use crate::{handlers, Game};
 
 #[derive(Clone, Copy)]
@@ -9,6 +10,15 @@ pub enum Mode {
     Building,
     Door,
     None,
+}
+
+impl Mode {
+    fn has_selection(&self) -> bool {
+        matches!(
+            self,
+            Mode::Piste | Mode::Path | Mode::Gate | Mode::Building | Mode::Door
+        )
+    }
 }
 
 pub struct Handler {
@@ -35,8 +45,8 @@ pub fn handle(
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) {
-    let update_selection = match mode {
-        Mode::Piste => !game
+    let handler_result = match mode {
+        Mode::Piste => game
             .handlers
             .piste_builder
             .handle(handlers::piste_builder::Parameters {
@@ -48,7 +58,7 @@ pub fn handle(
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
             }),
-        Mode::Path => !game
+        Mode::Path => game
             .handlers
             .path_builder
             .handle(handlers::piste_builder::Parameters {
@@ -60,27 +70,25 @@ pub fn handle(
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
             }),
-        Mode::Lift => {
-            game.handlers
-                .lift_builder
-                .handle(handlers::lift_builder::Parameters {
-                    event,
-                    mouse_xy: &game.mouse_xy,
-                    terrain: &game.components.terrain,
-                    piste_map: &game.components.piste_map,
-                    lifts: &mut game.components.lifts,
-                    open: &mut game.components.open,
-                    id_allocator: &mut game.components.services.id_allocator,
-                    carousels: &mut game.components.carousels,
-                    cars: &mut game.components.cars,
-                    exits: &mut game.components.exits,
-                    entrances: &mut game.components.entrances,
-                    reservations: &mut game.components.reservations,
-                    graphics,
-                });
-            false
-        }
-        Mode::Gate => !game
+        Mode::Lift => game
+            .handlers
+            .lift_builder
+            .handle(handlers::lift_builder::Parameters {
+                event,
+                mouse_xy: &game.mouse_xy,
+                terrain: &game.components.terrain,
+                piste_map: &game.components.piste_map,
+                lifts: &mut game.components.lifts,
+                open: &mut game.components.open,
+                id_allocator: &mut game.components.services.id_allocator,
+                carousels: &mut game.components.carousels,
+                cars: &mut game.components.cars,
+                exits: &mut game.components.exits,
+                entrances: &mut game.components.entrances,
+                reservations: &mut game.components.reservations,
+                graphics,
+            }),
+        Mode::Gate => game
             .handlers
             .gate_builder
             .handle(handlers::gate_builder::Parameters {
@@ -97,8 +105,7 @@ pub fn handle(
                 reservations: &mut game.components.reservations,
             }),
         Mode::Building => {
-            !game
-                .handlers
+            game.handlers
                 .building_builder
                 .handle(handlers::building_builder::Parameters {
                     event,
@@ -113,7 +120,7 @@ pub fn handle(
                     window_artist: &mut game.systems.window_artist,
                 })
         }
-        Mode::Door => !game
+        Mode::Door => game
             .handlers
             .door_builder
             .handle(handlers::door_builder::Parameters {
@@ -126,10 +133,14 @@ pub fn handle(
                 doors: &mut game.components.doors,
                 entrances: &mut game.components.entrances,
             }),
-        Mode::None => false,
+        Mode::None => EventRetained,
     };
 
-    if update_selection {
+    if handler_result == EventConsumed {
+        return;
+    }
+
+    if mode.has_selection() {
         game.handlers.selection.handle(
             event,
             &game.mouse_xy,

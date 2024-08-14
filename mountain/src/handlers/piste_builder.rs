@@ -6,7 +6,10 @@ use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 
-use crate::handlers::selection;
+use crate::handlers::{
+    selection,
+    HandlerResult::{self, EventConsumed, EventRetained},
+};
 use crate::model::piste::{self, Piste};
 use crate::services::id_allocator;
 use crate::systems::{terrain_artist, tree_artist};
@@ -43,19 +46,19 @@ impl Handler {
             tree_artist,
             id_allocator,
         }: Parameters<'_>,
-    ) -> bool {
+    ) -> HandlerResult {
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
         if !(add || subtract) {
-            return false;
+            return EventRetained;
         }
 
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return false;
+            return EventRetained;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return false;
+            return EventRetained;
         };
 
         let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
@@ -106,6 +109,6 @@ impl Handler {
 
         selection.clear_selection();
 
-        true
+        EventConsumed
     }
 }

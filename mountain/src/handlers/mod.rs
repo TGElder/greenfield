@@ -19,3 +19,9 @@ pub mod piste_highlighter;
 pub mod save;
 pub mod selection;
 pub mod skier_debugger;
+
+#[derive(PartialEq)]
+pub enum HandlerResult {
+    EventRetained,
+    EventConsumed,
+}

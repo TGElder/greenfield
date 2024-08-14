@@ -8,7 +8,7 @@ use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::handlers::selection;
+use crate::handlers::{selection, HandlerResult};
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
@@ -86,13 +86,18 @@ impl Handler {
         }
     }
 
-    pub fn handle(&mut self, parameters: Parameters<'_>) -> bool {
+    pub fn handle(&mut self, parameters: Parameters<'_>) -> HandlerResult {
         let old_state = self.state;
         self.state = match self.state {
             State::Selecting => self.select(parameters),
             State::Editing { building_id } => self.edit(building_id, parameters),
         };
-        old_state != self.state
+
+        if old_state == self.state {
+            HandlerResult::EventRetained
+        } else {
+            HandlerResult::EventConsumed
+        }
     }
 
     pub fn select(

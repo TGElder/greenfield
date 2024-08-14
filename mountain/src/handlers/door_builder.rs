@@ -10,6 +10,7 @@ use crate::model::building::Building;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::door::Door;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
 use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
@@ -43,25 +44,25 @@ impl Handler {
             doors,
             entrances,
         }: Parameters<'_>,
-    ) -> bool {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return false;
+            return EventRetained;
         }
 
         let Some(grid) = &selection.grid else {
-            return false;
+            return EventRetained;
         };
         if grid.width() != 1 && grid.height() != 1 {
             println!("WARN: Door must be 1 wide or 1 high");
             selection.clear_selection();
-            return false;
+            return EventRetained;
         }
 
         let longest_side_cell_count = grid.width().max(grid.height());
         if longest_side_cell_count < 2 {
             println!("WARN: Door must be at least 2 wide or 2 high");
             selection.clear_selection();
-            return false;
+            return EventRetained;
         }
 
         let rectangle = XYRectangle {
@@ -82,13 +83,13 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return false;
+            return EventRetained;
         };
 
         if building.under_construction {
             println!("WARN: Door cannot be added to building under construction");
             selection.clear_selection();
-            return false;
+            return EventRetained;
         }
 
         let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
@@ -105,7 +106,7 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return false;
+            return EventRetained;
         };
 
         let aperture = piste_positions
@@ -137,7 +138,7 @@ impl Handler {
 
         selection.clear_selection();
 
-        true
+        EventConsumed
     }
 }
 
