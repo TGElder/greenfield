@@ -4,6 +4,7 @@ use commons::geometry::{xy, XY, XYZ};
 use commons::grid::Grid;
 use engine::binding::Binding;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::Plan;
 
@@ -34,16 +35,22 @@ impl Handler {
             global_targets,
             graphics,
         }: Parameters<'_>,
-    ) {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return;
+            return EventPersists;
         }
 
-        let Some(mouse_xy) = mouse_xy else { return };
+        let Some(mouse_xy) = mouse_xy else {
+            return EventPersists;
+        };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
+            return EventPersists;
         };
         let mouse_position = xy(x.round() as u32, y.round() as u32);
+
+        if reservations[mouse_position].is_empty() {
+            return EventPersists;
+        }
 
         for (id, _) in reservations[mouse_position].iter() {
             println!("ID = {:?}", id);
@@ -52,5 +59,7 @@ impl Handler {
             println!("Global target = {:?}", global_targets.get(id));
             println!("Plan = {:?}", plans.get(id));
         }
+
+        EventConsumed
     }
 }

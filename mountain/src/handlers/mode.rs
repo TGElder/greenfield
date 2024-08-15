@@ -3,6 +3,8 @@ use crate::{handlers, Game};
 
 #[derive(Clone, Copy, PartialEq)]
 pub enum Mode {
+    Open,
+    Query,
     Piste,
     Path,
     Lift,
@@ -53,7 +55,7 @@ fn handle(
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) {
-    let handler_result = try_to_build(mode, event, game, graphics);
+    let handler_result = try_to_handle(mode, event, game, graphics);
 
     if handler_result == EventConsumed {
         return;
@@ -70,13 +72,26 @@ fn handle(
     }
 }
 
-fn try_to_build(
+fn try_to_handle(
     mode: Mode,
     event: &engine::events::Event,
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) -> handlers::HandlerResult {
     match mode {
+        Mode::Open => try_to_open(game, event, graphics),
+        Mode::Query => game.handlers.skier_debugger.handle(
+            event,
+            handlers::skier_debugger::Parameters {
+                mouse_xy: &game.mouse_xy,
+                reservations: &game.components.reservations,
+                plans: &game.components.plans,
+                locations: &game.components.locations,
+                targets: &game.components.targets,
+                global_targets: &game.components.global_targets,
+                graphics,
+            },
+        ),
         Mode::Piste => game
             .handlers
             .piste_builder
@@ -167,6 +182,36 @@ fn try_to_build(
         Mode::Demolish => try_to_demolish(game, event, graphics),
         Mode::None => EventPersists,
     }
+}
+
+fn try_to_open(
+    game: &mut Game,
+    event: &engine::events::Event,
+    graphics: &mut dyn engine::graphics::Graphics,
+) -> HandlerResult {
+    if game.handlers.lift_opener.handle(
+        event,
+        &game.mouse_xy,
+        &game.components.lifts,
+        &mut game.components.open,
+        &mut game.systems.global_computer,
+        graphics,
+    ) == EventConsumed
+    {
+        return EventConsumed;
+    }
+    if game.handlers.gate_opener.handle(
+        event,
+        &game.mouse_xy,
+        &game.components.gates,
+        &mut game.components.open,
+        &mut game.systems.global_computer,
+        graphics,
+    ) == EventConsumed
+    {
+        return EventConsumed;
+    }
+    EventPersists
 }
 
 fn try_to_demolish(

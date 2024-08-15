@@ -2,58 +2,84 @@ use engine::egui;
 use engine::engine::Engine;
 use engine::graphics::Graphics;
 
-use crate::handlers::builder;
+use crate::handlers::mode;
 use crate::Game;
 
-struct BuildButton {
+struct ModeButton {
     icon: &'static str,
     hover_text: &'static str,
-    build_mode: builder::Mode,
+    build_mode: mode::Mode,
+    panel: Panel,
 }
 
-const BUILD_BUTTONS: [BuildButton; 7] = [
-    BuildButton {
+#[derive(PartialEq)]
+enum Panel {
+    Run,
+    Build,
+}
+
+const MODE_BUTTONS: [ModeButton; 9] = [
+    ModeButton {
+        icon: "🚦",
+        hover_text: "Open/Close",
+        build_mode: mode::Mode::Open,
+        panel: Panel::Run,
+    },
+    ModeButton {
+        icon: "❓",
+        hover_text: "Query",
+        build_mode: mode::Mode::Query,
+        panel: Panel::Run,
+    },
+    ModeButton {
         icon: "⛷",
         hover_text: "Piste",
-        build_mode: builder::Mode::Piste,
+        build_mode: mode::Mode::Piste,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "🚶",
         hover_text: "Path",
-        build_mode: builder::Mode::Path,
+        build_mode: mode::Mode::Path,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "🚡",
         hover_text: "Lift",
-        build_mode: builder::Mode::Lift,
+        build_mode: mode::Mode::Lift,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "🚧",
         hover_text: "Gate",
-        build_mode: builder::Mode::Gate,
+        build_mode: mode::Mode::Gate,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "🏠",
         hover_text: "Hotel",
-        build_mode: builder::Mode::Building,
+        build_mode: mode::Mode::Building,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "🚪",
         hover_text: "Entrance",
-        build_mode: builder::Mode::Door,
+        build_mode: mode::Mode::Door,
+        panel: Panel::Build,
     },
-    BuildButton {
+    ModeButton {
         icon: "💣",
         hover_text: "Demolish",
-        build_mode: builder::Mode::Demolish,
+        build_mode: mode::Mode::Demolish,
+        panel: Panel::Build,
     },
 ];
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
-    let build_mode = game.handlers.builder.mode();
-    let mut build_button_clicked = [false; BUILD_BUTTONS.len()];
+    let build_mode = game.handlers.mode.mode();
+    let mut mode_button_clicked = [false; MODE_BUTTONS.len()];
 
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
@@ -67,17 +93,30 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                     ui.label("Run");
                     ui.horizontal(|ui| {
                         ui.add(egui::Slider::new(&mut speed, 0.0..=8.0));
-                        ui.button("🚦").on_hover_text("Status");
-                        ui.button("❓").on_hover_text("Query");
+                        for (i, config) in MODE_BUTTONS
+                            .iter()
+                            .enumerate()
+                            .filter(|(_, config)| config.panel == Panel::Run)
+                        {
+                            let button = ui.button(config.icon).on_hover_text(config.hover_text);
+                            mode_button_clicked[i] = button.clicked();
+                            if build_mode == config.build_mode {
+                                button.highlight();
+                            }
+                        }
                     });
                 });
                 ui.separator();
                 ui.vertical(|ui| {
                     ui.label("Build");
                     ui.horizontal(|ui| {
-                        for (i, config) in BUILD_BUTTONS.iter().enumerate() {
+                        for (i, config) in MODE_BUTTONS
+                            .iter()
+                            .enumerate()
+                            .filter(|(_, config)| config.panel == Panel::Build)
+                        {
                             let button = ui.button(config.icon).on_hover_text(config.hover_text);
-                            build_button_clicked[i] = button.clicked();
+                            mode_button_clicked[i] = button.clicked();
                             if build_mode == config.build_mode {
                                 button.highlight();
                             }
@@ -113,14 +152,14 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 
     game.components.services.clock.set_speed(speed);
 
-    for (i, &clicked) in build_button_clicked.iter().enumerate() {
+    for (i, &clicked) in mode_button_clicked.iter().enumerate() {
         if clicked {
             game.handlers.selection.clear_selection();
-            let config = &BUILD_BUTTONS[i];
+            let config = &MODE_BUTTONS[i];
             if build_mode == config.build_mode {
-                game.handlers.builder.set_mode(builder::Mode::None);
+                game.handlers.mode.set_mode(mode::Mode::None);
             } else {
-                game.handlers.builder.set_mode(config.build_mode);
+                game.handlers.mode.set_mode(config.build_mode);
             };
         }
     }
