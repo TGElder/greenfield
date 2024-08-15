@@ -2,6 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::graphics::Graphics;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
 use crate::model::ability::ABILITIES;
 use crate::model::gate::Gate;
 use crate::Components;
@@ -17,14 +18,16 @@ impl Handler {
         mouse_xy: &Option<XY<u32>>,
         graphics: &mut dyn engine::graphics::Graphics,
         components: &mut Components,
-    ) {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return;
+            return EventRetained;
         }
 
-        let Some(mouse_xy) = mouse_xy else { return };
+        let Some(mouse_xy) = mouse_xy else {
+            return EventRetained;
+        };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
+            return EventRetained;
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
@@ -35,9 +38,15 @@ impl Handler {
             .map(|(gate_id, _)| *gate_id)
             .collect::<Vec<_>>();
 
+        if gate_ids.is_empty() {
+            return EventRetained;
+        }
+
         for gate_id in gate_ids {
             remove_gate(graphics, components, &gate_id);
         }
+
+        EventConsumed
     }
 }
 

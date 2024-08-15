@@ -1,4 +1,4 @@
-use crate::handlers::HandlerResult::{EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
 use crate::{handlers, Game};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -9,6 +9,7 @@ pub enum Mode {
     Gate,
     Building,
     Door,
+    Demolish,
     None,
 }
 
@@ -163,6 +164,41 @@ fn try_to_build(
                 doors: &mut game.components.doors,
                 entrances: &mut game.components.entrances,
             }),
+        Mode::Demolish => try_to_demolish(game, event, graphics),
         Mode::None => EventRetained,
     }
+}
+
+fn try_to_demolish(
+    game: &mut Game,
+    event: &engine::events::Event,
+    graphics: &mut dyn engine::graphics::Graphics,
+) -> HandlerResult {
+    if game.handlers.building_remover.handle(
+        event,
+        &game.mouse_xy,
+        graphics,
+        &mut game.components,
+        &mut game.systems,
+    ) == EventConsumed
+    {
+        return EventConsumed;
+    }
+    if game
+        .handlers
+        .gate_remover
+        .handle(event, &game.mouse_xy, graphics, &mut game.components)
+        == EventConsumed
+    {
+        return EventConsumed;
+    };
+    if game
+        .handlers
+        .lift_remover
+        .handle(event, &game.mouse_xy, graphics, &mut game.components)
+        == EventConsumed
+    {
+        return EventConsumed;
+    }
+    EventRetained
 }
