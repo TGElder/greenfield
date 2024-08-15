@@ -125,7 +125,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                 });
                 ui.separator();
                 ui.vertical(|ui| {
-                    ui.label("View").highlight();
+                    ui.label("View");
                     ui.horizontal(|ui| {
                         let pistes = ui.button("⛷").on_hover_text("Pistes");
                         view_pistes_clicked = pistes.clicked();
