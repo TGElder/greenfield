@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::lift::Lift;
 use crate::systems::global_computer;
 
@@ -19,18 +20,31 @@ impl Handler {
         open: &mut HashSet<usize>,
         global_computer: &mut global_computer::System,
         graphics: &mut dyn engine::graphics::Graphics,
-    ) {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return;
+            return EventPersists;
         }
 
-        let Some(mouse_xy) = mouse_xy else { return };
+        let Some(mouse_xy) = mouse_xy else {
+            return EventPersists;
+        };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
+            return EventPersists;
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
-        for (lift_id, lift) in lifts {
+        let lifts_to_modify = lifts
+            .iter()
+            .filter(|(_, lift)| {
+                lift.pick_up.state.position == position || lift.drop_off.state.position == position
+            })
+            .collect::<Vec<_>>();
+
+        if lifts_to_modify.is_empty() {
+            return EventPersists;
+        }
+
+        for (lift_id, lift) in lifts_to_modify {
             if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
                 if open.remove(lift_id) {
                     println!("Lift {} is closed", lift_id);
@@ -46,9 +60,11 @@ impl Handler {
                     open.insert(lift.drop_off.id);
                     println!("Drop off {} is open", lift.drop_off.id);
                 }
-
-                global_computer.update();
             }
         }
+
+        global_computer.update();
+
+        EventConsumed
     }
 }

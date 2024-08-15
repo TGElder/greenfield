@@ -1,7 +1,6 @@
 use engine::events::Event;
 use engine::graphics::Graphics;
 
-pub mod builder;
 pub mod building_builder;
 pub mod building_remover;
 pub mod clock;
@@ -13,6 +12,7 @@ pub mod lift_builder;
 pub mod lift_opener;
 pub mod lift_remover;
 pub mod lift_targeter;
+pub mod mode;
 pub mod piste_builder;
 pub mod piste_computer;
 pub mod piste_highlighter;

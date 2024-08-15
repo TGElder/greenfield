@@ -3,6 +3,7 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::gate::Gate;
 use crate::systems::global_computer;
 
@@ -19,32 +20,43 @@ impl Handler {
         open: &mut HashSet<usize>,
         global_computer: &mut global_computer::System,
         graphics: &mut dyn engine::graphics::Graphics,
-    ) {
+    ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return;
+            return EventPersists;
         }
 
-        let Some(mouse_xy) = mouse_xy else { return };
+        let Some(mouse_xy) = mouse_xy else {
+            return EventPersists;
+        };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
+            return EventPersists;
         };
         let mouse_position = xy(x.round() as u32, y.round() as u32);
 
-        for (gate_id, gate) in gates {
-            if gate
-                .footprint
-                .iter()
-                .any(|position| position == mouse_position)
-            {
-                if open.remove(gate_id) {
-                    println!("Gate {} is closed", gate_id);
-                } else {
-                    open.insert(*gate_id);
-                    println!("Gate {} is open", gate_id);
-                }
+        let gate_ids = gates
+            .iter()
+            .filter(|(_, gate)| {
+                gate.footprint
+                    .iter()
+                    .any(|position| position == mouse_position)
+            })
+            .map(|(gate_id, _)| gate_id)
+            .collect::<Vec<_>>();
 
-                global_computer.update();
+        if gate_ids.is_empty() {
+            return EventPersists;
+        }
+
+        for gate_id in gate_ids {
+            if open.remove(gate_id) {
+                println!("Gate {} is closed", gate_id);
+            } else {
+                open.insert(*gate_id);
+                println!("Gate {} is open", gate_id);
             }
         }
+        global_computer.update();
+
+        EventConsumed
     }
 }

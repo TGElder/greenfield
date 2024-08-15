@@ -32,8 +32,8 @@ use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
-    builder, building_builder, building_remover, door_builder, gate_builder, gate_opener,
-    gate_remover, lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer,
+    building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
+    lift_opener, lift_remover, lift_targeter, mode, piste_builder, piste_computer,
     piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
@@ -72,7 +72,7 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
-                builder: builder::Handler::new(),
+                mode: mode::Handler::new(),
                 building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
                         button: Button::Mouse(MouseButton::Left),
@@ -133,7 +133,7 @@ fn main() {
                 }),
                 gate_opener: gate_opener::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::O),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -182,7 +182,7 @@ fn main() {
                 }),
                 lift_opener: lift_opener::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::O),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -221,7 +221,7 @@ fn main() {
                 }),
                 skier_debugger: handlers::skier_debugger::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::I),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -427,7 +427,7 @@ pub struct Components {
 }
 
 struct Handlers {
-    builder: builder::Handler,
+    mode: mode::Handler,
     building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
@@ -504,24 +504,8 @@ impl EventHandler for Game {
             .clock
             .handle(event, &mut self.components.services.clock);
 
-        self.handlers.builder.handle()(event, self, graphics);
+        self.handlers.mode.handle()(event, self, graphics);
 
-        self.handlers.lift_opener.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.lifts,
-            &mut self.components.open,
-            &mut self.systems.global_computer,
-            graphics,
-        );
-        self.handlers.gate_opener.handle(
-            event,
-            &self.mouse_xy,
-            &self.components.gates,
-            &mut self.components.open,
-            &mut self.systems.global_computer,
-            graphics,
-        );
         self.handlers.lift_targeter.handle(
             event,
             lift_targeter::Parameters {
@@ -552,19 +536,6 @@ impl EventHandler for Game {
                 terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
-
-        self.handlers.skier_debugger.handle(
-            event,
-            handlers::skier_debugger::Parameters {
-                mouse_xy: &self.mouse_xy,
-                reservations: &self.components.reservations,
-                plans: &self.components.plans,
-                locations: &self.components.locations,
-                targets: &self.components.targets,
-                global_targets: &self.components.global_targets,
-                graphics,
-            },
-        );
 
         self.systems
             .global_computer
