@@ -10,7 +10,7 @@ use crate::model::building::Building;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::door::Door;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
@@ -46,23 +46,23 @@ impl Handler {
         }: Parameters<'_>,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return EventRetained;
+            return EventPersists;
         }
 
         let Some(grid) = &selection.grid else {
-            return EventRetained;
+            return EventPersists;
         };
         if grid.width() != 1 && grid.height() != 1 {
             println!("WARN: Door must be 1 wide or 1 high");
             selection.clear_selection();
-            return EventRetained;
+            return EventPersists;
         }
 
         let longest_side_cell_count = grid.width().max(grid.height());
         if longest_side_cell_count < 2 {
             println!("WARN: Door must be at least 2 wide or 2 high");
             selection.clear_selection();
-            return EventRetained;
+            return EventPersists;
         }
 
         let rectangle = XYRectangle {
@@ -83,13 +83,13 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return EventRetained;
+            return EventPersists;
         };
 
         if building.under_construction {
             println!("WARN: Door cannot be added to building under construction");
             selection.clear_selection();
-            return EventRetained;
+            return EventPersists;
         }
 
         let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
@@ -106,7 +106,7 @@ impl Handler {
                 longest_side_position_count
             );
             selection.clear_selection();
-            return EventRetained;
+            return EventPersists;
         };
 
         let aperture = piste_positions

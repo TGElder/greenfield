@@ -1,4 +1,4 @@
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::{handlers, Game};
 
 #[derive(Clone, Copy, PartialEq)]
@@ -165,7 +165,7 @@ fn try_to_build(
                 entrances: &mut game.components.entrances,
             }),
         Mode::Demolish => try_to_demolish(game, event, graphics),
-        Mode::None => EventRetained,
+        Mode::None => EventPersists,
     }
 }
 
@@ -200,5 +200,5 @@ fn try_to_demolish(
     {
         return EventConsumed;
     }
-    EventRetained
+    EventPersists
 }

@@ -5,7 +5,7 @@ use commons::grid::Grid;
 use engine::binding::Binding;
 
 use crate::handlers::selection;
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -55,14 +55,14 @@ impl Handler {
         }: Parameters<'_>,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return EventRetained;
+            return EventPersists;
         }
         let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return EventRetained;
+            return EventPersists;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return EventRetained;
+            return EventPersists;
         };
 
         // clearing selection
@@ -74,13 +74,13 @@ impl Handler {
 
         if rectangle.width() == 0 || rectangle.height() == 0 {
             println!("INFO: Entrance must not be zero length");
-            return EventRetained;
+            return EventPersists;
         }
         let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
             .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
 
         let Some(configuration) = maybe_configuration else {
-            return EventRetained;
+            return EventPersists;
         };
 
         let gate = match configuration.orientation {

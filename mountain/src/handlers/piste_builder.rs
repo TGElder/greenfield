@@ -8,7 +8,7 @@ use engine::binding::Binding;
 
 use crate::handlers::{
     selection,
-    HandlerResult::{self, EventConsumed, EventRetained},
+    HandlerResult::{self, EventConsumed, EventPersists},
 };
 use crate::model::piste::{self, Piste};
 use crate::services::id_allocator;
@@ -50,15 +50,15 @@ impl Handler {
         let add = self.bindings.add.binds_event(event);
         let subtract = self.bindings.subtract.binds_event(event);
         if !(add || subtract) {
-            return EventRetained;
+            return EventPersists;
         }
 
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return EventRetained;
+            return EventPersists;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return EventRetained;
+            return EventPersists;
         };
 
         let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());

@@ -1,4 +1,4 @@
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::graphics::Graphics;
@@ -20,14 +20,14 @@ impl Handler {
         systems: &mut Systems,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return EventRetained;
+            return EventPersists;
         }
 
         let Some(mouse_xy) = mouse_xy else {
-            return EventRetained;
+            return EventPersists;
         };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventRetained;
+            return EventPersists;
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
@@ -39,7 +39,7 @@ impl Handler {
             .collect::<Vec<_>>();
 
         if building_ids.is_empty() {
-            return EventRetained;
+            return EventPersists;
         }
 
         for building_id in building_ids {
