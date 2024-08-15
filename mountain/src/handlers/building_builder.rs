@@ -10,7 +10,7 @@ use rand::thread_rng;
 
 use crate::handlers::{
     selection,
-    HandlerResult::{self, EventConsumed, EventRetained},
+    HandlerResult::{self, EventConsumed, EventPersists},
 };
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
@@ -97,7 +97,7 @@ impl Handler {
         };
 
         if old_state == self.state {
-            EventRetained
+            EventPersists
         } else {
             EventConsumed
         }

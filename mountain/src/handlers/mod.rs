@@ -22,6 +22,6 @@ pub mod skier_debugger;
 
 #[derive(PartialEq)]
 pub enum HandlerResult {
-    EventRetained,
+    EventPersists,
     EventConsumed,
 }

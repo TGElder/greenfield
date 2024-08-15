@@ -7,7 +7,7 @@ use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::{Grid, CORNERS};
 use engine::binding::Binding;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
@@ -74,18 +74,18 @@ impl Handler {
         }: Parameters<'_>,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return EventRetained;
+            return EventPersists;
         }
 
         let Some(mouse_xy) = mouse_xy else {
-            return EventRetained;
+            return EventPersists;
         };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventRetained;
+            return EventPersists;
         };
         let position = xy(x.round() as u32, y.round() as u32);
         if !terrain.in_bounds(position) {
-            return EventRetained;
+            return EventPersists;
         }
 
         // handle case where from position is not set
@@ -102,12 +102,12 @@ impl Handler {
         let Some(from_piste) = piste_map[from] else {
             println!("INFO: No piste at from position");
             self.from = None;
-            return EventRetained;
+            return EventPersists;
         };
         let Some(to_piste) = piste_map[to] else {
             self.from = None;
             println!("INFO: No piste at to position");
-            return EventRetained;
+            return EventPersists;
         };
 
         let lift_id = id_allocator.next_id();

@@ -2,7 +2,7 @@ use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::graphics::Graphics;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventRetained};
+use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::ability::ABILITIES;
 use crate::Components;
 
@@ -19,14 +19,14 @@ impl Handler {
         components: &mut Components,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
-            return EventRetained;
+            return EventPersists;
         }
 
         let Some(mouse_xy) = mouse_xy else {
-            return EventRetained;
+            return EventPersists;
         };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventRetained;
+            return EventPersists;
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
@@ -40,7 +40,7 @@ impl Handler {
             .collect::<Vec<_>>();
 
         if lift_ids.is_empty() {
-            return EventRetained;
+            return EventPersists;
         }
 
         for lift_id in lift_ids {
