@@ -97,7 +97,7 @@ fn main() {
                 }),
                 building_remover: building_remover::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::X),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -139,7 +139,7 @@ fn main() {
                 },
                 gate_remover: gate_remover::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::X),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -188,7 +188,7 @@ fn main() {
                 },
                 lift_remover: lift_remover::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::X),
+                        button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -505,20 +505,6 @@ impl EventHandler for Game {
             .handle(event, &mut self.components.services.clock);
 
         self.handlers.builder.handle()(event, self, graphics);
-
-        self.handlers.building_remover.handle(
-            event,
-            &self.mouse_xy,
-            graphics,
-            &mut self.components,
-            &mut self.systems,
-        );
-        self.handlers
-            .gate_remover
-            .handle(event, &self.mouse_xy, graphics, &mut self.components);
-        self.handlers
-            .lift_remover
-            .handle(event, &self.mouse_xy, graphics, &mut self.components);
 
         self.handlers.lift_opener.handle(
             event,

@@ -11,7 +11,7 @@ struct BuildButton {
     build_mode: builder::Mode,
 }
 
-const BUILD_BUTTONS: [BuildButton; 6] = [
+const BUILD_BUTTONS: [BuildButton; 7] = [
     BuildButton {
         icon: "⛷",
         hover_text: "Piste",
@@ -42,13 +42,18 @@ const BUILD_BUTTONS: [BuildButton; 6] = [
         hover_text: "Entrance",
         build_mode: builder::Mode::Door,
     },
+    BuildButton {
+        icon: "💣",
+        hover_text: "Demolish",
+        build_mode: builder::Mode::Demolish,
+    },
 ];
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.handlers.builder.mode();
-    let mut build_button_clicked = [false; 6];
+    let mut build_button_clicked = [false; BUILD_BUTTONS.len()];
 
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
