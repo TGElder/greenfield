@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::time::Duration;
 
-use commons::geometry::{xy, Rectangle};
+use commons::geometry::{xy, Rectangle, XY};
+use winit::dpi::PhysicalPosition;
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::engine::errors::InitializationError;
@@ -92,6 +93,8 @@ where
 
                     self.event_handler
                         .handle(&Event::Tick, &mut self.state, &mut self.graphics);
+
+                    cursor_position = None;
 
                     match self.graphics.render() {
                         Ok(_) => (),
