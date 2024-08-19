@@ -214,9 +214,13 @@ fn main() {
                         button: Button::Mouse(MouseButton::Left),
                         state: ButtonState::Released,
                     },
-                    clear: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Escape),
+                    start_clearing: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Pressed,
+                    },
+                    finish_clearing: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Released,
                     },
                 }),
                 skier_debugger: handlers::skier_debugger::Handler {

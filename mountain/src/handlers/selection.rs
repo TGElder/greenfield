@@ -12,12 +12,14 @@ pub struct Handler {
     pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
     pub binding: Bindings,
+    pub clear_interrupted: bool,
 }
 
 pub struct Bindings {
     pub first_cell: Binding,
     pub second_cell: Binding,
-    pub clear: Binding,
+    pub start_clearing: Binding,
+    pub finish_clearing: Binding,
 }
 
 impl Handler {
@@ -26,6 +28,7 @@ impl Handler {
             cells: Vec::with_capacity(3),
             grid: None,
             binding,
+            clear_interrupted: false,
         }
     }
     pub fn handle(
@@ -37,10 +40,16 @@ impl Handler {
         terrain_artist: &mut terrain_artist::System,
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
-            self.update_last_cell(terrain, mouse_xy, graphics)
+            self.update_last_cell(terrain, mouse_xy, graphics);
+            self.clear_interrupted = true;
         }
 
-        if self.binding.clear.binds_event(event) && !self.cells.is_empty() {
+        if self.binding.start_clearing.binds_event(event) {
+            self.clear_interrupted = false;
+        } else if !self.clear_interrupted
+            && self.binding.finish_clearing.binds_event(event)
+            && !self.cells.is_empty()
+        {
             self.clear_selection();
         } else if self.binding.first_cell.binds_event(event) && self.cells.is_empty() {
             self.add_cell(terrain, mouse_xy, graphics);
