@@ -12,7 +12,7 @@ pub struct Handler {
     pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
     pub binding: Bindings,
-    pub clear_interrupted: bool,
+    pub was_clear_interrupted: bool,
 }
 
 pub struct Bindings {
@@ -28,7 +28,7 @@ impl Handler {
             cells: Vec::with_capacity(3),
             grid: None,
             binding,
-            clear_interrupted: false,
+            was_clear_interrupted: false,
         }
     }
     pub fn handle(
@@ -41,12 +41,12 @@ impl Handler {
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
             self.update_last_cell(terrain, mouse_xy, graphics);
-            self.clear_interrupted = true;
+            self.was_clear_interrupted = true;
         }
 
         if self.binding.start_clearing.binds_event(event) {
-            self.clear_interrupted = false;
-        } else if !self.clear_interrupted
+            self.was_clear_interrupted = false;
+        } else if !self.was_clear_interrupted
             && self.binding.finish_clearing.binds_event(event)
             && !self.cells.is_empty()
         {
