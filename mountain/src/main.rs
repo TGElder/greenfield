@@ -297,6 +297,15 @@ fn main() {
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
             },
+            bindings: Bindings {
+                mode: HashMap::from([(
+                    mode::Mode::Piste,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::P),
+                        state: ButtonState::Pressed,
+                    },
+                )]),
+            },
             mouse_xy: None,
             components,
         },
@@ -385,6 +394,7 @@ struct Game {
     components: Components,
     handlers: Handlers,
     systems: Systems,
+    bindings: Bindings,
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -460,6 +470,10 @@ struct Systems {
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
     window_artist: window_artist::System,
+}
+
+pub struct Bindings {
+    mode: HashMap<mode::Mode, Binding>,
 }
 
 #[derive(Serialize, Deserialize)]

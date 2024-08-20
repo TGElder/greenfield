@@ -1,9 +1,11 @@
-use engine::egui;
+use engine::binding::Binding;
+use engine::egui::{self};
 use engine::engine::Engine;
+use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::handlers::mode;
-use crate::Game;
+use crate::{Bindings, Game};
 
 struct ModeButton {
     icon: &'static str,
@@ -104,7 +106,8 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                             .enumerate()
                             .filter(|(_, config)| config.panel == Panel::Run)
                         {
-                            let button = ui.button(config.icon).on_hover_text(config.hover_text);
+                            let hover_text = mode_button_hover_text(&game.bindings, config);
+                            let button = ui.button(config.icon).on_hover_text(hover_text);
                             mode_button_clicked[i] = button.clicked();
                             if build_mode == config.build_mode {
                                 button.highlight();
@@ -121,7 +124,8 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                             .enumerate()
                             .filter(|(_, config)| config.panel == Panel::Build)
                         {
-                            let button = ui.button(config.icon).on_hover_text(config.hover_text);
+                            let hover_text = mode_button_hover_text(&game.bindings, config);
+                            let button = ui.button(config.icon).on_hover_text(hover_text);
                             mode_button_clicked[i] = button.clicked();
                             if build_mode == config.build_mode {
                                 button.highlight();
@@ -181,5 +185,73 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 
     if view_skier_abilities_clicked {
         game.systems.skier_colors.toggle_show_ability();
+    }
+}
+
+fn mode_button_hover_text(bindings: &Bindings, mode_button: &ModeButton) -> String {
+    let Some(Binding::Single { button, .. }) = bindings.mode.get(&mode_button.build_mode) else {
+        return mode_button.hover_text.to_string();
+    };
+    format!("{} ({})", mode_button.hover_text, describe_button(button))
+}
+
+fn describe_button(button: &Button) -> &'static str {
+    match button {
+        Button::Keyboard(key) => match key {
+            KeyboardKey::Key1 => "1",
+            KeyboardKey::Key2 => "2",
+            KeyboardKey::Key3 => "3",
+            KeyboardKey::Key4 => "4",
+            KeyboardKey::Key5 => "5",
+            KeyboardKey::Key6 => "6",
+            KeyboardKey::Key7 => "7",
+            KeyboardKey::Key8 => "8",
+            KeyboardKey::Key9 => "9",
+            KeyboardKey::Key0 => "0",
+            KeyboardKey::A => "A",
+            KeyboardKey::B => "B",
+            KeyboardKey::C => "C",
+            KeyboardKey::D => "D",
+            KeyboardKey::E => "E",
+            KeyboardKey::F => "F",
+            KeyboardKey::G => "G",
+            KeyboardKey::H => "H",
+            KeyboardKey::I => "I",
+            KeyboardKey::J => "J",
+            KeyboardKey::K => "K",
+            KeyboardKey::L => "L",
+            KeyboardKey::M => "M",
+            KeyboardKey::N => "N",
+            KeyboardKey::O => "O",
+            KeyboardKey::P => "P",
+            KeyboardKey::Q => "Q",
+            KeyboardKey::R => "R",
+            KeyboardKey::S => "S",
+            KeyboardKey::T => "T",
+            KeyboardKey::U => "U",
+            KeyboardKey::V => "V",
+            KeyboardKey::W => "W",
+            KeyboardKey::X => "X",
+            KeyboardKey::Y => "Y",
+            KeyboardKey::Z => "Z",
+            KeyboardKey::Equal => "=",
+            KeyboardKey::Minus => "-",
+            KeyboardKey::Comma => ",",
+            KeyboardKey::Period => ".",
+            KeyboardKey::BracketLeft => "[",
+            KeyboardKey::BracketRight => "]",
+            KeyboardKey::Slash => "/",
+            KeyboardKey::Backslash => "\\",
+            KeyboardKey::Escape => "Esc",
+            KeyboardKey::Unknown => "?",
+        },
+        Button::Mouse(button) => match button {
+            engine::events::MouseButton::Left => "Left Click",
+            engine::events::MouseButton::Middle => "Middle Click",
+            engine::events::MouseButton::Right => "Right Click",
+            engine::events::MouseButton::WheelUp => "Mouse Wheel Up",
+            engine::events::MouseButton::WheelDown => "Mouse Wheel Down",
+            engine::events::MouseButton::Unknown => "?",
+        },
     }
 }

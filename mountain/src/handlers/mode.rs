@@ -1,7 +1,7 @@
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::{handlers, Game};
 
-#[derive(Clone, Copy, PartialEq)]
+#[derive(Clone, Copy, Eq, Hash, PartialEq)]
 pub enum Mode {
     Open,
     Query,
