@@ -15,13 +15,8 @@ use crate::services::id_allocator;
 use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Handler {
-    pub bindings: Bindings,
+    pub binding: Binding,
     pub class: piste::Class,
-}
-
-pub struct Bindings {
-    pub add: Binding,
-    pub subtract: Binding,
 }
 
 pub struct Parameters<'a> {
@@ -47,9 +42,7 @@ impl Handler {
             id_allocator,
         }: Parameters<'_>,
     ) -> HandlerResult {
-        let add = self.bindings.add.binds_event(event);
-        let subtract = self.bindings.subtract.binds_event(event);
-        if !(add || subtract) {
+        if !self.binding.binds_event(event) {
             return EventPersists;
         }
 
@@ -66,10 +59,8 @@ impl Handler {
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
-            if add && piste_map[cell].is_none() {
+            if piste_map[cell].is_none() {
                 piste_map[cell] = Some(id)
-            } else if subtract && piste_map[cell] == Some(id) {
-                piste_map[cell] = None
             }
         }
 

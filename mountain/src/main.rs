@@ -145,28 +145,16 @@ fn main() {
                 },
                 path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
-                    bindings: piste_builder::Bindings {
-                        add: Binding::Single {
-                            button: Button::Mouse(MouseButton::Left),
-                            state: ButtonState::Pressed,
-                        },
-                        subtract: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::X),
-                            state: ButtonState::Pressed,
-                        },
+                    binding: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
                     },
                 },
                 piste_builder: piste_builder::Handler {
                     class: piste::Class::Piste,
-                    bindings: piste_builder::Bindings {
-                        add: Binding::Single {
-                            button: Button::Mouse(MouseButton::Left),
-                            state: ButtonState::Pressed,
-                        },
-                        subtract: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::X),
-                            state: ButtonState::Pressed,
-                        },
+                    binding: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
                     },
                 },
                 piste_eraser: piste_eraser::Handler {
