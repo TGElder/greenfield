@@ -15,6 +15,7 @@ pub mod lift_targeter;
 pub mod mode;
 pub mod piste_builder;
 pub mod piste_computer;
+pub mod piste_eraser;
 pub mod piste_highlighter;
 pub mod save;
 pub mod selection;
