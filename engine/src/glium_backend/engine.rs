@@ -1,7 +1,8 @@
 use std::error::Error;
 use std::time::Duration;
 
-use commons::geometry::{xy, Rectangle};
+use commons::geometry::{xy, Rectangle, XY};
+use winit::dpi::PhysicalPosition;
 use winit::keyboard::{KeyCode, PhysicalKey};
 
 use crate::engine::errors::InitializationError;

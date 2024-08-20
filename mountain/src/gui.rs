@@ -92,7 +92,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_skier_abilities_clicked = false;
 
     graphics.draw_gui(&mut |ctx| {
-        ctx.set_zoom_factor(1.5);
+        ctx.set_pixels_per_point(1.5);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
