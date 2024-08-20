@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
@@ -10,13 +9,11 @@ use crate::handlers::{
     selection,
     HandlerResult::{self, EventConsumed, EventPersists},
 };
-use crate::model::piste::{self, Piste};
-use crate::services::id_allocator;
+use crate::model::piste::Piste;
 use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Handler {
     pub binding: Binding,
-    pub class: piste::Class,
 }
 
 pub struct Parameters<'a> {
@@ -26,7 +23,6 @@ pub struct Parameters<'a> {
     pub selection: &'a mut selection::Handler,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
-    pub id_allocator: &'a mut id_allocator::Service,
 }
 
 impl Handler {
@@ -39,7 +35,6 @@ impl Handler {
             selection,
             terrain_artist,
             tree_artist,
-            id_allocator,
         }: Parameters<'_>,
     ) -> HandlerResult {
         if !self.binding.binds_event(event) {
@@ -54,13 +49,19 @@ impl Handler {
             return EventPersists;
         };
 
-        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+        let Some(id) = piste_map[origin] else {
+            return EventPersists;
+        };
+
+        let Some(piste) = pistes.get(&id) else {
+            return EventPersists;
+        };
 
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
-            if piste_map[cell].is_none() {
-                piste_map[cell] = Some(id)
+            if piste_map[cell] == Some(id) {
+                piste_map[cell] = None
             }
         }
 
@@ -79,17 +80,7 @@ impl Handler {
                 .any(|cell| piste_map[cell] == Some(id))
         });
 
-        match pistes.entry(id) {
-            Entry::Occupied(mut entry) => {
-                entry.get_mut().grid = entry.get().grid.paste(&point_grid);
-            }
-            Entry::Vacant(entry) => {
-                entry.insert(Piste {
-                    class: self.class,
-                    grid: point_grid,
-                });
-            }
-        }
+        piste.grid.paste(&point_grid);
 
         // updating art
 

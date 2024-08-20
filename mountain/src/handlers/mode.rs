@@ -6,6 +6,7 @@ pub enum Mode {
     Open,
     Query,
     Piste,
+    PisteEraser,
     Path,
     Lift,
     Gate,
@@ -19,7 +20,7 @@ impl Mode {
     fn has_selection(&self) -> bool {
         matches!(
             self,
-            Mode::Piste | Mode::Path | Mode::Gate | Mode::Building | Mode::Door
+            Mode::Piste | Mode::PisteEraser | Mode::Path | Mode::Gate | Mode::Building | Mode::Door
         )
     }
 }
@@ -104,6 +105,18 @@ fn try_to_handle(
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
             }),
+        Mode::PisteEraser => {
+            game.handlers
+                .piste_eraser
+                .handle(handlers::piste_eraser::Parameters {
+                    event,
+                    pistes: &mut game.components.pistes,
+                    piste_map: &mut game.components.piste_map,
+                    selection: &mut game.handlers.selection,
+                    terrain_artist: &mut game.systems.terrain_artist,
+                    tree_artist: &mut game.systems.tree_artist,
+                })
+        }
         Mode::Path => game
             .handlers
             .path_builder

@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, mode, piste_builder, piste_computer,
+    lift_opener, lift_remover, lift_targeter, mode, piste_builder, piste_computer, piste_eraser,
     piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
@@ -145,28 +145,22 @@ fn main() {
                 },
                 path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
-                    bindings: piste_builder::Bindings {
-                        add: Binding::Single {
-                            button: Button::Mouse(MouseButton::Left),
-                            state: ButtonState::Pressed,
-                        },
-                        subtract: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::X),
-                            state: ButtonState::Pressed,
-                        },
+                    binding: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
                     },
                 },
                 piste_builder: piste_builder::Handler {
                     class: piste::Class::Piste,
-                    bindings: piste_builder::Bindings {
-                        add: Binding::Single {
-                            button: Button::Mouse(MouseButton::Left),
-                            state: ButtonState::Pressed,
-                        },
-                        subtract: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::X),
-                            state: ButtonState::Pressed,
-                        },
+                    binding: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                piste_eraser: piste_eraser::Handler {
+                    binding: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
                     },
                 },
                 piste_computer: piste_computer::Handler {
@@ -446,6 +440,7 @@ struct Handlers {
     lift_targeter: lift_targeter::Handler,
     path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
+    piste_eraser: piste_eraser::Handler,
     piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
     resize: resize::Handler,
