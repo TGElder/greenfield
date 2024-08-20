@@ -18,7 +18,7 @@ enum Panel {
     Build,
 }
 
-const MODE_BUTTONS: [ModeButton; 9] = [
+const MODE_BUTTONS: [ModeButton; 10] = [
     ModeButton {
         icon: "🚦",
         hover_text: "Open/Close",
@@ -35,6 +35,12 @@ const MODE_BUTTONS: [ModeButton; 9] = [
         icon: "⛷",
         hover_text: "Piste",
         build_mode: mode::Mode::Piste,
+        panel: Panel::Build,
+    },
+    ModeButton {
+        icon: "✂",
+        hover_text: "Erase Piste",
+        build_mode: mode::Mode::PisteEraser,
         panel: Panel::Build,
     },
     ModeButton {
