@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, mode, piste_builder, piste_computer, piste_eraser,
+    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_eraser,
     piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
@@ -55,7 +55,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
-use crate::services::id_allocator;
+use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,

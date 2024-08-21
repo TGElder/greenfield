@@ -4,7 +4,7 @@ use engine::engine::Engine;
 use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
-use crate::handlers::mode;
+use crate::services::mode;
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -192,7 +192,7 @@ fn mode_button_hover_text(bindings: &Bindings, mode_button: &ModeButton) -> Stri
     let Some(Binding::Single { button, .. }) = bindings.mode.get(&mode_button.build_mode) else {
         return mode_button.hover_text.to_string();
     };
-    format!("{} ({})", mode_button.hover_text, describe_button(button))
+    format!("{} ({})", mode_button.hover_text, describe_button(&button))
 }
 
 fn describe_button(button: &Button) -> &'static str {
