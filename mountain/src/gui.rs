@@ -88,6 +88,20 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 
     let build_mode = game.components.services.mode.mode();
     let mut mode_button_clicked = [false; MODE_BUTTONS.len()];
+    let mut draw_mode_buttons = |ui: &mut egui::Ui, panel: Panel| {
+        for (i, config) in MODE_BUTTONS
+            .iter()
+            .enumerate()
+            .filter(|(_, config)| config.panel == panel)
+        {
+            let hover_text = mode_button_hover_text(&game.bindings, config);
+            let button = ui.button(config.icon).on_hover_text(hover_text);
+            mode_button_clicked[i] = button.clicked();
+            if build_mode == config.build_mode {
+                button.highlight();
+            }
+        }
+    };
 
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
@@ -101,36 +115,14 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                     ui.label("Run");
                     ui.horizontal(|ui| {
                         ui.add(egui::Slider::new(&mut speed, 0.0..=8.0));
-                        for (i, config) in MODE_BUTTONS
-                            .iter()
-                            .enumerate()
-                            .filter(|(_, config)| config.panel == Panel::Run)
-                        {
-                            let hover_text = mode_button_hover_text(&game.bindings, config);
-                            let button = ui.button(config.icon).on_hover_text(hover_text);
-                            mode_button_clicked[i] = button.clicked();
-                            if build_mode == config.build_mode {
-                                button.highlight();
-                            }
-                        }
+                        draw_mode_buttons(ui, Panel::Run);
                     });
                 });
                 ui.separator();
                 ui.vertical(|ui| {
                     ui.label("Build");
                     ui.horizontal(|ui| {
-                        for (i, config) in MODE_BUTTONS
-                            .iter()
-                            .enumerate()
-                            .filter(|(_, config)| config.panel == Panel::Build)
-                        {
-                            let hover_text = mode_button_hover_text(&game.bindings, config);
-                            let button = ui.button(config.icon).on_hover_text(hover_text);
-                            mode_button_clicked[i] = button.clicked();
-                            if build_mode == config.build_mode {
-                                button.highlight();
-                            }
-                        }
+                        draw_mode_buttons(ui, Panel::Build);
                     });
                 });
                 ui.separator();
