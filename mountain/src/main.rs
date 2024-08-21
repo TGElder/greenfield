@@ -33,7 +33,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::handlers::{
     building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, mode, piste_builder, piste_computer, piste_eraser,
+    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_eraser,
     piste_highlighter, save,
 };
 use crate::handlers::{lift_builder, selection};
@@ -55,7 +55,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
-use crate::services::id_allocator;
+use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
@@ -72,7 +72,6 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
-                mode: mode::Handler::new(),
                 building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
                         button: Button::Mouse(MouseButton::Left),
@@ -188,14 +187,14 @@ fn main() {
                 },
                 lift_targeter: lift_targeter::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::G),
+                        button: Button::Keyboard(KeyboardKey::T),
                         state: ButtonState::Pressed,
                     },
                 },
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::P),
+                        button: Button::Keyboard(KeyboardKey::S),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -297,6 +296,80 @@ fn main() {
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
             },
+            bindings: Bindings {
+                mode: HashMap::from([
+                    (
+                        mode::Mode::Open,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::O),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Query,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::I),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Piste,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::P),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::PisteEraser,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::X),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Path,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::W),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Lift,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::L),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Gate,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::G),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Building,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::H),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Door,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::D),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Demolish,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Backslash),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                ]),
+            },
             mouse_xy: None,
             components,
         },
@@ -377,6 +450,7 @@ fn new_components() -> Components {
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
+            mode: mode::Service::default(),
         },
     }
 }
@@ -385,6 +459,7 @@ struct Game {
     components: Components,
     handlers: Handlers,
     systems: Systems,
+    bindings: Bindings,
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -425,7 +500,6 @@ pub struct Components {
 }
 
 struct Handlers {
-    mode: mode::Handler,
     building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
@@ -462,10 +536,16 @@ struct Systems {
     window_artist: window_artist::System,
 }
 
+pub struct Bindings {
+    mode: HashMap<mode::Mode, Binding>,
+}
+
 #[derive(Serialize, Deserialize)]
 pub struct Services {
     clock: services::clock::Service,
     id_allocator: id_allocator::Service,
+    #[serde(skip)]
+    mode: services::mode::Service,
 }
 
 impl Game {
@@ -503,7 +583,7 @@ impl EventHandler for Game {
             .clock
             .handle(event, &mut self.components.services.clock);
 
-        self.handlers.mode.handle()(event, self, graphics);
+        self.components.services.mode.get_handler()(event, self, graphics);
 
         self.handlers.lift_targeter.handle(
             event,
@@ -535,6 +615,7 @@ impl EventHandler for Game {
                 terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
+        handlers::mode::handle(event, &self.bindings, &mut self.components.services.mode);
 
         self.systems
             .global_computer
