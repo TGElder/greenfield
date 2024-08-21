@@ -40,7 +40,7 @@ impl Service {
         self.mode = mode;
     }
 
-    pub fn handle(
+    pub fn get_handler(
         &self,
     ) -> impl FnOnce(&engine::events::Event, &mut Game, &mut dyn engine::graphics::Graphics) {
         let mode = self.mode;

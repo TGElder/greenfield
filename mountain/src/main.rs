@@ -583,7 +583,7 @@ impl EventHandler for Game {
             .clock
             .handle(event, &mut self.components.services.clock);
 
-        self.components.services.mode.handle()(event, self, graphics);
+        self.components.services.mode.get_handler()(event, self, graphics);
 
         self.handlers.lift_targeter.handle(
             event,

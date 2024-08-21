@@ -13,6 +13,7 @@ pub fn handle(
             } else {
                 service.set_mode(mode);
             }
+            return;
         }
     }
 }
