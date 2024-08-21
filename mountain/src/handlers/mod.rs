@@ -12,6 +12,7 @@ pub mod lift_builder;
 pub mod lift_opener;
 pub mod lift_remover;
 pub mod lift_targeter;
+pub mod mode;
 pub mod piste_builder;
 pub mod piste_computer;
 pub mod piste_eraser;

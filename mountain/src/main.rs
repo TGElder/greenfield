@@ -72,7 +72,6 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
-                mode: mode::Handler::new(),
                 building_builder: building_builder::Handler::new(building_builder::Bindings {
                     start_building: Binding::Single {
                         button: Button::Mouse(MouseButton::Left),
@@ -188,14 +187,14 @@ fn main() {
                 },
                 lift_targeter: lift_targeter::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::G),
+                        button: Button::Keyboard(KeyboardKey::T),
                         state: ButtonState::Pressed,
                     },
                 },
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::P),
+                        button: Button::Keyboard(KeyboardKey::S),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -298,13 +297,78 @@ fn main() {
                 window_artist: window_artist::System::new(),
             },
             bindings: Bindings {
-                mode: HashMap::from([(
-                    mode::Mode::Piste,
-                    Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::P),
-                        state: ButtonState::Pressed,
-                    },
-                )]),
+                mode: HashMap::from([
+                    (
+                        mode::Mode::Open,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::O),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Query,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::I),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Piste,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::P),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::PisteEraser,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::X),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Path,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::W),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Lift,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::L),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Gate,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::G),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Building,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::H),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Door,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::D),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                    (
+                        mode::Mode::Demolish,
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::Backslash),
+                            state: ButtonState::Pressed,
+                        },
+                    ),
+                ]),
             },
             mouse_xy: None,
             components,
@@ -386,6 +450,7 @@ fn new_components() -> Components {
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
+            mode: mode::Service::default(),
         },
     }
 }
@@ -435,7 +500,6 @@ pub struct Components {
 }
 
 struct Handlers {
-    mode: mode::Handler,
     building_builder: building_builder::Handler,
     building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
@@ -480,6 +544,8 @@ pub struct Bindings {
 pub struct Services {
     clock: services::clock::Service,
     id_allocator: id_allocator::Service,
+    #[serde(skip)]
+    mode: services::mode::Service,
 }
 
 impl Game {
@@ -517,7 +583,7 @@ impl EventHandler for Game {
             .clock
             .handle(event, &mut self.components.services.clock);
 
-        self.handlers.mode.handle()(event, self, graphics);
+        self.components.services.mode.handle()(event, self, graphics);
 
         self.handlers.lift_targeter.handle(
             event,
@@ -549,6 +615,7 @@ impl EventHandler for Game {
                 terrain_artist: &mut self.systems.terrain_artist,
                 graphics,
             });
+        handlers::mode::handle(event, &self.bindings, &mut self.components.services.mode);
 
         self.systems
             .global_computer

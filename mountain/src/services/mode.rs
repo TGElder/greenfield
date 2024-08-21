@@ -1,8 +1,10 @@
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::{handlers, Game};
 
-#[derive(Clone, Copy, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
 pub enum Mode {
+    #[default]
+    None,
     Open,
     Query,
     Piste,
@@ -13,7 +15,6 @@ pub enum Mode {
     Building,
     Door,
     Demolish,
-    None,
 }
 
 impl Mode {
@@ -25,15 +26,12 @@ impl Mode {
     }
 }
 
-pub struct Handler {
+#[derive(Default)]
+pub struct Service {
     mode: Mode,
 }
 
-impl Handler {
-    pub fn new() -> Handler {
-        Handler { mode: Mode::None }
-    }
-
+impl Service {
     pub fn mode(&self) -> Mode {
         self.mode
     }

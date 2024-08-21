@@ -86,7 +86,7 @@ const MODE_BUTTONS: [ModeButton; 10] = [
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
-    let build_mode = game.handlers.mode.mode();
+    let build_mode = game.components.services.mode.mode();
     let mut mode_button_clicked = [false; MODE_BUTTONS.len()];
 
     let mut view_pistes_clicked = false;
@@ -167,9 +167,9 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
             game.handlers.selection.clear_selection();
             let config = &MODE_BUTTONS[i];
             if build_mode == config.build_mode {
-                game.handlers.mode.set_mode(mode::Mode::None);
+                game.components.services.mode.set_mode(mode::Mode::None);
             } else {
-                game.handlers.mode.set_mode(config.build_mode);
+                game.components.services.mode.set_mode(config.build_mode);
             };
         }
     }
@@ -192,7 +192,7 @@ fn mode_button_hover_text(bindings: &Bindings, mode_button: &ModeButton) -> Stri
     let Some(Binding::Single { button, .. }) = bindings.mode.get(&mode_button.build_mode) else {
         return mode_button.hover_text.to_string();
     };
-    format!("{} ({})", mode_button.hover_text, describe_button(&button))
+    format!("{} ({})", mode_button.hover_text, describe_button(button))
 }
 
 fn describe_button(button: &Button) -> &'static str {
