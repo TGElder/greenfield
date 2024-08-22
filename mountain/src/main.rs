@@ -82,15 +82,15 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                     decrease_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::BracketLeft),
+                        button: Button::Keyboard(KeyboardKey::from("[")),
                         state: ButtonState::Pressed,
                     },
                     increase_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::BracketRight),
+                        button: Button::Keyboard(KeyboardKey::from("]")),
                         state: ButtonState::Pressed,
                     },
                     toggle_roof: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Slash),
+                        button: Button::Keyboard(KeyboardKey::from("/")),
                         state: ButtonState::Pressed,
                     },
                 }),
@@ -102,11 +102,11 @@ fn main() {
                 },
                 clock: handlers::clock::Handler::new(handlers::clock::Bindings {
                     slow_down: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Comma),
+                        button: Button::Keyboard(KeyboardKey::from(",")),
                         state: ButtonState::Pressed,
                     },
                     speed_up: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Period),
+                        button: Button::Keyboard(KeyboardKey::from(".")),
                         state: ButtonState::Pressed,
                     },
                 }),
@@ -164,7 +164,7 @@ fn main() {
                 },
                 piste_computer: piste_computer::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::C),
+                        button: Button::Keyboard(KeyboardKey::from("c")),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -187,14 +187,14 @@ fn main() {
                 },
                 lift_targeter: lift_targeter::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::T),
+                        button: Button::Keyboard(KeyboardKey::from("t")),
                         state: ButtonState::Pressed,
                     },
                 },
                 resize: resize::Handler::new(),
                 save: save::Handler {
                     binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::S),
+                        button: Button::Keyboard(KeyboardKey::from("s")),
                         state: ButtonState::Pressed,
                     },
                 },
@@ -227,11 +227,11 @@ fn main() {
                     angles: 16,
                     bindings: yaw::Bindings {
                         plus: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::E),
+                            button: Button::Keyboard(KeyboardKey::from("e")),
                             state: ButtonState::Pressed,
                         },
                         minus: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::Q),
+                            button: Button::Keyboard(KeyboardKey::from("q")),
                             state: ButtonState::Pressed,
                         },
                     },
@@ -243,7 +243,7 @@ fn main() {
                     bindings: zoom::Bindings {
                         plus: Binding::Multi(vec![
                             Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::Equal),
+                                button: Button::Keyboard(KeyboardKey::from("+")),
                                 state: ButtonState::Pressed,
                             },
                             Binding::Single {
@@ -253,7 +253,7 @@ fn main() {
                         ]),
                         minus: Binding::Multi(vec![
                             Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::Minus),
+                                button: Button::Keyboard(KeyboardKey::from("-")),
                                 state: ButtonState::Pressed,
                             },
                             Binding::Single {
@@ -301,70 +301,70 @@ fn main() {
                     (
                         mode::Mode::Open,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::O),
+                            button: Button::Keyboard(KeyboardKey::from("o")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Query,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::I),
+                            button: Button::Keyboard(KeyboardKey::from("?")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Piste,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::P),
+                            button: Button::Keyboard(KeyboardKey::from("p")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::PisteEraser,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::X),
+                            button: Button::Keyboard(KeyboardKey::from("x")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Path,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::W),
+                            button: Button::Keyboard(KeyboardKey::from("w")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Lift,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::L),
+                            button: Button::Keyboard(KeyboardKey::from("l")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Gate,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::G),
+                            button: Button::Keyboard(KeyboardKey::from("g")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Building,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::H),
+                            button: Button::Keyboard(KeyboardKey::from("h")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Door,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::D),
+                            button: Button::Keyboard(KeyboardKey::from("d")),
                             state: ButtonState::Pressed,
                         },
                     ),
                     (
                         mode::Mode::Demolish,
                         Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::Backslash),
+                            button: Button::Keyboard(KeyboardKey::Backspace),
                             state: ButtonState::Pressed,
                         },
                     ),

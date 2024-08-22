@@ -718,11 +718,11 @@ fn yaw_handler() {
         angles: 16,
         bindings: yaw::Bindings {
             plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Equal),
+                button: Button::Keyboard(KeyboardKey::from("+")),
                 state: ButtonState::Pressed,
             },
             minus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Minus),
+                button: Button::Keyboard(KeyboardKey::from("-")),
                 state: ButtonState::Pressed,
             },
         },
@@ -736,7 +736,7 @@ fn yaw_handler() {
     );
     yaw_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Equal),
+            button: Button::Keyboard(KeyboardKey::from("+")),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -761,7 +761,7 @@ fn yaw_handler() {
     );
     yaw_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Minus),
+            button: Button::Keyboard(KeyboardKey::from("-")),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -827,11 +827,11 @@ fn zoom_handler() {
         max_level: 9,
         bindings: zoom::Bindings {
             plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Equal),
+                button: Button::Keyboard(KeyboardKey::from("+")),
                 state: ButtonState::Pressed,
             },
             minus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::Minus),
+                button: Button::Keyboard(KeyboardKey::from("-")),
                 state: ButtonState::Pressed,
             },
         },
@@ -845,7 +845,7 @@ fn zoom_handler() {
     );
     zoom_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Equal),
+            button: Button::Keyboard(KeyboardKey::from("+")),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
@@ -870,7 +870,7 @@ fn zoom_handler() {
     );
     zoom_handler.handle(
         &Event::Button {
-            button: Button::Keyboard(KeyboardKey::Minus),
+            button: Button::Keyboard(KeyboardKey::from("-")),
             state: ButtonState::Pressed,
         },
         &mut MockEngine {},
