@@ -33,59 +33,18 @@ pub enum MouseButton {
 
 #[derive(PartialEq)]
 pub enum KeyboardKey {
-    Key1,
-    Key2,
-    Key3,
-    Key4,
-    Key5,
-    Key6,
-    Key7,
-    Key8,
-    Key9,
-    Key0,
+    String(String),
 
-    A,
-    B,
-    C,
-    D,
-    E,
-    F,
-    G,
-    H,
-    I,
-    J,
-    K,
-    L,
-    M,
-    N,
-    O,
-    P,
-    Q,
-    R,
-    S,
-    T,
-    U,
-    V,
-    W,
-    X,
-    Y,
-    Z,
-
-    Equal,
-    Minus,
-
-    Comma,
-    Period,
-
-    BracketLeft,
-    BracketRight,
-
-    Slash,
-    Backslash,
-
+    Backspace,
     Escape,
 
     Unknown,
+}
+
+impl From<&str> for KeyboardKey {
+    fn from(value: &str) -> Self {
+        KeyboardKey::String(value.into())
+    }
 }
 
 pub enum Event {
