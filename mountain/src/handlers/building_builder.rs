@@ -50,13 +50,10 @@ const SUIT_COLORS: [Color; 8] = [
 const HELMET_COLORS: [Color; 2] = [Color::Black, Color::Grey];
 
 pub struct Handler {
-    pub bindings: Bindings,
     pub state: State,
 }
 
 pub struct Bindings {
-    pub start_building: Binding,
-    pub finish_building: Binding,
     pub decrease_height: Binding,
     pub increase_height: Binding,
     pub toggle_roof: Binding,
@@ -69,6 +66,8 @@ pub enum State {
 }
 
 pub struct Parameters<'a> {
+    pub action_binding: &'a Binding,
+    pub bindings: &'a Bindings,
     pub event: &'a engine::events::Event,
     pub terrain: &'a Grid<f32>,
     pub selection: &'a mut selection::Handler,
@@ -82,9 +81,8 @@ pub struct Parameters<'a> {
 }
 
 impl Handler {
-    pub fn new(bindings: Bindings) -> Handler {
+    pub fn new() -> Handler {
         Handler {
-            bindings,
             state: State::Selecting,
         }
     }
@@ -106,6 +104,7 @@ impl Handler {
     pub fn select(
         &mut self,
         Parameters {
+            action_binding,
             event,
             selection,
             id_allocator,
@@ -114,7 +113,7 @@ impl Handler {
             ..
         }: Parameters<'_>,
     ) -> State {
-        if !self.bindings.start_building.binds_event(event) {
+        if !action_binding.binds_event(event) {
             return self.state;
         }
         let Some(grid) = &selection.grid else {
@@ -161,6 +160,8 @@ impl Handler {
         &mut self,
         building_id: usize,
         Parameters {
+            action_binding,
+            bindings,
             event,
             terrain,
             id_allocator,
@@ -176,7 +177,7 @@ impl Handler {
             return State::Selecting;
         };
 
-        if self.bindings.finish_building.binds_event(event) {
+        if action_binding.binds_event(event) {
             // creating skiers
 
             building.windows = windows(terrain, &building.footprint, building.height);
@@ -211,15 +212,15 @@ impl Handler {
             building_artist.redraw(building_id);
             window_artist.update();
             State::Selecting
-        } else if self.bindings.decrease_height.binds_event(event) {
+        } else if bindings.decrease_height.binds_event(event) {
             building.height = (building.height.saturating_sub(HEIGHT_INTERVAL)).max(HEIGHT_MIN);
             building_artist.redraw(building_id);
             self.state
-        } else if self.bindings.increase_height.binds_event(event) {
+        } else if bindings.increase_height.binds_event(event) {
             building.height = (building.height.saturating_add(HEIGHT_INTERVAL)).min(HEIGHT_MAX);
             building_artist.redraw(building_id);
             self.state
-        } else if self.bindings.toggle_roof.binds_event(event) {
+        } else if bindings.toggle_roof.binds_event(event) {
             building.roof = match building.roof {
                 Roof::Peaked => Roof::PeakedRotated,
                 Roof::PeakedRotated => Roof::Flat,

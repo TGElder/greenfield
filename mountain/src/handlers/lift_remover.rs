@@ -1,54 +1,41 @@
 use commons::geometry::{xy, XY, XYZ};
-use engine::binding::Binding;
 use engine::graphics::Graphics;
 
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::ability::ABILITIES;
 use crate::Components;
 
-pub struct Handler {
-    pub binding: Binding,
-}
+pub fn handle(
+    mouse_xy: &Option<XY<u32>>,
+    graphics: &mut dyn engine::graphics::Graphics,
+    components: &mut Components,
+) -> HandlerResult {
+    let Some(mouse_xy) = mouse_xy else {
+        return EventPersists;
+    };
+    let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+        return EventPersists;
+    };
+    let position = xy(x.round() as u32, y.round() as u32);
 
-impl Handler {
-    pub fn handle(
-        &self,
-        event: &engine::events::Event,
-        mouse_xy: &Option<XY<u32>>,
-        graphics: &mut dyn engine::graphics::Graphics,
-        components: &mut Components,
-    ) -> HandlerResult {
-        if !self.binding.binds_event(event) {
-            return EventPersists;
-        }
+    let lift_ids = components
+        .lifts
+        .iter()
+        .filter(|(_, lift)| {
+            lift.pick_up.state.position == position || lift.drop_off.state.position == position
+        })
+        .map(|(lift_id, _)| *lift_id)
+        .collect::<Vec<_>>();
 
-        let Some(mouse_xy) = mouse_xy else {
-            return EventPersists;
-        };
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventPersists;
-        };
-        let position = xy(x.round() as u32, y.round() as u32);
-
-        let lift_ids = components
-            .lifts
-            .iter()
-            .filter(|(_, lift)| {
-                lift.pick_up.state.position == position || lift.drop_off.state.position == position
-            })
-            .map(|(lift_id, _)| *lift_id)
-            .collect::<Vec<_>>();
-
-        if lift_ids.is_empty() {
-            return EventPersists;
-        }
-
-        for lift_id in lift_ids {
-            remove_lift(graphics, components, &lift_id);
-        }
-
-        EventConsumed
+    if lift_ids.is_empty() {
+        return EventPersists;
     }
+
+    for lift_id in lift_ids {
+        remove_lift(graphics, components, &lift_id);
+    }
+
+    EventConsumed
 }
 
 pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lift_id: &usize) {

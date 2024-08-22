@@ -31,11 +31,7 @@ use engine::graphics::Graphics;
 use engine::handlers::{drag, resize, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
-use crate::handlers::{
-    building_builder, building_remover, door_builder, gate_builder, gate_opener, gate_remover,
-    lift_opener, lift_remover, lift_targeter, piste_builder, piste_computer, piste_eraser,
-    piste_highlighter, save,
-};
+use crate::handlers::{building_builder, lift_targeter, piste_builder, piste_highlighter};
 use crate::handlers::{lift_builder, selection};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
@@ -72,50 +68,8 @@ fn main() {
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             handlers: Handlers {
-                building_builder: building_builder::Handler::new(building_builder::Bindings {
-                    start_building: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                    finish_building: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                    decrease_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("[")),
-                        state: ButtonState::Pressed,
-                    },
-                    increase_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("]")),
-                        state: ButtonState::Pressed,
-                    },
-                    toggle_roof: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("/")),
-                        state: ButtonState::Pressed,
-                    },
-                }),
-                building_remover: building_remover::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                clock: handlers::clock::Handler::new(handlers::clock::Bindings {
-                    slow_down: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from(",")),
-                        state: ButtonState::Pressed,
-                    },
-                    speed_up: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from(".")),
-                        state: ButtonState::Pressed,
-                    },
-                }),
-                door_builder: door_builder::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
+                building_builder: building_builder::Handler::new(),
+                clock: handlers::clock::Handler::new(),
                 drag: drag::Handler::new(drag::Bindings {
                     start_dragging: Binding::Single {
                         button: Button::Mouse(MouseButton::Right),
@@ -126,102 +80,19 @@ fn main() {
                         state: ButtonState::Released,
                     },
                 }),
-                gate_builder: gate_builder::Handler::new(Binding::Single {
-                    button: Button::Mouse(MouseButton::Left),
-                    state: ButtonState::Pressed,
-                }),
-                gate_opener: gate_opener::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                gate_remover: gate_remover::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
                 path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
                 },
                 piste_builder: piste_builder::Handler {
                     class: piste::Class::Piste,
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
                 },
-                piste_eraser: piste_eraser::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                piste_computer: piste_computer::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("c")),
-                        state: ButtonState::Pressed,
-                    },
-                },
+
                 piste_highlighter: piste_highlighter::Handler::default(),
-                lift_builder: lift_builder::Handler::new(Binding::Single {
-                    button: Button::Mouse(MouseButton::Left),
-                    state: ButtonState::Pressed,
-                }),
-                lift_opener: lift_opener::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                lift_remover: lift_remover::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                lift_targeter: lift_targeter::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("t")),
-                        state: ButtonState::Pressed,
-                    },
-                },
+                lift_builder: lift_builder::Handler::new(),
+
                 resize: resize::Handler::new(),
-                save: save::Handler {
-                    binding: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("s")),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                selection: selection::Handler::new(selection::Bindings {
-                    first_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                    second_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Released,
-                    },
-                    start_clearing: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Pressed,
-                    },
-                    finish_clearing: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Released,
-                    },
-                }),
-                skier_debugger: handlers::skier_debugger::Handler {
-                    binding: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                },
+                selection: selection::Handler::new(),
+
                 yaw: yaw::Handler::new(yaw::Parameters {
                     initial_angle: 5,
                     angles: 16,
@@ -297,6 +168,48 @@ fn main() {
                 window_artist: window_artist::System::new(),
             },
             bindings: Bindings {
+                action: Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
+                    state: ButtonState::Pressed,
+                },
+                building_builder: building_builder::Bindings {
+                    decrease_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("[")),
+                        state: ButtonState::Pressed,
+                    },
+                    increase_height: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("]")),
+                        state: ButtonState::Pressed,
+                    },
+                    toggle_roof: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("/")),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                clock_handler: handlers::clock::Bindings {
+                    slow_down: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from(",")),
+                        state: ButtonState::Pressed,
+                    },
+                    speed_up: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from(".")),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                compute: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("c")),
+                    state: ButtonState::Pressed,
+                },
+                _drag: drag::Bindings {
+                    start_dragging: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Pressed,
+                    },
+                    stop_dragging: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Released,
+                    },
+                },
                 mode: HashMap::from([
                     (
                         mode::Mode::Open,
@@ -369,6 +282,64 @@ fn main() {
                         },
                     ),
                 ]),
+                save: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("s")),
+                    state: ButtonState::Pressed,
+                },
+                selection: selection::Bindings {
+                    first_cell: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Pressed,
+                    },
+                    second_cell: Binding::Single {
+                        button: Button::Mouse(MouseButton::Left),
+                        state: ButtonState::Released,
+                    },
+                    start_clearing: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Pressed,
+                    },
+                    finish_clearing: Binding::Single {
+                        button: Button::Mouse(MouseButton::Right),
+                        state: ButtonState::Released,
+                    },
+                },
+                target_lift: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("t")),
+                    state: ButtonState::Pressed,
+                },
+                _yaw: yaw::Bindings {
+                    plus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("e")),
+                        state: ButtonState::Pressed,
+                    },
+                    minus: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("q")),
+                        state: ButtonState::Pressed,
+                    },
+                },
+                _zoom: zoom::Bindings {
+                    plus: Binding::Multi(vec![
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::from("+")),
+                            state: ButtonState::Pressed,
+                        },
+                        Binding::Single {
+                            button: Button::Mouse(MouseButton::WheelUp),
+                            state: ButtonState::Pressed,
+                        },
+                    ]),
+                    minus: Binding::Multi(vec![
+                        Binding::Single {
+                            button: Button::Keyboard(KeyboardKey::from("-")),
+                            state: ButtonState::Pressed,
+                        },
+                        Binding::Single {
+                            button: Button::Mouse(MouseButton::WheelDown),
+                            state: ButtonState::Pressed,
+                        },
+                    ]),
+                },
             },
             mouse_xy: None,
             components,
@@ -501,26 +472,14 @@ pub struct Components {
 
 struct Handlers {
     building_builder: building_builder::Handler,
-    building_remover: building_remover::Handler,
     clock: handlers::clock::Handler,
-    door_builder: door_builder::Handler,
     drag: drag::Handler,
-    gate_builder: gate_builder::Handler,
-    gate_opener: gate_opener::Handler,
-    gate_remover: gate_remover::Handler,
     lift_builder: lift_builder::Handler,
-    lift_opener: lift_opener::Handler,
-    lift_remover: lift_remover::Handler,
-    lift_targeter: lift_targeter::Handler,
     path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
-    piste_eraser: piste_eraser::Handler,
-    piste_computer: piste_computer::Handler,
     piste_highlighter: piste_highlighter::Handler,
     resize: resize::Handler,
-    save: save::Handler,
     selection: selection::Handler,
-    skier_debugger: handlers::skier_debugger::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
 }
@@ -537,6 +496,16 @@ struct Systems {
 }
 
 pub struct Bindings {
+    action: Binding,
+    building_builder: building_builder::Bindings,
+    clock_handler: handlers::clock::Bindings,
+    compute: Binding,
+    _drag: drag::Bindings,
+    save: Binding,
+    selection: selection::Bindings,
+    target_lift: Binding,
+    _yaw: yaw::Bindings,
+    _zoom: zoom::Bindings,
     mode: HashMap<mode::Mode, Binding>,
 }
 
@@ -579,13 +548,16 @@ impl EventHandler for Game {
         self.handlers.yaw.handle(event, engine, graphics);
         self.handlers.zoom.handle(event, engine, graphics);
 
-        self.handlers
-            .clock
-            .handle(event, &mut self.components.services.clock);
+        self.handlers.clock.handle(
+            &self.bindings.clock_handler,
+            event,
+            &mut self.components.services.clock,
+        );
 
         self.components.services.mode.get_handler()(event, self, graphics);
 
-        self.handlers.lift_targeter.handle(
+        handlers::lift_targeter::handle(
+            &self.bindings.target_lift,
             event,
             lift_targeter::Parameters {
                 mouse_xy: &self.mouse_xy,
@@ -596,25 +568,24 @@ impl EventHandler for Game {
                 graphics,
             },
         );
-        self.handlers.save.handle(event, &mut self.components);
-        self.handlers
-            .piste_computer
-            .handle(handlers::piste_computer::Parameters {
-                event,
-                mouse_xy: &self.mouse_xy,
-                terrain: &self.components.terrain,
-                pistes: &self.components.pistes,
-                piste_map: &self.components.piste_map,
-                entrances: &mut self.components.entrances,
-                exits: &mut self.components.exits,
-                reservations: &self.components.reservations,
-                costs: &mut self.components.costs,
-                abilities: &mut self.components.abilities,
-                clock: &mut self.components.services.clock,
-                global_computer: &mut self.systems.global_computer,
-                terrain_artist: &mut self.systems.terrain_artist,
-                graphics,
-            });
+        handlers::save::handle(&self.bindings.save, event, &mut self.components);
+        handlers::piste_computer::handle(handlers::piste_computer::Parameters {
+            binding: &self.bindings.compute,
+            event,
+            mouse_xy: &self.mouse_xy,
+            terrain: &self.components.terrain,
+            pistes: &self.components.pistes,
+            piste_map: &self.components.piste_map,
+            entrances: &mut self.components.entrances,
+            exits: &mut self.components.exits,
+            reservations: &self.components.reservations,
+            costs: &mut self.components.costs,
+            abilities: &mut self.components.abilities,
+            clock: &mut self.components.services.clock,
+            global_computer: &mut self.systems.global_computer,
+            terrain_artist: &mut self.systems.terrain_artist,
+            graphics,
+        });
         handlers::mode::handle(event, &self.bindings, &mut self.components.services.mode);
 
         self.systems

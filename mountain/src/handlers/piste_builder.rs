@@ -4,7 +4,6 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
-use engine::binding::Binding;
 
 use crate::handlers::{
     selection,
@@ -15,12 +14,10 @@ use crate::services::id_allocator;
 use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Handler {
-    pub binding: Binding,
     pub class: piste::Class,
 }
 
 pub struct Parameters<'a> {
-    pub event: &'a engine::events::Event,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
     pub selection: &'a mut selection::Handler,
@@ -33,7 +30,6 @@ impl Handler {
     pub fn handle(
         &mut self,
         Parameters {
-            event,
             pistes,
             piste_map,
             selection,
@@ -42,10 +38,6 @@ impl Handler {
             id_allocator,
         }: Parameters<'_>,
     ) -> HandlerResult {
-        if !self.binding.binds_event(event) {
-            return EventPersists;
-        }
-
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
             return EventPersists;
         };

@@ -15,11 +15,8 @@ use crate::services::clock;
 use crate::systems::{global_computer, terrain_artist};
 use crate::utils::computer;
 
-pub struct Handler {
-    pub binding: Binding,
-}
-
 pub struct Parameters<'a> {
+    pub binding: &'a Binding,
     pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
@@ -36,57 +33,55 @@ pub struct Parameters<'a> {
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
-impl Handler {
-    pub fn handle(
-        &mut self,
-        Parameters {
-            event,
-            mouse_xy,
-            terrain,
-            pistes,
-            piste_map,
-            entrances,
-            exits,
-            reservations,
-            costs,
-            abilities,
-            clock,
-            global_computer,
-            terrain_artist,
-            graphics,
-        }: Parameters<'_>,
-    ) {
-        if !self.binding.binds_event(event) {
-            return;
-        }
-
-        let Some(mouse_xy) = mouse_xy else { return };
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
-        };
-        let position = xy(
-            (x.floor() as u32).min(piste_map.width() - 2),
-            (y.floor() as u32).min(piste_map.height() - 2),
-        );
-        let Some(piste_id) = piste_map[position] else {
-            return;
-        };
-
-        let current_speed = clock.speed();
-        clock.set_speed(0.0);
-
-        computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
-        computer::piste_ability::compute_piste(&piste_id, costs, entrances, exits, abilities);
-        global_computer.update();
-
-        if let Some(piste) = pistes.get(&piste_id) {
-            let grid = &piste.grid;
-            terrain_artist.update_overlay(XYRectangle {
-                from: *grid.origin(),
-                to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
-            });
-        }
-
-        clock.set_speed(current_speed);
+pub fn handle(
+    Parameters {
+        binding,
+        event,
+        mouse_xy,
+        terrain,
+        pistes,
+        piste_map,
+        entrances,
+        exits,
+        reservations,
+        costs,
+        abilities,
+        clock,
+        global_computer,
+        terrain_artist,
+        graphics,
+    }: Parameters<'_>,
+) {
+    if !binding.binds_event(event) {
+        return;
     }
+
+    let Some(mouse_xy) = mouse_xy else { return };
+    let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+        return;
+    };
+    let position = xy(
+        (x.floor() as u32).min(piste_map.width() - 2),
+        (y.floor() as u32).min(piste_map.height() - 2),
+    );
+    let Some(piste_id) = piste_map[position] else {
+        return;
+    };
+
+    let current_speed = clock.speed();
+    clock.set_speed(0.0);
+
+    computer::costs::compute_piste(&piste_id, pistes, terrain, exits, reservations, costs);
+    computer::piste_ability::compute_piste(&piste_id, costs, entrances, exits, abilities);
+    global_computer.update();
+
+    if let Some(piste) = pistes.get(&piste_id) {
+        let grid = &piste.grid;
+        terrain_artist.update_overlay(XYRectangle {
+            from: *grid.origin(),
+            to: *grid.origin() + xy(grid.width() - 2, grid.height() - 2),
+        });
+    }
+
+    clock.set_speed(current_speed);
 }

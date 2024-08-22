@@ -6,10 +6,6 @@ use engine::binding::Binding;
 use crate::model::lift::Lift;
 use crate::model::skier::Skier;
 
-pub struct Handler {
-    pub binding: Binding,
-}
-
 pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub lifts: &'a HashMap<usize, Lift>,
@@ -19,42 +15,40 @@ pub struct Parameters<'a> {
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
-impl Handler {
-    pub fn handle(
-        &self,
-        event: &engine::events::Event,
-        Parameters {
-            mouse_xy,
-            lifts,
-            skiers,
-            targets,
-            global_targets,
-            graphics,
-        }: Parameters<'_>,
-    ) {
-        if !self.binding.binds_event(event) {
-            return;
-        }
+pub fn handle(
+    binding: &Binding,
+    event: &engine::events::Event,
+    Parameters {
+        mouse_xy,
+        lifts,
+        skiers,
+        targets,
+        global_targets,
+        graphics,
+    }: Parameters<'_>,
+) {
+    if !binding.binds_event(event) {
+        return;
+    }
 
-        let Some(mouse_xy) = mouse_xy else { return };
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return;
-        };
-        let position = xy(x.round() as u32, y.round() as u32);
+    let Some(mouse_xy) = mouse_xy else { return };
+    let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+        return;
+    };
+    let position = xy(x.round() as u32, y.round() as u32);
 
-        for (&lift_id, lift) in lifts {
-            if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
-                global_targets.clear();
+    for (&lift_id, lift) in lifts {
+        if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
+            global_targets.clear();
 
-                for &skier_id in skiers.keys() {
-                    targets.remove(&skier_id);
-                    global_targets.insert(skier_id, lift_id);
-                }
-
-                println!("Global target set to {} for all skiers", lift_id);
-
-                return;
+            for &skier_id in skiers.keys() {
+                targets.remove(&skier_id);
+                global_targets.insert(skier_id, lift_id);
             }
+
+            println!("Global target set to {} for all skiers", lift_id);
+
+            return;
         }
     }
 }

@@ -21,7 +21,7 @@ pub mod save;
 pub mod selection;
 pub mod skier_debugger;
 
-#[derive(PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum HandlerResult {
     EventPersists,
     EventConsumed,
