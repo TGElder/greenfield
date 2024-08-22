@@ -11,7 +11,6 @@ use super::*;
 pub struct Handler {
     pub cells: Vec<XY<u32>>,
     pub grid: Option<OriginGrid<bool>>,
-    pub binding: Bindings,
     pub was_clear_interrupted: bool,
 }
 
@@ -23,16 +22,16 @@ pub struct Bindings {
 }
 
 impl Handler {
-    pub fn new(binding: Bindings) -> Handler {
+    pub fn new() -> Handler {
         Handler {
             cells: Vec::with_capacity(3),
             grid: None,
-            binding,
             was_clear_interrupted: false,
         }
     }
     pub fn handle(
         &mut self,
+        bindings: &Bindings,
         event: &engine::events::Event,
         mouse_xy: &Option<XY<u32>>,
         terrain: &Grid<f32>,
@@ -44,17 +43,17 @@ impl Handler {
             self.was_clear_interrupted = true;
         }
 
-        if self.binding.start_clearing.binds_event(event) {
+        if bindings.start_clearing.binds_event(event) {
             self.was_clear_interrupted = false;
         } else if !self.was_clear_interrupted
-            && self.binding.finish_clearing.binds_event(event)
+            && bindings.finish_clearing.binds_event(event)
             && !self.cells.is_empty()
         {
             self.clear_selection();
-        } else if self.binding.first_cell.binds_event(event) && self.cells.is_empty() {
+        } else if bindings.first_cell.binds_event(event) && self.cells.is_empty() {
             self.add_cell(terrain, mouse_xy, graphics);
             self.add_cell(terrain, mouse_xy, graphics);
-        } else if self.binding.second_cell.binds_event(event) && self.cells.len() == 2 {
+        } else if bindings.second_cell.binds_event(event) && self.cells.len() == 2 {
             self.add_cell(terrain, mouse_xy, graphics);
         }
 

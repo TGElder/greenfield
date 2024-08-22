@@ -1,5 +1,4 @@
 use commons::geometry::{xy, XY, XYZ};
-use engine::binding::Binding;
 use engine::graphics::Graphics;
 
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
@@ -7,47 +6,35 @@ use crate::model::ability::ABILITIES;
 use crate::model::gate::Gate;
 use crate::Components;
 
-pub struct Handler {
-    pub binding: Binding,
-}
+pub fn handle(
+    mouse_xy: &Option<XY<u32>>,
+    graphics: &mut dyn engine::graphics::Graphics,
+    components: &mut Components,
+) -> HandlerResult {
+    let Some(mouse_xy) = mouse_xy else {
+        return EventPersists;
+    };
+    let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
+        return EventPersists;
+    };
+    let position = xy(x.round() as u32, y.round() as u32);
 
-impl Handler {
-    pub fn handle(
-        &self,
-        event: &engine::events::Event,
-        mouse_xy: &Option<XY<u32>>,
-        graphics: &mut dyn engine::graphics::Graphics,
-        components: &mut Components,
-    ) -> HandlerResult {
-        if !self.binding.binds_event(event) {
-            return EventPersists;
-        }
+    let gate_ids = components
+        .gates
+        .iter()
+        .filter(|(_, Gate { footprint, .. })| footprint.contains(position))
+        .map(|(gate_id, _)| *gate_id)
+        .collect::<Vec<_>>();
 
-        let Some(mouse_xy) = mouse_xy else {
-            return EventPersists;
-        };
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventPersists;
-        };
-        let position = xy(x.round() as u32, y.round() as u32);
-
-        let gate_ids = components
-            .gates
-            .iter()
-            .filter(|(_, Gate { footprint, .. })| footprint.contains(position))
-            .map(|(gate_id, _)| *gate_id)
-            .collect::<Vec<_>>();
-
-        if gate_ids.is_empty() {
-            return EventPersists;
-        }
-
-        for gate_id in gate_ids {
-            remove_gate(graphics, components, &gate_id);
-        }
-
-        EventConsumed
+    if gate_ids.is_empty() {
+        return EventPersists;
     }
+
+    for gate_id in gate_ids {
+        remove_gate(graphics, components, &gate_id);
+    }
+
+    EventConsumed
 }
 
 pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gate_id: &usize) {

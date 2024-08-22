@@ -3,7 +3,6 @@ use engine::binding::Binding;
 use crate::services::clock;
 
 pub struct Handler {
-    pub bindings: Bindings,
     pub power: i32,
 }
 
@@ -13,15 +12,20 @@ pub struct Bindings {
 }
 
 impl Handler {
-    pub fn new(bindings: Bindings) -> Handler {
-        Handler { bindings, power: 0 }
+    pub fn new() -> Handler {
+        Handler { power: 0 }
     }
-    pub fn handle(&mut self, event: &engine::events::Event, clock: &mut clock::Service) {
-        if self.bindings.slow_down.binds_event(event) {
+    pub fn handle(
+        &mut self,
+        bindings: &Bindings,
+        event: &engine::events::Event,
+        clock: &mut clock::Service,
+    ) {
+        if bindings.slow_down.binds_event(event) {
             self.power -= 1;
             clock.set_speed(self.multiplier());
         }
-        if self.bindings.speed_up.binds_event(event) {
+        if bindings.speed_up.binds_event(event) {
             self.power += 1;
             clock.set_speed(self.multiplier());
         }

@@ -5,7 +5,6 @@ use std::iter::once;
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::{Grid, CORNERS};
-use engine::binding::Binding;
 
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::carousel::{Car, Carousel};
@@ -27,12 +26,10 @@ pub const CURVE_RADIUS: f32 = 2.0;
 pub const WIRE_HEIGHT: f32 = 2.5;
 
 pub struct Handler {
-    binding: Binding,
     from: Option<XY<u32>>,
 }
 
 pub struct Parameters<'a> {
-    pub event: &'a engine::events::Event,
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
@@ -48,17 +45,13 @@ pub struct Parameters<'a> {
 }
 
 impl Handler {
-    pub fn new(binding: Binding) -> Handler {
-        Handler {
-            binding,
-            from: None,
-        }
+    pub fn new() -> Handler {
+        Handler { from: None }
     }
 
     pub fn handle(
         &mut self,
         Parameters {
-            event,
             mouse_xy,
             terrain,
             piste_map,
@@ -73,10 +66,6 @@ impl Handler {
             graphics,
         }: Parameters<'_>,
     ) -> HandlerResult {
-        if !self.binding.binds_event(event) {
-            return EventPersists;
-        }
-
         let Some(mouse_xy) = mouse_xy else {
             return EventPersists;
         };

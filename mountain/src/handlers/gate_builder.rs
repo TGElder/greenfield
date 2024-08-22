@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
-use engine::binding::Binding;
 
 use crate::handlers::selection;
 use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
@@ -15,12 +14,7 @@ use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::terrain_artist;
 
-pub struct Handler {
-    pub binding: Binding,
-}
-
 pub struct Parameters<'a> {
-    pub event: &'a engine::events::Event,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub selection: &'a mut selection::Handler,
@@ -33,129 +27,118 @@ pub struct Parameters<'a> {
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
-impl Handler {
-    pub fn new(binding: Binding) -> Handler {
-        Handler { binding }
+pub fn handle(
+    Parameters {
+        terrain,
+        piste_map,
+        selection,
+        terrain_artist,
+        id_allocator,
+        gates,
+        entrances,
+        exits,
+        open,
+        reservations,
+    }: Parameters<'_>,
+) -> HandlerResult {
+    let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
+        return EventPersists;
+    };
+
+    let Ok(rectangle) = grid.rectangle() else {
+        return EventPersists;
+    };
+
+    // clearing selection
+
+    selection.clear_selection();
+    terrain_artist.update_overlay(rectangle);
+
+    // create gate
+
+    if rectangle.width() == 0 || rectangle.height() == 0 {
+        println!("INFO: Entrance must not be zero length");
+        return EventPersists;
     }
+    let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
+        .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
 
-    pub fn handle(
-        &mut self,
-        Parameters {
-            event,
-            terrain,
-            piste_map,
-            selection,
-            terrain_artist,
-            id_allocator,
-            gates,
-            entrances,
-            exits,
-            open,
-            reservations,
-        }: Parameters<'_>,
-    ) -> HandlerResult {
-        if !self.binding.binds_event(event) {
-            return EventPersists;
-        }
-        let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return EventPersists;
-        };
+    let Some(configuration) = maybe_configuration else {
+        return EventPersists;
+    };
 
-        let Ok(rectangle) = grid.rectangle() else {
-            return EventPersists;
-        };
-
-        // clearing selection
-
-        selection.clear_selection();
-        terrain_artist.update_overlay(rectangle);
-
-        // create gate
-
-        if rectangle.width() == 0 || rectangle.height() == 0 {
-            println!("INFO: Entrance must not be zero length");
-            return EventPersists;
-        }
-        let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
-            .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
-
-        let Some(configuration) = maybe_configuration else {
-            return EventPersists;
-        };
-
-        let gate = match configuration.orientation {
-            Orientation::Vertical => Gate {
-                footprint: XYRectangle {
-                    from: xy(rectangle.to.x, rectangle.from.y),
-                    to: xy(rectangle.to.x, rectangle.to.y + 1),
-                },
+    let gate = match configuration.orientation {
+        Orientation::Vertical => Gate {
+            footprint: XYRectangle {
+                from: xy(rectangle.to.x, rectangle.from.y),
+                to: xy(rectangle.to.x, rectangle.to.y + 1),
             },
-            Orientation::Horizontal => Gate {
-                footprint: XYRectangle {
-                    from: xy(rectangle.from.x, rectangle.to.y),
-                    to: xy(rectangle.to.x + 1, rectangle.to.y),
-                },
+        },
+        Orientation::Horizontal => Gate {
+            footprint: XYRectangle {
+                from: xy(rectangle.from.x, rectangle.to.y),
+                to: xy(rectangle.to.x + 1, rectangle.to.y),
             },
-        };
+        },
+    };
 
-        // creating gate
+    // creating gate
 
-        let gate_id = id_allocator.next_id();
+    let gate_id = id_allocator.next_id();
 
-        // reserving footprint
+    // reserving footprint
 
-        gate.footprint.iter().for_each(|position| {
-            reservations[position].insert(gate_id, Reservation::Structure);
-        });
+    gate.footprint.iter().for_each(|position| {
+        reservations[position].insert(gate_id, Reservation::Structure);
+    });
 
-        // creating entrance and exit
+    // creating entrance and exit
 
-        let origin_piste_id = piste_map[origin].unwrap();
-        let destination_piste_id =
-            (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
+    let origin_piste_id = piste_map[origin].unwrap();
+    let destination_piste_id =
+        (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
 
-        let stationary_states = gate
-            .footprint
-            .iter()
-            .flat_map(|position| {
-                DIRECTIONS.iter().map(move |&travel_direction| State {
-                    position,
-                    velocity: 0,
-                    travel_direction,
-                })
+    let stationary_states = gate
+        .footprint
+        .iter()
+        .flat_map(|position| {
+            DIRECTIONS.iter().map(move |&travel_direction| State {
+                position,
+                velocity: 0,
+                travel_direction,
             })
-            .collect::<HashSet<_>>();
-        entrances.insert(
-            gate_id,
-            Entrance {
-                destination_piste_id,
-                stationary_states: stationary_states.clone(),
-                altitude_meters: gate
-                    .footprint
-                    .iter()
-                    .map(|position| terrain[position])
-                    .sum::<f32>()
-                    / gate.footprint.iter().count() as f32,
-            },
-        );
-        exits.insert(
-            gate_id,
-            Exit {
-                origin_piste_id,
-                stationary_states,
-            },
-        );
+        })
+        .collect::<HashSet<_>>();
+    entrances.insert(
+        gate_id,
+        Entrance {
+            destination_piste_id,
+            stationary_states: stationary_states.clone(),
+            altitude_meters: gate
+                .footprint
+                .iter()
+                .map(|position| terrain[position])
+                .sum::<f32>()
+                / gate.footprint.iter().count() as f32,
+        },
+    );
+    exits.insert(
+        gate_id,
+        Exit {
+            origin_piste_id,
+            stationary_states,
+        },
+    );
 
-        // opening gate
+    // opening gate
 
-        open.insert(gate_id);
+    open.insert(gate_id);
 
-        // inserting gate
+    // inserting gate
 
-        gates.insert(gate_id, gate);
+    gates.insert(gate_id, gate);
 
-        EventConsumed
-    }
+    EventConsumed
 }
 
 fn try_get_vertical_configuration(
