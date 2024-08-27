@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XY, XYZ};
 use commons::grid::Grid;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::Plan;
 
@@ -17,7 +17,7 @@ pub struct Parameters<'a> {
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
-pub fn handle(
+pub fn trigger(
     Parameters {
         mouse_xy,
         reservations,
@@ -27,17 +27,17 @@ pub fn handle(
         global_targets,
         graphics,
     }: Parameters<'_>,
-) -> HandlerResult {
+) -> Result {
     let Some(mouse_xy) = mouse_xy else {
-        return EventPersists;
+        return NoAction;
     };
     let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-        return EventPersists;
+        return NoAction;
     };
     let mouse_position = xy(x.round() as u32, y.round() as u32);
 
     if reservations[mouse_position].is_empty() {
-        return EventPersists;
+        return NoAction;
     }
 
     for (id, _) in reservations[mouse_position].iter() {
@@ -48,5 +48,5 @@ pub fn handle(
         println!("Plan = {:?}", plans.get(id));
     }
 
-    EventConsumed
+    Action
 }

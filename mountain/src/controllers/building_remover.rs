@@ -1,21 +1,21 @@
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use commons::geometry::{xy, XY, XYZ};
 use engine::graphics::Graphics;
 
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::building::Building;
 use crate::{Components, Systems};
 
-pub fn handle(
+pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     graphics: &mut dyn engine::graphics::Graphics,
     components: &mut Components,
     systems: &mut Systems,
-) -> HandlerResult {
+) -> Result {
     let Some(mouse_xy) = mouse_xy else {
-        return EventPersists;
+        return NoAction;
     };
     let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-        return EventPersists;
+        return NoAction;
     };
     let position = xy(x.round() as u32, y.round() as u32);
 
@@ -27,14 +27,14 @@ pub fn handle(
         .collect::<Vec<_>>();
 
     if building_ids.is_empty() {
-        return EventPersists;
+        return NoAction;
     }
 
     for building_id in building_ids {
         remove_building(graphics, components, systems, &building_id);
     }
 
-    EventConsumed
+    Action
 }
 
 pub fn remove_building(

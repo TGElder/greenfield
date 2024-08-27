@@ -2,22 +2,22 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XY, XYZ};
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::gate::Gate;
 use crate::systems::global_computer;
 
-pub fn handle(
+pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     gates: &HashMap<usize, Gate>,
     open: &mut HashSet<usize>,
     global_computer: &mut global_computer::System,
     graphics: &mut dyn engine::graphics::Graphics,
-) -> HandlerResult {
+) -> Result {
     let Some(mouse_xy) = mouse_xy else {
-        return EventPersists;
+        return NoAction;
     };
     let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-        return EventPersists;
+        return NoAction;
     };
     let mouse_position = xy(x.round() as u32, y.round() as u32);
 
@@ -32,7 +32,7 @@ pub fn handle(
         .collect::<Vec<_>>();
 
     if gate_ids.is_empty() {
-        return EventPersists;
+        return NoAction;
     }
 
     for gate_id in gate_ids {
@@ -45,5 +45,5 @@ pub fn handle(
     }
     global_computer.update();
 
-    EventConsumed
+    Action
 }

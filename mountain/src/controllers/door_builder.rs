@@ -9,7 +9,7 @@ use crate::model::building::Building;
 use crate::model::direction::{Direction, DIRECTIONS};
 use crate::model::door::Door;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
@@ -25,7 +25,7 @@ pub struct Parameters<'a> {
     pub entrances: &'a mut HashMap<usize, Entrance>,
 }
 
-pub fn handle(
+pub fn trigger(
     Parameters {
         pistes,
         selection,
@@ -35,21 +35,21 @@ pub fn handle(
         doors,
         entrances,
     }: Parameters<'_>,
-) -> HandlerResult {
+) -> Result {
     let Some(grid) = &selection.grid else {
-        return EventPersists;
+        return NoAction;
     };
     if grid.width() != 1 && grid.height() != 1 {
         println!("WARN: Door must be 1 wide or 1 high");
         selection.clear_selection();
-        return EventPersists;
+        return NoAction;
     }
 
     let longest_side_cell_count = grid.width().max(grid.height());
     if longest_side_cell_count < 2 {
         println!("WARN: Door must be at least 2 wide or 2 high");
         selection.clear_selection();
-        return EventPersists;
+        return NoAction;
     }
 
     let rectangle = XYRectangle {
@@ -70,13 +70,13 @@ pub fn handle(
             longest_side_position_count
         );
         selection.clear_selection();
-        return EventPersists;
+        return NoAction;
     };
 
     if building.under_construction {
         println!("WARN: Door cannot be added to building under construction");
         selection.clear_selection();
-        return EventPersists;
+        return NoAction;
     }
 
     let (building_positions, piste_positions): (Vec<_>, Vec<_>) = rectangle
@@ -93,7 +93,7 @@ pub fn handle(
             longest_side_position_count
         );
         selection.clear_selection();
-        return EventPersists;
+        return NoAction;
     };
 
     let aperture = piste_positions
@@ -125,7 +125,7 @@ pub fn handle(
 
     selection.clear_selection();
 
-    EventConsumed
+    Action
 }
 
 fn direction(piste_positions: &[XY<u32>], building_positions: &[XY<u32>]) -> Direction {

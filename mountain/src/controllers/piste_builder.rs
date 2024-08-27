@@ -5,15 +5,14 @@ use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 
-use crate::handlers::{
-    selection,
-    HandlerResult::{self, EventConsumed, EventPersists},
-};
+use crate::controllers::Result::{self, Action, NoAction};
+use crate::handlers::selection;
+
 use crate::model::piste::{self, Piste};
 use crate::services::id_allocator;
 use crate::systems::{terrain_artist, tree_artist};
 
-pub struct Handler {
+pub struct Controller {
     pub class: piste::Class,
 }
 
@@ -26,8 +25,8 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
 }
 
-impl Handler {
-    pub fn handle(
+impl Controller {
+    pub fn trigger(
         &mut self,
         Parameters {
             pistes,
@@ -37,13 +36,13 @@ impl Handler {
             tree_artist,
             id_allocator,
         }: Parameters<'_>,
-    ) -> HandlerResult {
+    ) -> Result {
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-            return EventPersists;
+            return NoAction;
         };
 
         let Ok(rectangle) = grid.rectangle() else {
-            return EventPersists;
+            return NoAction;
         };
 
         let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
@@ -92,6 +91,6 @@ impl Handler {
 
         selection.clear_selection();
 
-        EventConsumed
+        Action
     }
 }

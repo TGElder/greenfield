@@ -4,10 +4,9 @@ use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 
-use crate::handlers::{
-    selection,
-    HandlerResult::{self, EventConsumed, EventPersists},
-};
+use crate::controllers::Result::{self, Action, NoAction};
+use crate::handlers::selection;
+
 use crate::model::piste::Piste;
 use crate::systems::{terrain_artist, tree_artist};
 
@@ -19,7 +18,7 @@ pub struct Parameters<'a> {
     pub tree_artist: &'a mut tree_artist::System,
 }
 
-pub fn handle(
+pub fn trigger(
     Parameters {
         pistes,
         piste_map,
@@ -27,21 +26,21 @@ pub fn handle(
         terrain_artist,
         tree_artist,
     }: Parameters<'_>,
-) -> HandlerResult {
+) -> Result {
     let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-        return EventPersists;
+        return NoAction;
     };
 
     let Ok(rectangle) = grid.rectangle() else {
-        return EventPersists;
+        return NoAction;
     };
 
     let Some(id) = piste_map[origin] else {
-        return EventPersists;
+        return NoAction;
     };
 
     let Some(piste) = pistes.get(&id) else {
-        return EventPersists;
+        return NoAction;
     };
 
     // updating piste map
@@ -78,5 +77,5 @@ pub fn handle(
 
     selection.clear_selection();
 
-    EventConsumed
+    Action
 }

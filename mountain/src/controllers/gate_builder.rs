@@ -3,8 +3,8 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
 
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::handlers::selection;
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -27,7 +27,7 @@ pub struct Parameters<'a> {
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
 }
 
-pub fn handle(
+pub fn trigger(
     Parameters {
         terrain,
         piste_map,
@@ -40,13 +40,13 @@ pub fn handle(
         open,
         reservations,
     }: Parameters<'_>,
-) -> HandlerResult {
+) -> Result {
     let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-        return EventPersists;
+        return NoAction;
     };
 
     let Ok(rectangle) = grid.rectangle() else {
-        return EventPersists;
+        return NoAction;
     };
 
     // clearing selection
@@ -58,13 +58,13 @@ pub fn handle(
 
     if rectangle.width() == 0 || rectangle.height() == 0 {
         println!("INFO: Entrance must not be zero length");
-        return EventPersists;
+        return NoAction;
     }
     let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
         .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
 
     let Some(configuration) = maybe_configuration else {
-        return EventPersists;
+        return NoAction;
     };
 
     let gate = match configuration.orientation {
@@ -138,7 +138,7 @@ pub fn handle(
 
     gates.insert(gate_id, gate);
 
-    EventConsumed
+    Action
 }
 
 fn try_get_vertical_configuration(
