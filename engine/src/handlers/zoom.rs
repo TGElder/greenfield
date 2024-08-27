@@ -1,17 +1,12 @@
 use commons::geometry::XY;
 
 use crate::binding::Binding;
-use crate::{
-    engine::Engine,
-    events::{Event, EventHandler},
-    graphics::Graphics,
-};
+use crate::{engine::Engine, events::Event, graphics::Graphics};
 
 pub struct Handler {
     level: i32,
     min_level: i32,
     max_level: i32,
-    pub bindings: Bindings,
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -19,7 +14,6 @@ pub struct Parameters {
     pub initial_level: i32,
     pub min_level: i32,
     pub max_level: i32,
-    pub bindings: Bindings,
 }
 
 pub struct Bindings {
@@ -33,14 +27,12 @@ impl Handler {
             initial_level: level,
             min_level,
             max_level,
-            bindings,
         }: Parameters,
     ) -> Handler {
         Handler {
             level,
             min_level,
             max_level,
-            bindings,
             mouse_xy: None,
         }
     }
@@ -68,17 +60,23 @@ impl Handler {
         2.0f32.powi(self.level)
     }
 }
-impl EventHandler for Handler {
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+impl Handler {
+    pub fn handle(
+        &mut self,
+        bindings: &Bindings,
+        event: &Event,
+        _: &mut dyn Engine,
+        graphics: &mut dyn Graphics,
+    ) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
         }
 
-        if self.bindings.plus.binds_event(event) {
+        if bindings.plus.binds_event(event) {
             self.step_level(true, graphics);
         }
 
-        if self.bindings.minus.binds_event(event) {
+        if bindings.minus.binds_event(event) {
             self.step_level(false, graphics);
         }
     }

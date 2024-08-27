@@ -8,7 +8,7 @@ use winit::platform::x11::EventLoopBuilderExtX11;
 
 use crate::binding::Binding;
 use crate::engine::Engine;
-use crate::events::{Button, ButtonState, Event, EventHandler, KeyboardKey, MouseButton};
+use crate::events::{Button, ButtonState, Event, KeyboardKey, MouseButton};
 use crate::glium_backend::graphics;
 use crate::graphics::elements::Quad;
 use crate::graphics::models::cube;
@@ -18,7 +18,7 @@ use crate::graphics::utils::{
     quad_normal, textured_triangles_from_textured_quads, transformation_matrix,
     triangles_from_quads, Transformation,
 };
-use crate::handlers::{drag, resize, yaw, zoom};
+use crate::handlers::{self, drag, yaw, zoom};
 
 use super::*;
 
@@ -629,7 +629,8 @@ fn drag_handler() {
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
 
-    let mut drag_handler = drag::Handler::new(drag::Bindings {
+    let mut drag_handler = drag::Handler::default();
+    let bindings = drag::Bindings {
         start_dragging: Binding::Single {
             button: Button::Mouse(MouseButton::Left),
             state: ButtonState::Pressed,
@@ -638,15 +639,17 @@ fn drag_handler() {
             button: Button::Mouse(MouseButton::Left),
             state: ButtonState::Released,
         },
-    });
+    };
 
     // when
     drag_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
     drag_handler.handle(
+        &bindings,
         &Event::Button {
             button: Button::Mouse(MouseButton::Left),
             state: ButtonState::Pressed,
@@ -655,6 +658,7 @@ fn drag_handler() {
         &mut graphics,
     );
     drag_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(80, 170)),
         &mut MockEngine {},
         &mut graphics,
@@ -716,25 +720,27 @@ fn yaw_handler() {
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
         initial_angle: 5,
         angles: 16,
-        bindings: yaw::Bindings {
-            plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("+")),
-                state: ButtonState::Pressed,
-            },
-            minus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("-")),
-                state: ButtonState::Pressed,
-            },
-        },
     });
+    let bindings = yaw::Bindings {
+        plus: Binding::Single {
+            button: Button::Keyboard(KeyboardKey::from("+")),
+            state: ButtonState::Pressed,
+        },
+        minus: Binding::Single {
+            button: Button::Keyboard(KeyboardKey::from("-")),
+            state: ButtonState::Pressed,
+        },
+    };
 
     // when
     yaw_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
     yaw_handler.handle(
+        &bindings,
         &Event::Button {
             button: Button::Keyboard(KeyboardKey::from("+")),
             state: ButtonState::Pressed,
@@ -755,11 +761,13 @@ fn yaw_handler() {
 
     // when
     yaw_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
     yaw_handler.handle(
+        &bindings,
         &Event::Button {
             button: Button::Keyboard(KeyboardKey::from("-")),
             state: ButtonState::Pressed,
@@ -825,25 +833,27 @@ fn zoom_handler() {
         initial_level: 8,
         min_level: 7,
         max_level: 9,
-        bindings: zoom::Bindings {
-            plus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("+")),
-                state: ButtonState::Pressed,
-            },
-            minus: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("-")),
-                state: ButtonState::Pressed,
-            },
-        },
     });
+    let bindings = zoom::Bindings {
+        plus: Binding::Single {
+            button: Button::Keyboard(KeyboardKey::from("+")),
+            state: ButtonState::Pressed,
+        },
+        minus: Binding::Single {
+            button: Button::Keyboard(KeyboardKey::from("-")),
+            state: ButtonState::Pressed,
+        },
+    };
 
     // when
     zoom_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
     zoom_handler.handle(
+        &bindings,
         &Event::Button {
             button: Button::Keyboard(KeyboardKey::from("+")),
             state: ButtonState::Pressed,
@@ -864,11 +874,13 @@ fn zoom_handler() {
 
     // when
     zoom_handler.handle(
+        &bindings,
         &Event::MouseMoved(xy(100, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
     zoom_handler.handle(
+        &bindings,
         &Event::Button {
             button: Button::Keyboard(KeyboardKey::from("-")),
             state: ButtonState::Pressed,
@@ -929,10 +941,8 @@ fn resize_handler() {
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
 
-    let mut resize_hander = resize::Handler::new();
-
     // when
-    resize_hander.handle(
+    handlers::resize::handle(
         &Event::WindowResize(Rectangle {
             width: 512,
             height: 256,

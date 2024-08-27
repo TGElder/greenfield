@@ -28,7 +28,7 @@ use engine::glium_backend;
 
 use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
-use engine::handlers::{drag, resize, yaw, zoom};
+use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::handlers::{building_builder, lift_targeter, piste_builder, piste_highlighter};
@@ -70,16 +70,7 @@ fn main() {
             handlers: Handlers {
                 building_builder: building_builder::Handler::new(),
                 clock: handlers::clock::Handler::new(),
-                drag: drag::Handler::new(drag::Bindings {
-                    start_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Pressed,
-                    },
-                    stop_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Released,
-                    },
-                }),
+                drag: drag::Handler::default(),
                 path_builder: piste_builder::Handler {
                     class: piste::Class::Path,
                 },
@@ -89,50 +80,15 @@ fn main() {
 
                 piste_highlighter: piste_highlighter::Handler::default(),
                 lift_builder: lift_builder::Handler::new(),
-
-                resize: resize::Handler::new(),
                 selection: selection::Handler::new(),
-
                 yaw: yaw::Handler::new(yaw::Parameters {
                     initial_angle: 5,
                     angles: 16,
-                    bindings: yaw::Bindings {
-                        plus: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("e")),
-                            state: ButtonState::Pressed,
-                        },
-                        minus: Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("q")),
-                            state: ButtonState::Pressed,
-                        },
-                    },
                 }),
                 zoom: zoom::Handler::new(zoom::Parameters {
                     initial_level: 1,
                     min_level: -1,
                     max_level: 8,
-                    bindings: zoom::Bindings {
-                        plus: Binding::Multi(vec![
-                            Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::from("+")),
-                                state: ButtonState::Pressed,
-                            },
-                            Binding::Single {
-                                button: Button::Mouse(MouseButton::WheelUp),
-                                state: ButtonState::Pressed,
-                            },
-                        ]),
-                        minus: Binding::Multi(vec![
-                            Binding::Single {
-                                button: Button::Keyboard(KeyboardKey::from("-")),
-                                state: ButtonState::Pressed,
-                            },
-                            Binding::Single {
-                                button: Button::Mouse(MouseButton::WheelDown),
-                                state: ButtonState::Pressed,
-                            },
-                        ]),
-                    },
                 }),
             },
             systems: Systems {
@@ -200,7 +156,7 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::from("c")),
                     state: ButtonState::Pressed,
                 },
-                _drag: drag::Bindings {
+                drag: drag::Bindings {
                     start_dragging: Binding::Single {
                         button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Pressed,
@@ -308,7 +264,7 @@ fn main() {
                     button: Button::Keyboard(KeyboardKey::from("t")),
                     state: ButtonState::Pressed,
                 },
-                _yaw: yaw::Bindings {
+                yaw: yaw::Bindings {
                     plus: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::from("e")),
                         state: ButtonState::Pressed,
@@ -318,7 +274,7 @@ fn main() {
                         state: ButtonState::Pressed,
                     },
                 },
-                _zoom: zoom::Bindings {
+                zoom: zoom::Bindings {
                     plus: Binding::Multi(vec![
                         Binding::Single {
                             button: Button::Keyboard(KeyboardKey::from("+")),
@@ -478,7 +434,6 @@ struct Handlers {
     path_builder: piste_builder::Handler,
     piste_builder: piste_builder::Handler,
     piste_highlighter: piste_highlighter::Handler,
-    resize: resize::Handler,
     selection: selection::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
@@ -500,12 +455,12 @@ pub struct Bindings {
     building_builder: building_builder::Bindings,
     clock_handler: handlers::clock::Bindings,
     compute: Binding,
-    _drag: drag::Bindings,
+    drag: drag::Bindings,
     save: Binding,
     selection: selection::Bindings,
     target_lift: Binding,
-    _yaw: yaw::Bindings,
-    _zoom: zoom::Bindings,
+    yaw: yaw::Bindings,
+    zoom: zoom::Bindings,
     mode: HashMap<mode::Mode, Binding>,
 }
 
@@ -543,10 +498,16 @@ impl EventHandler for Game {
             _ => (),
         }
 
-        self.handlers.drag.handle(event, engine, graphics);
-        self.handlers.resize.handle(event, engine, graphics);
-        self.handlers.yaw.handle(event, engine, graphics);
-        self.handlers.zoom.handle(event, engine, graphics);
+        self.handlers
+            .drag
+            .handle(&self.bindings.drag, event, engine, graphics);
+        engine::handlers::resize::handle(event, engine, graphics);
+        self.handlers
+            .yaw
+            .handle(&self.bindings.yaw, event, engine, graphics);
+        self.handlers
+            .zoom
+            .handle(&self.bindings.zoom, event, engine, graphics);
 
         self.handlers.clock.handle(
             &self.bindings.clock_handler,

@@ -1,16 +1,12 @@
 use commons::geometry::{XY, XYZ};
 
 use crate::binding::Binding;
-use crate::{
-    engine::Engine,
-    events::{Event, EventHandler},
-    graphics::Graphics,
-};
+use crate::{engine::Engine, events::Event, graphics::Graphics};
 
+#[derive(Default)]
 pub struct Handler {
     mouse_xy: Option<XY<u32>>,
     selection: Option<XYZ<f32>>,
-    bindings: Bindings,
 }
 
 pub struct Bindings {
@@ -19,17 +15,13 @@ pub struct Bindings {
 }
 
 impl Handler {
-    pub fn new(bindings: Bindings) -> Handler {
-        Handler {
-            mouse_xy: None,
-            selection: None,
-            bindings,
-        }
-    }
-}
-
-impl EventHandler for Handler {
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    pub fn handle(
+        &mut self,
+        bindings: &Bindings,
+        event: &Event,
+        _: &mut dyn Engine,
+        graphics: &mut dyn Graphics,
+    ) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
             if let Some(selection) = self.selection {
@@ -37,7 +29,7 @@ impl EventHandler for Handler {
             }
         }
 
-        if self.bindings.start_dragging.binds_event(event) {
+        if bindings.start_dragging.binds_event(event) {
             let Some(mouse_xy) = self.mouse_xy else {
                 return;
             };
@@ -46,7 +38,7 @@ impl EventHandler for Handler {
             }
         }
 
-        if self.bindings.stop_dragging.binds_event(event) {
+        if bindings.stop_dragging.binds_event(event) {
             self.selection = None;
         }
     }

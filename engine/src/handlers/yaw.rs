@@ -3,23 +3,17 @@ use std::f32::consts::PI;
 use commons::geometry::XY;
 
 use crate::binding::Binding;
-use crate::{
-    engine::Engine,
-    events::{Event, EventHandler},
-    graphics::Graphics,
-};
+use crate::{engine::Engine, events::Event, graphics::Graphics};
 
 pub struct Handler {
     angle: usize,
     angles: usize,
-    bindings: Bindings,
     mouse_xy: Option<XY<u32>>,
 }
 
 pub struct Parameters {
     pub initial_angle: usize,
     pub angles: usize,
-    pub bindings: Bindings,
 }
 
 pub struct Bindings {
@@ -32,13 +26,11 @@ impl Handler {
         Parameters {
             initial_angle: angle,
             angles,
-            bindings,
         }: Parameters,
     ) -> Handler {
         Handler {
             angle,
             angles,
-            bindings,
             mouse_xy: None,
         }
     }
@@ -65,17 +57,23 @@ impl Handler {
         (self.angle as f32 / self.angles as f32) * PI * 2.0
     }
 }
-impl EventHandler for Handler {
-    fn handle(&mut self, event: &Event, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+impl Handler {
+    pub fn handle(
+        &mut self,
+        bindings: &Bindings,
+        event: &Event,
+        _: &mut dyn Engine,
+        graphics: &mut dyn Graphics,
+    ) {
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
         }
 
-        if self.bindings.plus.binds_event(event) {
+        if bindings.plus.binds_event(event) {
             self.step_angle(true, graphics);
         }
 
-        if self.bindings.minus.binds_event(event) {
+        if bindings.minus.binds_event(event) {
             self.step_angle(false, graphics);
         }
     }
