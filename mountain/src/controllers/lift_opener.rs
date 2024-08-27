@@ -2,22 +2,22 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XY, XYZ};
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::lift::Lift;
 use crate::systems::global_computer;
 
-pub fn handle(
+pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     lifts: &HashMap<usize, Lift>,
     open: &mut HashSet<usize>,
     global_computer: &mut global_computer::System,
     graphics: &mut dyn engine::graphics::Graphics,
-) -> HandlerResult {
+) -> Result {
     let Some(mouse_xy) = mouse_xy else {
-        return EventPersists;
+        return NoAction;
     };
     let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-        return EventPersists;
+        return NoAction;
     };
     let position = xy(x.round() as u32, y.round() as u32);
 
@@ -29,7 +29,7 @@ pub fn handle(
         .collect::<Vec<_>>();
 
     if lifts_to_modify.is_empty() {
-        return EventPersists;
+        return NoAction;
     }
 
     for (lift_id, lift) in lifts_to_modify {
@@ -53,5 +53,5 @@ pub fn handle(
 
     global_computer.update();
 
-    EventConsumed
+    Action
 }

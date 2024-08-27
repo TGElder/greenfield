@@ -1,20 +1,20 @@
 use commons::geometry::{xy, XY, XYZ};
 use engine::graphics::Graphics;
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
 use crate::Components;
 
-pub fn handle(
+pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     graphics: &mut dyn engine::graphics::Graphics,
     components: &mut Components,
-) -> HandlerResult {
+) -> Result {
     let Some(mouse_xy) = mouse_xy else {
-        return EventPersists;
+        return NoAction;
     };
     let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-        return EventPersists;
+        return NoAction;
     };
     let position = xy(x.round() as u32, y.round() as u32);
 
@@ -28,14 +28,14 @@ pub fn handle(
         .collect::<Vec<_>>();
 
     if lift_ids.is_empty() {
-        return EventPersists;
+        return NoAction;
     }
 
     for lift_id in lift_ids {
         remove_lift(graphics, components, &lift_id);
     }
 
-    EventConsumed
+    Action
 }
 
 pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lift_id: &usize) {

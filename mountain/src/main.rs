@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate lazy_static;
 
+mod controllers;
 mod draw;
 mod gui;
 mod handlers;
@@ -31,8 +32,8 @@ use engine::graphics::Graphics;
 use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
-use crate::handlers::{building_builder, lift_targeter, piste_builder, piste_highlighter};
-use crate::handlers::{lift_builder, selection};
+use crate::controllers::{building_builder, lift_builder, piste_builder};
+use crate::handlers::{lift_targeter, piste_highlighter, selection};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
@@ -67,19 +68,20 @@ fn main() {
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
-            handlers: Handlers {
-                building_builder: building_builder::Handler::new(),
-                clock: handlers::clock::Handler::new(),
-                drag: drag::Handler::default(),
-                path_builder: piste_builder::Handler {
+            controllers: Controllers {
+                building_builder: building_builder::Controller::new(),
+                path_builder: piste_builder::Controller {
                     class: piste::Class::Path,
                 },
-                piste_builder: piste_builder::Handler {
+                piste_builder: piste_builder::Controller {
                     class: piste::Class::Piste,
                 },
-
+                lift_builder: lift_builder::Controller::new(),
+            },
+            handlers: Handlers {
+                clock: handlers::clock::Handler::new(),
+                drag: drag::Handler::default(),
                 piste_highlighter: piste_highlighter::Handler::default(),
-                lift_builder: lift_builder::Handler::new(),
                 selection: selection::Handler::new(),
                 yaw: yaw::Handler::new(yaw::Parameters {
                     initial_angle: 5,
@@ -384,6 +386,7 @@ fn new_components() -> Components {
 
 struct Game {
     components: Components,
+    controllers: Controllers,
     handlers: Handlers,
     systems: Systems,
     bindings: Bindings,
@@ -426,13 +429,16 @@ pub struct Components {
     services: Services,
 }
 
+struct Controllers {
+    building_builder: building_builder::Controller,
+    lift_builder: lift_builder::Controller,
+    path_builder: piste_builder::Controller,
+    piste_builder: piste_builder::Controller,
+}
+
 struct Handlers {
-    building_builder: building_builder::Handler,
     clock: handlers::clock::Handler,
     drag: drag::Handler,
-    lift_builder: lift_builder::Handler,
-    path_builder: piste_builder::Handler,
-    piste_builder: piste_builder::Handler,
     piste_highlighter: piste_highlighter::Handler,
     selection: selection::Handler,
     yaw: yaw::Handler,

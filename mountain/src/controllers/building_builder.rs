@@ -8,10 +8,8 @@ use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::handlers::{
-    selection,
-    HandlerResult::{self, EventConsumed, EventPersists},
-};
+use crate::controllers::Result::{self, Action, NoAction};
+use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
@@ -49,7 +47,7 @@ const SUIT_COLORS: [Color; 8] = [
 
 const HELMET_COLORS: [Color; 2] = [Color::Black, Color::Grey];
 
-pub struct Handler {
+pub struct Controller {
     pub state: State,
 }
 
@@ -80,14 +78,14 @@ pub struct Parameters<'a> {
     pub window_artist: &'a mut window_artist::System,
 }
 
-impl Handler {
-    pub fn new() -> Handler {
-        Handler {
+impl Controller {
+    pub fn new() -> Controller {
+        Controller {
             state: State::Selecting,
         }
     }
 
-    pub fn handle(&mut self, parameters: Parameters<'_>) -> HandlerResult {
+    pub fn trigger(&mut self, parameters: Parameters<'_>) -> Result {
         let old_state = self.state;
         self.state = match self.state {
             State::Selecting => self.select(parameters),
@@ -95,9 +93,9 @@ impl Handler {
         };
 
         if old_state == self.state {
-            EventPersists
+            NoAction
         } else {
-            EventConsumed
+            Action
         }
     }
 

@@ -1,5 +1,5 @@
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
-use crate::{handlers, Game};
+use crate::controllers::Result::{self, Action, NoAction};
+use crate::{controllers, Game};
 
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
 pub enum Mode {
@@ -56,7 +56,7 @@ fn handle(
 ) {
     let handler_result = try_to_handle(mode, event, game, graphics);
 
-    if handler_result == EventConsumed {
+    if handler_result == Action {
         return;
     }
 
@@ -77,12 +77,10 @@ fn try_to_handle(
     event: &engine::events::Event,
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
-) -> handlers::HandlerResult {
+) -> controllers::Result {
     if let Mode::Building = mode {
-        return game
-            .handlers
-            .building_builder
-            .handle(handlers::building_builder::Parameters {
+        return game.controllers.building_builder.trigger(
+            controllers::building_builder::Parameters {
                 action_binding: &game.bindings.action,
                 bindings: &game.bindings.building_builder,
                 event,
@@ -95,71 +93,79 @@ fn try_to_handle(
                 building_artist: &mut game.systems.building_artist,
                 tree_artist: &mut game.systems.tree_artist,
                 window_artist: &mut game.systems.window_artist,
-            });
+            },
+        );
     }
 
     if !game.bindings.action.binds_event(event) {
-        return EventPersists;
+        return NoAction;
     }
 
     match mode {
         Mode::Open => try_to_open(game, graphics),
-        Mode::Query => handlers::skier_debugger::handle(handlers::skier_debugger::Parameters {
-            mouse_xy: &game.mouse_xy,
-            reservations: &game.components.reservations,
-            plans: &game.components.plans,
-            locations: &game.components.locations,
-            targets: &game.components.targets,
-            global_targets: &game.components.global_targets,
-            graphics,
-        }),
-        Mode::Piste => game
-            .handlers
-            .piste_builder
-            .handle(handlers::piste_builder::Parameters {
-                pistes: &mut game.components.pistes,
-                piste_map: &mut game.components.piste_map,
-                selection: &mut game.handlers.selection,
-                terrain_artist: &mut game.systems.terrain_artist,
-                tree_artist: &mut game.systems.tree_artist,
-                id_allocator: &mut game.components.services.id_allocator,
-            }),
-        Mode::PisteEraser => handlers::piste_eraser::handle(handlers::piste_eraser::Parameters {
-            pistes: &mut game.components.pistes,
-            piste_map: &mut game.components.piste_map,
-            selection: &mut game.handlers.selection,
-            terrain_artist: &mut game.systems.terrain_artist,
-            tree_artist: &mut game.systems.tree_artist,
-        }),
-        Mode::Path => game
-            .handlers
-            .path_builder
-            .handle(handlers::piste_builder::Parameters {
-                pistes: &mut game.components.pistes,
-                piste_map: &mut game.components.piste_map,
-                selection: &mut game.handlers.selection,
-                terrain_artist: &mut game.systems.terrain_artist,
-                tree_artist: &mut game.systems.tree_artist,
-                id_allocator: &mut game.components.services.id_allocator,
-            }),
-        Mode::Lift => game
-            .handlers
-            .lift_builder
-            .handle(handlers::lift_builder::Parameters {
+        Mode::Query => {
+            controllers::skier_debugger::trigger(controllers::skier_debugger::Parameters {
                 mouse_xy: &game.mouse_xy,
-                terrain: &game.components.terrain,
-                piste_map: &game.components.piste_map,
-                lifts: &mut game.components.lifts,
-                open: &mut game.components.open,
-                id_allocator: &mut game.components.services.id_allocator,
-                carousels: &mut game.components.carousels,
-                cars: &mut game.components.cars,
-                exits: &mut game.components.exits,
-                entrances: &mut game.components.entrances,
-                reservations: &mut game.components.reservations,
+                reservations: &game.components.reservations,
+                plans: &game.components.plans,
+                locations: &game.components.locations,
+                targets: &game.components.targets,
+                global_targets: &game.components.global_targets,
                 graphics,
-            }),
-        Mode::Gate => handlers::gate_builder::handle(handlers::gate_builder::Parameters {
+            })
+        }
+        Mode::Piste => {
+            game.controllers
+                .piste_builder
+                .trigger(controllers::piste_builder::Parameters {
+                    pistes: &mut game.components.pistes,
+                    piste_map: &mut game.components.piste_map,
+                    selection: &mut game.handlers.selection,
+                    terrain_artist: &mut game.systems.terrain_artist,
+                    tree_artist: &mut game.systems.tree_artist,
+                    id_allocator: &mut game.components.services.id_allocator,
+                })
+        }
+        Mode::PisteEraser => {
+            controllers::piste_eraser::trigger(controllers::piste_eraser::Parameters {
+                pistes: &mut game.components.pistes,
+                piste_map: &mut game.components.piste_map,
+                selection: &mut game.handlers.selection,
+                terrain_artist: &mut game.systems.terrain_artist,
+                tree_artist: &mut game.systems.tree_artist,
+            })
+        }
+        Mode::Path => {
+            game.controllers
+                .path_builder
+                .trigger(controllers::piste_builder::Parameters {
+                    pistes: &mut game.components.pistes,
+                    piste_map: &mut game.components.piste_map,
+                    selection: &mut game.handlers.selection,
+                    terrain_artist: &mut game.systems.terrain_artist,
+                    tree_artist: &mut game.systems.tree_artist,
+                    id_allocator: &mut game.components.services.id_allocator,
+                })
+        }
+        Mode::Lift => {
+            game.controllers
+                .lift_builder
+                .trigger(controllers::lift_builder::Parameters {
+                    mouse_xy: &game.mouse_xy,
+                    terrain: &game.components.terrain,
+                    piste_map: &game.components.piste_map,
+                    lifts: &mut game.components.lifts,
+                    open: &mut game.components.open,
+                    id_allocator: &mut game.components.services.id_allocator,
+                    carousels: &mut game.components.carousels,
+                    cars: &mut game.components.cars,
+                    exits: &mut game.components.exits,
+                    entrances: &mut game.components.entrances,
+                    reservations: &mut game.components.reservations,
+                    graphics,
+                })
+        }
+        Mode::Gate => controllers::gate_builder::trigger(controllers::gate_builder::Parameters {
             piste_map: &game.components.piste_map,
             terrain: &game.components.terrain,
             selection: &mut game.handlers.selection,
@@ -171,7 +177,7 @@ fn try_to_handle(
             open: &mut game.components.open,
             reservations: &mut game.components.reservations,
         }),
-        Mode::Door => handlers::door_builder::handle(handlers::door_builder::Parameters {
+        Mode::Door => controllers::door_builder::trigger(controllers::door_builder::Parameters {
             pistes: &game.components.pistes,
             buildings: &game.components.buildings,
             terrain: &game.components.terrain,
@@ -181,56 +187,51 @@ fn try_to_handle(
             entrances: &mut game.components.entrances,
         }),
         Mode::Demolish => try_to_demolish(game, graphics),
-        _ => EventPersists,
+        _ => NoAction,
     }
 }
 
-fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> HandlerResult {
-    if handlers::lift_opener::handle(
+fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
+    if controllers::lift_opener::trigger(
         &game.mouse_xy,
         &game.components.lifts,
         &mut game.components.open,
         &mut game.systems.global_computer,
         graphics,
-    ) == EventConsumed
+    ) == Action
     {
-        return EventConsumed;
+        return Action;
     }
-    if handlers::gate_opener::handle(
+    if controllers::gate_opener::trigger(
         &game.mouse_xy,
         &game.components.gates,
         &mut game.components.open,
         &mut game.systems.global_computer,
         graphics,
-    ) == EventConsumed
+    ) == Action
     {
-        return EventConsumed;
+        return Action;
     }
-    EventPersists
+    NoAction
 }
 
-fn try_to_demolish(
-    game: &mut Game,
-    graphics: &mut dyn engine::graphics::Graphics,
-) -> HandlerResult {
-    if handlers::building_remover::handle(
+fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
+    if controllers::building_remover::trigger(
         &game.mouse_xy,
         graphics,
         &mut game.components,
         &mut game.systems,
-    ) == EventConsumed
+    ) == Action
     {
-        return EventConsumed;
+        return Action;
     }
-    if handlers::gate_remover::handle(&game.mouse_xy, graphics, &mut game.components)
-        == EventConsumed
+    if controllers::gate_remover::trigger(&game.mouse_xy, graphics, &mut game.components) == Action
     {
-        return EventConsumed;
+        return Action;
     };
-    if handlers::lift_remover::handle(&game.mouse_xy, graphics, &mut game.components)
-        == EventConsumed
+    if controllers::lift_remover::trigger(&game.mouse_xy, graphics, &mut game.components) == Action
     {
-        return EventConsumed;
+        return Action;
     }
-    EventPersists
+    NoAction
 }

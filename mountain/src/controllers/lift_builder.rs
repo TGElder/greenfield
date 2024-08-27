@@ -6,7 +6,7 @@ use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::{Grid, CORNERS};
 
-use crate::handlers::HandlerResult::{self, EventConsumed, EventPersists};
+use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
@@ -25,7 +25,7 @@ pub const CURVE_INCREMENT: f32 = (2.0 * PI) / CIRCLE_SEGMENTS as f32;
 pub const CURVE_RADIUS: f32 = 2.0;
 pub const WIRE_HEIGHT: f32 = 2.5;
 
-pub struct Handler {
+pub struct Controller {
     from: Option<XY<u32>>,
 }
 
@@ -44,12 +44,12 @@ pub struct Parameters<'a> {
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
-impl Handler {
-    pub fn new() -> Handler {
-        Handler { from: None }
+impl Controller {
+    pub fn new() -> Controller {
+        Controller { from: None }
     }
 
-    pub fn handle(
+    pub fn trigger(
         &mut self,
         Parameters {
             mouse_xy,
@@ -65,23 +65,23 @@ impl Handler {
             reservations,
             graphics,
         }: Parameters<'_>,
-    ) -> HandlerResult {
+    ) -> Result {
         let Some(mouse_xy) = mouse_xy else {
-            return EventPersists;
+            return NoAction;
         };
         let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return EventPersists;
+            return NoAction;
         };
         let position = xy(x.round() as u32, y.round() as u32);
         if !terrain.in_bounds(position) {
-            return EventPersists;
+            return NoAction;
         }
 
         // handle case where from position is not set
 
         let Some(from) = self.from else {
             self.from = Some(position);
-            return EventConsumed;
+            return Action;
         };
 
         // create lift
@@ -91,12 +91,12 @@ impl Handler {
         let Some(from_piste) = piste_map[from] else {
             println!("INFO: No piste at from position");
             self.from = None;
-            return EventPersists;
+            return NoAction;
         };
         let Some(to_piste) = piste_map[to] else {
             self.from = None;
             println!("INFO: No piste at to position");
-            return EventPersists;
+            return NoAction;
         };
 
         let lift_id = id_allocator.next_id();
@@ -192,7 +192,7 @@ impl Handler {
         // register lift
 
         lifts.insert(lift_id, lift);
-        EventConsumed
+        Action
     }
 }
 
