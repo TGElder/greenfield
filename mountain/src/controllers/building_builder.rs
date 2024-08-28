@@ -16,9 +16,8 @@ use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
 use crate::model::skier::{Clothes, Color, Skier};
-use crate::services::id_allocator;
+use crate::services::{self, id_allocator};
 use crate::systems::{building_artist, tree_artist, window_artist};
-use crate::Game;
 
 pub const HEIGHT_MIN: u32 = 3;
 pub const HEIGHT_MAX: u32 = 36;
@@ -305,12 +304,29 @@ pub struct ControllerView {
     height: Option<u32>,
 }
 
-impl View<Game> for ControllerView {
-    fn init(&mut self, game: &Game) {
-        if let State::Editing { building_id } = game.controllers.building_builder.state {
+pub struct Input<'a> {
+    pub mode: services::mode::Mode,
+    pub builder: &'a Controller,
+    pub buildings: &'a HashMap<usize, Building>,
+}
+
+pub struct Output<'a> {
+    pub buildings: &'a mut HashMap<usize, Building>,
+    pub artist: &'a mut building_artist::System,
+}
+
+// 1. Move to it's own file
+// 2. Instead of Game, create input and output objects
+// 3. Plumb Game to input/output in GUI
+
+impl<'a> View<Input<'a>, Output<'a>> for ControllerView {
+    fn init(&mut self, input: Input) {
+        if input.mode != services::mode::Mode::Building {
+            return;
+        }
+        if let State::Editing { building_id } = input.builder.state {
             self.building_id = Some(building_id);
-            self.height = game
-                .components
+            self.height = input
                 .buildings
                 .get(&building_id)
                 .map(|building| building.height);
@@ -318,26 +334,26 @@ impl View<Game> for ControllerView {
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {
-        ui.vertical(|ui| {
-            ui.label("Building");
-            if let Some(height) = self.height.as_mut() {
+        if let Some(height) = self.height.as_mut() {
+            ui.vertical(|ui| {
+                ui.label("Building");
                 ui.horizontal(|ui| {
                     ui.add(egui::Slider::new(height, 0..=32));
                 });
-            }
-        });
+            });
+        }
     }
 
-    fn update(&self, game: &mut Game) {
+    fn update(&self, output: Output) {
         let Some(building_id) = self.building_id else {
             return;
         };
         let Some(height) = self.height else {
             return;
         };
-        if let Some(building) = game.components.buildings.get_mut(&building_id) {
+        if let Some(building) = output.buildings.get_mut(&building_id) {
             building.height = height;
-            game.systems.building_artist.redraw(building_id);
+            output.artist.redraw(building_id);
         }
     }
 }

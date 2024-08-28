@@ -4,6 +4,7 @@ use engine::engine::Engine;
 use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
+use crate::controllers::building_builder;
 use crate::services::mode;
 use crate::{Bindings, Game};
 
@@ -83,13 +84,15 @@ const MODE_BUTTONS: [ModeButton; 10] = [
     },
 ];
 
-pub trait View<T> {
-    fn init(&mut self, value: &T);
+pub trait View<T, U> {
+    fn init(&mut self, value: T);
     fn draw(&mut self, ui: &mut egui::Ui);
-    fn update(&self, value: &mut T);
+    fn update(&self, value: U);
 }
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    let mut building_widget = building_builder::ControllerView::default();
+
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.components.services.mode.mode();
@@ -113,8 +116,11 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
 
-    let mut mode_view = game.components.services.mode.view();
-    mode_view.init(game);
+    building_widget.init(building_builder::Input {
+        mode: build_mode,
+        builder: &game.controllers.building_builder,
+        buildings: &game.components.buildings,
+    });
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
@@ -158,12 +164,15 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                     });
                 });
                 ui.separator();
-                mode_view.draw(ui);
+                building_widget.draw(ui);
             });
         });
     });
 
-    mode_view.update(game);
+    building_widget.update(building_builder::Output {
+        buildings: &mut game.components.buildings,
+        artist: &mut game.systems.building_artist,
+    });
 
     game.components.services.clock.set_speed(speed);
 
