@@ -1,4 +1,6 @@
+use crate::controllers::building_builder::ControllerView;
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::gui::View;
 use crate::{controllers, Game};
 
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
@@ -46,6 +48,24 @@ impl Service {
         let mode = self.mode;
         move |event, game, graphics| handle(mode, event, game, graphics)
     }
+
+    pub fn view(&self) -> Box<dyn View<Game>> {
+        if self.mode == Mode::Building {
+            Box::new(ControllerView::default())
+        } else {
+            Box::new(NullView {})
+        }
+    }
+}
+
+struct NullView {}
+
+impl View<Game> for NullView {
+    fn init(&mut self, _: &Game) {}
+
+    fn draw(&mut self, _: &mut engine::egui::Ui) {}
+
+    fn update(&self, _: &mut Game) {}
 }
 
 fn handle(

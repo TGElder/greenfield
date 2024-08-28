@@ -83,6 +83,12 @@ const MODE_BUTTONS: [ModeButton; 10] = [
     },
 ];
 
+pub trait View<T> {
+    fn init(&mut self, value: &T);
+    fn draw(&mut self, ui: &mut egui::Ui);
+    fn update(&self, value: &mut T);
+}
+
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
@@ -106,6 +112,9 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
+
+    let mut mode_view = game.components.services.mode.view();
+    mode_view.init(game);
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
@@ -148,9 +157,13 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                         }
                     });
                 });
+                ui.separator();
+                mode_view.draw(ui);
             });
         });
     });
+
+    mode_view.update(game);
 
     game.components.services.clock.set_speed(speed);
 

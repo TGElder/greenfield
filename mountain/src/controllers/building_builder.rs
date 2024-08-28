@@ -5,10 +5,12 @@ use commons::geometry::{xy, xyz, XYRectangle, XY};
 use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
 use engine::binding::Binding;
+use engine::egui;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::gui::View;
 use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
@@ -16,6 +18,7 @@ use crate::model::direction::Direction;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist, window_artist};
+use crate::Game;
 
 pub const HEIGHT_MIN: u32 = 3;
 pub const HEIGHT_MAX: u32 = 36;
@@ -294,4 +297,47 @@ pub fn window_row(
             position,
             direction: Direction::snap_to_direction(angle),
         })
+}
+
+#[derive(Default)]
+pub struct ControllerView {
+    building_id: Option<usize>,
+    height: Option<u32>,
+}
+
+impl View<Game> for ControllerView {
+    fn init(&mut self, game: &Game) {
+        if let State::Editing { building_id } = game.controllers.building_builder.state {
+            self.building_id = Some(building_id);
+            self.height = game
+                .components
+                .buildings
+                .get(&building_id)
+                .map(|building| building.height);
+        }
+    }
+
+    fn draw(&mut self, ui: &mut engine::egui::Ui) {
+        ui.vertical(|ui| {
+            ui.label("Building");
+            if let Some(height) = self.height.as_mut() {
+                ui.horizontal(|ui| {
+                    ui.add(egui::Slider::new(height, 0..=32));
+                });
+            }
+        });
+    }
+
+    fn update(&self, game: &mut Game) {
+        let Some(building_id) = self.building_id else {
+            return;
+        };
+        let Some(height) = self.height else {
+            return;
+        };
+        if let Some(building) = game.components.buildings.get_mut(&building_id) {
+            building.height = height;
+            game.systems.building_artist.redraw(building_id);
+        }
+    }
 }
