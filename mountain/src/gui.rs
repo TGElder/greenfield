@@ -5,6 +5,7 @@ use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
+use crate::widgets::{building_editor, Widget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -84,6 +85,8 @@ const MODE_BUTTONS: [ModeButton; 10] = [
 ];
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
+    let mut building_editor = building_editor::Widget::default();
+
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.components.services.mode.mode();
@@ -106,6 +109,12 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
+
+    building_editor.init(building_editor::Input {
+        mode: build_mode,
+        builder: &game.controllers.building_builder,
+        buildings: &game.components.buildings,
+    });
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
@@ -148,8 +157,15 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                         }
                     });
                 });
+                ui.separator();
+                building_editor.draw(ui);
             });
         });
+    });
+
+    building_editor.update(building_editor::Output {
+        buildings: &mut game.components.buildings,
+        artist: &mut game.systems.building_artist,
     });
 
     game.components.services.clock.set_speed(speed);

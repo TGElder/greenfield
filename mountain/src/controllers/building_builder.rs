@@ -48,7 +48,7 @@ const SUIT_COLORS: [Color; 8] = [
 const HELMET_COLORS: [Color; 2] = [Color::Black, Color::Grey];
 
 pub struct Controller {
-    pub state: State,
+    state: State,
 }
 
 pub struct Bindings {
@@ -83,6 +83,10 @@ impl Controller {
         Controller {
             state: State::Selecting,
         }
+    }
+
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     pub fn trigger(&mut self, parameters: Parameters<'_>) -> Result {
