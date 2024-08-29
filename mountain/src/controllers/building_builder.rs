@@ -4,7 +4,6 @@ use std::vec;
 use commons::geometry::{xy, xyz, XYRectangle, XY};
 use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
-use engine::binding::Binding;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -17,8 +16,7 @@ use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist, window_artist};
 
-pub const HEIGHT_MIN: u32 = 3;
-pub const HEIGHT_MAX: u32 = 36;
+pub const HEIGHT_INITIAL: u32 = 3;
 pub const HEIGHT_INTERVAL: u32 = 3;
 
 pub const WINDOW_INTERVAL: f32 = 3.0;
@@ -51,12 +49,6 @@ pub struct Controller {
     state: State,
 }
 
-pub struct Bindings {
-    pub decrease_height: Binding,
-    pub increase_height: Binding,
-    pub toggle_roof: Binding,
-}
-
 #[derive(Clone, Copy, PartialEq)]
 pub enum State {
     Selecting,
@@ -64,9 +56,6 @@ pub enum State {
 }
 
 pub struct Parameters<'a> {
-    pub action_binding: &'a Binding,
-    pub bindings: &'a Bindings,
-    pub event: &'a engine::events::Event,
     pub terrain: &'a Grid<f32>,
     pub selection: &'a mut selection::Handler,
     pub id_allocator: &'a mut id_allocator::Service,
@@ -106,8 +95,6 @@ impl Controller {
     pub fn select(
         &mut self,
         Parameters {
-            action_binding,
-            event,
             selection,
             id_allocator,
             buildings,
@@ -115,9 +102,6 @@ impl Controller {
             ..
         }: Parameters<'_>,
     ) -> State {
-        if !action_binding.binds_event(event) {
-            return self.state;
-        }
         let Some(grid) = &selection.grid else {
             return self.state;
         };
@@ -139,7 +123,7 @@ impl Controller {
         let building_id = id_allocator.next_id();
         let building = Building {
             footprint: rectangle,
-            height: HEIGHT_MIN,
+            height: HEIGHT_INITIAL,
             roof: Roof::Peaked,
             under_construction: true,
             windows: vec![],
@@ -162,9 +146,6 @@ impl Controller {
         &mut self,
         building_id: usize,
         Parameters {
-            action_binding,
-            bindings,
-            event,
             terrain,
             id_allocator,
             buildings,
@@ -179,60 +160,40 @@ impl Controller {
             return State::Selecting;
         };
 
-        if action_binding.binds_event(event) {
-            // creating skiers
+        // creating skiers
 
-            building.windows = windows(terrain, &building.footprint, building.height);
+        building.windows = windows(terrain, &building.footprint, building.height);
 
-            let capacity = building.windows.len();
-            println!("INFO: Spawing {} skiers", capacity);
+        let capacity = building.windows.len();
+        println!("INFO: Spawing {} skiers", capacity);
 
-            let mut rng = thread_rng();
-            for _ in 0..capacity {
-                let skier_id = id_allocator.next_id();
+        let mut rng = thread_rng();
+        for _ in 0..capacity {
+            let skier_id = id_allocator.next_id();
 
-                locations.insert(skier_id, building_id);
+            locations.insert(skier_id, building_id);
 
-                skiers.insert(
-                    skier_id,
-                    Skier {
-                        ability: *ABILITIES.choose(&mut rng).unwrap(),
-                        clothes: Clothes {
-                            skis: *SKI_COLORS.choose(&mut rng).unwrap(),
-                            trousers: *SUIT_COLORS.choose(&mut rng).unwrap(),
-                            jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
-                            helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
-                        },
-                        hotel_id: building_id,
+            skiers.insert(
+                skier_id,
+                Skier {
+                    ability: *ABILITIES.choose(&mut rng).unwrap(),
+                    clothes: Clothes {
+                        skis: *SKI_COLORS.choose(&mut rng).unwrap(),
+                        trousers: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                        jacket: *SUIT_COLORS.choose(&mut rng).unwrap(),
+                        helmet: *HELMET_COLORS.choose(&mut rng).unwrap(),
                     },
-                );
-            }
-
-            println!("INFO: {} total skiers", skiers.len());
-
-            building.under_construction = false;
-            building_artist.redraw(building_id);
-            window_artist.update();
-            State::Selecting
-        } else if bindings.decrease_height.binds_event(event) {
-            building.height = (building.height.saturating_sub(HEIGHT_INTERVAL)).max(HEIGHT_MIN);
-            building_artist.redraw(building_id);
-            self.state
-        } else if bindings.increase_height.binds_event(event) {
-            building.height = (building.height.saturating_add(HEIGHT_INTERVAL)).min(HEIGHT_MAX);
-            building_artist.redraw(building_id);
-            self.state
-        } else if bindings.toggle_roof.binds_event(event) {
-            building.roof = match building.roof {
-                Roof::Peaked => Roof::PeakedRotated,
-                Roof::PeakedRotated => Roof::Flat,
-                Roof::Flat => Roof::Peaked,
-            };
-            building_artist.redraw(building_id);
-            self.state
-        } else {
-            self.state
+                    hotel_id: building_id,
+                },
+            );
         }
+
+        println!("INFO: {} total skiers", skiers.len());
+
+        building.under_construction = false;
+        building_artist.redraw(building_id);
+        window_artist.update();
+        State::Selecting
     }
 }
 

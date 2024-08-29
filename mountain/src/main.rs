@@ -131,20 +131,6 @@ fn main() {
                     button: Button::Mouse(MouseButton::Left),
                     state: ButtonState::Pressed,
                 },
-                building_builder: building_builder::Bindings {
-                    decrease_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("[")),
-                        state: ButtonState::Pressed,
-                    },
-                    increase_height: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("]")),
-                        state: ButtonState::Pressed,
-                    },
-                    toggle_roof: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("/")),
-                        state: ButtonState::Pressed,
-                    },
-                },
                 clock_handler: handlers::clock::Bindings {
                     slow_down: Binding::Single {
                         button: Button::Keyboard(KeyboardKey::from(",")),
@@ -459,7 +445,6 @@ struct Systems {
 
 pub struct Bindings {
     action: Binding,
-    building_builder: building_builder::Bindings,
     clock_handler: handlers::clock::Bindings,
     compute: Binding,
     drag: drag::Bindings,
