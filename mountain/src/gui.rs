@@ -4,8 +4,8 @@ use engine::engine::Engine;
 use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
-use crate::controllers::building_builder;
 use crate::services::mode;
+use crate::widgets::{building_editor, Widget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -84,14 +84,8 @@ const MODE_BUTTONS: [ModeButton; 10] = [
     },
 ];
 
-pub trait View<T, U> {
-    fn init(&mut self, value: T);
-    fn draw(&mut self, ui: &mut egui::Ui);
-    fn update(&self, value: U);
-}
-
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
-    let mut building_widget = building_builder::ControllerView::default();
+    let mut building_widget = building_editor::ControllerView::default();
 
     let mut speed = game.components.services.clock.speed();
 
@@ -116,7 +110,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
 
-    building_widget.init(building_builder::Input {
+    building_widget.init(building_editor::Input {
         mode: build_mode,
         builder: &game.controllers.building_builder,
         buildings: &game.components.buildings,
@@ -169,7 +163,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         });
     });
 
-    building_widget.update(building_builder::Output {
+    building_widget.update(building_editor::Output {
         buildings: &mut game.components.buildings,
         artist: &mut game.systems.building_artist,
     });

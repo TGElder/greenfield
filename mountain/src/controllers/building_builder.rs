@@ -5,18 +5,16 @@ use commons::geometry::{xy, xyz, XYRectangle, XY};
 use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
 use engine::binding::Binding;
-use engine::egui;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::controllers::Result::{self, Action, NoAction};
-use crate::gui::View;
 use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
 use crate::model::skier::{Clothes, Color, Skier};
-use crate::services::{self, id_allocator};
+use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist, window_artist};
 
 pub const HEIGHT_MIN: u32 = 3;
@@ -50,7 +48,7 @@ const SUIT_COLORS: [Color; 8] = [
 const HELMET_COLORS: [Color; 2] = [Color::Black, Color::Grey];
 
 pub struct Controller {
-    pub state: State,
+    state: State,
 }
 
 pub struct Bindings {
@@ -85,6 +83,10 @@ impl Controller {
         Controller {
             state: State::Selecting,
         }
+    }
+
+    pub fn state(&self) -> &State {
+        &self.state
     }
 
     pub fn trigger(&mut self, parameters: Parameters<'_>) -> Result {
@@ -296,64 +298,4 @@ pub fn window_row(
             position,
             direction: Direction::snap_to_direction(angle),
         })
-}
-
-#[derive(Default)]
-pub struct ControllerView {
-    building_id: Option<usize>,
-    height: Option<u32>,
-}
-
-pub struct Input<'a> {
-    pub mode: services::mode::Mode,
-    pub builder: &'a Controller,
-    pub buildings: &'a HashMap<usize, Building>,
-}
-
-pub struct Output<'a> {
-    pub buildings: &'a mut HashMap<usize, Building>,
-    pub artist: &'a mut building_artist::System,
-}
-
-// 1. Move to it's own file
-// 2. Instead of Game, create input and output objects
-// 3. Plumb Game to input/output in GUI
-
-impl<'a> View<Input<'a>, Output<'a>> for ControllerView {
-    fn init(&mut self, input: Input) {
-        if input.mode != services::mode::Mode::Building {
-            return;
-        }
-        if let State::Editing { building_id } = input.builder.state {
-            self.building_id = Some(building_id);
-            self.height = input
-                .buildings
-                .get(&building_id)
-                .map(|building| building.height);
-        }
-    }
-
-    fn draw(&mut self, ui: &mut engine::egui::Ui) {
-        if let Some(height) = self.height.as_mut() {
-            ui.vertical(|ui| {
-                ui.label("Building");
-                ui.horizontal(|ui| {
-                    ui.add(egui::Slider::new(height, 0..=32));
-                });
-            });
-        }
-    }
-
-    fn update(&self, output: Output) {
-        let Some(building_id) = self.building_id else {
-            return;
-        };
-        let Some(height) = self.height else {
-            return;
-        };
-        if let Some(building) = output.buildings.get_mut(&building_id) {
-            building.height = height;
-            output.artist.redraw(building_id);
-        }
-    }
 }

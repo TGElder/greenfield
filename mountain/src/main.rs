@@ -11,6 +11,7 @@ mod network;
 mod services;
 mod systems;
 mod utils;
+mod widgets;
 
 use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
