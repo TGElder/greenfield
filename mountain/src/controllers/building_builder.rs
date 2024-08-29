@@ -16,7 +16,8 @@ use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, tree_artist, window_artist};
 
-pub const HEIGHT_INITIAL: u32 = 3;
+pub const HEIGHT_MIN: u32 = 3;
+pub const HEIGHT_MAX: u32 = 60;
 pub const HEIGHT_INTERVAL: u32 = 3;
 
 pub const WINDOW_INTERVAL: f32 = 3.0;
@@ -118,7 +119,7 @@ impl Controller {
         let building_id = id_allocator.next_id();
         let building = Building {
             footprint: rectangle,
-            height: HEIGHT_INITIAL,
+            height: HEIGHT_MIN,
             roof: Roof::Peaked,
             under_construction: true,
             windows: vec![],

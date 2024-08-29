@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use engine::egui;
 
-use crate::controllers::building_builder;
+use crate::controllers::building_builder::{self, HEIGHT_INTERVAL, HEIGHT_MAX, HEIGHT_MIN};
 use crate::model::building::{Building, Roof, ROOFS};
 use crate::services;
 use crate::systems::building_artist;
@@ -66,8 +66,11 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
         ui.vertical(|ui| {
             ui.label("Hotel");
             ui.horizontal(|ui| {
-                ui.label("Floors:");
-                ui.add(egui::Slider::new(height, 1..=32));
+                ui.label("Height:");
+                ui.add(
+                    egui::Slider::new(height, HEIGHT_MIN..=HEIGHT_MAX)
+                        .step_by(HEIGHT_INTERVAL.into()),
+                );
                 ui.label("Roof Style:");
                 egui::ComboBox::from_id_source(0)
                     .selected_text(describe_roof(roof))
