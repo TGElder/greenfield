@@ -78,25 +78,6 @@ fn try_to_handle(
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) -> controllers::Result {
-    if let Mode::Building = mode {
-        return game.controllers.building_builder.trigger(
-            controllers::building_builder::Parameters {
-                action_binding: &game.bindings.action,
-                bindings: &game.bindings.building_builder,
-                event,
-                terrain: &game.components.terrain,
-                selection: &mut game.handlers.selection,
-                id_allocator: &mut game.components.services.id_allocator,
-                buildings: &mut game.components.buildings,
-                locations: &mut game.components.locations,
-                skiers: &mut game.components.skiers,
-                building_artist: &mut game.systems.building_artist,
-                tree_artist: &mut game.systems.tree_artist,
-                window_artist: &mut game.systems.window_artist,
-            },
-        );
-    }
-
     if !game.bindings.action.binds_event(event) {
         return NoAction;
     }
@@ -163,6 +144,21 @@ fn try_to_handle(
                     entrances: &mut game.components.entrances,
                     reservations: &mut game.components.reservations,
                     graphics,
+                })
+        }
+        Mode::Building => {
+            game.controllers
+                .building_builder
+                .trigger(controllers::building_builder::Parameters {
+                    terrain: &game.components.terrain,
+                    selection: &mut game.handlers.selection,
+                    id_allocator: &mut game.components.services.id_allocator,
+                    buildings: &mut game.components.buildings,
+                    locations: &mut game.components.locations,
+                    skiers: &mut game.components.skiers,
+                    building_artist: &mut game.systems.building_artist,
+                    tree_artist: &mut game.systems.tree_artist,
+                    window_artist: &mut game.systems.window_artist,
                 })
         }
         Mode::Gate => controllers::gate_builder::trigger(controllers::gate_builder::Parameters {
