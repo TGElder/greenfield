@@ -17,6 +17,7 @@ struct State {
     building_id: usize,
     height: u32,
     roof: Roof,
+    under_construction: bool,
 }
 
 pub struct Input<'a> {
@@ -48,11 +49,18 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
             building_id,
             height: building.height,
             roof: building.roof,
+            under_construction: building.under_construction,
         });
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {
-        let Some(State { height, roof, .. }) = self.state.as_mut() else {
+        let Some(State {
+            height,
+            roof,
+            under_construction,
+            ..
+        }) = self.state.as_mut()
+        else {
             return;
         };
         ui.vertical(|ui| {
@@ -68,6 +76,7 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
                             ui.selectable_value(roof, option, describe_roof(&option));
                         }
                     });
+                *under_construction = !ui.button("Build").clicked();
             });
         });
     }
@@ -77,6 +86,7 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
             building_id,
             height,
             roof,
+            under_construction,
         }) = self.state
         else {
             return;
@@ -88,6 +98,7 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
 
         building.height = height;
         building.roof = roof;
+        building.under_construction = under_construction;
         output.artist.redraw(building_id);
     }
 }

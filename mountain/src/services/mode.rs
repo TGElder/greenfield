@@ -146,21 +146,14 @@ fn try_to_handle(
                     graphics,
                 })
         }
-        Mode::Building => {
-            game.controllers
-                .building_builder
-                .trigger(controllers::building_builder::Parameters {
-                    terrain: &game.components.terrain,
-                    selection: &mut game.handlers.selection,
-                    id_allocator: &mut game.components.services.id_allocator,
-                    buildings: &mut game.components.buildings,
-                    locations: &mut game.components.locations,
-                    skiers: &mut game.components.skiers,
-                    building_artist: &mut game.systems.building_artist,
-                    tree_artist: &mut game.systems.tree_artist,
-                    window_artist: &mut game.systems.window_artist,
-                })
-        }
+        Mode::Building => game.controllers.building_builder.select(
+            controllers::building_builder::SelectParameters {
+                selection: &mut game.handlers.selection,
+                id_allocator: &mut game.components.services.id_allocator,
+                buildings: &mut game.components.buildings,
+                tree_artist: &mut game.systems.tree_artist,
+            },
+        ),
         Mode::Gate => controllers::gate_builder::trigger(controllers::gate_builder::Parameters {
             piste_map: &game.components.piste_map,
             terrain: &game.components.terrain,
