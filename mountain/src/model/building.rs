@@ -12,12 +12,14 @@ pub struct Building {
     pub windows: Vec<Window>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum Roof {
     Peaked,
     PeakedRotated,
     Flat,
 }
+
+pub const ROOFS: [Roof; 3] = [Roof::Peaked, Roof::PeakedRotated, Roof::Flat];
 
 #[derive(Serialize, Deserialize)]
 pub struct Window {
