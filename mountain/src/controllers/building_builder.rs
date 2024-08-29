@@ -55,15 +55,20 @@ pub enum State {
     Editing { building_id: usize },
 }
 
-pub struct Parameters<'a> {
-    pub terrain: &'a Grid<f32>,
+pub struct SelectParameters<'a> {
     pub selection: &'a mut selection::Handler,
+    pub id_allocator: &'a mut id_allocator::Service,
+    pub buildings: &'a mut HashMap<usize, Building>,
+    pub tree_artist: &'a mut tree_artist::System,
+}
+
+pub struct FinalizeParameters<'a> {
+    pub terrain: &'a Grid<f32>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub buildings: &'a mut HashMap<usize, Building>,
     pub locations: &'a mut HashMap<usize, usize>,
     pub skiers: &'a mut HashMap<usize, Skier>,
     pub building_artist: &'a mut building_artist::System,
-    pub tree_artist: &'a mut tree_artist::System,
     pub window_artist: &'a mut window_artist::System,
 }
 
@@ -78,38 +83,28 @@ impl Controller {
         &self.state
     }
 
-    pub fn trigger(&mut self, parameters: Parameters<'_>) -> Result {
-        let old_state = self.state;
-        self.state = match self.state {
-            State::Selecting => self.select(parameters),
-            State::Editing { building_id } => self.edit(building_id, parameters),
-        };
-
-        if old_state == self.state {
-            NoAction
-        } else {
-            Action
-        }
-    }
-
     pub fn select(
         &mut self,
-        Parameters {
+        SelectParameters {
             selection,
             id_allocator,
             buildings,
             tree_artist,
             ..
-        }: Parameters<'_>,
-    ) -> State {
+        }: SelectParameters<'_>,
+    ) -> Result {
+        let State::Selecting = self.state else {
+            return NoAction;
+        };
+
         let Some(grid) = &selection.grid else {
-            return self.state;
+            return NoAction;
         };
 
         for position in grid.iter() {
             if !grid[position] {
                 // can only build rectangle buildings
-                return self.state;
+                return NoAction;
             }
         }
 
@@ -139,13 +134,13 @@ impl Controller {
 
         selection.clear_selection();
 
-        State::Editing { building_id }
+        self.state = State::Editing { building_id };
+        Action
     }
 
-    pub fn edit(
+    pub fn finalize(
         &mut self,
-        building_id: usize,
-        Parameters {
+        FinalizeParameters {
             terrain,
             id_allocator,
             buildings,
@@ -154,11 +149,19 @@ impl Controller {
             building_artist,
             window_artist,
             ..
-        }: Parameters<'_>,
-    ) -> State {
-        let Some(building) = buildings.get_mut(&building_id) else {
-            return State::Selecting;
+        }: FinalizeParameters<'_>,
+    ) -> Result {
+        let State::Editing { building_id } = self.state else {
+            return NoAction;
         };
+
+        let Some(building) = buildings.get_mut(&building_id) else {
+            return NoAction;
+        };
+
+        if building.under_construction {
+            return NoAction;
+        }
 
         // creating skiers
 
@@ -193,7 +196,9 @@ impl Controller {
         building.under_construction = false;
         building_artist.redraw(building_id);
         window_artist.update();
-        State::Selecting
+
+        self.state = State::Selecting;
+        Action
     }
 }
 

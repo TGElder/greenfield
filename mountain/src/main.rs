@@ -33,6 +33,7 @@ use engine::graphics::Graphics;
 use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
+use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder};
 use crate::handlers::{lift_targeter, piste_highlighter, selection};
 use crate::init::terrain::generate_heightmap;
@@ -540,6 +541,18 @@ impl EventHandler for Game {
             graphics,
         });
         handlers::mode::handle(event, &self.bindings, &mut self.components.services.mode);
+
+        self.controllers
+            .building_builder
+            .finalize(FinalizeParameters {
+                terrain: &self.components.terrain,
+                id_allocator: &mut self.components.services.id_allocator,
+                buildings: &mut self.components.buildings,
+                locations: &mut self.components.locations,
+                skiers: &mut self.components.skiers,
+                building_artist: &mut self.systems.building_artist,
+                window_artist: &mut self.systems.window_artist,
+            });
 
         self.systems
             .global_computer
