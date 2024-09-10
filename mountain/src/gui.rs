@@ -5,7 +5,7 @@ use engine::events::{Button, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
-use crate::widgets::{building_editor, Widget};
+use crate::widgets::{building_editor, piste_mode, Widget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -86,6 +86,7 @@ const MODE_BUTTONS: [ModeButton; 10] = [
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut building_editor = building_editor::Widget::default();
+    let mut piste_mode = piste_mode::Widget::default();
 
     let mut speed = game.components.services.clock.speed();
 
@@ -114,6 +115,10 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         mode: build_mode,
         builder: &game.controllers.building_builder,
         buildings: &game.components.buildings,
+    });
+    piste_mode.init(piste_mode::Input {
+        mode: build_mode,
+        piste_eraser: &game.controllers.piste_eraser,
     });
 
     graphics.draw_gui(&mut |ctx| {
@@ -159,6 +164,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                 });
                 ui.separator();
                 building_editor.draw(ui);
+                piste_mode.draw(ui);
             });
         });
     });
@@ -166,6 +172,11 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     building_editor.update(building_editor::Output {
         buildings: &mut game.components.buildings,
         artist: &mut game.systems.building_artist,
+    });
+    piste_mode.update(piste_mode::Output {
+        path_builder: &mut game.controllers.path_builder,
+        piste_builder: &mut game.controllers.piste_builder,
+        piste_eraser: &mut game.controllers.piste_eraser,
     });
 
     game.components.services.clock.set_speed(speed);

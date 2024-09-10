@@ -1,6 +1,7 @@
 use engine::egui;
 
 pub mod building_editor;
+pub mod piste_mode;
 
 pub trait Widget<T, U> {
     fn init(&mut self, value: T);

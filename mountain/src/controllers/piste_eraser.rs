@@ -10,6 +10,10 @@ use crate::handlers::selection;
 use crate::model::piste::Piste;
 use crate::systems::{terrain_artist, tree_artist};
 
+pub struct Controller {
+    enabled: bool,
+}
+
 pub struct Parameters<'a> {
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
@@ -18,64 +22,85 @@ pub struct Parameters<'a> {
     pub tree_artist: &'a mut tree_artist::System,
 }
 
-pub fn trigger(
-    Parameters {
-        pistes,
-        piste_map,
-        selection,
-        terrain_artist,
-        tree_artist,
-    }: Parameters<'_>,
-) -> Result {
-    let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
-        return NoAction;
-    };
-
-    let Ok(rectangle) = grid.rectangle() else {
-        return NoAction;
-    };
-
-    let Some(id) = piste_map[origin] else {
-        return NoAction;
-    };
-
-    let Some(piste) = pistes.get(&id) else {
-        return NoAction;
-    };
-
-    // updating piste map
-
-    for cell in grid.iter().filter(|cell| grid[cell]) {
-        if piste_map[cell] == Some(id) {
-            piste_map[cell] = None
-        }
+impl Controller {
+    pub fn new() -> Controller {
+        Controller { enabled: true }
     }
 
-    // updating piste
+    pub fn is_enabled(&self) -> &bool {
+        &self.enabled
+    }
 
-    let point_grid = OriginGrid::from_rectangle(
-        XYRectangle {
-            from: rectangle.from,
-            to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
-        },
-        false,
-    );
-    let point_grid = point_grid.map(|point, _| {
-        piste_map
-            .offsets(point, &CORNERS_INVERSE)
-            .any(|cell| piste_map[cell] == Some(id))
-    });
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
 
-    piste.grid.paste(&point_grid);
+    pub fn trigger(
+        &self,
+        Parameters {
+            pistes,
+            piste_map,
+            selection,
+            terrain_artist,
+            tree_artist,
+        }: Parameters<'_>,
+    ) -> Result {
+        if !self.enabled {
+            return NoAction;
+        }
 
-    // updating art
+        println!("erase");
 
-    terrain_artist.update_overlay(rectangle);
-    tree_artist.update();
+        let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
+            return NoAction;
+        };
 
-    // clearing selection
+        let Ok(rectangle) = grid.rectangle() else {
+            return NoAction;
+        };
 
-    selection.clear_selection();
+        let Some(id) = piste_map[origin] else {
+            return NoAction;
+        };
 
-    Action
+        let Some(piste) = pistes.get(&id) else {
+            return NoAction;
+        };
+
+        // updating piste map
+
+        for cell in grid.iter().filter(|cell| grid[cell]) {
+            if piste_map[cell] == Some(id) {
+                piste_map[cell] = None
+            }
+        }
+
+        // updating piste
+
+        let point_grid = OriginGrid::from_rectangle(
+            XYRectangle {
+                from: rectangle.from,
+                to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
+            },
+            false,
+        );
+        let point_grid = point_grid.map(|point, _| {
+            piste_map
+                .offsets(point, &CORNERS_INVERSE)
+                .any(|cell| piste_map[cell] == Some(id))
+        });
+
+        piste.grid.paste(&point_grid);
+
+        // updating art
+
+        terrain_artist.update_overlay(rectangle);
+        tree_artist.update();
+
+        // clearing selection
+
+        selection.clear_selection();
+
+        Action
+    }
 }
