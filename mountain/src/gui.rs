@@ -1,7 +1,7 @@
 use engine::binding::Binding;
 use engine::egui::{self};
 use engine::engine::Engine;
-use engine::events::{Button, KeyboardKey};
+use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
@@ -118,6 +118,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     });
     piste_mode.init(piste_mode::Input {
         mode: build_mode,
+        bindings: &game.bindings.piste_mode,
         piste_eraser: &game.controllers.piste_eraser,
     });
 
@@ -208,10 +209,20 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
 }
 
 fn mode_button_hover_text(bindings: &Bindings, mode_button: &ModeButton) -> String {
-    let Some(Binding::Single { button, .. }) = bindings.mode.get(&mode_button.build_mode) else {
+    let Some(binding) = bindings.mode.get(&mode_button.build_mode) else {
         return mode_button.hover_text.to_string();
     };
-    format!("{} ({})", mode_button.hover_text, describe_button(button))
+    format!("{} ({})", mode_button.hover_text, describe_binding(binding))
+}
+
+pub fn describe_binding(binding: &Binding) -> String {
+    match binding {
+        Binding::Single { button, state } => match state {
+            ButtonState::Pressed => describe_button(button).to_string(),
+            ButtonState::Released => format!("{} (Key Up)", describe_button(button)),
+        },
+        Binding::Multi(vec) => vec.first().map(describe_binding).unwrap_or_default(),
+    }
 }
 
 fn describe_button(button: &Button) -> &str {

@@ -49,8 +49,6 @@ impl Controller {
             return NoAction;
         }
 
-        println!("erase");
-
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
             return NoAction;
         };

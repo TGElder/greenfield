@@ -1,4 +1,6 @@
 use crate::controllers::{piste_builder, piste_eraser};
+use crate::gui::describe_binding;
+use crate::handlers::piste_mode;
 use crate::services;
 use crate::widgets;
 
@@ -8,14 +10,19 @@ pub struct Widget {
 }
 
 struct State {
-    building: bool,
-    erasing: bool,
-    building_clicked: bool,
-    erasing_clicked: bool,
+    build: Button,
+    erase: Button,
+}
+
+struct Button {
+    hover_text: Option<String>,
+    highlighted: bool,
+    clicked: bool,
 }
 
 pub struct Input<'a> {
     pub mode: services::mode::Mode,
+    pub bindings: &'a piste_mode::Bindings,
     pub piste_eraser: &'a piste_eraser::Controller,
 }
 
@@ -31,34 +38,38 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
             return;
         }
         self.state = Some(State {
-            building: !*input.piste_eraser.is_enabled(),
-            erasing: *input.piste_eraser.is_enabled(),
-            building_clicked: false,
-            erasing_clicked: false,
+            build: Button {
+                hover_text: Some(describe_binding(&input.bindings.build)),
+                highlighted: !input.piste_eraser.is_enabled(),
+                clicked: false,
+            },
+            erase: Button {
+                hover_text: Some(describe_binding(&input.bindings.erase)),
+                highlighted: *input.piste_eraser.is_enabled(),
+                clicked: false,
+            },
         });
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {
-        let Some(State {
-            building,
-            erasing,
-            building_clicked,
-            erasing_clicked,
-        }) = self.state.as_mut()
-        else {
+        let Some(State { build, erase }) = self.state.as_mut() else {
             return;
         };
         ui.vertical(|ui| {
             ui.label("Build");
             ui.horizontal(|ui| {
-                let build_button = ui.button("+");
-                *building_clicked = build_button.clicked();
-                if *building {
+                let build_button = ui
+                    .button("+")
+                    .on_hover_text(build.hover_text.take().unwrap());
+                build.clicked = build_button.clicked();
+                if build.highlighted {
                     build_button.highlight();
                 }
-                let erase_button = ui.button("-");
-                *erasing_clicked = erase_button.clicked();
-                if *erasing {
+                let erase_button = ui
+                    .button("-")
+                    .on_hover_text(erase.hover_text.take().unwrap());
+                erase.clicked = erase_button.clicked();
+                if erase.highlighted {
                     erase_button.highlight();
                 }
             });
@@ -66,22 +77,17 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
     }
 
     fn update(&self, output: Output) {
-        let Some(State {
-            building_clicked,
-            erasing_clicked,
-            ..
-        }) = self.state
-        else {
+        let Some(State { build, erase }) = &self.state else {
             return;
         };
 
-        if building_clicked {
+        if build.clicked {
             output.path_builder.set_enabled(true);
             output.piste_builder.set_enabled(true);
             output.piste_eraser.set_enabled(false);
         }
 
-        if erasing_clicked {
+        if erase.clicked {
             output.path_builder.set_enabled(false);
             output.piste_builder.set_enabled(true);
             output.piste_eraser.set_enabled(true);
