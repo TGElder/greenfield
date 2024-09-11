@@ -14,6 +14,7 @@ use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Controller {
     pub class: piste::Class,
+    enabled: bool,
 }
 
 pub struct Parameters<'a> {
@@ -26,6 +27,14 @@ pub struct Parameters<'a> {
 }
 
 impl Controller {
+    pub fn new(class: piste::Class, enabled: bool) -> Controller {
+        Controller { class, enabled }
+    }
+
+    pub fn set_enabled(&mut self, enabled: bool) {
+        self.enabled = enabled;
+    }
+
     pub fn trigger(
         &mut self,
         Parameters {
@@ -37,6 +46,10 @@ impl Controller {
             id_allocator,
         }: Parameters<'_>,
     ) -> Result {
+        if !self.enabled {
+            return NoAction;
+        }
+
         let (Some(origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
             return NoAction;
         };

@@ -34,8 +34,8 @@ use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
 
 use crate::controllers::building_builder::FinalizeParameters;
-use crate::controllers::{building_builder, lift_builder, piste_builder};
-use crate::handlers::{lift_targeter, piste_highlighter, selection};
+use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
+use crate::handlers::{lift_targeter, piste_build_mode, piste_highlighter, selection};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
@@ -72,12 +72,9 @@ fn main() {
         Game {
             controllers: Controllers {
                 building_builder: building_builder::Controller::new(),
-                path_builder: piste_builder::Controller {
-                    class: piste::Class::Path,
-                },
-                piste_builder: piste_builder::Controller {
-                    class: piste::Class::Piste,
-                },
+                path_builder: piste_builder::Controller::new(piste::Class::Path, true),
+                piste_builder: piste_builder::Controller::new(piste::Class::Piste, true),
+                piste_eraser: piste_eraser::Controller::new(false),
                 lift_builder: lift_builder::Controller::new(),
             },
             handlers: Handlers {
@@ -179,13 +176,6 @@ fn main() {
                         },
                     ),
                     (
-                        mode::Mode::PisteEraser,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("x")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
                         mode::Mode::Path,
                         Binding::Single {
                             button: Button::Keyboard(KeyboardKey::from("w")),
@@ -228,6 +218,16 @@ fn main() {
                         },
                     ),
                 ]),
+                piste_mode: piste_build_mode::Bindings {
+                    build: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("x")),
+                        state: ButtonState::Released,
+                    },
+                    erase: Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("x")),
+                        state: ButtonState::Pressed,
+                    },
+                },
                 save: Binding::Single {
                     button: Button::Keyboard(KeyboardKey::from("s")),
                     state: ButtonState::Pressed,
@@ -422,6 +422,7 @@ struct Controllers {
     lift_builder: lift_builder::Controller,
     path_builder: piste_builder::Controller,
     piste_builder: piste_builder::Controller,
+    piste_eraser: piste_eraser::Controller,
 }
 
 struct Handlers {
@@ -449,6 +450,7 @@ pub struct Bindings {
     clock_handler: handlers::clock::Bindings,
     compute: Binding,
     drag: drag::Bindings,
+    piste_mode: piste_build_mode::Bindings,
     save: Binding,
     selection: selection::Bindings,
     target_lift: Binding,
@@ -506,6 +508,14 @@ impl EventHandler for Game {
             &self.bindings.clock_handler,
             event,
             &mut self.components.services.clock,
+        );
+
+        handlers::piste_build_mode::handle(
+            &self.bindings.piste_mode,
+            event,
+            &mut self.controllers.path_builder,
+            &mut self.controllers.piste_builder,
+            &mut self.controllers.piste_eraser,
         );
 
         self.components.services.mode.get_handler()(event, self, graphics);
