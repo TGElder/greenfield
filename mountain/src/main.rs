@@ -220,11 +220,11 @@ fn main() {
                 ]),
                 piste_mode: piste_build_mode::Bindings {
                     build: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("x")),
+                        button: Button::Keyboard(KeyboardKey::Shift),
                         state: ButtonState::Released,
                     },
                     erase: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("x")),
+                        button: Button::Keyboard(KeyboardKey::Shift),
                         state: ButtonState::Pressed,
                     },
                 },
