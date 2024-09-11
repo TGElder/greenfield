@@ -5,7 +5,7 @@ use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
-use crate::widgets::{building_editor, piste_mode, Widget};
+use crate::widgets::{building_editor, piste_build_mode, Widget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -85,9 +85,6 @@ const MODE_BUTTONS: [ModeButton; 10] = [
 ];
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
-    let mut building_editor = building_editor::Widget::default();
-    let mut piste_mode = piste_mode::Widget::default();
-
     let mut speed = game.components.services.clock.speed();
 
     let build_mode = game.components.services.mode.mode();
@@ -111,12 +108,12 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
 
-    building_editor.init(building_editor::Input {
+    let mut building_editor = building_editor::Widget::init(building_editor::Input {
         mode: build_mode,
         builder: &game.controllers.building_builder,
         buildings: &game.components.buildings,
     });
-    piste_mode.init(piste_mode::Input {
+    let mut piste_mode = piste_build_mode::Widget::init(piste_build_mode::Input {
         mode: build_mode,
         bindings: &game.bindings.piste_mode,
         piste_eraser: &game.controllers.piste_eraser,
@@ -174,7 +171,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         buildings: &mut game.components.buildings,
         artist: &mut game.systems.building_artist,
     });
-    piste_mode.update(piste_mode::Output {
+    piste_mode.update(piste_build_mode::Output {
         path_builder: &mut game.controllers.path_builder,
         piste_builder: &mut game.controllers.piste_builder,
         piste_eraser: &mut game.controllers.piste_eraser,

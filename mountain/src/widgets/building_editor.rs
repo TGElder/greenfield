@@ -32,25 +32,26 @@ pub struct Output<'a> {
 }
 
 impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
-    fn init(&mut self, input: Input) {
+    fn init(input: Input) -> Self {
         if input.mode != services::mode::Mode::Building {
-            return;
+            return Widget::default();
         }
 
         let &building_builder::State::Editing { building_id } = input.builder.state() else {
-            return;
+            return Widget::default();
         };
 
         let Some(building) = input.buildings.get(&building_id) else {
-            return;
+            return Widget::default();
         };
 
-        self.state = Some(State {
+        let state = State {
             building_id,
             height: building.height,
             roof: building.roof,
             under_construction: building.under_construction,
-        });
+        };
+        Widget { state: Some(state) }
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {

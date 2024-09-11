@@ -27,15 +27,8 @@ pub struct Parameters<'a> {
 }
 
 impl Controller {
-    pub fn new(class: piste::Class) -> Controller {
-        Controller {
-            class,
-            enabled: true,
-        }
-    }
-
-    pub fn is_enabled(&self) -> &bool {
-        &self.enabled
+    pub fn new(class: piste::Class, enabled: bool) -> Controller {
+        Controller { class, enabled }
     }
 
     pub fn set_enabled(&mut self, enabled: bool) {

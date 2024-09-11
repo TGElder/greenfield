@@ -1,6 +1,6 @@
 use crate::controllers::{piste_builder, piste_eraser};
 use crate::gui::describe_binding;
-use crate::handlers::piste_mode;
+use crate::handlers::piste_build_mode;
 use crate::services;
 use crate::widgets;
 
@@ -22,7 +22,7 @@ struct Button {
 
 pub struct Input<'a> {
     pub mode: services::mode::Mode,
-    pub bindings: &'a piste_mode::Bindings,
+    pub bindings: &'a piste_build_mode::Bindings,
     pub piste_eraser: &'a piste_eraser::Controller,
 }
 
@@ -33,11 +33,11 @@ pub struct Output<'a> {
 }
 
 impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
-    fn init(&mut self, input: Input) {
+    fn init(input: Input) -> Widget {
         if input.mode != services::mode::Mode::Path && input.mode != services::mode::Mode::Piste {
-            return;
+            return Widget::default();
         }
-        self.state = Some(State {
+        let state = State {
             build: Button {
                 hover_text: Some(describe_binding(&input.bindings.build)),
                 highlighted: !input.piste_eraser.is_enabled(),
@@ -48,7 +48,8 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
                 highlighted: *input.piste_eraser.is_enabled(),
                 clicked: false,
             },
-        });
+        };
+        Widget { state: Some(state) }
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {
@@ -65,6 +66,7 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
                 if build.highlighted {
                     build_button.highlight();
                 }
+
                 let erase_button = ui
                     .button("-")
                     .on_hover_text(erase.hover_text.take().unwrap());
@@ -85,9 +87,7 @@ impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
             output.path_builder.set_enabled(true);
             output.piste_builder.set_enabled(true);
             output.piste_eraser.set_enabled(false);
-        }
-
-        if erase.clicked {
+        } else if erase.clicked {
             output.path_builder.set_enabled(false);
             output.piste_builder.set_enabled(true);
             output.piste_eraser.set_enabled(true);

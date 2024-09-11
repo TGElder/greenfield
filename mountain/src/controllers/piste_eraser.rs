@@ -23,8 +23,8 @@ pub struct Parameters<'a> {
 }
 
 impl Controller {
-    pub fn new() -> Controller {
-        Controller { enabled: true }
+    pub fn new(enabled: bool) -> Controller {
+        Controller { enabled }
     }
 
     pub fn is_enabled(&self) -> &bool {

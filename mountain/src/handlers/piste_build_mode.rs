@@ -14,7 +14,7 @@ pub fn handle(
     piste_builder: &mut piste_builder::Controller,
     piste_eraser: &mut piste_eraser::Controller,
 ) {
-    if bindings.build.binds_event(event) || matches!(event, engine::events::Event::Init) {
+    if bindings.build.binds_event(event) {
         piste_eraser.set_enabled(false);
         path_builder.set_enabled(true);
         piste_builder.set_enabled(true);
