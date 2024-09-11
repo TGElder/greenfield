@@ -38,6 +38,11 @@ pub enum KeyboardKey {
     Backspace,
     Escape,
 
+    Shift,
+    Ctrl,
+    Alt,
+    AltGr,
+
     Unknown,
 }
 
