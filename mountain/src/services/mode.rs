@@ -95,20 +95,18 @@ fn try_to_handle(
                 graphics,
             })
         }
-        Mode::Piste => {
-            if game
-                .controllers
-                .piste_builder
-                .trigger(controllers::piste_builder::Parameters {
-                    pistes: &mut game.components.pistes,
-                    piste_map: &mut game.components.piste_map,
-                    selection: &mut game.handlers.selection,
-                    terrain_artist: &mut game.systems.terrain_artist,
-                    tree_artist: &mut game.systems.tree_artist,
-                    id_allocator: &mut game.components.services.id_allocator,
-                })
-                == NoAction
-            {
+        Mode::Piste => game
+            .controllers
+            .piste_builder
+            .trigger(controllers::piste_builder::Parameters {
+                pistes: &mut game.components.pistes,
+                piste_map: &mut game.components.piste_map,
+                selection: &mut game.handlers.selection,
+                terrain_artist: &mut game.systems.terrain_artist,
+                tree_artist: &mut game.systems.tree_artist,
+                id_allocator: &mut game.components.services.id_allocator,
+            })
+            .then_try(|| {
                 game.controllers
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
@@ -118,24 +116,19 @@ fn try_to_handle(
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
                     })
-            } else {
-                Action
-            }
-        }
-        Mode::Path => {
-            if game
-                .controllers
-                .path_builder
-                .trigger(controllers::piste_builder::Parameters {
-                    pistes: &mut game.components.pistes,
-                    piste_map: &mut game.components.piste_map,
-                    selection: &mut game.handlers.selection,
-                    terrain_artist: &mut game.systems.terrain_artist,
-                    tree_artist: &mut game.systems.tree_artist,
-                    id_allocator: &mut game.components.services.id_allocator,
-                })
-                == NoAction
-            {
+            }),
+        Mode::Path => game
+            .controllers
+            .path_builder
+            .trigger(controllers::piste_builder::Parameters {
+                pistes: &mut game.components.pistes,
+                piste_map: &mut game.components.piste_map,
+                selection: &mut game.handlers.selection,
+                terrain_artist: &mut game.systems.terrain_artist,
+                tree_artist: &mut game.systems.tree_artist,
+                id_allocator: &mut game.components.services.id_allocator,
+            })
+            .then_try(|| {
                 game.controllers
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
@@ -145,10 +138,7 @@ fn try_to_handle(
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
                     })
-            } else {
-                Action
-            }
-        }
+            }),
         Mode::Lift => {
             game.controllers
                 .lift_builder
@@ -202,46 +192,31 @@ fn try_to_handle(
 }
 
 fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
-    if controllers::lift_opener::trigger(
+    controllers::lift_opener::trigger(
         &game.mouse_xy,
         &game.components.lifts,
         &mut game.components.open,
         &mut game.systems.global_computer,
         graphics,
-    ) == Action
-    {
-        return Action;
-    }
-    if controllers::gate_opener::trigger(
-        &game.mouse_xy,
-        &game.components.gates,
-        &mut game.components.open,
-        &mut game.systems.global_computer,
-        graphics,
-    ) == Action
-    {
-        return Action;
-    }
-    NoAction
+    )
+    .then_try(|| {
+        controllers::gate_opener::trigger(
+            &game.mouse_xy,
+            &game.components.gates,
+            &mut game.components.open,
+            &mut game.systems.global_computer,
+            graphics,
+        )
+    })
 }
 
 fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
-    if controllers::building_remover::trigger(
+    controllers::building_remover::trigger(
         &game.mouse_xy,
         graphics,
         &mut game.components,
         &mut game.systems,
-    ) == Action
-    {
-        return Action;
-    }
-    if controllers::gate_remover::trigger(&game.mouse_xy, graphics, &mut game.components) == Action
-    {
-        return Action;
-    };
-    if controllers::lift_remover::trigger(&game.mouse_xy, graphics, &mut game.components) == Action
-    {
-        return Action;
-    }
-    NoAction
+    )
+    .then_try(|| controllers::gate_remover::trigger(&game.mouse_xy, graphics, &mut game.components))
+    .then_try(|| controllers::lift_remover::trigger(&game.mouse_xy, graphics, &mut game.components))
 }

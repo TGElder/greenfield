@@ -16,3 +16,15 @@ pub enum Result {
     NoAction,
     Action,
 }
+
+impl Result {
+    pub fn then_try<T>(&self, mut function: T) -> Result
+    where
+        T: FnMut() -> Result,
+    {
+        match self {
+            Result::NoAction => function(),
+            Result::Action => Result::Action,
+        }
+    }
+}
