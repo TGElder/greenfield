@@ -208,10 +208,14 @@ impl From<Key> for Button {
     fn from(keycode: Key) -> Self {
         let key = match keycode {
             winit::keyboard::Key::Character(s) => KeyboardKey::String(s.as_str().to_string()),
-            winit::keyboard::Key::Named(winit::keyboard::NamedKey::Escape) => KeyboardKey::Escape,
             winit::keyboard::Key::Named(winit::keyboard::NamedKey::Backspace) => {
                 KeyboardKey::Backspace
             }
+            winit::keyboard::Key::Named(winit::keyboard::NamedKey::Escape) => KeyboardKey::Escape,
+            winit::keyboard::Key::Named(winit::keyboard::NamedKey::Shift) => KeyboardKey::Shift,
+            winit::keyboard::Key::Named(winit::keyboard::NamedKey::Control) => KeyboardKey::Ctrl,
+            winit::keyboard::Key::Named(winit::keyboard::NamedKey::Alt) => KeyboardKey::Alt,
+            winit::keyboard::Key::Named(winit::keyboard::NamedKey::AltGraph) => KeyboardKey::AltGr,
             _ => KeyboardKey::Unknown,
         };
         Button::Keyboard(key)

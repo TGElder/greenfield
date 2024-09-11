@@ -228,6 +228,10 @@ fn describe_button(button: &Button) -> &str {
             KeyboardKey::String(str) => str,
             KeyboardKey::Backspace => "Backspace",
             KeyboardKey::Escape => "Esc",
+            KeyboardKey::Shift => "Shift",
+            KeyboardKey::Ctrl => "Ctrl",
+            KeyboardKey::Alt => "Alt",
+            KeyboardKey::AltGr => "AltGr",
             KeyboardKey::Unknown => "?",
         },
         Button::Mouse(button) => match button {
