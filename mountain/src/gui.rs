@@ -1,5 +1,7 @@
+use std::time::Instant;
+
 use engine::binding::Binding;
-use engine::egui::{self};
+use engine::egui::{self, Color32, Frame};
 use engine::engine::Engine;
 use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
@@ -7,6 +9,11 @@ use engine::graphics::Graphics;
 use crate::services::mode;
 use crate::widgets::{building_editor, piste_build_mode, Widget};
 use crate::{Bindings, Game};
+
+pub struct Toast {
+    pub message: String,
+    pub expiry: Instant,
+}
 
 struct ModeButton {
     icon: &'static str,
@@ -119,8 +126,31 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         piste_eraser: &game.controllers.piste_eraser,
     });
 
+    let toast_message = game
+        .components
+        .toast
+        .as_ref()
+        .filter(|Toast { expiry, .. }| *expiry > Instant::now())
+        .map(|Toast { message, .. }| message);
+
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
+        if let Some(toast_message) = toast_message {
+            egui::Window::new("Toast")
+                .interactable(false)
+                .resizable(false)
+                .movable(false)
+                .title_bar(false)
+                .frame(Frame::none())
+                .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 16.0))
+                .show(ctx, |ui| {
+                    ui.label(
+                        egui::RichText::new(toast_message)
+                            .color(Color32::from_rgb(0, 0, 0))
+                            .background_color(Color32::from_rgb(255, 0, 0)),
+                    )
+                });
+        }
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {

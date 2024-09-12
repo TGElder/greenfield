@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
 use std::iter::once;
+use std::time::{Duration, Instant};
 
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
@@ -16,7 +17,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
-use crate::utils;
+use crate::{gui, utils};
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
@@ -41,6 +42,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub toast: &'a mut Option<gui::Toast>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -63,6 +65,7 @@ impl Controller {
             exits,
             entrances,
             reservations,
+            toast,
             graphics,
         }: Parameters<'_>,
     ) -> Result {
@@ -89,13 +92,19 @@ impl Controller {
         let to = position;
 
         let Some(from_piste) = piste_map[from] else {
-            println!("INFO: No piste at from position");
+            toast.replace(gui::Toast {
+                message: "Lift needs piste at start position!".to_string(),
+                expiry: Instant::now() + Duration::from_secs(5),
+            });
             self.from = None;
             return NoAction;
         };
         let Some(to_piste) = piste_map[to] else {
+            toast.replace(gui::Toast {
+                message: "Lift needs piste at end position!".to_string(),
+                expiry: Instant::now() + Duration::from_secs(5),
+            });
             self.from = None;
-            println!("INFO: No piste at to position");
             return NoAction;
         };
 

@@ -364,6 +364,7 @@ fn new_components() -> Components {
         terrain,
         trees,
         planning_queue: HashVec::new(),
+        toast: None,
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -414,6 +415,8 @@ pub struct Components {
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
+    #[serde(skip)]
+    toast: Option<gui::Toast>,
     services: Services,
 }
 

@@ -154,6 +154,7 @@ fn try_to_handle(
                     exits: &mut game.components.exits,
                     entrances: &mut game.components.entrances,
                     reservations: &mut game.components.reservations,
+                    toast: &mut game.components.toast,
                     graphics,
                 })
         }
