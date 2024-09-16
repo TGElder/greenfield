@@ -31,7 +31,7 @@ pub struct Output<'a> {
     pub artist: &'a mut building_artist::System,
 }
 
-impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
+impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
     fn init(input: Input) -> Self {
         if input.mode != services::mode::Mode::Building {
             return Widget::default();
