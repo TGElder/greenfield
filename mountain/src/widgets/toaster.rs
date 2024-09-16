@@ -1,30 +1,28 @@
-use std::time::Instant;
-
 use engine::egui;
 
-use crate::gui::{self, Toast};
+use crate::systems::log;
 use crate::widgets::ContextWidget;
 
 pub struct Widget {
-    toast: Option<gui::Toast>,
+    toast: Option<String>,
 }
 
-pub struct Input {
-    pub toast: Option<gui::Toast>,
+pub struct Input<'a> {
+    pub log: &'a log::System,
 }
 
-impl ContextWidget<Input, ()> for Widget {
-    fn init(value: Input) -> Self {
-        Widget { toast: value.toast }
+impl<'a> ContextWidget<Input<'a>, ()> for Widget {
+    fn init(input: Input) -> Self {
+        let toast = input
+            .log
+            .messages()
+            .first()
+            .map(|message| message.text.clone());
+        Widget { toast }
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
-        let toast_message = self
-            .toast
-            .as_ref()
-            .filter(|Toast { expiry, .. }| *expiry > Instant::now())
-            .map(|Toast { message, .. }| message);
-        let Some(toast_message) = toast_message else {
+        let Some(ref toast) = self.toast else {
             return;
         };
         egui::Window::new("Toast")
@@ -36,7 +34,7 @@ impl ContextWidget<Input, ()> for Widget {
             .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 16.0))
             .show(ctx, |ui| {
                 ui.label(
-                    egui::RichText::new(toast_message)
+                    egui::RichText::new(toast)
                         .color(egui::Color32::from_rgb(0, 0, 0))
                         .background_color(egui::Color32::from_rgb(255, 0, 0)),
                 )

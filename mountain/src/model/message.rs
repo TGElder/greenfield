@@ -7,7 +7,7 @@ pub struct Message {
 }
 
 impl Message {
-    fn new(text: String) -> Message {
+    pub fn new(text: String) -> Message {
         Message {
             timestamp: Instant::now(),
             text,

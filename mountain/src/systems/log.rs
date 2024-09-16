@@ -1,6 +1,5 @@
 use std::time::{Duration, Instant};
 
-use tokio::sync::broadcast;
 use tokio::sync::broadcast::Receiver;
 
 use crate::model::message::Message;
@@ -32,8 +31,14 @@ impl System {
         self.apply_max_length();
     }
 
+    pub fn messages(&self) -> &[Message] {
+        &self.messages
+    }
+
     fn pull(&mut self) {
-        self.messages.extend(self.rx.blocking_recv());
+        while let Ok(message) = self.rx.try_recv() {
+            self.messages.push(message);
+        }
     }
 
     fn apply_max_duration(&mut self) {

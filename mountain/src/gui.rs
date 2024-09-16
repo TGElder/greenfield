@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use engine::binding::Binding;
 use engine::egui;
 use engine::engine::Engine;
@@ -9,12 +7,6 @@ use engine::graphics::Graphics;
 use crate::services::mode;
 use crate::widgets::{building_editor, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
-
-#[derive(Clone)]
-pub struct Toast {
-    pub message: String,
-    pub expiry: Instant,
-}
 
 struct ModeButton {
     icon: &'static str,
@@ -127,7 +119,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         piste_eraser: &game.controllers.piste_eraser,
     });
     let mut toaster = toaster::Widget::init(toaster::Input {
-        toast: game.components.toast.clone(),
+        log: &game.systems.log,
     });
 
     graphics.draw_gui(&mut |ctx| {
