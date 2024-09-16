@@ -32,6 +32,7 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
+use tokio::sync::broadcast::{self, Receiver, Sender};
 
 use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
@@ -49,6 +50,7 @@ use crate::model::frame::Frame;
 use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
+use crate::model::message::Message;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
@@ -58,7 +60,7 @@ use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
-    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
+    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
     piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
     tree_artist, window_artist,
 };
@@ -67,6 +69,8 @@ use crate::utils::computer;
 fn main() {
     let components = get_components();
     let max_z = components.terrain.max();
+
+    let (tx, rx) = broadcast::channel(1000);
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -97,6 +101,13 @@ fn main() {
                 carousel: carousel::System::new(),
                 chair_artist: chair_artist::System::new(),
                 global_computer: global_computer::System::new(),
+                log: log::System::new(
+                    tx.subscribe(),
+                    log::Parameters {
+                        max_duration: Duration::from_millis(300),
+                        max_length: 8,
+                    },
+                ),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
                         intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -287,6 +298,7 @@ fn main() {
                     ]),
                 },
             },
+            messenger: (tx, rx),
             mouse_xy: None,
             components,
         },
@@ -379,6 +391,7 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     bindings: Bindings,
+    messenger: (Sender<Message>, Receiver<Message>),
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -442,6 +455,7 @@ struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
+    log: log::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,

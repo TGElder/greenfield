@@ -16,3 +16,4 @@ network = { path = "../network" }
 rand = { workspace = true }
 serde = { workspace = true }
 terrain_gen = { path = "../terrain_gen" }
+tokio = { workspace = true }
