@@ -30,14 +30,17 @@ impl<'a> ContextWidget<Input<'a>, ()> for Widget {
             .title_bar(false)
             .frame(egui::Frame::none())
             .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 16.0))
+            .min_width(ctx.screen_rect().width())
             .show(ctx, |ui| {
-                for message in &self.messages {
-                    ui.label(
-                        egui::RichText::new(message)
-                            .color(egui::Color32::from_rgb(0, 0, 0))
-                            .background_color(egui::Color32::from_rgb(255, 255, 255)),
-                    );
-                }
+                ui.vertical_centered(|ui| {
+                    for message in &self.messages {
+                        ui.label(
+                            egui::RichText::new(message)
+                                .color(egui::Color32::from_rgb(0, 0, 0))
+                                .background_color(egui::Color32::from_rgb(255, 255, 255)),
+                        );
+                    }
+                })
             });
     }
 

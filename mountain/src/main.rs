@@ -100,14 +100,6 @@ fn main() {
                 carousel: carousel::System::new(),
                 chair_artist: chair_artist::System::new(),
                 global_computer: global_computer::System::new(),
-                log: log::System::new(
-                    tx.subscribe(),
-                    log::Parameters {
-                        max_duration: Duration::from_secs(3),
-                        max_length: 8,
-                    },
-                ),
-                messenger: messenger::System::new(tx),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
                         intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -132,8 +124,16 @@ fn main() {
                     },
                     cliff: Rgba::new(6, 6, 6, 128),
                 }),
+                toaster_log: log::System::new(
+                    tx.subscribe(),
+                    log::Parameters {
+                        max_duration: Duration::from_secs(5),
+                        max_length: 8,
+                    },
+                ),
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
+                messenger: messenger::System::new(tx),
             },
             bindings: Bindings {
                 action: Binding::Single {
@@ -450,7 +450,7 @@ struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
-    log: log::System,
+    toaster_log: log::System,
     messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
@@ -603,7 +603,7 @@ impl EventHandler for Game {
             global_targets: &mut self.components.global_targets,
             cars: &mut self.components.cars,
         });
-        self.systems.log.run();
+        self.systems.toaster_log.run();
 
         target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(

@@ -119,7 +119,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         piste_eraser: &game.controllers.piste_eraser,
     });
     let mut toaster = toaster::Widget::init(toaster::Input {
-        log: &game.systems.log,
+        log: &game.systems.toaster_log,
     });
 
     graphics.draw_gui(&mut |ctx| {
