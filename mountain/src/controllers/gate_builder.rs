@@ -9,7 +9,6 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::gate::Gate;
-use crate::model::message;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
@@ -60,7 +59,7 @@ pub fn trigger(
     // create gate
 
     if rectangle.width() == 0 || rectangle.height() == 0 {
-        messenger.send("INFO: Entrance must not be zero length");
+        messenger.send("Entrance must not be zero length");
         return NoAction;
     }
     let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map, messenger)
@@ -150,7 +149,7 @@ fn try_get_vertical_configuration(
     messenger: &mut messenger::System,
 ) -> Option<Configuration> {
     if rectangle.width() != 2 {
-        messenger.send("INFO: Not vertical gate - selection must be 2 wide");
+        messenger.send("Not vertical gate - selection must be 2 wide");
         return None;
     }
 
@@ -160,7 +159,7 @@ fn try_get_vertical_configuration(
         let value = piste_map[xy(x, rectangle.from.y)]?;
         for y in rectangle.from.y..=rectangle.to.y {
             if piste_map[xy(x, y)]? != value {
-                messenger.send("INFO: Not vertical gate - column does not contain piste");
+                messenger.send("Not vertical gate - column does not contain piste");
                 return None;
             }
         }
@@ -168,7 +167,7 @@ fn try_get_vertical_configuration(
     }
 
     if pistes[0] == pistes[1] {
-        messenger.send("INFO: Not vertical gate - same piste on both sides");
+        messenger.send("Not vertical gate - same piste on both sides");
         return None;
     }
 
@@ -184,7 +183,7 @@ fn try_get_horizontal_configuration(
     messenger: &mut messenger::System,
 ) -> Option<Configuration> {
     if rectangle.height() != 2 {
-        messenger.send("INFO: Not horizontal gate - selection must be 2 high");
+        messenger.send("Not horizontal gate - selection must be 2 high");
         return None;
     }
 
@@ -194,7 +193,7 @@ fn try_get_horizontal_configuration(
         let value = piste_map[xy(rectangle.from.x, y)]?;
         for x in rectangle.from.x..=rectangle.to.x {
             if piste_map[xy(x, y)]? != value {
-                messenger.send("INFO: Not horizontal gate - row does not contain piste");
+                messenger.send("Not horizontal gate - row does not contain piste");
                 return None;
             }
         }
@@ -202,7 +201,7 @@ fn try_get_horizontal_configuration(
     }
 
     if pistes[0] == pistes[1] {
-        messenger.send("INFO: Not horizontal gate - same piste on both sides");
+        messenger.send("Not horizontal gate - same piste on both sides");
         return None;
     }
 

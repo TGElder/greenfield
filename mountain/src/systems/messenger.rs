@@ -15,6 +15,8 @@ impl System {
     where
         T: Into<String>,
     {
-        self.tx.send(Message::new(text));
+        if let Err(e) = self.tx.send(Message::new(text)) {
+            println!("Couldn't send message: {}", e);
+        }
     }
 }

@@ -2,7 +2,6 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle, XY};
 use commons::grid::Grid;
-use tokio::sync::broadcast::Sender;
 
 use crate::handlers::selection;
 use crate::model::building::Building;

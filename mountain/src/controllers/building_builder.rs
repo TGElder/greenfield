@@ -6,14 +6,12 @@ use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
 use rand::seq::SliceRandom;
 use rand::thread_rng;
-use tokio::sync::broadcast::Sender;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
-use crate::model::message::Message;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, messenger, tree_artist, window_artist};
@@ -172,7 +170,7 @@ impl Controller {
         building.windows = windows(terrain, &building.footprint, building.height);
 
         let capacity = building.windows.len();
-        messenger.send(format!("INFO: Spawing {} skiers", capacity));
+        messenger.send(format!("Spawing {} skiers", capacity));
 
         let mut rng = thread_rng();
         for _ in 0..capacity {
@@ -195,7 +193,7 @@ impl Controller {
             );
         }
 
-        messenger.send(format!("INFO: {} total skiers", skiers.len()));
+        messenger.send(format!("{} total skiers", skiers.len()));
 
         building.under_construction = false;
         building_artist.redraw(building_id);

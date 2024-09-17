@@ -32,7 +32,7 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
-use tokio::sync::broadcast::{self, Receiver, Sender};
+use tokio::sync::broadcast::{self};
 
 use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
@@ -50,7 +50,6 @@ use crate::model::frame::Frame;
 use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
-use crate::model::message::Message;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::skier::{Clothes, Skier};
@@ -70,7 +69,7 @@ fn main() {
     let components = get_components();
     let max_z = components.terrain.max();
 
-    let (tx, rx) = broadcast::channel(1000);
+    let (tx, _) = broadcast::channel(1000);
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
