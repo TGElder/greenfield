@@ -4,7 +4,7 @@ use crate::systems::log;
 use crate::widgets::ContextWidget;
 
 pub struct Widget {
-    toast: Option<String>,
+    messages: Vec<String>,
 }
 
 pub struct Input<'a> {
@@ -13,18 +13,16 @@ pub struct Input<'a> {
 
 impl<'a> ContextWidget<Input<'a>, ()> for Widget {
     fn init(input: Input) -> Self {
-        let toast = input
+        let messages = input
             .log
             .messages()
-            .first()
-            .map(|message| message.text.clone());
-        Widget { toast }
+            .iter()
+            .map(|message| message.text.clone())
+            .collect();
+        Widget { messages }
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
-        let Some(ref toast) = self.toast else {
-            return;
-        };
         egui::Window::new("Toast")
             .interactable(false)
             .resizable(false)
@@ -33,11 +31,13 @@ impl<'a> ContextWidget<Input<'a>, ()> for Widget {
             .frame(egui::Frame::none())
             .anchor(egui::Align2::CENTER_TOP, egui::vec2(0.0, 16.0))
             .show(ctx, |ui| {
-                ui.label(
-                    egui::RichText::new(toast)
-                        .color(egui::Color32::from_rgb(0, 0, 0))
-                        .background_color(egui::Color32::from_rgb(255, 0, 0)),
-                )
+                for message in &self.messages {
+                    ui.label(
+                        egui::RichText::new(message)
+                            .color(egui::Color32::from_rgb(0, 0, 0))
+                            .background_color(egui::Color32::from_rgb(255, 0, 0)),
+                    );
+                }
             });
     }
 

@@ -104,7 +104,7 @@ fn main() {
                 log: log::System::new(
                     tx.subscribe(),
                     log::Parameters {
-                        max_duration: Duration::from_millis(300),
+                        max_duration: Duration::from_secs(3),
                         max_length: 8,
                     },
                 ),
