@@ -1,11 +1,11 @@
 use engine::binding::Binding;
-use engine::egui::{self};
+use engine::egui;
 use engine::engine::Engine;
 use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
-use crate::widgets::{building_editor, piste_build_mode, Widget};
+use crate::widgets::{building_editor, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -118,9 +118,13 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         bindings: &game.bindings.piste_mode,
         piste_eraser: &game.controllers.piste_eraser,
     });
+    let mut toaster = toaster::Widget::init(toaster::Input {
+        log: &game.systems.toaster_log,
+    });
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
+        toaster.draw(ctx);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {

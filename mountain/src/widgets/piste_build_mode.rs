@@ -32,7 +32,7 @@ pub struct Output<'a> {
     pub piste_eraser: &'a mut piste_eraser::Controller,
 }
 
-impl<'a> widgets::Widget<Input<'a>, Output<'a>> for Widget {
+impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
     fn init(input: Input) -> Widget {
         if input.mode != services::mode::Mode::Path && input.mode != services::mode::Mode::Piste {
             return Widget::default();

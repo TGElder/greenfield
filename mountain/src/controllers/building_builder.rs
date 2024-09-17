@@ -14,7 +14,7 @@ use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
-use crate::systems::{building_artist, tree_artist, window_artist};
+use crate::systems::{building_artist, messenger, tree_artist, window_artist};
 
 pub const HEIGHT_MIN: u32 = 3;
 pub const HEIGHT_MAX: u32 = 60;
@@ -71,6 +71,7 @@ pub struct FinalizeParameters<'a> {
     pub skiers: &'a mut HashMap<usize, Skier>,
     pub building_artist: &'a mut building_artist::System,
     pub window_artist: &'a mut window_artist::System,
+    pub messenger: &'a mut messenger::System,
 }
 
 impl Controller {
@@ -149,7 +150,7 @@ impl Controller {
             skiers,
             building_artist,
             window_artist,
-            ..
+            messenger,
         }: FinalizeParameters<'_>,
     ) -> Result {
         let State::Editing { building_id } = self.state else {
@@ -169,7 +170,7 @@ impl Controller {
         building.windows = windows(terrain, &building.footprint, building.height);
 
         let capacity = building.windows.len();
-        println!("INFO: Spawing {} skiers", capacity);
+        messenger.send(format!("Spawing {} skiers", capacity));
 
         let mut rng = thread_rng();
         for _ in 0..capacity {
@@ -192,7 +193,7 @@ impl Controller {
             );
         }
 
-        println!("INFO: {} total skiers", skiers.len());
+        messenger.send(format!("{} total skiers", skiers.len()));
 
         building.under_construction = false;
         building_artist.redraw(building_id);

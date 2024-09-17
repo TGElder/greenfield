@@ -4,12 +4,14 @@ use engine::graphics::Graphics;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
 use crate::model::gate::Gate;
+use crate::systems::messenger;
 use crate::Components;
 
 pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
-    graphics: &mut dyn engine::graphics::Graphics,
     components: &mut Components,
+    messenger: &mut messenger::System,
+    graphics: &mut dyn engine::graphics::Graphics,
 ) -> Result {
     let Some(mouse_xy) = mouse_xy else {
         return NoAction;
@@ -31,17 +33,22 @@ pub fn trigger(
     }
 
     for gate_id in gate_ids {
-        remove_gate(graphics, components, &gate_id);
+        remove_gate(components, &gate_id, messenger, graphics);
     }
 
     Action
 }
 
-pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gate_id: &usize) {
+pub fn remove_gate(
+    components: &mut Components,
+    gate_id: &usize,
+    messenger: &mut messenger::System,
+    graphics: &mut dyn Graphics,
+) {
     // Validate
 
     if components.open.contains(gate_id) {
-        println!("Close gate {} before removing it!", gate_id);
+        messenger.send(format!("Close gate {} before removing it!", gate_id));
         return;
     }
 
@@ -50,10 +57,10 @@ pub fn remove_gate(graphics: &mut dyn Graphics, components: &mut Components, gat
         .values()
         .any(|target_id| *target_id == *gate_id)
     {
-        println!(
+        messenger.send(format!(
             "Cannot remove gate {} while people are targeting it!",
             gate_id
-        );
+        ));
         return;
     }
 

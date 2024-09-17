@@ -32,6 +32,7 @@ use engine::graphics::projections::isometric;
 use engine::graphics::Graphics;
 use engine::handlers::{drag, yaw, zoom};
 use serde::{Deserialize, Serialize};
+use tokio::sync::broadcast::{self};
 
 use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
@@ -58,15 +59,17 @@ use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
-    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
-    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
-    tree_artist, window_artist,
+    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
+    messenger, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
+    terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 
 fn main() {
     let components = get_components();
     let max_z = components.terrain.max();
+
+    let (tx, _) = broadcast::channel(1000);
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -121,6 +124,14 @@ fn main() {
                     },
                     cliff: Rgba::new(6, 6, 6, 128),
                 }),
+                toaster_log: log::System::new(
+                    tx.subscribe(),
+                    log::Parameters {
+                        max_duration: Duration::from_secs(5),
+                        max_length: 8,
+                    },
+                ),
+                messenger: messenger::System::new(tx),
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
             },
@@ -439,6 +450,8 @@ struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
+    toaster_log: log::System,
+    messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
@@ -562,6 +575,7 @@ impl EventHandler for Game {
                 skiers: &mut self.components.skiers,
                 building_artist: &mut self.systems.building_artist,
                 window_artist: &mut self.systems.window_artist,
+                messenger: &mut self.systems.messenger,
             });
 
         self.systems
@@ -589,6 +603,7 @@ impl EventHandler for Game {
             global_targets: &mut self.components.global_targets,
             cars: &mut self.components.cars,
         });
+        self.systems.toaster_log.run();
 
         target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(

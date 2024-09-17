@@ -14,6 +14,7 @@ use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
+use crate::systems::messenger;
 
 pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
@@ -23,6 +24,7 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
     pub doors: &'a mut HashMap<usize, Door>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub messenger: &'a mut messenger::System,
 }
 
 pub fn trigger(
@@ -34,20 +36,21 @@ pub fn trigger(
         id_allocator,
         doors,
         entrances,
+        messenger,
     }: Parameters<'_>,
 ) -> Result {
     let Some(grid) = &selection.grid else {
         return NoAction;
     };
     if grid.width() != 1 && grid.height() != 1 {
-        println!("WARN: Door must be 1 wide or 1 high");
+        messenger.send("Door must be 1 wide or 1 high");
         selection.clear_selection();
         return NoAction;
     }
 
     let longest_side_cell_count = grid.width().max(grid.height());
     if longest_side_cell_count < 2 {
-        println!("WARN: Door must be at least 2 wide or 2 high");
+        messenger.send("Door must be at least 2 wide or 2 high");
         selection.clear_selection();
         return NoAction;
     }
@@ -65,16 +68,16 @@ pub fn trigger(
             .count()
             == longest_side_position_count
     }) else {
-        println!(
-            "WARN: Door must contain {} postions from the same building",
+        messenger.send(format!(
+            "Door must contain {} postions from the same building",
             longest_side_position_count
-        );
+        ));
         selection.clear_selection();
         return NoAction;
     };
 
     if building.under_construction {
-        println!("WARN: Door cannot be added to building under construction");
+        messenger.send("Door cannot be added to building under construction");
         selection.clear_selection();
         return NoAction;
     }
@@ -88,10 +91,10 @@ pub fn trigger(
             .iter()
             .all(|position| grid.in_bounds(position) && grid[position])
     }) else {
-        println!(
-            "WARN: Door must contain {} postions from the same piste",
+        messenger.send(format!(
+            "Door must contain {} postions from the same piste",
             longest_side_position_count
-        );
+        ));
         selection.clear_selection();
         return NoAction;
     };

@@ -16,6 +16,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
+use crate::systems::messenger;
 use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
@@ -41,6 +42,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub messenger: &'a mut messenger::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -63,6 +65,7 @@ impl Controller {
             exits,
             entrances,
             reservations,
+            messenger,
             graphics,
         }: Parameters<'_>,
     ) -> Result {
@@ -89,13 +92,13 @@ impl Controller {
         let to = position;
 
         let Some(from_piste) = piste_map[from] else {
-            println!("INFO: No piste at from position");
+            messenger.send("Lift needs piste at start position!");
             self.from = None;
             return NoAction;
         };
         let Some(to_piste) = piste_map[to] else {
+            messenger.send("Lift needs piste at end position!");
             self.from = None;
-            println!("INFO: No piste at to position");
             return NoAction;
         };
 
