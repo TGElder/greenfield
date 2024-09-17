@@ -9,10 +9,11 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::gate::Gate;
+use crate::model::message;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
-use crate::systems::terrain_artist;
+use crate::systems::{messenger, terrain_artist};
 
 pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
@@ -25,6 +26,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub open: &'a mut HashSet<usize>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub messenger: &'a mut messenger::System,
 }
 
 pub fn trigger(
@@ -39,6 +41,7 @@ pub fn trigger(
         exits,
         open,
         reservations,
+        messenger,
     }: Parameters<'_>,
 ) -> Result {
     let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
@@ -57,11 +60,11 @@ pub fn trigger(
     // create gate
 
     if rectangle.width() == 0 || rectangle.height() == 0 {
-        println!("INFO: Entrance must not be zero length");
+        messenger.send("INFO: Entrance must not be zero length");
         return NoAction;
     }
-    let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map)
-        .or_else(|| try_get_horizontal_configuration(rectangle, piste_map));
+    let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map, messenger)
+        .or_else(|| try_get_horizontal_configuration(rectangle, piste_map, messenger));
 
     let Some(configuration) = maybe_configuration else {
         return NoAction;
@@ -144,9 +147,10 @@ pub fn trigger(
 fn try_get_vertical_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
+    messenger: &mut messenger::System,
 ) -> Option<Configuration> {
     if rectangle.width() != 2 {
-        println!("INFO: Not vertical gate - selection must be 2 wide");
+        messenger.send("INFO: Not vertical gate - selection must be 2 wide");
         return None;
     }
 
@@ -156,7 +160,7 @@ fn try_get_vertical_configuration(
         let value = piste_map[xy(x, rectangle.from.y)]?;
         for y in rectangle.from.y..=rectangle.to.y {
             if piste_map[xy(x, y)]? != value {
-                println!("INFO: Not vertical gate - column does not contain piste");
+                messenger.send("INFO: Not vertical gate - column does not contain piste");
                 return None;
             }
         }
@@ -164,7 +168,7 @@ fn try_get_vertical_configuration(
     }
 
     if pistes[0] == pistes[1] {
-        println!("INFO: Not vertical gate - same piste on both sides");
+        messenger.send("INFO: Not vertical gate - same piste on both sides");
         return None;
     }
 
@@ -177,9 +181,10 @@ fn try_get_vertical_configuration(
 fn try_get_horizontal_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
+    messenger: &mut messenger::System,
 ) -> Option<Configuration> {
     if rectangle.height() != 2 {
-        println!("INFO: Not horizontal gate - selection must be 2 high");
+        messenger.send("INFO: Not horizontal gate - selection must be 2 high");
         return None;
     }
 
@@ -189,7 +194,7 @@ fn try_get_horizontal_configuration(
         let value = piste_map[xy(rectangle.from.x, y)]?;
         for x in rectangle.from.x..=rectangle.to.x {
             if piste_map[xy(x, y)]? != value {
-                println!("INFO: Not horizontal gate - row does not contain piste");
+                messenger.send("INFO: Not horizontal gate - row does not contain piste");
                 return None;
             }
         }
@@ -197,7 +202,7 @@ fn try_get_horizontal_configuration(
     }
 
     if pistes[0] == pistes[1] {
-        println!("INFO: Not horizontal gate - same piste on both sides");
+        messenger.send("INFO: Not horizontal gate - same piste on both sides");
         return None;
     }
 

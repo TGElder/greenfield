@@ -6,6 +6,7 @@ use commons::grid::Grid;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::reservation::Reservation;
 use crate::model::skiing::Plan;
+use crate::systems::messenger;
 
 pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
@@ -14,6 +15,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub targets: &'a HashMap<usize, usize>,
     pub global_targets: &'a HashMap<usize, usize>,
+    pub messenger: &'a mut messenger::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -25,6 +27,7 @@ pub fn trigger(
         locations,
         targets,
         global_targets,
+        messenger,
         graphics,
     }: Parameters<'_>,
 ) -> Result {
@@ -41,11 +44,11 @@ pub fn trigger(
     }
 
     for (id, _) in reservations[mouse_position].iter() {
-        println!("ID = {:?}", id);
-        println!("Location = {:?}", locations.get(id));
-        println!("Target = {:?}", targets.get(id));
-        println!("Global target = {:?}", global_targets.get(id));
-        println!("Plan = {:?}", plans.get(id));
+        messenger.send(format!("ID = {:?}", id));
+        messenger.send(format!("Location = {:?}", locations.get(id)));
+        messenger.send(format!("Target = {:?}", targets.get(id)));
+        messenger.send(format!("Global target = {:?}", global_targets.get(id)));
+        messenger.send(format!("Plan = {:?}", plans.get(id)));
     }
 
     Action

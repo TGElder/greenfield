@@ -7,10 +7,13 @@ pub struct Message {
 }
 
 impl Message {
-    pub fn new(text: String) -> Message {
+    pub fn new<T>(text: T) -> Message
+    where
+        T: Into<String>,
+    {
         Message {
             timestamp: Instant::now(),
-            text,
+            text: text.into(),
         }
     }
 }

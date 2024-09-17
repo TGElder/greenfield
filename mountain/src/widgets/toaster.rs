@@ -23,7 +23,7 @@ impl<'a> ContextWidget<Input<'a>, ()> for Widget {
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
-        egui::Window::new("Toast")
+        egui::Window::new("Toaster")
             .interactable(false)
             .resizable(false)
             .movable(false)
@@ -35,7 +35,7 @@ impl<'a> ContextWidget<Input<'a>, ()> for Widget {
                     ui.label(
                         egui::RichText::new(message)
                             .color(egui::Color32::from_rgb(0, 0, 0))
-                            .background_color(egui::Color32::from_rgb(255, 0, 0)),
+                            .background_color(egui::Color32::from_rgb(255, 255, 255)),
                     );
                 }
             });

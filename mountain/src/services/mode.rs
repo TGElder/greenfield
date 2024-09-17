@@ -1,4 +1,5 @@
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::systems::messenger;
 use crate::{controllers, Game};
 
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
@@ -92,6 +93,7 @@ fn try_to_handle(
                 locations: &game.components.locations,
                 targets: &game.components.targets,
                 global_targets: &game.components.global_targets,
+                messenger: &mut game.systems.messenger,
                 graphics,
             })
         }
@@ -154,7 +156,7 @@ fn try_to_handle(
                     exits: &mut game.components.exits,
                     entrances: &mut game.components.entrances,
                     reservations: &mut game.components.reservations,
-                    message_sender: &mut game.messenger.0,
+                    messenger: &mut game.systems.messenger,
                     graphics,
                 })
         }
@@ -177,6 +179,7 @@ fn try_to_handle(
             exits: &mut game.components.exits,
             open: &mut game.components.open,
             reservations: &mut game.components.reservations,
+            messenger: &mut game.systems.messenger,
         }),
         Mode::Door => controllers::door_builder::trigger(controllers::door_builder::Parameters {
             pistes: &game.components.pistes,
@@ -186,6 +189,7 @@ fn try_to_handle(
             id_allocator: &mut game.components.services.id_allocator,
             doors: &mut game.components.doors,
             entrances: &mut game.components.entrances,
+            messenger: &mut game.systems.messenger,
         }),
         Mode::Demolish => try_to_demolish(game, graphics),
         _ => NoAction,
@@ -198,6 +202,7 @@ fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -
         &game.components.lifts,
         &mut game.components.open,
         &mut game.systems.global_computer,
+        &mut game.systems.messenger,
         graphics,
     )
     .then_try(|| {
@@ -206,6 +211,7 @@ fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -
             &game.components.gates,
             &mut game.components.open,
             &mut game.systems.global_computer,
+            &mut game.systems.messenger,
             graphics,
         )
     })
@@ -218,6 +224,20 @@ fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphic
         &mut game.components,
         &mut game.systems,
     )
-    .then_try(|| controllers::gate_remover::trigger(&game.mouse_xy, graphics, &mut game.components))
-    .then_try(|| controllers::lift_remover::trigger(&game.mouse_xy, graphics, &mut game.components))
+    .then_try(|| {
+        controllers::gate_remover::trigger(
+            &game.mouse_xy,
+            &mut game.components,
+            &mut game.systems.messenger,
+            graphics,
+        )
+    })
+    .then_try(|| {
+        controllers::lift_remover::trigger(
+            &game.mouse_xy,
+            &mut game.components,
+            &mut game.systems.messenger,
+            graphics,
+        )
+    })
 }

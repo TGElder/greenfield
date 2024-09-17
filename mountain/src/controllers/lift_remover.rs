@@ -3,12 +3,14 @@ use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
+use crate::systems::messenger;
 use crate::Components;
 
 pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
-    graphics: &mut dyn engine::graphics::Graphics,
     components: &mut Components,
+    messenger: &mut messenger::System,
+    graphics: &mut dyn engine::graphics::Graphics,
 ) -> Result {
     let Some(mouse_xy) = mouse_xy else {
         return NoAction;
@@ -32,13 +34,18 @@ pub fn trigger(
     }
 
     for lift_id in lift_ids {
-        remove_lift(graphics, components, &lift_id);
+        remove_lift(components, &lift_id, messenger, graphics);
     }
 
     Action
 }
 
-pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lift_id: &usize) {
+pub fn remove_lift(
+    components: &mut Components,
+    lift_id: &usize,
+    messenger: &mut messenger::System,
+    graphics: &mut dyn Graphics,
+) {
     // Fetch entities
 
     let carousel_ids = components
@@ -58,7 +65,7 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
     // Validate
 
     if components.open.contains(lift_id) {
-        println!("Close lift {} before removing it!", lift_id);
+        messenger.send(format!("Close lift {} before removing it!", lift_id));
         return;
     }
 
@@ -67,7 +74,10 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
         .values()
         .any(|location_id| car_ids.contains(location_id))
     {
-        println!("Cannot remove lift {} while people are riding it!", lift_id);
+        messenger.send(format!(
+            "Cannot remove lift {} while people are riding it!",
+            lift_id
+        ));
         return;
     }
 
@@ -76,10 +86,10 @@ pub fn remove_lift(graphics: &mut dyn Graphics, components: &mut Components, lif
         .values()
         .any(|target_id| *target_id == *lift_id)
     {
-        println!(
+        messenger.send(format!(
             "Cannot remove lift {} while people are targeting it!",
             lift_id
-        );
+        ));
         return;
     }
 

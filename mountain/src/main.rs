@@ -61,8 +61,8 @@ use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
-    piste_adopter, planner, skiing_framer, target_scrubber, target_setter, terrain_artist,
-    tree_artist, window_artist,
+    messenger, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
+    terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 
@@ -108,6 +108,7 @@ fn main() {
                         max_length: 8,
                     },
                 ),
+                messenger: messenger::System::new(tx),
                 skier_colors: systems::skier_colors::System::new(
                     systems::skier_colors::AbilityColors {
                         intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -298,7 +299,6 @@ fn main() {
                     ]),
                 },
             },
-            messenger: (tx, rx),
             mouse_xy: None,
             components,
         },
@@ -390,7 +390,6 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     bindings: Bindings,
-    messenger: (Sender<Message>, Receiver<Message>),
     mouse_xy: Option<XY<u32>>,
 }
 
@@ -453,6 +452,7 @@ struct Systems {
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
     log: log::System,
+    messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
@@ -576,6 +576,7 @@ impl EventHandler for Game {
                 skiers: &mut self.components.skiers,
                 building_artist: &mut self.systems.building_artist,
                 window_artist: &mut self.systems.window_artist,
+                messenger: &mut self.systems.messenger,
             });
 
         self.systems

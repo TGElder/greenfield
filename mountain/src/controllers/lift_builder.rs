@@ -5,7 +5,6 @@ use std::iter::once;
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::{Grid, CORNERS};
-use tokio::sync::broadcast::Sender;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::carousel::{Car, Carousel};
@@ -13,11 +12,11 @@ use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::{self, Lift, Segment};
-use crate::model::message::Message;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
+use crate::systems::messenger;
 use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
@@ -43,7 +42,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
-    pub message_sender: &'a mut Sender<Message>,
+    pub messenger: &'a mut messenger::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -66,7 +65,7 @@ impl Controller {
             exits,
             entrances,
             reservations,
-            message_sender,
+            messenger,
             graphics,
         }: Parameters<'_>,
     ) -> Result {
@@ -93,16 +92,12 @@ impl Controller {
         let to = position;
 
         let Some(from_piste) = piste_map[from] else {
-            let _ = message_sender.send(Message::new(
-                "Lift needs piste at start position!".to_string(),
-            ));
+            messenger.send("Lift needs piste at start position!");
             self.from = None;
             return NoAction;
         };
         let Some(to_piste) = piste_map[to] else {
-            let _ = message_sender.send(Message::new(
-                "Lift needs piste at end position!".to_string(),
-            ));
+            messenger.send("Lift needs piste at end position!");
             self.from = None;
             return NoAction;
         };

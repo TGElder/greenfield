@@ -12,6 +12,7 @@ pub mod global_computer;
 pub mod global_target_setter;
 pub mod lift_artist;
 pub mod log;
+pub mod messenger;
 pub mod piste_adopter;
 pub mod planner;
 pub mod skier_colors;
