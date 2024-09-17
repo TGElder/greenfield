@@ -131,9 +131,9 @@ fn main() {
                         max_length: 8,
                     },
                 ),
+                messenger: messenger::System::new(tx),
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
-                messenger: messenger::System::new(tx),
             },
             bindings: Bindings {
                 action: Binding::Single {
