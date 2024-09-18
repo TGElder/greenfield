@@ -65,7 +65,7 @@ use crate::systems::{
     terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
-use crate::widgets::{building_editor, toaster};
+use crate::widgets::{building_editor, main_menu, toaster};
 
 fn main() {
     let components = get_components();
@@ -99,6 +99,7 @@ fn main() {
             },
             widgets: Widgets {
                 building_editor: building_editor::Widget::default(),
+                main_menu: main_menu::Widget::default(),
                 piste_build_mode: widgets::piste_build_mode::Widget::default(),
                 toaster: toaster::Widget::new(log::System::new(
                     tx.subscribe(),
@@ -169,6 +170,10 @@ fn main() {
                         button: Button::Mouse(MouseButton::Right),
                         state: ButtonState::Released,
                     },
+                },
+                main_menu: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::Escape),
+                    state: ButtonState::Released,
                 },
                 mode: HashMap::from([
                     (
@@ -244,10 +249,6 @@ fn main() {
                         button: Button::Keyboard(KeyboardKey::Shift),
                         state: ButtonState::Pressed,
                     },
-                },
-                save: Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::from("s")),
-                    state: ButtonState::Pressed,
                 },
                 selection: selection::Bindings {
                     first_cell: Binding::Single {
@@ -470,7 +471,7 @@ pub struct Bindings {
     compute: Binding,
     drag: drag::Bindings,
     piste_mode: piste_build_mode::Bindings,
-    save: Binding,
+    main_menu: Binding,
     selection: selection::Bindings,
     target_lift: Binding,
     yaw: yaw::Bindings,
@@ -551,7 +552,6 @@ impl EventHandler for Game {
                 graphics,
             },
         );
-        handlers::save::handle(&self.bindings.save, event, &mut self.components);
         handlers::piste_computer::handle(handlers::piste_computer::Parameters {
             binding: &self.bindings.compute,
             event,
@@ -752,6 +752,6 @@ impl EventHandler for Game {
             .window_artist
             .run(&self.components.buildings, graphics);
 
-        gui::run(self, engine, graphics);
+        gui::run(self, event, engine, graphics);
     }
 }
