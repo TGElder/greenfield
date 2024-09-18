@@ -3,6 +3,7 @@ use engine::egui;
 use crate::systems::log;
 use crate::widgets::ContextWidget;
 
+#[derive(Default)]
 pub struct Widget {
     messages: Vec<String>,
 }
@@ -12,14 +13,13 @@ pub struct Input<'a> {
 }
 
 impl<'a> ContextWidget<Input<'a>, ()> for Widget {
-    fn init(input: Input) -> Self {
-        let messages = input
+    fn init(&mut self, input: Input) {
+        self.messages = input
             .log
             .messages()
             .iter()
             .map(|message| message.text.clone())
             .collect();
-        Widget { messages }
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
