@@ -7,5 +7,4 @@ pub mod mode;
 pub mod piste_build_mode;
 pub mod piste_computer;
 pub mod piste_highlighter;
-pub mod save;
 pub mod selection;
