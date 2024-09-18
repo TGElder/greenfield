@@ -84,11 +84,10 @@ const MODE_BUTTONS: [ModeButton; 10] = [
     },
 ];
 
-#[derive(Default)]
 pub struct Widgets {
-    building_editor: building_editor::Widget,
-    piste_build_mode: piste_build_mode::Widget,
-    toaster: toaster::Widget,
+    pub building_editor: building_editor::Widget,
+    pub piste_build_mode: piste_build_mode::Widget,
+    pub toaster: toaster::Widget,
 }
 
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
@@ -125,10 +124,7 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
         bindings: &game.bindings.piste_mode,
         piste_eraser: &game.controllers.piste_eraser,
     });
-    game.widgets.toaster.init(toaster::Input {
-        log: &game.systems.toaster_log,
-    });
-
+    game.widgets.toaster.init(());
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
         game.widgets.toaster.draw(ctx);

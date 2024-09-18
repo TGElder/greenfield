@@ -65,6 +65,7 @@ use crate::systems::{
     terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
+use crate::widgets::{building_editor, toaster};
 
 fn main() {
     let components = get_components();
@@ -96,6 +97,17 @@ fn main() {
                     max_level: 8,
                 }),
             },
+            widgets: Widgets {
+                building_editor: building_editor::Widget::default(),
+                piste_build_mode: widgets::piste_build_mode::Widget::default(),
+                toaster: toaster::Widget::new(log::System::new(
+                    tx.subscribe(),
+                    log::Parameters {
+                        max_duration: Duration::from_secs(5),
+                        max_length: 8,
+                    },
+                )),
+            },
             systems: Systems {
                 building_artist: building_artist::System::new(),
                 carousel: carousel::System::new(),
@@ -125,13 +137,6 @@ fn main() {
                     },
                     cliff: Rgba::new(6, 6, 6, 128),
                 }),
-                toaster_log: log::System::new(
-                    tx.subscribe(),
-                    log::Parameters {
-                        max_duration: Duration::from_secs(5),
-                        max_length: 8,
-                    },
-                ),
                 messenger: messenger::System::new(tx),
                 tree_artist: tree_artist::System::new(),
                 window_artist: window_artist::System::new(),
@@ -299,7 +304,6 @@ fn main() {
                     ]),
                 },
             },
-            widgets: Widgets::default(),
             mouse_xy: None,
             components,
         },
@@ -453,7 +457,6 @@ struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
-    toaster_log: log::System,
     messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
@@ -606,7 +609,6 @@ impl EventHandler for Game {
             global_targets: &mut self.components.global_targets,
             cars: &mut self.components.cars,
         });
-        self.systems.toaster_log.run();
 
         target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(

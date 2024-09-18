@@ -3,26 +3,29 @@ use engine::egui;
 use crate::systems::log;
 use crate::widgets::ContextWidget;
 
-#[derive(Default)]
 pub struct Widget {
-    messages: Vec<String>,
+    log: log::System,
 }
 
-pub struct Input<'a> {
-    pub log: &'a log::System,
+impl Widget {
+    pub fn new(log: log::System) -> Widget {
+        Widget { log }
+    }
 }
 
-impl<'a> ContextWidget<Input<'a>, ()> for Widget {
-    fn init(&mut self, input: Input) {
-        self.messages = input
+impl ContextWidget<(), ()> for Widget {
+    fn init(&mut self, _: ()) {
+        self.log.run();
+    }
+
+    fn draw(&mut self, ctx: &engine::egui::Context) {
+        let messages = self
             .log
             .messages()
             .iter()
             .map(|message| message.text.clone())
-            .collect();
-    }
+            .collect::<Vec<_>>();
 
-    fn draw(&mut self, ctx: &engine::egui::Context) {
         egui::Window::new("Toaster")
             .interactable(false)
             .resizable(false)
@@ -33,7 +36,7 @@ impl<'a> ContextWidget<Input<'a>, ()> for Widget {
             .min_width(ctx.screen_rect().width())
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
-                    for message in &self.messages {
+                    for message in messages.iter() {
                         ui.label(
                             egui::RichText::new(message)
                                 .color(egui::Color32::from_rgb(0, 0, 0))
