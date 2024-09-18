@@ -33,9 +33,11 @@ pub struct Output<'a> {
 }
 
 impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
-    fn init(input: Input) -> Widget {
+    fn init(&mut self, input: Input) {
+        self.state = None;
+
         if input.mode != services::mode::Mode::Path && input.mode != services::mode::Mode::Piste {
-            return Widget::default();
+            return;
         }
         let state = State {
             build: Button {
@@ -49,7 +51,7 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
                 clicked: false,
             },
         };
-        Widget { state: Some(state) }
+        self.state = Some(state);
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {

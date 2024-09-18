@@ -36,6 +36,7 @@ use tokio::sync::broadcast::{self};
 
 use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
+use crate::gui::Widgets;
 use crate::handlers::{lift_targeter, piste_build_mode, piste_highlighter, selection};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
@@ -298,6 +299,7 @@ fn main() {
                     ]),
                 },
             },
+            widgets: Widgets::default(),
             mouse_xy: None,
             components,
         },
@@ -389,6 +391,7 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     bindings: Bindings,
+    widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
 }
 

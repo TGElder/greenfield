@@ -84,6 +84,13 @@ const MODE_BUTTONS: [ModeButton; 10] = [
     },
 ];
 
+#[derive(Default)]
+pub struct Widgets {
+    building_editor: building_editor::Widget,
+    piste_build_mode: piste_build_mode::Widget,
+    toaster: toaster::Widget,
+}
+
 pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut speed = game.components.services.clock.speed();
 
@@ -108,23 +115,23 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
 
-    let mut building_editor = building_editor::Widget::init(building_editor::Input {
+    game.widgets.building_editor.init(building_editor::Input {
         mode: build_mode,
         builder: &game.controllers.building_builder,
         buildings: &game.components.buildings,
     });
-    let mut piste_mode = piste_build_mode::Widget::init(piste_build_mode::Input {
+    game.widgets.piste_build_mode.init(piste_build_mode::Input {
         mode: build_mode,
         bindings: &game.bindings.piste_mode,
         piste_eraser: &game.controllers.piste_eraser,
     });
-    let mut toaster = toaster::Widget::init(toaster::Input {
+    game.widgets.toaster.init(toaster::Input {
         log: &game.systems.toaster_log,
     });
 
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
-        toaster.draw(ctx);
+        game.widgets.toaster.draw(ctx);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
@@ -165,21 +172,25 @@ pub fn run(game: &mut Game, _: &mut dyn Engine, graphics: &mut dyn Graphics) {
                     });
                 });
                 ui.separator();
-                building_editor.draw(ui);
-                piste_mode.draw(ui);
+                game.widgets.building_editor.draw(ui);
+                game.widgets.piste_build_mode.draw(ui);
             });
         });
     });
 
-    building_editor.update(building_editor::Output {
-        buildings: &mut game.components.buildings,
-        artist: &mut game.systems.building_artist,
-    });
-    piste_mode.update(piste_build_mode::Output {
-        path_builder: &mut game.controllers.path_builder,
-        piste_builder: &mut game.controllers.piste_builder,
-        piste_eraser: &mut game.controllers.piste_eraser,
-    });
+    game.widgets
+        .building_editor
+        .update(building_editor::Output {
+            buildings: &mut game.components.buildings,
+            artist: &mut game.systems.building_artist,
+        });
+    game.widgets
+        .piste_build_mode
+        .update(piste_build_mode::Output {
+            path_builder: &mut game.controllers.path_builder,
+            piste_builder: &mut game.controllers.piste_builder,
+            piste_eraser: &mut game.controllers.piste_eraser,
+        });
 
     game.components.services.clock.set_speed(speed);
 
