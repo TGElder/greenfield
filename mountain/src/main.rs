@@ -65,7 +65,7 @@ use crate::systems::{
     terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
-use crate::widgets::{building_editor, main_menu, toaster};
+use crate::widgets::{building_editor, main_menu, save_dialog, toaster};
 
 fn main() {
     let components = get_components();
@@ -101,6 +101,7 @@ fn main() {
                 building_editor: building_editor::Widget::default(),
                 main_menu: main_menu::Widget::default(),
                 piste_build_mode: widgets::piste_build_mode::Widget::default(),
+                save_dialog: save_dialog::Widget::default(),
                 toaster: toaster::Widget::new(log::System::new(
                     tx.subscribe(),
                     log::Parameters {

@@ -6,7 +6,7 @@ use engine::graphics::Graphics;
 
 use crate::services::mode;
 use crate::widgets::{
-    building_editor, main_menu, piste_build_mode, toaster, ContextWidget, UiWidget,
+    building_editor, main_menu, piste_build_mode, save_dialog, toaster, ContextWidget, UiWidget,
 };
 use crate::{Bindings, Game};
 
@@ -90,6 +90,7 @@ pub struct Widgets {
     pub building_editor: building_editor::Widget,
     pub piste_build_mode: piste_build_mode::Widget,
     pub main_menu: main_menu::Widget,
+    pub save_dialog: save_dialog::Widget,
     pub toaster: toaster::Widget,
 }
 
@@ -126,6 +127,7 @@ pub fn run(
         event,
         binding: &game.bindings.main_menu,
     });
+    game.widgets.save_dialog.init(());
     game.widgets.building_editor.init(building_editor::Input {
         mode: build_mode,
         builder: &game.controllers.building_builder,
@@ -140,6 +142,7 @@ pub fn run(
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
         game.widgets.main_menu.draw(ctx);
+        game.widgets.save_dialog.draw(ctx);
         game.widgets.toaster.draw(ctx);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -192,6 +195,7 @@ pub fn run(
         engine,
         messenger: &mut game.systems.messenger,
     });
+    game.widgets.save_dialog.update(());
 
     game.widgets
         .building_editor
