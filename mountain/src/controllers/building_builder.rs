@@ -158,6 +158,7 @@ impl Controller {
         };
 
         let Some(building) = buildings.get_mut(&building_id) else {
+            self.state = State::Selecting;
             return NoAction;
         };
 
