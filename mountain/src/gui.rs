@@ -146,7 +146,7 @@ pub fn run(
                 ui.vertical(|ui| {
                     ui.label("Run");
                     ui.horizontal(|ui| {
-                        ui.add(egui::Slider::new(&mut speed, 0.0..=8.0));
+                        ui.add(egui::Slider::new(&mut speed, 0.0..=50.0).step_by(1.0));
                         draw_mode_buttons(ui, Panel::Run);
                     });
                 });
