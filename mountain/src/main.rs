@@ -53,6 +53,7 @@ use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
+use crate::model::selection::Selection;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
@@ -382,6 +383,7 @@ fn new_components() -> Components {
         terrain,
         trees,
         planning_queue: HashVec::new(),
+        selection: Selection::default(),
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -433,6 +435,8 @@ pub struct Components {
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
+    #[serde(skip)]
+    selection: Selection,
     services: Services,
 }
 
@@ -738,7 +742,7 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 highlights: &self.components.highlights,
                 abilities: &self.components.abilities,
-                selection: &self.handlers.selection,
+                selection: &self.components.selection,
                 graphics,
             });
         self.systems.tree_artist.run(

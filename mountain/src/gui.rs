@@ -211,7 +211,7 @@ pub fn run(
 
     for (i, &clicked) in mode_button_clicked.iter().enumerate() {
         if clicked {
-            game.handlers.selection.clear_selection();
+            game.components.selection.cells.clear();
             let config = &MODE_BUTTONS[i];
             if build_mode == config.build_mode {
                 game.components.services.mode.set_mode(mode::Mode::None);

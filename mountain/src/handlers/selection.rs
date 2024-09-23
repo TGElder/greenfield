@@ -4,14 +4,22 @@ use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
 use line_drawing::Bresenham;
 
+use crate::model::selection::Selection;
 use crate::systems::terrain_artist;
 
 use super::*;
 
 pub struct Handler {
-    pub cells: Vec<XY<u32>>,
-    pub grid: Option<OriginGrid<bool>>,
     pub was_clear_interrupted: bool,
+}
+
+pub struct Parameters<'a> {
+    pub bindings: &'a Bindings,
+    pub mouse_xy: &'a Option<XY<u32>>,
+    pub terrain: &'a Grid<f32>,
+    pub selection: &'a mut Selection,
+    pub graphics: &'a mut dyn engine::graphics::Graphics,
+    pub terrain_artist: &'a mut terrain_artist::System,
 }
 
 pub struct Bindings {
@@ -24,22 +32,23 @@ pub struct Bindings {
 impl Handler {
     pub fn new() -> Handler {
         Handler {
-            cells: Vec::with_capacity(3),
-            grid: None,
             was_clear_interrupted: false,
         }
     }
     pub fn handle(
         &mut self,
-        bindings: &Bindings,
         event: &engine::events::Event,
-        mouse_xy: &Option<XY<u32>>,
-        terrain: &Grid<f32>,
-        graphics: &mut dyn engine::graphics::Graphics,
-        terrain_artist: &mut terrain_artist::System,
+        Parameters {
+            bindings,
+            mouse_xy,
+            terrain,
+            selection,
+            graphics,
+            terrain_artist,
+        }: Parameters<'_>,
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
-            self.update_last_cell(terrain, mouse_xy, graphics);
+            self.update_last_cell(terrain, mouse_xy, &mut selection.cells, graphics);
             self.was_clear_interrupted = true;
         }
 
@@ -47,21 +56,21 @@ impl Handler {
             self.was_clear_interrupted = false;
         } else if !self.was_clear_interrupted
             && bindings.finish_clearing.binds_event(event)
-            && !self.cells.is_empty()
+            && !selection.cells.is_empty()
         {
-            self.clear_selection();
-        } else if bindings.first_cell.binds_event(event) && self.cells.is_empty() {
-            self.add_cell(terrain, mouse_xy, graphics);
-            self.add_cell(terrain, mouse_xy, graphics);
-        } else if bindings.second_cell.binds_event(event) && self.cells.len() == 2 {
-            self.add_cell(terrain, mouse_xy, graphics);
+            selection.cells.clear();
+        } else if bindings.first_cell.binds_event(event) && selection.cells.is_empty() {
+            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
+            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
+        } else if bindings.second_cell.binds_event(event) && selection.cells.len() == 2 {
+            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
         }
 
-        let previous_grid = self.grid.clone();
+        let previous_grid = selection.grid.clone();
 
-        self.rasterize(terrain);
+        self.rasterize(terrain, selection);
 
-        let new_grid = &self.grid;
+        let new_grid = &selection.grid;
         if previous_grid != *new_grid {
             previous_grid
                 .iter()
@@ -71,21 +80,18 @@ impl Handler {
         }
     }
 
-    pub fn clear_selection(&mut self) {
-        self.cells.clear();
-    }
-
     fn add_cell(
         &mut self,
         terrain: &Grid<f32>,
         mouse_xy: &Option<XY<u32>>,
+        cells: &mut Vec<XY<u32>>,
         graphics: &mut dyn Graphics,
     ) {
         let Some(mouse_xy) = mouse_xy else {
             return;
         };
         if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
-            self.cells.push(selected_cell);
+            cells.push(selected_cell);
         }
     }
 
@@ -93,19 +99,20 @@ impl Handler {
         &mut self,
         terrain: &Grid<f32>,
         mouse_xy: &XY<u32>,
+        cells: &mut [XY<u32>],
         graphics: &mut dyn Graphics,
     ) {
         if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
-            if let Some(last_cell) = self.cells.last_mut() {
+            if let Some(last_cell) = cells.last_mut() {
                 *last_cell = selected_cell;
             }
         }
     }
 
-    fn rasterize(&mut self, terrain: &Grid<f32>) {
-        self.grid = None;
+    fn rasterize(&mut self, terrain: &Grid<f32>, selection: &mut Selection) {
+        selection.grid = None;
 
-        let cells = &self.cells;
+        let cells = &selection.cells;
         if cells.len() < 2 {
             return;
         }
@@ -120,7 +127,7 @@ impl Handler {
         } else if cells.len() == 3 {
             border.push(cells[0]);
 
-            let Some(border_1) = self.compute_border_1() else {
+            let Some(border_1) = self.compute_border_1(&selection.cells) else {
                 return;
             };
             if border_1.x > terrain.width() - 2 || border_1.y > terrain.height() {
@@ -167,12 +174,10 @@ impl Handler {
         }
         let filled = fill_cells_inaccessible_from_border(&grid);
 
-        self.grid = Some(filled)
+        selection.grid = Some(filled)
     }
 
-    fn compute_border_1(&self) -> Option<XY<u32>> {
-        let cells = &self.cells;
-
+    fn compute_border_1(&self, cells: &[XY<u32>]) -> Option<XY<u32>> {
         // Case where user did not drag
         let to = if cells[0] == cells[1] {
             // Default is a grid aligned to the x-axis

@@ -4,12 +4,12 @@ use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
 
 use crate::controllers::Result::{self, Action, NoAction};
-use crate::handlers::selection;
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::gate::Gate;
 use crate::model::reservation::Reservation;
+use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist};
@@ -17,7 +17,7 @@ use crate::systems::{messenger, terrain_artist};
 pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
-    pub selection: &'a mut selection::Handler,
+    pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
     pub gates: &'a mut HashMap<usize, Gate>,
@@ -52,8 +52,7 @@ pub fn trigger(
     };
 
     // clearing selection
-
-    selection.clear_selection();
+    selection.cells.clear();
     terrain_artist.update_overlay(rectangle);
 
     // create gate

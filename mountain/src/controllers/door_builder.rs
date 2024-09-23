@@ -3,7 +3,6 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XYRectangle, XY};
 use commons::grid::Grid;
 
-use crate::handlers::selection;
 use crate::model::building::Building;
 
 use crate::model::direction::{Direction, DIRECTIONS};
@@ -12,6 +11,7 @@ use crate::model::door::Door;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::entrance::Entrance;
 use crate::model::piste::Piste;
+use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::messenger;
@@ -19,7 +19,7 @@ use crate::systems::messenger;
 pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub terrain: &'a Grid<f32>,
-    pub selection: &'a mut selection::Handler,
+    pub selection: &'a mut Selection,
     pub buildings: &'a HashMap<usize, Building>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub doors: &'a mut HashMap<usize, Door>,
@@ -44,14 +44,14 @@ pub fn trigger(
     };
     if grid.width() != 1 && grid.height() != 1 {
         messenger.send("Door must be 1 wide or 1 high");
-        selection.clear_selection();
+        selection.cells.clear();
         return NoAction;
     }
 
     let longest_side_cell_count = grid.width().max(grid.height());
     if longest_side_cell_count < 2 {
         messenger.send("Door must be at least 2 wide or 2 high");
-        selection.clear_selection();
+        selection.cells.clear();
         return NoAction;
     }
 
@@ -72,13 +72,13 @@ pub fn trigger(
             "Door must contain {} postions from the same building",
             longest_side_position_count
         ));
-        selection.clear_selection();
+        selection.cells.clear();
         return NoAction;
     };
 
     if building.under_construction {
         messenger.send("Door cannot be added to building under construction");
-        selection.clear_selection();
+        selection.cells.clear();
         return NoAction;
     }
 
@@ -95,7 +95,7 @@ pub fn trigger(
             "Door must contain {} postions from the same piste",
             longest_side_position_count
         ));
-        selection.clear_selection();
+        selection.cells.clear();
         return NoAction;
     };
 
@@ -126,7 +126,7 @@ pub fn trigger(
         },
     );
 
-    selection.clear_selection();
+    selection.cells.clear();
 
     Action
 }
