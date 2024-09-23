@@ -21,24 +21,20 @@ pub fn run(
 ) {
     let previous_grid = selection.grid.clone();
 
-    rasterize(terrain, selection);
-
-    let new_grid = &selection.grid;
-    if previous_grid != *new_grid {
+    selection.grid = rasterize(terrain, selection);
+    if previous_grid != selection.grid {
         previous_grid
             .iter()
-            .chain(new_grid.iter())
+            .chain(selection.grid.iter())
             .flat_map(|grid| grid.rectangle())
             .for_each(|rectangle| terrain_artist.update_overlay(rectangle));
     }
 }
 
-fn rasterize(terrain: &Grid<f32>, selection: &mut Selection) {
-    selection.grid = None;
-
+fn rasterize(terrain: &Grid<f32>, selection: &mut Selection) -> Option<OriginGrid<bool>> {
     let cells = &selection.cells;
     if cells.len() < 2 {
-        return;
+        return None;
     }
 
     // Computing border
@@ -51,11 +47,9 @@ fn rasterize(terrain: &Grid<f32>, selection: &mut Selection) {
     } else if cells.len() == 3 {
         border.push(cells[0]);
 
-        let Some(border_1) = compute_border_1(&selection.cells) else {
-            return;
-        };
+        let border_1 = compute_border_1(&selection.cells)?;
         if border_1.x > terrain.width() - 2 || border_1.y > terrain.height() {
-            return;
+            return None;
         }
         border.push(border_1);
 
@@ -63,11 +57,11 @@ fn rasterize(terrain: &Grid<f32>, selection: &mut Selection) {
 
         let border_3 = to_xy_i32(&border[2]) - (to_xy_i32(&border[1]) - to_xy_i32(&border[0]));
         if border_3.x < 0 || border_3.y < 0 {
-            return;
+            return None;
         }
         let border_3 = xy(border_3.x as u32, border_3.y as u32);
         if border_3.x > terrain.width() - 2 || border_3.y > terrain.height() {
-            return;
+            return None;
         }
         border.push(border_3);
 
@@ -98,7 +92,7 @@ fn rasterize(terrain: &Grid<f32>, selection: &mut Selection) {
     }
     let filled = fill_cells_inaccessible_from_border(&grid);
 
-    selection.grid = Some(filled)
+    Some(filled)
 }
 
 fn to_xy_i32(XY { x, y }: &XY<u32>) -> XY<i32> {

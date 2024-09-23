@@ -38,12 +38,12 @@ impl Handler {
             bindings,
             mouse_xy,
             terrain,
-            selection,
+            selection: Selection { cells, .. },
             graphics,
         }: Parameters<'_>,
     ) {
         if let Event::MouseMoved(mouse_xy) = event {
-            self.update_last_cell(terrain, mouse_xy, &mut selection.cells, graphics);
+            update_last_cell(terrain, mouse_xy, cells, graphics);
             self.was_clear_interrupted = true;
         }
 
@@ -51,43 +51,41 @@ impl Handler {
             self.was_clear_interrupted = false;
         } else if !self.was_clear_interrupted
             && bindings.finish_clearing.binds_event(event)
-            && !selection.cells.is_empty()
+            && !cells.is_empty()
         {
-            selection.cells.clear();
-        } else if bindings.first_cell.binds_event(event) && selection.cells.is_empty() {
-            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
-            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
-        } else if bindings.second_cell.binds_event(event) && selection.cells.len() == 2 {
-            self.add_cell(terrain, mouse_xy, &mut selection.cells, graphics);
+            cells.clear();
+        } else if bindings.first_cell.binds_event(event) && cells.is_empty() {
+            add_cell(terrain, mouse_xy, cells, graphics);
+            add_cell(terrain, mouse_xy, cells, graphics);
+        } else if bindings.second_cell.binds_event(event) && cells.len() == 2 {
+            add_cell(terrain, mouse_xy, cells, graphics);
         }
     }
+}
 
-    fn add_cell(
-        &mut self,
-        terrain: &Grid<f32>,
-        mouse_xy: &Option<XY<u32>>,
-        cells: &mut Vec<XY<u32>>,
-        graphics: &mut dyn Graphics,
-    ) {
-        let Some(mouse_xy) = mouse_xy else {
-            return;
-        };
-        if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
-            cells.push(selected_cell);
-        }
+fn add_cell(
+    terrain: &Grid<f32>,
+    mouse_xy: &Option<XY<u32>>,
+    cells: &mut Vec<XY<u32>>,
+    graphics: &mut dyn Graphics,
+) {
+    let Some(mouse_xy) = mouse_xy else {
+        return;
+    };
+    if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
+        cells.push(selected_cell);
     }
+}
 
-    fn update_last_cell(
-        &mut self,
-        terrain: &Grid<f32>,
-        mouse_xy: &XY<u32>,
-        cells: &mut [XY<u32>],
-        graphics: &mut dyn Graphics,
-    ) {
-        if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
-            if let Some(last_cell) = cells.last_mut() {
-                *last_cell = selected_cell;
-            }
+fn update_last_cell(
+    terrain: &Grid<f32>,
+    mouse_xy: &XY<u32>,
+    cells: &mut [XY<u32>],
+    graphics: &mut dyn Graphics,
+) {
+    if let Some(selected_cell) = selected_cell(mouse_xy, graphics, terrain) {
+        if let Some(last_cell) = cells.last_mut() {
+            *last_cell = selected_cell;
         }
     }
 }
