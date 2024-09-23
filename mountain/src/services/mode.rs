@@ -1,5 +1,6 @@
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::handlers::selection::Parameters;
+use crate::model::selection::Selection;
 use crate::{controllers, Game};
 
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
@@ -37,8 +38,11 @@ impl Service {
         self.mode
     }
 
-    pub fn set_mode(&mut self, mode: Mode) {
+    pub fn set_mode(&mut self, mode: Mode, selection: &mut Selection) {
         self.mode = mode;
+        if !mode.has_selection() {
+            selection.cells.clear();
+        }
     }
 
     pub fn get_handler(
@@ -70,7 +74,6 @@ fn handle(
                 terrain: &game.components.terrain,
                 selection: &mut game.components.selection,
                 graphics,
-                terrain_artist: &mut game.systems.terrain_artist,
             },
         );
     }
