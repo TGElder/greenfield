@@ -13,6 +13,7 @@ pub mod lift;
 pub mod message;
 pub mod piste;
 pub mod reservation;
+pub mod selection;
 pub mod skier;
 pub mod skiing;
 pub mod tree;

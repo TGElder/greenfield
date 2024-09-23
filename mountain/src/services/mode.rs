@@ -1,4 +1,6 @@
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::handlers::selection::Parameters;
+use crate::model::selection::Selection;
 use crate::{controllers, Game};
 
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
@@ -36,8 +38,11 @@ impl Service {
         self.mode
     }
 
-    pub fn set_mode(&mut self, mode: Mode) {
+    pub fn set_mode(&mut self, mode: Mode, selection: &mut Selection) {
         self.mode = mode;
+        if !mode.has_selection() {
+            selection.cells.clear();
+        }
     }
 
     pub fn get_handler(
@@ -62,12 +67,14 @@ fn handle(
 
     if mode.has_selection() {
         game.handlers.selection.handle(
-            &game.bindings.selection,
             event,
-            &game.mouse_xy,
-            &game.components.terrain,
-            graphics,
-            &mut game.systems.terrain_artist,
+            Parameters {
+                bindings: &game.bindings.selection,
+                mouse_xy: &game.mouse_xy,
+                terrain: &game.components.terrain,
+                selection: &mut game.components.selection,
+                graphics,
+            },
         );
     }
 }
@@ -102,7 +109,7 @@ fn try_to_handle(
             .trigger(controllers::piste_builder::Parameters {
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
-                selection: &mut game.handlers.selection,
+                selection: &mut game.components.selection,
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
@@ -113,7 +120,7 @@ fn try_to_handle(
                     .trigger(controllers::piste_eraser::Parameters {
                         pistes: &mut game.components.pistes,
                         piste_map: &mut game.components.piste_map,
-                        selection: &mut game.handlers.selection,
+                        selection: &mut game.components.selection,
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
                     })
@@ -124,7 +131,7 @@ fn try_to_handle(
             .trigger(controllers::piste_builder::Parameters {
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
-                selection: &mut game.handlers.selection,
+                selection: &mut game.components.selection,
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
@@ -135,7 +142,7 @@ fn try_to_handle(
                     .trigger(controllers::piste_eraser::Parameters {
                         pistes: &mut game.components.pistes,
                         piste_map: &mut game.components.piste_map,
-                        selection: &mut game.handlers.selection,
+                        selection: &mut game.components.selection,
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
                     })
@@ -161,7 +168,7 @@ fn try_to_handle(
         }
         Mode::Building => game.controllers.building_builder.select(
             controllers::building_builder::SelectParameters {
-                selection: &mut game.handlers.selection,
+                selection: &mut game.components.selection,
                 id_allocator: &mut game.components.services.id_allocator,
                 buildings: &mut game.components.buildings,
                 tree_artist: &mut game.systems.tree_artist,
@@ -170,7 +177,7 @@ fn try_to_handle(
         Mode::Gate => controllers::gate_builder::trigger(controllers::gate_builder::Parameters {
             piste_map: &game.components.piste_map,
             terrain: &game.components.terrain,
-            selection: &mut game.handlers.selection,
+            selection: &mut game.components.selection,
             terrain_artist: &mut game.systems.terrain_artist,
             id_allocator: &mut game.components.services.id_allocator,
             gates: &mut game.components.gates,
@@ -184,7 +191,7 @@ fn try_to_handle(
             pistes: &game.components.pistes,
             buildings: &game.components.buildings,
             terrain: &game.components.terrain,
-            selection: &mut game.handlers.selection,
+            selection: &mut game.components.selection,
             id_allocator: &mut game.components.services.id_allocator,
             doors: &mut game.components.doors,
             entrances: &mut game.components.entrances,

@@ -7,8 +7,8 @@ use commons::origin_grid::OriginGrid;
 use engine::graphics::Graphics;
 
 use crate::draw::terrain::Drawing;
-use crate::handlers::selection;
 use crate::model::ability::Ability;
+use crate::model::selection::Selection;
 use crate::utils::ability::cell_ability;
 
 pub const CLEAR: Rgba<u8> = Rgba::new(0, 0, 0, 0);
@@ -39,7 +39,7 @@ impl Colors {
         &self,
         xy: &XY<u32>,
         terrain: &Grid<f32>,
-        selection: &selection::Handler,
+        selection: &Selection,
     ) -> Option<Rgba<u8>> {
         let grid = selection.grid.as_ref()?;
 
@@ -97,7 +97,7 @@ pub struct Parameters<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
     pub highlights: &'a HashSet<usize>,
     pub abilities: &'a HashMap<usize, Ability>,
-    pub selection: &'a selection::Handler,
+    pub selection: &'a Selection,
     pub graphics: &'a mut dyn Graphics,
 }
 

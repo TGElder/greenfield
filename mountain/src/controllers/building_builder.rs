@@ -8,10 +8,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::controllers::Result::{self, Action, NoAction};
-use crate::handlers::selection;
 use crate::model::ability::Ability;
 use crate::model::building::{Building, Roof, Window};
 use crate::model::direction::Direction;
+use crate::model::selection::Selection;
 use crate::model::skier::{Clothes, Color, Skier};
 use crate::services::id_allocator;
 use crate::systems::{building_artist, messenger, tree_artist, window_artist};
@@ -57,7 +57,7 @@ pub enum State {
 }
 
 pub struct SelectParameters<'a> {
-    pub selection: &'a mut selection::Handler,
+    pub selection: &'a mut Selection,
     pub id_allocator: &'a mut id_allocator::Service,
     pub buildings: &'a mut HashMap<usize, Building>,
     pub tree_artist: &'a mut tree_artist::System,
@@ -134,7 +134,7 @@ impl Controller {
 
         // clearing selection
 
-        selection.clear_selection();
+        selection.cells.clear();
 
         self.state = State::Editing { building_id };
         Action

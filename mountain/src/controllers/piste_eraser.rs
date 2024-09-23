@@ -5,9 +5,9 @@ use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
-use crate::handlers::selection;
 
 use crate::model::piste::Piste;
+use crate::model::selection::Selection;
 use crate::systems::{terrain_artist, tree_artist};
 
 pub struct Controller {
@@ -17,7 +17,7 @@ pub struct Controller {
 pub struct Parameters<'a> {
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
-    pub selection: &'a mut selection::Handler,
+    pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
 }
@@ -97,7 +97,7 @@ impl Controller {
 
         // clearing selection
 
-        selection.clear_selection();
+        selection.cells.clear();
 
         Action
     }

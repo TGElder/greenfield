@@ -15,6 +15,7 @@ pub mod log;
 pub mod messenger;
 pub mod piste_adopter;
 pub mod planner;
+pub mod selection_rasterizer;
 pub mod skier_colors;
 pub mod skiing_framer;
 pub mod target_scrubber;

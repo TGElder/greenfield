@@ -53,6 +53,7 @@ use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
+use crate::model::selection::Selection;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
 use crate::model::tree::Tree;
@@ -61,8 +62,8 @@ use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
-    messenger, piste_adopter, planner, skiing_framer, target_scrubber, target_setter,
-    terrain_artist, tree_artist, window_artist,
+    messenger, piste_adopter, planner, selection_rasterizer, skiing_framer, target_scrubber,
+    target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 use crate::widgets::{building_editor, main_menu, toaster};
@@ -382,6 +383,7 @@ fn new_components() -> Components {
         terrain,
         trees,
         planning_queue: HashVec::new(),
+        selection: Selection::default(),
         services: Services {
             clock: services::clock::Service::new(),
             id_allocator: id_allocator::Service::new(),
@@ -433,6 +435,8 @@ pub struct Components {
     reservations: Grid<HashMap<usize, Reservation>>,
     piste_map: Grid<Option<usize>>,
     planning_queue: HashVec<usize>,
+    #[serde(skip)]
+    selection: Selection,
     services: Services,
 }
 
@@ -569,7 +573,17 @@ impl EventHandler for Game {
             terrain_artist: &mut self.systems.terrain_artist,
             graphics,
         });
-        handlers::mode::handle(event, &self.bindings, &mut self.components.services.mode);
+        selection_rasterizer::run(selection_rasterizer::Parameters {
+            terrain: &self.components.terrain,
+            selection: &mut self.components.selection,
+            terrain_artist: &mut self.systems.terrain_artist,
+        });
+        handlers::mode::handle(
+            event,
+            &self.bindings,
+            &mut self.components.services.mode,
+            &mut self.components.selection,
+        );
 
         self.controllers
             .building_builder
@@ -738,7 +752,7 @@ impl EventHandler for Game {
                 piste_map: &self.components.piste_map,
                 highlights: &self.components.highlights,
                 abilities: &self.components.abilities,
-                selection: &self.handlers.selection,
+                selection: &self.components.selection,
                 graphics,
             });
         self.systems.tree_artist.run(

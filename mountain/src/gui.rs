@@ -211,12 +211,17 @@ pub fn run(
 
     for (i, &clicked) in mode_button_clicked.iter().enumerate() {
         if clicked {
-            game.handlers.selection.clear_selection();
             let config = &MODE_BUTTONS[i];
             if build_mode == config.build_mode {
-                game.components.services.mode.set_mode(mode::Mode::None);
+                game.components
+                    .services
+                    .mode
+                    .set_mode(mode::Mode::None, &mut game.components.selection);
             } else {
-                game.components.services.mode.set_mode(config.build_mode);
+                game.components
+                    .services
+                    .mode
+                    .set_mode(config.build_mode, &mut game.components.selection);
             };
         }
     }
