@@ -4,8 +4,8 @@ use crate::widgets::{save_picker, ContextWidget, UiWidget};
 
 #[derive(Default)]
 pub struct Widget {
-    save_picker: save_picker::Widget,
-    load: bool,
+    pub save_picker: save_picker::Widget,
+    pub load: bool,
     pub cancel: bool,
 }
 
