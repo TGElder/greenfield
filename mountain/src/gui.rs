@@ -189,7 +189,7 @@ pub fn run(
         components: &mut game.components,
         engine,
         messenger: &mut game.systems.messenger,
-        load: &mut game.load,
+        file_to_load: &mut game.file_to_load,
     });
 
     game.widgets

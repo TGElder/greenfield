@@ -71,8 +71,10 @@ use crate::widgets::{building_editor, menu, toaster};
 fn main() {
     let max_z = 4096.0;
 
+    let components = load_components_or_default("default.save");
+
     let engine = glium_backend::engine::GliumEngine::new(
-        get_game("default.save"),
+        load_game(components),
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
@@ -102,7 +104,7 @@ fn main() {
     engine.run();
 }
 
-fn get_components(file: &str) -> Components {
+fn load_components_or_default(file: &str) -> Components {
     if let Some(loaded_components) = load_components(file) {
         loaded_components
     } else {
@@ -115,8 +117,7 @@ fn load_components(path: &str) -> Option<Components> {
     bincode::deserialize_from(BufReader::new(file)).ok()
 }
 
-fn get_game(file: &str) -> Game {
-    let components = get_components(file);
+fn load_game(components: Components) -> Game {
     let (tx, _) = broadcast::channel(1000);
     Game {
         controllers: Controllers {
@@ -351,7 +352,7 @@ fn get_game(file: &str) -> Game {
         },
         mouse_xy: None,
         components,
-        load: None,
+        file_to_load: None,
     }
 }
 
@@ -404,7 +405,7 @@ struct Game {
     bindings: Bindings,
     widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
-    load: Option<String>,
+    file_to_load: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -516,11 +517,20 @@ impl Game {
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Some(file) = &self.load {
-            *self = get_game(file);
-            graphics.clear();
-            self.init(graphics);
-            // self.systems.messenger.send(format!("Loaded {}", file));
+        if let Some(file) = &self.file_to_load {
+            let components = load_components(file);
+            match components {
+                Some(components) => {
+                    *self = load_game(components);
+                    graphics.clear();
+                    self.init(graphics);
+                }
+                None => {
+                    self.systems
+                        .messenger
+                        .send(format!("Could not load {}", file));
+                }
+            }
         }
 
         match event {

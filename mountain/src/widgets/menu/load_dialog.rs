@@ -20,7 +20,7 @@ impl Widget {
 }
 
 pub struct Output<'a> {
-    pub load: &'a mut Option<String>,
+    pub file_to_load: &'a mut Option<String>,
 }
 
 impl<'a> ContextWidget<(), Output<'a>> for Widget {
@@ -48,7 +48,7 @@ impl<'a> ContextWidget<(), Output<'a>> for Widget {
     fn update(&mut self, value: Output<'a>) {
         self.save_picker.update(());
         if self.load {
-            *value.load = Some(format!("saves/{}.save", self.save_picker.focus));
+            *value.file_to_load = Some(format!("saves/{}.save", self.save_picker.focus));
         }
     }
 }

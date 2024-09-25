@@ -10,11 +10,11 @@ use crate::Components;
 
 #[derive(Default)]
 pub struct Widget {
-    mode: Mode,
+    page: Page,
 }
 
 #[derive(Default)]
-pub enum Mode {
+pub enum Page {
     #[default]
     Closed,
     Main(main::Widget),
@@ -30,68 +30,70 @@ pub struct Output<'a> {
     pub components: &'a mut Components,
     pub engine: &'a mut dyn Engine,
     pub messenger: &'a mut messenger::System,
-    pub load: &'a mut Option<String>,
+    pub file_to_load: &'a mut Option<String>,
 }
 
 impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
     fn init(&mut self, input: Input) {
-        match &mut self.mode {
-            Mode::Closed => {
+        match &mut self.page {
+            Page::Closed => {
                 if input.binding.binds_event(input.event) {
                     let mut widget = main::Widget::default();
                     widget.init(());
-                    self.mode = Mode::Main(widget);
+                    self.page = Page::Main(widget);
                 }
             }
-            Mode::Main(ref mut widget) => {
+            Page::Main(ref mut widget) => {
                 if input.binding.binds_event(input.event) {
-                    self.mode = Mode::Closed;
+                    self.page = Page::Closed;
                 } else {
                     widget.init(());
                 }
             }
-            Mode::LoadDialog(ref mut widget) => {
+            Page::LoadDialog(ref mut widget) => {
                 widget.init(());
             }
         }
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
-        match &mut self.mode {
-            Mode::Closed => {}
-            Mode::Main(ref mut widget) => {
+        match &mut self.page {
+            Page::Closed => {}
+            Page::Main(ref mut widget) => {
                 widget.draw(ctx);
             }
-            Mode::LoadDialog(ref mut widget) => {
+            Page::LoadDialog(ref mut widget) => {
                 widget.draw(ctx);
             }
         }
     }
 
     fn update(&mut self, output: Output) {
-        let mut new_mode = None;
-        match &mut self.mode {
-            Mode::Closed => {}
-            Mode::Main(widget) => {
+        let mut new_page = None;
+        match &mut self.page {
+            Page::Closed => {}
+            Page::Main(widget) => {
                 widget.update(main::Output {
                     components: output.components,
                     engine: output.engine,
                     messenger: output.messenger,
                 });
                 if widget.load {
-                    new_mode = Some(Mode::LoadDialog(load_dialog::Widget::default()));
+                    new_page = Some(Page::LoadDialog(load_dialog::Widget::default()));
                 }
             }
-            Mode::LoadDialog(ref mut widget) => {
-                widget.update(load_dialog::Output { load: output.load });
+            Page::LoadDialog(ref mut widget) => {
+                widget.update(load_dialog::Output {
+                    file_to_load: output.file_to_load,
+                });
                 if widget.cancel {
-                    new_mode = Some(Mode::Main(main::Widget::default()));
+                    new_page = Some(Page::Main(main::Widget::default()));
                 }
             }
         }
 
-        if let Some(new_mode) = new_mode {
-            self.mode = new_mode;
+        if let Some(new_mode) = new_page {
+            self.page = new_mode;
         }
     }
 }
