@@ -66,249 +66,14 @@ use crate::systems::{
     target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
-use crate::widgets::{building_editor, main_menu, toaster};
+use crate::widgets::menu::main_menu;
+use crate::widgets::{building_editor, toaster};
 
 fn main() {
-    let components = get_components();
-    let max_z = components.terrain.max();
-
-    let (tx, _) = broadcast::channel(1000);
+    let max_z = 4096.0;
 
     let engine = glium_backend::engine::GliumEngine::new(
-        Game {
-            controllers: Controllers {
-                building_builder: building_builder::Controller::new(),
-                path_builder: piste_builder::Controller::new(piste::Class::Path, true),
-                piste_builder: piste_builder::Controller::new(piste::Class::Piste, true),
-                piste_eraser: piste_eraser::Controller::new(false),
-                lift_builder: lift_builder::Controller::new(),
-            },
-            handlers: Handlers {
-                clock: handlers::clock::Handler::new(),
-                drag: drag::Handler::default(),
-                piste_highlighter: piste_highlighter::Handler::default(),
-                selection: selection::Handler::new(),
-                yaw: yaw::Handler::new(yaw::Parameters {
-                    initial_angle: 5,
-                    angles: 16,
-                }),
-                zoom: zoom::Handler::new(zoom::Parameters {
-                    initial_level: 1,
-                    min_level: -1,
-                    max_level: 8,
-                }),
-            },
-            widgets: Widgets {
-                building_editor: building_editor::Widget::default(),
-                main_menu: main_menu::Widget::default(),
-                piste_build_mode: widgets::piste_build_mode::Widget::default(),
-                toaster: toaster::Widget::new(log::System::new(
-                    tx.subscribe(),
-                    log::Parameters {
-                        max_duration: Duration::from_secs(5),
-                        max_length: 8,
-                    },
-                )),
-            },
-            systems: Systems {
-                building_artist: building_artist::System::new(),
-                carousel: carousel::System::new(),
-                chair_artist: chair_artist::System::new(),
-                global_computer: global_computer::System::new(),
-                skier_colors: systems::skier_colors::System::new(
-                    systems::skier_colors::AbilityColors {
-                        intermedite: Rgb::new(0.01, 0.41, 0.76),
-                        advanced: Rgb::new(0.86, 0.01, 0.01),
-                        expert: Rgb::new(0.01, 0.01, 0.01),
-                    },
-                ),
-                terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
-                    piste: terrain_artist::AbilityColors {
-                        beginner: Rgba::new(0, 98, 19, 128),
-                        intermedite: Rgba::new(3, 105, 194, 128),
-                        advanced: Rgba::new(219, 2, 3, 128),
-                        expert: Rgba::new(3, 2, 3, 128),
-                        ungraded: Rgba::new(238, 76, 2, 128),
-                    },
-                    highlight: terrain_artist::AbilityColors {
-                        beginner: Rgba::new(0, 98, 19, 192),
-                        intermedite: Rgba::new(3, 105, 194, 192),
-                        advanced: Rgba::new(219, 2, 3, 192),
-                        expert: Rgba::new(3, 2, 3, 192),
-                        ungraded: Rgba::new(238, 76, 2, 192),
-                    },
-                    cliff: Rgba::new(6, 6, 6, 128),
-                }),
-                messenger: messenger::System::new(tx),
-                tree_artist: tree_artist::System::new(),
-                window_artist: window_artist::System::new(),
-            },
-            bindings: Bindings {
-                action: Binding::Single {
-                    button: Button::Mouse(MouseButton::Left),
-                    state: ButtonState::Pressed,
-                },
-                clock_handler: handlers::clock::Bindings {
-                    slow_down: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from(",")),
-                        state: ButtonState::Pressed,
-                    },
-                    speed_up: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from(".")),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                compute: Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::from("c")),
-                    state: ButtonState::Pressed,
-                },
-                drag: drag::Bindings {
-                    start_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Pressed,
-                    },
-                    stop_dragging: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Released,
-                    },
-                },
-                main_menu: Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::Escape),
-                    state: ButtonState::Released,
-                },
-                mode: HashMap::from([
-                    (
-                        mode::Mode::Open,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("o")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Query,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("?")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Piste,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("p")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Path,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("w")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Lift,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("l")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Gate,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("g")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Building,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("h")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Door,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("d")),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                    (
-                        mode::Mode::Demolish,
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::Backspace),
-                            state: ButtonState::Pressed,
-                        },
-                    ),
-                ]),
-                piste_mode: piste_build_mode::Bindings {
-                    build: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Shift),
-                        state: ButtonState::Released,
-                    },
-                    erase: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::Shift),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                selection: selection::Bindings {
-                    first_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Pressed,
-                    },
-                    second_cell: Binding::Single {
-                        button: Button::Mouse(MouseButton::Left),
-                        state: ButtonState::Released,
-                    },
-                    start_clearing: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Pressed,
-                    },
-                    finish_clearing: Binding::Single {
-                        button: Button::Mouse(MouseButton::Right),
-                        state: ButtonState::Released,
-                    },
-                },
-                target_lift: Binding::Single {
-                    button: Button::Keyboard(KeyboardKey::from("t")),
-                    state: ButtonState::Pressed,
-                },
-                yaw: yaw::Bindings {
-                    plus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("e")),
-                        state: ButtonState::Pressed,
-                    },
-                    minus: Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("q")),
-                        state: ButtonState::Pressed,
-                    },
-                },
-                zoom: zoom::Bindings {
-                    plus: Binding::Multi(vec![
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("+")),
-                            state: ButtonState::Pressed,
-                        },
-                        Binding::Single {
-                            button: Button::Mouse(MouseButton::WheelUp),
-                            state: ButtonState::Pressed,
-                        },
-                    ]),
-                    minus: Binding::Multi(vec![
-                        Binding::Single {
-                            button: Button::Keyboard(KeyboardKey::from("-")),
-                            state: ButtonState::Pressed,
-                        },
-                        Binding::Single {
-                            button: Button::Mouse(MouseButton::WheelDown),
-                            state: ButtonState::Pressed,
-                        },
-                    ]),
-                },
-            },
-            mouse_xy: None,
-            components,
-        },
+        get_game("default.save"),
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
@@ -338,8 +103,8 @@ fn main() {
     engine.run();
 }
 
-fn get_components() -> Components {
-    if let Some(loaded_components) = load_components("default.save") {
+fn get_components(file: &str) -> Components {
+    if let Some(loaded_components) = load_components(file) {
         loaded_components
     } else {
         new_components()
@@ -349,6 +114,246 @@ fn get_components() -> Components {
 fn load_components(path: &str) -> Option<Components> {
     let file = File::open(path).ok()?;
     bincode::deserialize_from(BufReader::new(file)).ok()
+}
+
+fn get_game(file: &str) -> Game {
+    let components = get_components(file);
+    let (tx, _) = broadcast::channel(1000);
+    Game {
+        controllers: Controllers {
+            building_builder: building_builder::Controller::new(),
+            path_builder: piste_builder::Controller::new(piste::Class::Path, true),
+            piste_builder: piste_builder::Controller::new(piste::Class::Piste, true),
+            piste_eraser: piste_eraser::Controller::new(false),
+            lift_builder: lift_builder::Controller::new(),
+        },
+        handlers: Handlers {
+            clock: handlers::clock::Handler::new(),
+            drag: drag::Handler::default(),
+            piste_highlighter: piste_highlighter::Handler::default(),
+            selection: selection::Handler::new(),
+            yaw: yaw::Handler::new(yaw::Parameters {
+                initial_angle: 5,
+                angles: 16,
+            }),
+            zoom: zoom::Handler::new(zoom::Parameters {
+                initial_level: 1,
+                min_level: -1,
+                max_level: 8,
+            }),
+        },
+        widgets: Widgets {
+            building_editor: building_editor::Widget::default(),
+            main_menu: main_menu::Widget::default(),
+            piste_build_mode: widgets::piste_build_mode::Widget::default(),
+            toaster: toaster::Widget::new(log::System::new(
+                tx.subscribe(),
+                log::Parameters {
+                    max_duration: Duration::from_secs(5),
+                    max_length: 8,
+                },
+            )),
+        },
+        systems: Systems {
+            building_artist: building_artist::System::new(),
+            carousel: carousel::System::new(),
+            chair_artist: chair_artist::System::new(),
+            global_computer: global_computer::System::new(),
+            skier_colors: systems::skier_colors::System::new(
+                systems::skier_colors::AbilityColors {
+                    intermedite: Rgb::new(0.01, 0.41, 0.76),
+                    advanced: Rgb::new(0.86, 0.01, 0.01),
+                    expert: Rgb::new(0.01, 0.01, 0.01),
+                },
+            ),
+            terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
+                piste: terrain_artist::AbilityColors {
+                    beginner: Rgba::new(0, 98, 19, 128),
+                    intermedite: Rgba::new(3, 105, 194, 128),
+                    advanced: Rgba::new(219, 2, 3, 128),
+                    expert: Rgba::new(3, 2, 3, 128),
+                    ungraded: Rgba::new(238, 76, 2, 128),
+                },
+                highlight: terrain_artist::AbilityColors {
+                    beginner: Rgba::new(0, 98, 19, 192),
+                    intermedite: Rgba::new(3, 105, 194, 192),
+                    advanced: Rgba::new(219, 2, 3, 192),
+                    expert: Rgba::new(3, 2, 3, 192),
+                    ungraded: Rgba::new(238, 76, 2, 192),
+                },
+                cliff: Rgba::new(6, 6, 6, 128),
+            }),
+            messenger: messenger::System::new(tx),
+            tree_artist: tree_artist::System::new(),
+            window_artist: window_artist::System::new(),
+        },
+        bindings: Bindings {
+            action: Binding::Single {
+                button: Button::Mouse(MouseButton::Left),
+                state: ButtonState::Pressed,
+            },
+            clock_handler: handlers::clock::Bindings {
+                slow_down: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from(",")),
+                    state: ButtonState::Pressed,
+                },
+                speed_up: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from(".")),
+                    state: ButtonState::Pressed,
+                },
+            },
+            compute: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::from("c")),
+                state: ButtonState::Pressed,
+            },
+            drag: drag::Bindings {
+                start_dragging: Binding::Single {
+                    button: Button::Mouse(MouseButton::Right),
+                    state: ButtonState::Pressed,
+                },
+                stop_dragging: Binding::Single {
+                    button: Button::Mouse(MouseButton::Right),
+                    state: ButtonState::Released,
+                },
+            },
+            main_menu: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::Escape),
+                state: ButtonState::Released,
+            },
+            mode: HashMap::from([
+                (
+                    mode::Mode::Open,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("o")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Query,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("?")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Piste,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("p")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Path,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("w")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Lift,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("l")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Gate,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("g")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Building,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("h")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Door,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("d")),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+                (
+                    mode::Mode::Demolish,
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::Backspace),
+                        state: ButtonState::Pressed,
+                    },
+                ),
+            ]),
+            piste_mode: piste_build_mode::Bindings {
+                build: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::Shift),
+                    state: ButtonState::Released,
+                },
+                erase: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::Shift),
+                    state: ButtonState::Pressed,
+                },
+            },
+            selection: selection::Bindings {
+                first_cell: Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
+                    state: ButtonState::Pressed,
+                },
+                second_cell: Binding::Single {
+                    button: Button::Mouse(MouseButton::Left),
+                    state: ButtonState::Released,
+                },
+                start_clearing: Binding::Single {
+                    button: Button::Mouse(MouseButton::Right),
+                    state: ButtonState::Pressed,
+                },
+                finish_clearing: Binding::Single {
+                    button: Button::Mouse(MouseButton::Right),
+                    state: ButtonState::Released,
+                },
+            },
+            target_lift: Binding::Single {
+                button: Button::Keyboard(KeyboardKey::from("t")),
+                state: ButtonState::Pressed,
+            },
+            yaw: yaw::Bindings {
+                plus: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("e")),
+                    state: ButtonState::Pressed,
+                },
+                minus: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("q")),
+                    state: ButtonState::Pressed,
+                },
+            },
+            zoom: zoom::Bindings {
+                plus: Binding::Multi(vec![
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("+")),
+                        state: ButtonState::Pressed,
+                    },
+                    Binding::Single {
+                        button: Button::Mouse(MouseButton::WheelUp),
+                        state: ButtonState::Pressed,
+                    },
+                ]),
+                minus: Binding::Multi(vec![
+                    Binding::Single {
+                        button: Button::Keyboard(KeyboardKey::from("-")),
+                        state: ButtonState::Pressed,
+                    },
+                    Binding::Single {
+                        button: Button::Mouse(MouseButton::WheelDown),
+                        state: ButtonState::Pressed,
+                    },
+                ]),
+            },
+        },
+        mouse_xy: None,
+        components,
+        load: None,
+    }
 }
 
 fn new_components() -> Components {
@@ -400,6 +405,7 @@ struct Game {
     bindings: Bindings,
     widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
+    load: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -511,6 +517,13 @@ impl Game {
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
+        if let Some(file) = &self.load {
+            *self = get_game(file);
+            graphics.clear();
+            self.init(graphics);
+            // self.systems.messenger.send(format!("Loaded {}", file));
+        }
+
         match event {
             Event::Init => self.init(graphics),
             Event::MouseMoved(xy) => self.mouse_xy = Some(*xy),

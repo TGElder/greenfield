@@ -47,5 +47,5 @@ impl ContextWidget<(), ()> for Widget {
             });
     }
 
-    fn update(&self, _: ()) {}
+    fn update(&mut self, _: ()) {}
 }

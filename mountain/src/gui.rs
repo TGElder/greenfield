@@ -5,9 +5,8 @@ use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
-use crate::widgets::{
-    building_editor, main_menu, piste_build_mode, toaster, ContextWidget, UiWidget,
-};
+use crate::widgets::menu::{load_dialog, main_menu};
+use crate::widgets::{building_editor, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -191,6 +190,9 @@ pub fn run(
         components: &mut game.components,
         engine,
         messenger: &mut game.systems.messenger,
+        load_dialog: load_dialog::Output {
+            load: &mut game.load,
+        },
     });
 
     game.widgets

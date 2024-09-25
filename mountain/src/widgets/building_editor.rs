@@ -87,7 +87,7 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
         });
     }
 
-    fn update(&self, output: Output) {
+    fn update(&mut self, output: Output) {
         let Some(State {
             building_id,
             height,
