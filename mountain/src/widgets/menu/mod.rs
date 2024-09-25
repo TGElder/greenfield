@@ -35,24 +35,23 @@ pub struct Output<'a> {
 
 impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
     fn init(&mut self, input: Input) {
-        match &mut self.page {
-            Page::Closed => {
-                if input.binding.binds_event(input.event) {
-                    let mut widget = main::Widget::default();
-                    widget.init(());
-                    self.page = Page::Main(widget);
-                }
-            }
-            Page::Main(ref mut widget) => {
-                if input.binding.binds_event(input.event) {
+        if input.binding.binds_event(input.event) {
+            match &mut self.page {
+                Page::Closed => self.page = Page::Main(main::Widget::default()),
+                Page::Main(_) => {
                     self.page = Page::Closed;
-                } else {
-                    widget.init(());
                 }
+                _ => {}
+            }
+        }
+        match &mut self.page {
+            Page::Main(ref mut widget) => {
+                widget.init(());
             }
             Page::LoadDialog(ref mut widget) => {
                 widget.init(());
             }
+            _ => {}
         }
     }
 
