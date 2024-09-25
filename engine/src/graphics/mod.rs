@@ -79,4 +79,6 @@ pub trait Graphics {
     fn world_xyz_at(&mut self, screen_xy: &XY<u32>) -> Result<XYZ<f32>, IndexError>;
 
     fn projection(&mut self) -> &mut Box<dyn Projection>;
+
+    fn clear(&mut self);
 }
