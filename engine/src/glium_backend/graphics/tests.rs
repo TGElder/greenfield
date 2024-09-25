@@ -107,6 +107,8 @@ fn render_cube() {
     let expected = image::open("test_resources/graphics/render_cube_rear.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -204,6 +206,8 @@ fn render_cube_dynamic() {
         image::open("test_resources/graphics/render_cube_dynamic_one_cube_invisible.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -314,6 +318,8 @@ fn instanced_cubes() {
         image::open("test_resources/graphics/instance_cubes_with_single_cube.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -385,6 +391,8 @@ fn render_billboard() {
 
     assert!(difference < max_difference);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -529,6 +537,8 @@ fn render_overlay_quads() {
         image::open("test_resources/graphics/render_overlay_quads_modified.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -586,6 +596,8 @@ fn look_at() {
     let actual = image::open(temp_path).unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -674,6 +686,8 @@ fn drag_handler() {
     let expected = image::open("test_resources/graphics/drag_handler.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -786,6 +800,8 @@ fn yaw_handler() {
     let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -899,6 +915,8 @@ fn zoom_handler() {
     let expected = image::open("test_resources/graphics/zoom_handler_2.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
+    clear(&mut graphics);
     event_loop.exit();
 }
 
@@ -961,5 +979,24 @@ fn resize_handler() {
     let expected = image::open("test_resources/graphics/resize_handler.png").unwrap();
     assert_eq!(actual, expected);
 
+    // finally
     event_loop.exit();
+}
+
+fn clear(graphics: &mut dyn Graphics) {
+    // when
+    graphics.clear();
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/clear.png").unwrap();
+    let difference = commons::image::difference(&actual, &expected).unwrap();
+    let max_difference = (256 * 256 * (255 * 3)) / 1000;
+
+    assert!(difference < max_difference);
 }

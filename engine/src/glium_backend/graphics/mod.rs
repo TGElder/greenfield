@@ -796,6 +796,15 @@ impl Graphics for GliumGraphics {
     fn projection(&mut self) -> &mut Box<dyn Projection> {
         &mut self.projection
     }
+
+    fn clear(&mut self) {
+        self.textures.clear();
+        self.primitives.clear();
+        self.dynamic_primitives.clear();
+        self.overlay_primitives.clear();
+        self.billboards.clear();
+        self.instanced_primitives.clear();
+    }
 }
 
 struct Primitive {
