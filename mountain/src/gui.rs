@@ -5,9 +5,7 @@ use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
-use crate::widgets::{
-    building_editor, main_menu, piste_build_mode, toaster, ContextWidget, UiWidget,
-};
+use crate::widgets::{building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
 
 struct ModeButton {
@@ -89,7 +87,7 @@ const MODE_BUTTONS: [ModeButton; 10] = [
 pub struct Widgets {
     pub building_editor: building_editor::Widget,
     pub piste_build_mode: piste_build_mode::Widget,
-    pub main_menu: main_menu::Widget,
+    pub menu: menu::Widget,
     pub toaster: toaster::Widget,
 }
 
@@ -122,9 +120,11 @@ pub fn run(
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
 
-    game.widgets.main_menu.init(main_menu::Input {
+    game.widgets.menu.init(menu::Input {
         event,
         binding: &game.bindings.main_menu,
+        save_directory: &game.config.save_directory,
+        save_extension: &game.config.save_extension,
     });
     game.widgets.building_editor.init(building_editor::Input {
         mode: build_mode,
@@ -139,7 +139,7 @@ pub fn run(
     game.widgets.toaster.init(());
     graphics.draw_gui(&mut |ctx| {
         ctx.set_pixels_per_point(1.5);
-        game.widgets.main_menu.draw(ctx);
+        game.widgets.menu.draw(ctx);
         game.widgets.toaster.draw(ctx);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
             ui.horizontal(|ui| {
@@ -187,10 +187,13 @@ pub fn run(
         });
     });
 
-    game.widgets.main_menu.update(main_menu::Output {
+    game.widgets.menu.update(menu::Output {
         components: &mut game.components,
         engine,
         messenger: &mut game.systems.messenger,
+        save_directory: &game.config.save_directory,
+        save_extension: &game.config.save_extension,
+        file_to_load: &mut game.file_to_load,
     });
 
     game.widgets
