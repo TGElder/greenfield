@@ -15,7 +15,7 @@ mod widgets;
 
 use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
-use std::fs::File;
+use std::fs::{create_dir_all, File};
 use std::io::BufReader;
 use std::time::Duration;
 
@@ -501,6 +501,7 @@ pub struct Services {
 
 impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
+        self.try_create_save_directory();
         let terrain = &self.components.terrain;
         self.systems.chair_artist.init(graphics);
         self.systems.terrain_artist.init(graphics, terrain);
@@ -514,6 +515,17 @@ impl Game {
             ),
             &xy(256, 256),
         );
+    }
+
+    fn try_create_save_directory(&mut self) {
+        if let Err(e) = create_dir_all(self.config.save_directory.clone()) {
+            let message = format!(
+                "Could not create save directory {}",
+                self.config.save_directory
+            );
+            eprintln!("{}: {}", message, e);
+            self.systems.messenger.send(message);
+        }
     }
 }
 
