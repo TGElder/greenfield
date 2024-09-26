@@ -45,14 +45,14 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             });
     }
 
-    fn update(&mut self, value: Output<'a>) {
+    fn update(&mut self, output: Output<'a>) {
         self.save_picker.update(());
         if self.load {
-            *value.file_to_load = Some(format!(
+            *output.file_to_load = Some(format!(
                 "{}{}.{}",
-                value.save_directory,
+                output.save_directory,
                 self.save_picker.focus(),
-                value.save_extension
+                output.save_extension
             ));
         }
     }
