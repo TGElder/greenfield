@@ -9,16 +9,6 @@ pub struct Widget {
     pub cancel: bool,
 }
 
-impl Widget {
-    pub fn new() -> Self {
-        Widget {
-            save_picker: save_picker::Widget::default(),
-            load: false,
-            cancel: false,
-        }
-    }
-}
-
 pub struct Input<'a> {
     pub save_directory: &'a str,
     pub save_extension: &'a str,
