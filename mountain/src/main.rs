@@ -71,7 +71,7 @@ use crate::widgets::{building_editor, menu, toaster};
 fn main() {
     let max_z = 4096.0;
 
-    let components = load_components_or_default("default.save");
+    let components = new_components();
 
     let engine = glium_backend::engine::GliumEngine::new(
         load_game(components),
@@ -102,14 +102,6 @@ fn main() {
     .unwrap();
 
     engine.run();
-}
-
-fn load_components_or_default(file: &str) -> Components {
-    if let Some(loaded_components) = load_components(file) {
-        loaded_components
-    } else {
-        new_components()
-    }
 }
 
 fn load_components(path: &str) -> Option<Components> {
@@ -350,6 +342,10 @@ fn load_game(components: Components) -> Game {
                 ]),
             },
         },
+        config: Config {
+            save_directory: "./saves/".to_string(),
+            save_extension: "save".to_string(),
+        },
         mouse_xy: None,
         components,
         file_to_load: None,
@@ -403,6 +399,7 @@ struct Game {
     handlers: Handlers,
     systems: Systems,
     bindings: Bindings,
+    config: Config,
     widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
     file_to_load: Option<String>,
@@ -487,6 +484,11 @@ pub struct Bindings {
     yaw: yaw::Bindings,
     zoom: zoom::Bindings,
     mode: HashMap<mode::Mode, Binding>,
+}
+
+pub struct Config {
+    save_directory: String,
+    save_extension: String,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -19,6 +19,8 @@ pub struct Output<'a> {
     pub components: &'a mut Components,
     pub engine: &'a mut dyn Engine,
     pub messenger: &'a mut messenger::System,
+    pub save_directory: &'a str,
+    pub save_extension: &'a str,
 }
 
 impl<'a> ContextWidget<(), Output<'a>> for Widget {
@@ -42,7 +44,11 @@ impl<'a> ContextWidget<(), Output<'a>> for Widget {
     fn update(&mut self, output: Output<'a>) {
         if self.save {
             output.messenger.send("Saving...");
-            save::trigger(output.components);
+            save::trigger(
+                output.components,
+                output.save_directory,
+                output.save_extension,
+            );
             output.messenger.send("Saved game");
         }
 

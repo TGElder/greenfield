@@ -123,6 +123,8 @@ pub fn run(
     game.widgets.menu.init(menu::Input {
         event,
         binding: &game.bindings.main_menu,
+        save_directory: &game.config.save_directory,
+        save_extension: &game.config.save_extension,
     });
     game.widgets.building_editor.init(building_editor::Input {
         mode: build_mode,
@@ -189,6 +191,8 @@ pub fn run(
         components: &mut game.components,
         engine,
         messenger: &mut game.systems.messenger,
+        save_directory: &game.config.save_directory,
+        save_extension: &game.config.save_extension,
         file_to_load: &mut game.file_to_load,
     });
 

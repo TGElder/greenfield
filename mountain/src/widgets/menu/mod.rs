@@ -24,12 +24,16 @@ pub enum Page {
 pub struct Input<'a> {
     pub event: &'a engine::events::Event,
     pub binding: &'a Binding,
+    pub save_directory: &'a str,
+    pub save_extension: &'a str,
 }
 
 pub struct Output<'a> {
     pub components: &'a mut Components,
     pub engine: &'a mut dyn Engine,
     pub messenger: &'a mut messenger::System,
+    pub save_directory: &'a str,
+    pub save_extension: &'a str,
     pub file_to_load: &'a mut Option<String>,
 }
 
@@ -49,7 +53,10 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                 widget.init(());
             }
             Page::LoadDialog(ref mut widget) => {
-                widget.init(());
+                widget.init(load_dialog::Input {
+                    save_directory: input.save_directory,
+                    save_extension: input.save_extension,
+                });
             }
             _ => {}
         }
@@ -76,6 +83,8 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                     components: output.components,
                     engine: output.engine,
                     messenger: output.messenger,
+                    save_directory: output.save_directory,
+                    save_extension: output.save_extension,
                 });
                 if widget.load {
                     new_page = Some(Page::LoadDialog(load_dialog::Widget::default()));
@@ -83,6 +92,8 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             }
             Page::LoadDialog(ref mut widget) => {
                 widget.update(load_dialog::Output {
+                    save_directory: output.save_directory,
+                    save_extension: output.save_extension,
                     file_to_load: output.file_to_load,
                 });
                 if widget.cancel {
