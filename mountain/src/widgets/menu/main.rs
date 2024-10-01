@@ -11,9 +11,10 @@ use crate::Components;
 #[derive(Default)]
 pub struct Widget {
     pub save_file: Option<String>,
-    pub quit: bool,
-    pub load: bool,
+    pub save_as: bool,
     pub save: bool,
+    pub load: bool,
+    pub quit: bool,
 }
 
 pub struct Input<'a> {
@@ -23,9 +24,9 @@ pub struct Input<'a> {
 pub struct Output<'a> {
     pub components: &'a mut Components,
     pub engine: &'a mut dyn Engine,
-    pub messenger: &'a mut messenger::System,
     pub save_directory: &'a str,
     pub save_extension: &'a str,
+    pub messenger: &'a mut messenger::System,
 }
 
 impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
@@ -41,10 +42,11 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
-                    self.load = ui.button("Load").clicked();
+                    self.save_as = ui.button("Save As").clicked();
                     if let Some(save_file) = &self.save_file {
-                        self.save = ui.button(format!("Save as \"{}\"", save_file)).clicked();
+                        self.save = ui.button(format!("Save to \"{}\"", save_file)).clicked();
                     }
+                    self.load = ui.button("Load").clicked();
                     self.quit = ui.button("Quit").clicked();
                 });
             });
@@ -53,18 +55,13 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
     fn update(&mut self, output: Output<'a>) {
         if self.save {
             if let Some(save_file) = &self.save_file {
-                output
-                    .messenger
-                    .send(format!("Saving game to {}", save_file));
                 save::trigger(
                     output.components,
                     save_file,
                     output.save_directory,
                     output.save_extension,
+                    output.messenger,
                 );
-                output
-                    .messenger
-                    .send(format!("Saved game to {}", save_file));
             }
         }
 

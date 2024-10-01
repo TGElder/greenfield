@@ -1,5 +1,6 @@
 mod load_dialog;
 mod main;
+mod save_as_dialog;
 
 use engine::binding::Binding;
 use engine::engine::Engine;
@@ -18,6 +19,7 @@ pub enum Page {
     #[default]
     Closed,
     Main(main::Widget),
+    SaveAsDialog(save_as_dialog::Widget),
     LoadDialog(load_dialog::Widget),
 }
 
@@ -33,6 +35,7 @@ pub struct Output<'a> {
     pub components: &'a mut Components,
     pub engine: &'a mut dyn Engine,
     pub messenger: &'a mut messenger::System,
+    pub save_file: &'a mut Option<String>,
     pub save_directory: &'a str,
     pub save_extension: &'a str,
     pub file_to_load: &'a mut Option<String>,
@@ -55,6 +58,9 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                     save_file: input.save_file,
                 });
             }
+            Page::SaveAsDialog(ref mut widget) => {
+                widget.init(());
+            }
             Page::LoadDialog(ref mut widget) => {
                 widget.init(load_dialog::Input {
                     save_directory: input.save_directory,
@@ -71,6 +77,9 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             Page::Main(ref mut widget) => {
                 widget.draw(ctx);
             }
+            Page::SaveAsDialog(ref mut widget) => {
+                widget.draw(ctx);
+            }
             Page::LoadDialog(ref mut widget) => {
                 widget.draw(ctx);
             }
@@ -85,12 +94,28 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                 widget.update(main::Output {
                     components: output.components,
                     engine: output.engine,
-                    messenger: output.messenger,
                     save_directory: output.save_directory,
                     save_extension: output.save_extension,
+                    messenger: output.messenger,
                 });
+                if widget.save_as {
+                    let save_file = output.save_file.clone().unwrap_or_default();
+                    new_page = Some(Page::SaveAsDialog(save_as_dialog::Widget::new(save_file)));
+                }
                 if widget.load {
                     new_page = Some(Page::LoadDialog(load_dialog::Widget::default()));
+                }
+            }
+            Page::SaveAsDialog(ref mut widget) => {
+                widget.update(save_as_dialog::Output {
+                    components: output.components,
+                    save_file: output.save_file,
+                    save_directory: output.save_directory,
+                    save_extension: output.save_extension,
+                    messenger: output.messenger,
+                });
+                if widget.save || widget.cancel {
+                    new_page = Some(Page::Main(main::Widget::default()));
                 }
             }
             Page::LoadDialog(ref mut widget) => {

@@ -192,6 +192,7 @@ pub fn run(
         components: &mut game.components,
         engine,
         messenger: &mut game.systems.messenger,
+        save_file: &mut game.config.save_file,
         save_directory: &game.config.save_directory,
         save_extension: &game.config.save_extension,
         file_to_load: &mut game.file_to_load,
