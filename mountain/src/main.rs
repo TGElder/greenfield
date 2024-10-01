@@ -74,7 +74,7 @@ fn main() {
     let components = new_components();
 
     let engine = glium_backend::engine::GliumEngine::new(
-        load_game(components),
+        new_game(components, None),
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
         },
@@ -109,7 +109,7 @@ fn load_components(path: &str) -> Option<Components> {
     bincode::deserialize_from(BufReader::new(file)).ok()
 }
 
-fn load_game(components: Components) -> Game {
+fn new_game(components: Components, save_file: Option<String>) -> Game {
     let (tx, _) = broadcast::channel(1000);
     Game {
         controllers: Controllers {
@@ -343,6 +343,7 @@ fn load_game(components: Components) -> Game {
             },
         },
         config: Config {
+            save_file,
             save_directory: "./saves/".to_string(),
             save_extension: "save".to_string(),
         },
@@ -487,6 +488,7 @@ pub struct Bindings {
 }
 
 pub struct Config {
+    save_file: Option<String>,
     save_directory: String,
     save_extension: String,
 }
@@ -527,24 +529,31 @@ impl Game {
             self.systems.messenger.send(message);
         }
     }
+
+    fn load(&mut self, file: String, graphics: &mut dyn Graphics) {
+        let components = load_components(&format!(
+            "{}{}.{}",
+            self.config.save_directory, &file, self.config.save_extension
+        ));
+        match components {
+            Some(components) => {
+                *self = new_game(components, Some(file));
+                graphics.clear();
+                self.init(graphics);
+            }
+            None => {
+                self.systems
+                    .messenger
+                    .send(format!("Could not load {}", file));
+            }
+        }
+    }
 }
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
         if let Some(file) = &self.file_to_load {
-            let components = load_components(file);
-            match components {
-                Some(components) => {
-                    *self = load_game(components);
-                    graphics.clear();
-                    self.init(graphics);
-                }
-                None => {
-                    self.systems
-                        .messenger
-                        .send(format!("Could not load {}", file));
-                }
-            }
+            self.load(file.clone(), graphics);
         }
 
         match event {

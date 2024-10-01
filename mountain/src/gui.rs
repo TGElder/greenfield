@@ -123,6 +123,7 @@ pub fn run(
     game.widgets.menu.init(menu::Input {
         event,
         binding: &game.bindings.main_menu,
+        save_file: &game.config.save_file,
         save_directory: &game.config.save_directory,
         save_extension: &game.config.save_extension,
     });
