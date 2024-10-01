@@ -15,8 +15,6 @@ pub struct Input<'a> {
 }
 
 pub struct Output<'a> {
-    pub save_directory: &'a str,
-    pub save_extension: &'a str,
     pub file_to_load: &'a mut Option<String>,
 }
 
@@ -48,12 +46,7 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
     fn update(&mut self, output: Output<'a>) {
         self.save_picker.update(());
         if self.load {
-            *output.file_to_load = Some(format!(
-                "{}{}.{}",
-                output.save_directory,
-                self.save_picker.focus(),
-                output.save_extension
-            ));
+            *output.file_to_load = Some(self.save_picker.focus().to_string());
         }
     }
 }

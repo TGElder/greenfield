@@ -10,9 +10,14 @@ use crate::Components;
 
 #[derive(Default)]
 pub struct Widget {
+    pub save_file: Option<String>,
     pub quit: bool,
     pub load: bool,
     pub save: bool,
+}
+
+pub struct Input<'a> {
+    pub save_file: &'a Option<String>,
 }
 
 pub struct Output<'a> {
@@ -23,8 +28,10 @@ pub struct Output<'a> {
     pub save_extension: &'a str,
 }
 
-impl<'a> ContextWidget<(), Output<'a>> for Widget {
-    fn init(&mut self, _: ()) {}
+impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
+    fn init(&mut self, input: Input) {
+        self.save_file = input.save_file.clone();
+    }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
         egui::Window::new("Main Menu")
@@ -35,7 +42,9 @@ impl<'a> ContextWidget<(), Output<'a>> for Widget {
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
                     self.load = ui.button("Load").clicked();
-                    self.save = ui.button("Save").clicked();
+                    if let Some(save_file) = &self.save_file {
+                        self.save = ui.button(format!("Save as \"{}\"", save_file)).clicked();
+                    }
                     self.quit = ui.button("Quit").clicked();
                 });
             });
@@ -43,13 +52,20 @@ impl<'a> ContextWidget<(), Output<'a>> for Widget {
 
     fn update(&mut self, output: Output<'a>) {
         if self.save {
-            output.messenger.send("Saving...");
-            save::trigger(
-                output.components,
-                output.save_directory,
-                output.save_extension,
-            );
-            output.messenger.send("Saved game");
+            if let Some(save_file) = &self.save_file {
+                output
+                    .messenger
+                    .send(format!("Saving game to {}", save_file));
+                save::trigger(
+                    output.components,
+                    save_file,
+                    output.save_directory,
+                    output.save_extension,
+                );
+                output
+                    .messenger
+                    .send(format!("Saved game to {}", save_file));
+            }
         }
 
         if self.quit {
