@@ -734,15 +734,24 @@ fn yaw_handler() {
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
         initial_angle: 5,
         angles: 16,
+        step_angles: 1,
     });
     let bindings = yaw::Bindings {
-        plus: Binding::Single {
+        step_plus: Binding::Single {
             button: Button::Keyboard(KeyboardKey::from("+")),
             state: ButtonState::Pressed,
         },
-        minus: Binding::Single {
+        step_minus: Binding::Single {
             button: Button::Keyboard(KeyboardKey::from("-")),
             state: ButtonState::Pressed,
+        },
+        mouse_yaw_enable: Binding::Single {
+            button: Button::Mouse(MouseButton::Middle),
+            state: ButtonState::Pressed,
+        },
+        mouse_yaw_disable: Binding::Single {
+            button: Button::Mouse(MouseButton::Middle),
+            state: ButtonState::Released,
         },
     };
 
@@ -776,7 +785,37 @@ fn yaw_handler() {
     // when
     yaw_handler.handle(
         &bindings,
-        &Event::MouseMoved(xy(100, 150)),
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::from("-")),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    yaw_handler.handle(
+        &bindings,
+        &Event::Button {
+            button: Button::Mouse(MouseButton::Middle),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &bindings,
+        &Event::MouseMoved(xy(99, 150)),
         &mut MockEngine {},
         &mut graphics,
     );
@@ -797,7 +836,61 @@ fn yaw_handler() {
 
     // then
     let actual = image::open(temp_path).unwrap();
-    let expected = image::open("test_resources/graphics/yaw_handler_2.png").unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_3.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    yaw_handler.handle(
+        &bindings,
+        &Event::MouseMoved(xy(100, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &bindings,
+        &Event::Button {
+            button: Button::Keyboard(KeyboardKey::from("+")),
+            state: ButtonState::Pressed,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_4.png").unwrap();
+    assert_eq!(actual, expected);
+
+    // when
+    yaw_handler.handle(
+        &bindings,
+        &Event::Button {
+            button: Button::Mouse(MouseButton::Middle),
+            state: ButtonState::Released,
+        },
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    yaw_handler.handle(
+        &bindings,
+        &Event::MouseMoved(xy(99, 150)),
+        &mut MockEngine {},
+        &mut graphics,
+    );
+    graphics.render().unwrap();
+
+    let temp_path = temp_dir().join("test.png");
+    let temp_path = temp_path.to_str().unwrap();
+    graphics.screenshot(temp_path).unwrap();
+
+    // then
+    let actual = image::open(temp_path).unwrap();
+    let expected = image::open("test_resources/graphics/yaw_handler_4.png").unwrap();
     assert_eq!(actual, expected);
 
     // finally

@@ -125,8 +125,9 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             piste_highlighter: piste_highlighter::Handler::default(),
             selection: selection::Handler::new(),
             yaw: yaw::Handler::new(yaw::Parameters {
-                initial_angle: 5,
-                angles: 16,
+                initial_angle: 108,
+                angles: 360,
+                step_angles: 30,
             }),
             zoom: zoom::Handler::new(zoom::Parameters {
                 initial_level: 1,
@@ -310,13 +311,21 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                 state: ButtonState::Pressed,
             },
             yaw: yaw::Bindings {
-                plus: Binding::Single {
+                step_plus: Binding::Single {
                     button: Button::Keyboard(KeyboardKey::from("e")),
                     state: ButtonState::Pressed,
                 },
-                minus: Binding::Single {
+                step_minus: Binding::Single {
                     button: Button::Keyboard(KeyboardKey::from("q")),
                     state: ButtonState::Pressed,
+                },
+                mouse_yaw_enable: Binding::Single {
+                    button: Button::Mouse(MouseButton::Middle),
+                    state: ButtonState::Pressed,
+                },
+                mouse_yaw_disable: Binding::Single {
+                    button: Button::Mouse(MouseButton::Middle),
+                    state: ButtonState::Released,
                 },
             },
             zoom: zoom::Bindings {
