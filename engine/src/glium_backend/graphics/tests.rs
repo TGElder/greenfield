@@ -1088,8 +1088,5 @@ fn clear(graphics: &mut dyn Graphics) {
     // then
     let actual = image::open(temp_path).unwrap();
     let expected = image::open("test_resources/graphics/clear.png").unwrap();
-    let difference = commons::image::difference(&actual, &expected).unwrap();
-    let max_difference = (256 * 256 * (255 * 3)) / 1000;
-
-    assert!(difference < max_difference);
+    assert_eq!(actual, expected);
 }
