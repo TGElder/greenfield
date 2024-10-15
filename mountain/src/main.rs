@@ -310,7 +310,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                 button: Button::Keyboard(KeyboardKey::from("x")),
                 state: ButtonState::Pressed,
             },
-            view: ViewBindings {
+            view: handlers::view::Bindings {
                 toggle_pistes: Binding::Single {
                     button: Button::Keyboard(KeyboardKey::from("P")),
                     state: ButtonState::Pressed,
@@ -506,15 +506,9 @@ pub struct Bindings {
     mode: HashMap<mode::Mode, Binding>,
     selection: selection::Bindings,
     target_lift: Binding,
-    view: ViewBindings,
+    view: handlers::view::Bindings,
     yaw: yaw::Bindings,
     zoom: zoom::Bindings,
-}
-
-pub struct ViewBindings {
-    toggle_pistes: Binding,
-    toggle_trees: Binding,
-    toggle_skier_ability: Binding,
 }
 
 pub struct Config {
@@ -658,6 +652,16 @@ impl EventHandler for Game {
             &self.bindings,
             &mut self.components.services.mode,
             &mut self.components.selection,
+        );
+        handlers::view::handle(
+            event,
+            handlers::view::Parameters {
+                bindings: &self.bindings.view,
+                terrain_artist: &mut self.systems.terrain_artist,
+                tree_artist: &mut self.systems.tree_artist,
+                skier_colors: &mut self.systems.skier_colors,
+                graphics,
+            },
         );
 
         self.controllers
