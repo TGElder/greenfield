@@ -307,8 +307,22 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                 },
             },
             target_lift: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("t")),
+                button: Button::Keyboard(KeyboardKey::from("x")),
                 state: ButtonState::Pressed,
+            },
+            view: ViewBindings {
+                toggle_pistes: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("P")),
+                    state: ButtonState::Pressed,
+                },
+                toggle_trees: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("t")),
+                    state: ButtonState::Pressed,
+                },
+                toggle_skier_ability: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("a")),
+                    state: ButtonState::Pressed,
+                },
             },
             yaw: yaw::Bindings {
                 step_plus: Binding::Single {
@@ -489,11 +503,18 @@ pub struct Bindings {
     drag: drag::Bindings,
     piste_mode: piste_build_mode::Bindings,
     main_menu: Binding,
+    mode: HashMap<mode::Mode, Binding>,
     selection: selection::Bindings,
     target_lift: Binding,
+    view: ViewBindings,
     yaw: yaw::Bindings,
     zoom: zoom::Bindings,
-    mode: HashMap<mode::Mode, Binding>,
+}
+
+pub struct ViewBindings {
+    toggle_pistes: Binding,
+    toggle_trees: Binding,
+    toggle_skier_ability: Binding,
 }
 
 pub struct Config {

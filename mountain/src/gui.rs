@@ -162,19 +162,28 @@ pub fn run(
                 ui.vertical(|ui| {
                     ui.label("View");
                     ui.horizontal(|ui| {
-                        let pistes = ui.button("⛷").on_hover_text("Pistes");
+                        let pistes = ui.button("⛷").on_hover_text(format!(
+                            "Pistes ({})",
+                            describe_binding(&game.bindings.view.toggle_pistes)
+                        ));
                         view_pistes_clicked = pistes.clicked();
                         if game.systems.terrain_artist.is_showing_pistes() {
                             pistes.highlight();
                         }
 
-                        let trees = ui.button("🌲").on_hover_text("Trees");
+                        let trees = ui.button("🌲").on_hover_text(format!(
+                            "Trees ({})",
+                            describe_binding(&game.bindings.view.toggle_trees)
+                        ));
                         view_trees_clicked = trees.clicked();
                         if game.systems.tree_artist.is_visible() {
                             trees.highlight();
                         }
 
-                        let skier_abilities = ui.button("📊").on_hover_text("Skier Abilities");
+                        let skier_abilities = ui.button("📊").on_hover_text(format!(
+                            "Skier Abilities ({})",
+                            describe_binding(&game.bindings.view.toggle_skier_ability)
+                        ));
                         view_skier_abilities_clicked = skier_abilities.clicked();
                         if game.systems.skier_colors.is_showing_ability() {
                             skier_abilities.highlight();
