@@ -125,9 +125,9 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             piste_highlighter: piste_highlighter::Handler::default(),
             selection: selection::Handler::new(),
             yaw: yaw::Handler::new(yaw::Parameters {
-                initial_angle: 108,
-                angles: 360,
-                step_angles: 30,
+                initial_angle: 216,
+                angles: 720,
+                step_angles: 60,
             }),
             zoom: zoom::Handler::new(zoom::Parameters {
                 initial_level: 1,
