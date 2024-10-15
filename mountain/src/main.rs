@@ -307,8 +307,22 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                 },
             },
             target_lift: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("t")),
+                button: Button::Keyboard(KeyboardKey::from("x")),
                 state: ButtonState::Pressed,
+            },
+            view: handlers::view::Bindings {
+                toggle_pistes: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("P")),
+                    state: ButtonState::Pressed,
+                },
+                toggle_trees: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("t")),
+                    state: ButtonState::Pressed,
+                },
+                toggle_skier_ability: Binding::Single {
+                    button: Button::Keyboard(KeyboardKey::from("a")),
+                    state: ButtonState::Pressed,
+                },
             },
             yaw: yaw::Bindings {
                 step_plus: Binding::Single {
@@ -489,11 +503,12 @@ pub struct Bindings {
     drag: drag::Bindings,
     piste_mode: piste_build_mode::Bindings,
     main_menu: Binding,
+    mode: HashMap<mode::Mode, Binding>,
     selection: selection::Bindings,
     target_lift: Binding,
+    view: handlers::view::Bindings,
     yaw: yaw::Bindings,
     zoom: zoom::Bindings,
-    mode: HashMap<mode::Mode, Binding>,
 }
 
 pub struct Config {
@@ -637,6 +652,16 @@ impl EventHandler for Game {
             &self.bindings,
             &mut self.components.services.mode,
             &mut self.components.selection,
+        );
+        handlers::view::handle(
+            event,
+            handlers::view::Parameters {
+                bindings: &self.bindings.view,
+                terrain_artist: &mut self.systems.terrain_artist,
+                tree_artist: &mut self.systems.tree_artist,
+                skier_colors: &mut self.systems.skier_colors,
+                graphics,
+            },
         );
 
         self.controllers

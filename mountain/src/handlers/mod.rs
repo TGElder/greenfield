@@ -8,3 +8,4 @@ pub mod piste_build_mode;
 pub mod piste_computer;
 pub mod piste_highlighter;
 pub mod selection;
+pub mod view;
