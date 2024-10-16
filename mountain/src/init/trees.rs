@@ -15,6 +15,7 @@ const BORDER_ELEVATION: f32 = 192.0; // Tree probability is 1.0 at elevation 0 b
 const SEA_LEVEL_MAX_TREE_HEIGHT: f32 = 40.0;
 const TREE_LINE_MAX_TREE_HEIGHT: f32 = 1.0;
 
+#[derive(Clone)]
 pub struct Parameters {
     pub power: u32,
     pub tree_line_elevation: f32,

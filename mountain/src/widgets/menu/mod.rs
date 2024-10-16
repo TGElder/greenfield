@@ -1,5 +1,6 @@
 mod load_dialog;
 mod main;
+mod new_game;
 mod save_as_dialog;
 
 use engine::binding::Binding;
@@ -19,6 +20,7 @@ pub enum Page {
     #[default]
     Closed,
     Main(main::Widget),
+    NewGameDialog(new_game::Widget),
     SaveAsDialog(save_as_dialog::Widget),
     LoadDialog(load_dialog::Widget),
 }
@@ -58,6 +60,9 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                     save_file: input.save_file,
                 });
             }
+            Page::NewGameDialog(ref mut widget) => {
+                widget.init(());
+            }
             Page::SaveAsDialog(ref mut widget) => {
                 widget.init(());
             }
@@ -75,6 +80,9 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
         match &mut self.page {
             Page::Closed => {}
             Page::Main(ref mut widget) => {
+                widget.draw(ctx);
+            }
+            Page::NewGameDialog(ref mut widget) => {
                 widget.draw(ctx);
             }
             Page::SaveAsDialog(ref mut widget) => {
@@ -98,12 +106,23 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
                     save_extension: output.save_extension,
                     messenger: output.messenger,
                 });
+                if widget.new_game {
+                    new_page = Some(Page::NewGameDialog(new_game::Widget::new()));
+                }
                 if widget.save_as {
                     let save_file = output.save_file.clone().unwrap_or_default();
                     new_page = Some(Page::SaveAsDialog(save_as_dialog::Widget::new(save_file)));
                 }
                 if widget.load {
                     new_page = Some(Page::LoadDialog(load_dialog::Widget::default()));
+                }
+            }
+            Page::NewGameDialog(ref mut widget) => {
+                widget.update(new_game::Output {
+                    command: output.command,
+                });
+                if widget.cancel {
+                    new_page = Some(Page::Main(main::Widget::default()));
                 }
             }
             Page::SaveAsDialog(ref mut widget) => {

@@ -4,6 +4,7 @@ use commons::noise::simplex_noise;
 use commons::scale::Scale;
 use terrain_gen::heightmap_from_rises;
 
+#[derive(Clone)]
 pub struct Parameters {
     pub power: u32,
     pub seed: i32,
