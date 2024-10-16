@@ -204,7 +204,7 @@ pub fn run(
         save_file: &mut game.config.save_file,
         save_directory: &game.config.save_directory,
         save_extension: &game.config.save_extension,
-        file_to_load: &mut game.file_to_load,
+        command: &mut game.command,
     });
 
     game.widgets

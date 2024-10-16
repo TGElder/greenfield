@@ -10,6 +10,7 @@ use crate::Components;
 
 #[derive(Default)]
 pub struct Widget {
+    pub new_game: bool,
     pub save_file: Option<String>,
     pub save_as: bool,
     pub save: bool,
@@ -42,6 +43,7 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             .anchor(egui::Align2::CENTER_CENTER, egui::vec2(0.0, 0.0))
             .show(ctx, |ui| {
                 ui.vertical_centered(|ui| {
+                    self.new_game = ui.button("New Game").clicked();
                     self.save_as = ui.button("Save As").clicked();
                     if let Some(save_file) = &self.save_file {
                         self.save = ui.button(format!("Save to \"{}\"", save_file)).clicked();

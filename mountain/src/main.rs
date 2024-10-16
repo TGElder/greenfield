@@ -71,7 +71,7 @@ use crate::widgets::{building_editor, menu, toaster};
 fn main() {
     let max_z = 4096.0;
 
-    let components = new_components();
+    let components = new_components(DEFAULT_NEW_GAME_PARAMETERS);
 
     let engine = glium_backend::engine::GliumEngine::new(
         new_game(components, None),
@@ -372,14 +372,27 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
         },
         mouse_xy: None,
         components,
-        file_to_load: None,
+        command: Command::None,
     }
 }
 
-fn new_components() -> Components {
-    let power = 11;
-    let terrain = generate_heightmap(power);
-    let trees = generate_trees(power, &terrain);
+#[derive(Clone)]
+pub struct NewGameParameters {
+    terrain: init::terrain::Parameters,
+    trees: init::trees::Parameters,
+}
+
+const DEFAULT_NEW_GAME_PARAMETERS: NewGameParameters = NewGameParameters {
+    terrain: init::terrain::Parameters { power: 11, seed: 0 },
+    trees: init::trees::Parameters {
+        power: 11,
+        tree_line_elevation: 512.0,
+    },
+};
+
+fn new_components(parameters: NewGameParameters) -> Components {
+    let terrain = generate_heightmap(parameters.terrain);
+    let trees = generate_trees(&terrain, parameters.trees);
     Components {
         skiers: HashMap::default(),
         plans: HashMap::default(),
@@ -426,7 +439,14 @@ struct Game {
     config: Config,
     widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
-    file_to_load: Option<String>,
+    command: Command,
+}
+
+#[derive(Clone)]
+enum Command {
+    None,
+    NewGame(NewGameParameters),
+    LoadGame(String),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -554,6 +574,13 @@ impl Game {
         }
     }
 
+    fn new_game(&mut self, parameters: NewGameParameters, graphics: &mut dyn Graphics) {
+        let components = new_components(parameters);
+        *self = new_game(components, None);
+        graphics.clear();
+        self.init(graphics);
+    }
+
     fn load(&mut self, file: String, graphics: &mut dyn Graphics) {
         let components = load_components(&format!(
             "{}{}.{}",
@@ -576,8 +603,10 @@ impl Game {
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Some(file) = &self.file_to_load {
-            self.load(file.clone(), graphics);
+        match self.command.clone() {
+            Command::NewGame(parameters) => self.new_game(parameters, graphics),
+            Command::LoadGame(file) => self.load(file.clone(), graphics),
+            Command::None => (),
         }
 
         match event {

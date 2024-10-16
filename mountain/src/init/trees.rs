@@ -12,15 +12,26 @@ use crate::utils::ability::exposure;
 
 const STRIP_WIDTH: u32 = 4;
 const BORDER_ELEVATION: f32 = 192.0; // Tree probability is 1.0 at elevation 0 but you probably don't want probability 1.0.
-const TREE_LINE_ELEVATION: f32 = 512.0;
 const SEA_LEVEL_MAX_TREE_HEIGHT: f32 = 40.0;
 const TREE_LINE_MAX_TREE_HEIGHT: f32 = 1.0;
 
-pub fn generate_trees(power: u32, terrain: &Grid<f32>) -> Grid<Option<Tree>> {
+#[derive(Clone)]
+pub struct Parameters {
+    pub power: u32,
+    pub tree_line_elevation: f32,
+}
+
+pub fn generate_trees(
+    terrain: &Grid<f32>,
+    Parameters {
+        power,
+        tree_line_elevation,
+    }: Parameters,
+) -> Grid<Option<Tree>> {
     let weights = vec![1.0; power as usize];
     let noise = simplex_noise(power, 1990, &weights).normalize();
 
-    let noise_to_max_elevation = Scale::new((0.0, 1.0), (0.0, TREE_LINE_ELEVATION));
+    let noise_to_max_elevation = Scale::new((0.0, 1.0), (0.0, tree_line_elevation));
     let noise_to_tree_height = Scale::new(
         (0.0, 1.0),
         (SEA_LEVEL_MAX_TREE_HEIGHT, TREE_LINE_MAX_TREE_HEIGHT),
