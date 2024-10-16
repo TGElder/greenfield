@@ -372,7 +372,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
         },
         mouse_xy: None,
         components,
-        file_to_load: None,
+        command: Command::None,
     }
 }
 
@@ -438,7 +438,13 @@ struct Game {
     config: Config,
     widgets: Widgets,
     mouse_xy: Option<XY<u32>>,
-    file_to_load: Option<String>,
+    command: Command,
+}
+
+enum Command {
+    None,
+    NewGame(NewGameParameters),
+    LoadGame(String),
 }
 
 #[derive(Serialize, Deserialize)]
@@ -588,7 +594,7 @@ impl Game {
 
 impl EventHandler for Game {
     fn handle(&mut self, event: &Event, engine: &mut dyn Engine, graphics: &mut dyn Graphics) {
-        if let Some(file) = &self.file_to_load {
+        if let Command::LoadGame(file) = &self.command {
             self.load(file.clone(), graphics);
         }
 

@@ -7,7 +7,7 @@ use engine::engine::Engine;
 
 use crate::systems::messenger;
 use crate::widgets::ContextWidget;
-use crate::Components;
+use crate::{Command, Components};
 
 #[derive(Default)]
 pub struct Widget {
@@ -38,7 +38,7 @@ pub struct Output<'a> {
     pub save_file: &'a mut Option<String>,
     pub save_directory: &'a str,
     pub save_extension: &'a str,
-    pub file_to_load: &'a mut Option<String>,
+    pub command: &'a mut Command,
 }
 
 impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
@@ -120,7 +120,7 @@ impl<'a> ContextWidget<Input<'a>, Output<'a>> for Widget {
             }
             Page::LoadDialog(ref mut widget) => {
                 widget.update(load_dialog::Output {
-                    file_to_load: output.file_to_load,
+                    command: output.command,
                 });
                 if widget.cancel {
                     new_page = Some(Page::Main(main::Widget::default()));
