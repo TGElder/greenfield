@@ -6,6 +6,7 @@ use rand::thread_rng;
 
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
+use crate::model::lift::Lift;
 use crate::model::piste::{self, Piste};
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
@@ -14,6 +15,7 @@ pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
+    pub lifts: &'a HashMap<usize, Lift>,
     pub entrances: &'a HashMap<usize, Entrance>,
     pub pistes: &'a HashMap<usize, Piste>,
     pub costs: &'a HashMap<usize, Costs<State>>,
@@ -26,6 +28,7 @@ pub fn run(
         skiers,
         plans,
         locations,
+        lifts,
         entrances,
         pistes,
         costs,
@@ -35,7 +38,10 @@ pub fn run(
 ) {
     let mut rng = thread_rng();
 
-    let valid_global_targets = valid_global_targets(entrances, pistes);
+    let valid_global_targets = lifts
+        .values()
+        .map(|lift| lift.drop_off.id)
+        .collect::<HashSet<_>>();
 
     for (
         skier_id,
@@ -68,12 +74,12 @@ pub fn run(
                 global_costs
                     .targets_reachable_from_node(piste_target, skier_ability)
                     .filter(|(target, _)| valid_global_targets.contains(target))
+                    .map(move |(target, _)| (target, piste_target))
             })
-            .filter(|(global_target, _)| {
+            .filter(|(global_target, piste_target)| {
                 global_costs
                     .targets_reachable_from_node(global_target, skier_ability)
-                    .count()
-                    > 1
+                    .any(|(target, _)| target == *piste_target)
             })
             .map(|(global_target, _)| global_target)
             .collect::<HashSet<_>>()

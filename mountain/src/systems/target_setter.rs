@@ -59,6 +59,10 @@ pub fn run(
             .costs(*global_target, *skier_ability)
             .unwrap_or(&default_global_costs);
 
+        // if *global_target == 592 {
+        //     println!("{:?} {:?}", skier_ability, global_costs);
+        // }
+
         let stationary_state = state.stationary();
 
         let target = costs
@@ -75,6 +79,9 @@ pub fn run(
         if let Some(target) = target {
             targets.insert(*skier_id, *target);
         } else {
+            if *global_target == 592 {
+                println!("RIP");
+            }
             targets.remove(skier_id);
             global_targets.remove(skier_id);
         }

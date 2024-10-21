@@ -38,15 +38,15 @@ pub fn handle(
     let position = xy(x.round() as u32, y.round() as u32);
 
     for (&lift_id, lift) in lifts {
-        if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
+        if lift.pick_up.state.position == position {
             global_targets.clear();
 
             for &skier_id in skiers.keys() {
                 targets.remove(&skier_id);
-                global_targets.insert(skier_id, lift_id);
+                global_targets.insert(skier_id, lift.pick_up.id);
             }
 
-            println!("Global target set to {} for all skiers", lift_id);
+            println!("Global target set to {} for all skiers", lift.pick_up.id);
 
             return;
         }

@@ -744,6 +744,7 @@ impl EventHandler for Game {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
             locations: &self.components.locations,
+            lifts: &self.components.lifts,
             entrances: &self.components.entrances,
             pistes: &self.components.pistes,
             costs: &self.components.costs,
