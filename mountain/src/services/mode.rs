@@ -176,7 +176,6 @@ fn try_to_handle(
         ),
         Mode::Gate => controllers::gate_builder::trigger(controllers::gate_builder::Parameters {
             piste_map: &game.components.piste_map,
-            terrain: &game.components.terrain,
             selection: &mut game.components.selection,
             terrain_artist: &mut game.systems.terrain_artist,
             id_allocator: &mut game.components.services.id_allocator,
@@ -190,7 +189,6 @@ fn try_to_handle(
         Mode::Door => controllers::door_builder::trigger(controllers::door_builder::Parameters {
             pistes: &game.components.pistes,
             buildings: &game.components.buildings,
-            terrain: &game.components.terrain,
             selection: &mut game.components.selection,
             id_allocator: &mut game.components.services.id_allocator,
             doors: &mut game.components.doors,

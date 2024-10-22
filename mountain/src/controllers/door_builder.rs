@@ -1,7 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle, XY};
-use commons::grid::Grid;
 
 use crate::model::building::Building;
 
@@ -19,7 +18,6 @@ use crate::systems::messenger;
 
 pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
-    pub terrain: &'a Grid<f32>,
     pub selection: &'a mut Selection,
     pub buildings: &'a HashMap<usize, Building>,
     pub id_allocator: &'a mut id_allocator::Service,
@@ -35,7 +33,6 @@ pub fn trigger(
         pistes,
         selection,
         buildings,
-        terrain,
         id_allocator,
         doors,
         entrances,
@@ -127,7 +124,6 @@ pub fn trigger(
         Entrance {
             destination_piste_id: *piste_id,
             stationary_states: stationary_states(&piste_positions),
-            altitude_meters: altitude_meters(terrain, &piste_positions),
         },
     );
     exits.insert(
@@ -166,12 +162,4 @@ fn stationary_states(piste_positions: &[XY<u32>]) -> HashSet<State> {
             })
         })
         .collect::<HashSet<_>>()
-}
-
-fn altitude_meters(terrain: &Grid<f32>, piste_positions: &[XY<u32>]) -> f32 {
-    piste_positions
-        .iter()
-        .map(|position| terrain[position])
-        .sum::<f32>()
-        / piste_positions.len() as f32
 }

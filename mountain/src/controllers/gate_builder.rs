@@ -15,7 +15,6 @@ use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist};
 
 pub struct Parameters<'a> {
-    pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
@@ -30,7 +29,6 @@ pub struct Parameters<'a> {
 
 pub fn trigger(
     Parameters {
-        terrain,
         piste_map,
         selection,
         terrain_artist,
@@ -115,12 +113,6 @@ pub fn trigger(
         Entrance {
             destination_piste_id,
             stationary_states: stationary_states.clone(),
-            altitude_meters: gate
-                .footprint
-                .iter()
-                .map(|position| terrain[position])
-                .sum::<f32>()
-                / gate.footprint.iter().count() as f32,
         },
     );
     exits.insert(
