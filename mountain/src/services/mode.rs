@@ -195,6 +195,8 @@ fn try_to_handle(
             id_allocator: &mut game.components.services.id_allocator,
             doors: &mut game.components.doors,
             entrances: &mut game.components.entrances,
+            exits: &mut game.components.exits,
+            open: &mut game.components.open,
             messenger: &mut game.systems.messenger,
         }),
         Mode::Demolish => try_to_demolish(game, graphics),
