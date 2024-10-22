@@ -746,6 +746,7 @@ impl EventHandler for Game {
             locations: &self.components.locations,
             entrances: &self.components.entrances,
             pistes: &self.components.pistes,
+            doors: &self.components.doors,
             costs: &self.components.costs,
             global_costs: &self.components.global_costs,
             global_targets: &mut self.components.global_targets,
