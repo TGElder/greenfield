@@ -651,6 +651,7 @@ impl EventHandler for Game {
                 skiers: &self.components.skiers,
                 targets: &mut self.components.targets,
                 global_targets: &mut self.components.global_targets,
+                messenger: &mut self.systems.messenger,
                 graphics,
             },
         );
@@ -744,8 +745,7 @@ impl EventHandler for Game {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
             locations: &self.components.locations,
-            entrances: &self.components.entrances,
-            pistes: &self.components.pistes,
+            lifts: &self.components.lifts,
             doors: &self.components.doors,
             costs: &self.components.costs,
             global_costs: &self.components.global_costs,

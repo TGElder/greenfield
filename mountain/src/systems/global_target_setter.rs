@@ -1,4 +1,3 @@
-use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
 use rand::seq::SliceRandom;
@@ -6,8 +5,7 @@ use rand::thread_rng;
 
 use crate::model::costs::Costs;
 use crate::model::door::Door;
-use crate::model::entrance::Entrance;
-use crate::model::piste::{self, Piste};
+use crate::model::lift::Lift;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 
@@ -15,8 +13,7 @@ pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
-    pub entrances: &'a HashMap<usize, Entrance>,
-    pub pistes: &'a HashMap<usize, Piste>,
+    pub lifts: &'a HashMap<usize, Lift>,
     pub doors: &'a HashMap<usize, Door>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub global_costs: &'a Costs<usize>,
@@ -28,8 +25,7 @@ pub fn run(
         skiers,
         plans,
         locations,
-        entrances,
-        pistes,
+        lifts,
         doors,
         costs,
         global_costs,
@@ -38,7 +34,10 @@ pub fn run(
 ) {
     let mut rng = thread_rng();
 
-    let valid_global_targets = valid_global_targets(entrances, pistes);
+    let lift_pick_ups = lifts
+        .values()
+        .map(|lift| lift.pick_up.id)
+        .collect::<HashSet<_>>();
 
     for (
         skier_id,
@@ -78,7 +77,7 @@ pub fn run(
                 global_costs
                     .targets_reachable_from_node(piste_target, skier_ability)
                     .map(|(target, _)| target)
-                    .filter(|target| valid_global_targets.contains(target))
+                    .filter(|target| lift_pick_ups.contains(target))
             })
             // skier must always be able to return home
             .filter(|global_target| {
@@ -94,33 +93,4 @@ pub fn run(
             global_targets.insert(*skier_id, new_target);
         }
     }
-}
-
-fn valid_global_targets<'a>(
-    entrances: &'a HashMap<usize, Entrance>,
-    pistes: &'a HashMap<usize, Piste>,
-) -> HashSet<&'a usize> {
-    let mut piste_to_highest_entrance: HashMap<usize, (&usize, &Entrance)> = HashMap::new();
-    for (entrance_id, entrance) in entrances {
-        match piste_to_highest_entrance.entry(entrance.destination_piste_id) {
-            Entry::Vacant(cell) => {
-                cell.insert((entrance_id, entrance));
-            }
-            Entry::Occupied(mut entry) => {
-                if entrance.altitude_meters > entry.get().1.altitude_meters {
-                    entry.insert((entrance_id, entrance));
-                }
-            }
-        }
-    }
-    piste_to_highest_entrance
-        .iter()
-        .filter(|(piste_id, _)| {
-            pistes
-                .get(piste_id)
-                .map(|piste| piste.class == piste::Class::Piste)
-                .unwrap_or_default()
-        })
-        .map(|(_, &(entrance_id, _))| entrance_id)
-        .collect::<HashSet<_>>()
 }
