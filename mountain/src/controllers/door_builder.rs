@@ -10,6 +10,7 @@ use crate::model::door::Door;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::piste::Piste;
 use crate::model::selection::Selection;
 use crate::model::skiing::State;
@@ -24,6 +25,8 @@ pub struct Parameters<'a> {
     pub id_allocator: &'a mut id_allocator::Service,
     pub doors: &'a mut HashMap<usize, Door>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
+    pub exits: &'a mut HashMap<usize, Exit>,
+    pub open: &'a mut HashSet<usize>,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -36,6 +39,8 @@ pub fn trigger(
         id_allocator,
         doors,
         entrances,
+        exits,
+        open,
         messenger,
     }: Parameters<'_>,
 ) -> Result {
@@ -125,6 +130,16 @@ pub fn trigger(
             altitude_meters: altitude_meters(terrain, &piste_positions),
         },
     );
+
+    exits.insert(
+        door_id,
+        Exit {
+            origin_piste_id: *piste_id,
+            stationary_states: stationary_states(&piste_positions),
+        },
+    );
+
+    open.insert(door_id);
 
     selection.cells.clear();
 

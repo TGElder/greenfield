@@ -749,6 +749,7 @@ impl EventHandler for Game {
             pistes: &self.components.pistes,
             costs: &self.components.costs,
             global_costs: &self.components.global_costs,
+            doors: &self.components.doors,
             global_targets: &mut self.components.global_targets,
         });
         target_setter::run(target_setter::Parameters {

@@ -5,6 +5,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::model::costs::Costs;
+use crate::model::door::Door;
 use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
 use crate::model::piste::{self, Piste};
@@ -20,6 +21,7 @@ pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub global_costs: &'a Costs<usize>,
+    pub doors: &'a HashMap<usize, Door>,
     pub global_targets: &'a mut HashMap<usize, usize>,
 }
 
@@ -33,6 +35,7 @@ pub fn run(
         pistes,
         costs,
         global_costs,
+        doors,
         global_targets,
     }: Parameters<'_>,
 ) {
@@ -47,6 +50,7 @@ pub fn run(
         skier_id,
         Skier {
             ability: skier_ability,
+            hotel_id,
             ..
         },
     ) in skiers
@@ -68,20 +72,25 @@ pub fn run(
         };
         let stationary_state = state.stationary();
 
+        let door_ids = doors
+            .iter()
+            .filter(|(_, door)| door.building_id == *hotel_id)
+            .map(|(door_id, _)| door_id)
+            .collect::<HashSet<_>>();
+
         let candidates = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
             .flat_map(|(piste_target, _)| {
                 global_costs
                     .targets_reachable_from_node(piste_target, skier_ability)
                     .filter(|(target, _)| valid_global_targets.contains(target))
-                    .map(move |(target, _)| (target, piste_target))
+                    .map(|(target, _)| target)
             })
-            .filter(|(global_target, piste_target)| {
+            .filter(|global_target| {
                 global_costs
                     .targets_reachable_from_node(global_target, skier_ability)
-                    .any(|(target, _)| target == *piste_target)
+                    .any(|(target, _)| door_ids.contains(target))
             })
-            .map(|(global_target, _)| global_target)
             .collect::<HashSet<_>>()
             .drain()
             .collect::<Vec<_>>();
