@@ -4,7 +4,7 @@ use std::iter::once;
 
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
-use commons::grid::{Grid, CORNERS};
+use commons::grid::Grid;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::carousel::{Car, Carousel};
@@ -176,11 +176,6 @@ impl Controller {
             Entrance {
                 destination_piste_id: to_piste,
                 stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
-                altitude_meters: terrain
-                    .offsets(to, &CORNERS)
-                    .map(|corner| terrain[corner])
-                    .sum::<f32>()
-                    / terrain.offsets(to, &CORNERS).count() as f32,
             },
         );
 
