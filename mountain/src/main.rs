@@ -596,6 +596,7 @@ impl Game {
                 self.systems
                     .messenger
                     .send(format!("Could not load {}", file));
+                self.command = Command::None;
             }
         }
     }
