@@ -1,13 +1,15 @@
 use std::collections::{HashMap, HashSet};
 
 use rand::seq::SliceRandom;
-use rand::thread_rng;
+use rand::{thread_rng, Rng};
 
 use crate::model::costs::Costs;
 use crate::model::door::Door;
 use crate::model::lift::Lift;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
+
+const EXPLORE_RATIO: f32 = 0.75;
 
 pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
@@ -34,9 +36,9 @@ pub fn run(
 ) {
     let mut rng = thread_rng();
 
-    let lift_pick_ups = lifts
+    let lift_drop_offs = lifts
         .values()
-        .map(|lift| lift.pick_up.id)
+        .map(|lift| lift.drop_off.id)
         .collect::<HashSet<_>>();
 
     for (
@@ -71,25 +73,39 @@ pub fn run(
             .map(|(door_id, _)| door_id)
             .collect::<HashSet<_>>();
 
-        let candidates = costs
+        let targets_on_this_piste = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
-            .flat_map(|(piste_target, _)| {
-                global_costs
-                    .targets_reachable_from_node(piste_target, skier_ability)
-                    .map(|(target, _)| target)
-                    .filter(|target| lift_pick_ups.contains(target))
-            })
-            // skier must always be able to return home
+            .map(|(piste_target, _)| piste_target);
+
+        let explore = rng.gen::<f32>() <= EXPLORE_RATIO;
+
+        let candidates: HashSet<usize> = if explore {
+            targets_on_this_piste
+                .filter(|target| !doors.contains_key(target))
+                .copied()
+                .collect()
+        } else {
+            targets_on_this_piste
+                .flat_map(|piste_target| {
+                    global_costs
+                        .targets_reachable_from_node(piste_target, skier_ability)
+                        .map(|(target, _)| target)
+                        .filter(|target| lift_drop_offs.contains(target))
+                })
+                .copied()
+                .collect()
+        };
+
+        let safe_candidates: Vec<usize> = candidates
+            .into_iter()
             .filter(|global_target| {
                 global_costs
                     .targets_reachable_from_node(global_target, skier_ability)
                     .any(|(target, _)| door_ids.contains(target))
             })
-            .collect::<HashSet<_>>()
-            .drain()
-            .collect::<Vec<_>>();
+            .collect();
 
-        if let Some(&&new_target) = candidates.choose(&mut rng) {
+        if let Some(&new_target) = safe_candidates.choose(&mut rng) {
             global_targets.insert(*skier_id, new_target);
         }
     }
