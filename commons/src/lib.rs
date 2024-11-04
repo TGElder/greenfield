@@ -7,6 +7,7 @@ pub mod float_grid;
 pub mod geometry;
 pub mod grid;
 pub mod image;
+pub mod map;
 pub mod noise;
 pub mod origin_grid;
 pub mod quadratic;
