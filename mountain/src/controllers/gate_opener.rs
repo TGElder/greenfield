@@ -1,6 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use commons::geometry::{xy, XY, XYZ};
+use commons::map::ContainsKeyValue;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::gate::Gate;
@@ -9,7 +10,7 @@ use crate::systems::{global_computer, messenger};
 pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     gates: &HashMap<usize, Gate>,
-    open: &mut HashSet<usize>,
+    open: &mut HashMap<usize, bool>,
     global_computer: &mut global_computer::System,
     messenger: &mut messenger::System,
     graphics: &mut dyn engine::graphics::Graphics,
@@ -37,10 +38,11 @@ pub fn trigger(
     }
 
     for gate_id in gate_ids {
-        if open.remove(gate_id) {
+        if open.contains_key_value(gate_id, true) {
+            open.insert(*gate_id, false);
             messenger.send(format!("Gate {} is closed", gate_id));
         } else {
-            open.insert(*gate_id);
+            open.insert(*gate_id, true);
             messenger.send(format!("Gate {} is open", gate_id));
         }
     }

@@ -1,4 +1,5 @@
 use commons::geometry::{xy, XY, XYZ};
+use commons::map::ContainsKeyValue;
 use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
@@ -64,7 +65,7 @@ pub fn remove_lift(
 
     // Validate
 
-    if components.open.contains(lift_id) {
+    if components.open.contains_key_value(lift_id, true) {
         messenger.send(format!("Close lift {} before removing it!", lift_id));
         return;
     }

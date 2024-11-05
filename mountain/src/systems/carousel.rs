@@ -2,6 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
+use commons::map::ContainsKeyValue;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
@@ -16,7 +17,7 @@ pub struct System {
 pub struct Parameters<'a> {
     pub micros: &'a u128,
     pub lifts: &'a HashMap<usize, Lift>,
-    pub open: &'a HashSet<usize>,
+    pub open: &'a HashMap<usize, bool>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub plans: &'a mut HashMap<usize, Plan>,
@@ -107,7 +108,7 @@ impl System {
                 let car_id = car_ids[car_index];
                 match action {
                     RevolveAction::PickUp => {
-                        if !open.contains(&lift.pick_up.id) {
+                        if !open.contains_key_value(lift.pick_up.id, true) {
                             continue;
                         }
                         plans.retain(|skier_id, plan| {

@@ -1,3 +1,4 @@
+use commons::map::ContainsKeyValue;
 use network::algorithms::costs_to_targets::CostsToTargets;
 use network::utils::MaterializedInNetwork;
 use std::collections::{HashMap, HashSet};
@@ -18,7 +19,7 @@ pub struct Parameters<'a> {
     pub exits: &'a HashMap<usize, Exit>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
-    pub open: &'a HashSet<usize>,
+    pub open: &'a HashMap<usize, bool>,
     pub global_costs: &'a mut Costs<usize>,
 }
 
@@ -55,7 +56,7 @@ pub fn compute_global_costs(
         let targets = entrances
             .keys()
             .chain(exits.keys())
-            .filter(|target| open.contains(target))
+            .filter(|&target| open.contains_key_value(target, true))
             .copied()
             .collect::<HashSet<_>>();
 

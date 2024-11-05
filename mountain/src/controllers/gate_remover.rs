@@ -1,4 +1,5 @@
 use commons::geometry::{xy, XY, XYZ};
+use commons::map::ContainsKeyValue;
 use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
@@ -47,7 +48,7 @@ pub fn remove_gate(
 ) {
     // Validate
 
-    if components.open.contains(gate_id) {
+    if components.open.contains_key_value(gate_id, true) {
         messenger.send(format!("Close gate {} before removing it!", gate_id));
         return;
     }

@@ -24,7 +24,7 @@ pub struct Parameters<'a> {
     pub doors: &'a mut HashMap<usize, Door>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
-    pub open: &'a mut HashSet<usize>,
+    pub open: &'a mut HashMap<usize, bool>,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -133,7 +133,7 @@ pub fn trigger(
             stationary_states: stationary_states(&piste_positions),
         },
     );
-    open.insert(door_id);
+    open.insert(door_id, true);
 
     selection.cells.clear();
 

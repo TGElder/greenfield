@@ -22,7 +22,7 @@ pub struct Parameters<'a> {
     pub gates: &'a mut HashMap<usize, Gate>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
-    pub open: &'a mut HashSet<usize>,
+    pub open: &'a mut HashMap<usize, bool>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub messenger: &'a mut messenger::System,
 }
@@ -125,7 +125,7 @@ pub fn trigger(
 
     // opening gate
 
-    open.insert(gate_id);
+    open.insert(gate_id, true);
 
     // inserting gate
 
