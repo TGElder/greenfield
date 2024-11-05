@@ -92,14 +92,10 @@ fn try_to_handle(
     match mode {
         Mode::Open => try_to_open(game, graphics),
         Mode::Query => {
-            controllers::skier_debugger::trigger(controllers::skier_debugger::Parameters {
+            controllers::entity_window::trigger(controllers::entity_window::Parameters {
                 mouse_xy: &game.mouse_xy,
-                reservations: &game.components.reservations,
-                plans: &game.components.plans,
-                locations: &game.components.locations,
-                targets: &game.components.targets,
-                global_targets: &game.components.global_targets,
-                messenger: &mut game.systems.messenger,
+                lifts: &game.components.lifts,
+                windows: &mut game.widgets.windows,
                 graphics,
             })
         }
