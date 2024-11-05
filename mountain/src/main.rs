@@ -146,6 +146,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                     max_length: 8,
                 },
             )),
+            windows: HashMap::default(),
         },
         systems: Systems {
             building_artist: building_artist::System::new(),

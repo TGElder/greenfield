@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use engine::binding::Binding;
 use engine::egui;
 use engine::engine::Engine;
@@ -5,6 +7,7 @@ use engine::events::{Button, ButtonState, KeyboardKey};
 use engine::graphics::Graphics;
 
 use crate::services::mode;
+use crate::widgets::entity_window::EntityWindow;
 use crate::widgets::{building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
 
@@ -89,6 +92,7 @@ pub struct Widgets {
     pub piste_build_mode: piste_build_mode::Widget,
     pub menu: menu::Widget,
     pub toaster: toaster::Widget,
+    pub windows: HashMap<usize, EntityWindow>,
 }
 
 pub fn run(
@@ -119,6 +123,10 @@ pub fn run(
     let mut view_pistes_clicked = false;
     let mut view_trees_clicked = false;
     let mut view_skier_abilities_clicked = false;
+
+    for window in game.widgets.windows.values_mut() {
+        window.init(&game.components);
+    }
 
     game.widgets.menu.init(menu::Input {
         event,
@@ -195,6 +203,9 @@ pub fn run(
                 game.widgets.piste_build_mode.draw(ui);
             });
         });
+        for window in game.widgets.windows.values_mut() {
+            window.draw(ctx);
+        }
     });
 
     game.widgets.menu.update(menu::Output {
@@ -220,6 +231,10 @@ pub fn run(
             piste_builder: &mut game.controllers.piste_builder,
             piste_eraser: &mut game.controllers.piste_eraser,
         });
+
+    for window in game.widgets.windows.values_mut() {
+        window.update(&mut game.components);
+    }
 
     game.components.services.clock.set_speed(speed);
 
