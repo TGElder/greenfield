@@ -416,7 +416,7 @@ fn new_components(parameters: NewGameParameters) -> Components {
         clothes: HashMap::default(),
         buildings: HashMap::default(),
         doors: HashMap::default(),
-        open: HashSet::default(),
+        open: HashMap::default(),
         highlights: HashSet::default(),
         terrain,
         trees,
@@ -474,7 +474,7 @@ pub struct Components {
     abilities: HashMap<usize, Ability>,
     buildings: HashMap<usize, Building>,
     doors: HashMap<usize, Door>,
-    open: HashSet<usize>,
+    open: HashMap<usize, bool>,
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,

@@ -1,4 +1,6 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+
+use commons::map::ContainsKeyValue;
 
 use crate::model::costs::Costs;
 use crate::model::skier::Skier;
@@ -11,7 +13,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
-    pub open: &'a HashSet<usize>,
+    pub open: &'a HashMap<usize, bool>,
     pub global_targets: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
@@ -63,7 +65,7 @@ pub fn run(
 
         let target = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
-            .filter(|(target, _)| open.contains(target))
+            .filter(|(&target, _)| open.contains_key_value(target, true))
             .flat_map(|(target, cost)| {
                 global_costs
                     .get(target)

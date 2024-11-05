@@ -35,7 +35,7 @@ pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a mut HashMap<usize, Lift>,
-    pub open: &'a mut HashSet<usize>,
+    pub open: &'a mut HashMap<usize, bool>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
@@ -133,9 +133,9 @@ impl Controller {
 
         // opening lift
 
-        open.insert(lift_id);
-        open.insert(lift.pick_up.id);
-        open.insert(lift.drop_off.id);
+        open.insert(lift_id, true);
+        open.insert(lift.pick_up.id, true);
+        open.insert(lift.drop_off.id, true);
 
         // setup carousel
 

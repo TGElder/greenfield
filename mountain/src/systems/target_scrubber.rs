@@ -1,5 +1,7 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
-pub fn run(open: &HashSet<usize>, targets: &mut HashMap<usize, usize>) {
-    targets.retain(|_, target| open.contains(target))
+use commons::map::ContainsKeyValue;
+
+pub fn run(open: &HashMap<usize, bool>, targets: &mut HashMap<usize, usize>) {
+    targets.retain(|_, target| open.contains_key_value(target, true))
 }

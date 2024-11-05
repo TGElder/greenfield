@@ -1,5 +1,7 @@
 use std::collections::hash_map::Entry;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
+
+use commons::map::ContainsKeyValue;
 
 use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
@@ -9,7 +11,7 @@ pub fn run(
     plans: &HashMap<usize, Plan>,
     gates: &HashMap<usize, Gate>,
     entrances: &HashMap<usize, Entrance>,
-    open: &HashSet<usize>,
+    open: &HashMap<usize, bool>,
     targets: &mut HashMap<usize, usize>,
     global_targets: &mut HashMap<usize, usize>,
     locations: &mut HashMap<usize, usize>,
@@ -35,7 +37,7 @@ pub fn run(
             continue;
         };
 
-        if !open.contains(&target_id) {
+        if !open.contains_key_value(target_id, true) {
             continue;
         }
 
