@@ -32,7 +32,7 @@ pub fn trigger(
     for lift in lifts.values() {
         let pick_up_id = &lift.pick_up.id;
         if lift.pick_up.state.position == position {
-            windows.insert(*pick_up_id, EntityWindow::new(*pick_up_id));
+            windows.insert(*pick_up_id, EntityWindow::new(*pick_up_id, *mouse_xy));
         }
     }
 

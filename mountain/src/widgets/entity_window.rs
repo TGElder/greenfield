@@ -1,18 +1,23 @@
+use commons::geometry::XY;
 use engine::egui;
 
+use crate::gui;
 use crate::widgets::ContextWidget;
 use crate::Components;
 
 pub struct EntityWindow {
     id: usize,
+    mouse_pos: XY<u32>,
     open: Option<bool>,
     is_open: bool,
 }
 
 impl EntityWindow {
-    pub fn new(id: usize) -> EntityWindow {
+    pub fn new(id: usize, mouse_pos: XY<u32>) -> EntityWindow {
+        println!("{:?}", mouse_pos);
         EntityWindow {
             id,
+            mouse_pos,
             open: None,
             is_open: true,
         }
@@ -30,6 +35,10 @@ impl ContextWidget<&Components, &mut Components> for EntityWindow {
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
         egui::Window::new(format!("Entity {}", self.id))
+            .default_pos((
+                self.mouse_pos.x as f32 / gui::PIXELS_PER_POINT,
+                self.mouse_pos.y as f32 / gui::PIXELS_PER_POINT,
+            ))
             .movable(true)
             .collapsible(false)
             .open(&mut self.is_open)

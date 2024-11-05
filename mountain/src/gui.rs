@@ -11,6 +11,8 @@ use crate::widgets::entity_window::EntityWindow;
 use crate::widgets::{building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget};
 use crate::{Bindings, Game};
 
+pub const PIXELS_PER_POINT: f32 = 1.5;
+
 struct ModeButton {
     icon: &'static str,
     hover_text: &'static str,
@@ -147,7 +149,7 @@ pub fn run(
     });
     game.widgets.toaster.init(());
     graphics.draw_gui(&mut |ctx| {
-        ctx.set_pixels_per_point(1.5);
+        ctx.set_pixels_per_point(PIXELS_PER_POINT);
         game.widgets.menu.draw(ctx);
         game.widgets.toaster.draw(ctx);
         egui::TopBottomPanel::bottom("base_panel").show(ctx, |ui| {
