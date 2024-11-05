@@ -6,11 +6,20 @@ use crate::Components;
 pub struct EntityWindow {
     id: usize,
     open: Option<bool>,
+    is_open: bool,
 }
 
 impl EntityWindow {
     pub fn new(id: usize) -> EntityWindow {
-        EntityWindow { id, open: None }
+        EntityWindow {
+            id,
+            open: None,
+            is_open: true,
+        }
+    }
+
+    pub fn is_open(&self) -> bool {
+        self.is_open
     }
 }
 
@@ -23,6 +32,7 @@ impl ContextWidget<&Components, &mut Components> for EntityWindow {
         egui::Window::new(format!("Entity {}", self.id))
             .movable(true)
             .collapsible(false)
+            .open(&mut self.is_open)
             .show(ctx, |ui| {
                 ui.vertical(|ui| {
                     if let Some(open) = self.open.as_mut() {

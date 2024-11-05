@@ -232,9 +232,10 @@ pub fn run(
             piste_eraser: &mut game.controllers.piste_eraser,
         });
 
-    for window in game.widgets.windows.values_mut() {
+    game.widgets.windows.retain(|_, window| {
         window.update(&mut game.components);
-    }
+        window.is_open()
+    });
 
     game.components.services.clock.set_speed(speed);
 
