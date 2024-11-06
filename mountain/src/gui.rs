@@ -29,7 +29,7 @@ enum Panel {
 const MODE_BUTTONS: [ModeButton; 9] = [
     ModeButton {
         icon: "❓",
-        hover_text: "Query",
+        hover_text: "Info",
         build_mode: mode::Mode::Query,
         panel: Panel::Run,
     },

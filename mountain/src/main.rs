@@ -218,7 +218,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                 (
                     mode::Mode::Query,
                     Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("?")),
+                        button: Button::Keyboard(KeyboardKey::from("i")),
                         state: ButtonState::Pressed,
                     },
                 ),
