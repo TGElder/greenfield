@@ -11,7 +11,6 @@ pub mod lift_remover;
 pub mod piste_builder;
 pub mod piste_eraser;
 pub mod save;
-pub mod skier_debugger;
 
 #[derive(Debug, PartialEq)]
 pub enum Result {
