@@ -7,7 +7,6 @@ use crate::{controllers, Game};
 pub enum Mode {
     #[default]
     None,
-    Open,
     Query,
     Piste,
     PisteEraser,
@@ -90,7 +89,6 @@ fn try_to_handle(
     }
 
     match mode {
-        Mode::Open => try_to_open(game, graphics),
         Mode::Query => {
             controllers::entity_window::trigger(controllers::entity_window::Parameters {
                 mouse_xy: &game.mouse_xy,
@@ -197,27 +195,6 @@ fn try_to_handle(
         Mode::Demolish => try_to_demolish(game, graphics),
         _ => NoAction,
     }
-}
-
-fn try_to_open(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
-    controllers::lift_opener::trigger(
-        &game.mouse_xy,
-        &game.components.lifts,
-        &mut game.components.open,
-        &mut game.systems.global_computer,
-        &mut game.systems.messenger,
-        graphics,
-    )
-    .then_try(|| {
-        controllers::gate_opener::trigger(
-            &game.mouse_xy,
-            &game.components.gates,
-            &mut game.components.open,
-            &mut game.systems.global_computer,
-            &mut game.systems.messenger,
-            graphics,
-        )
-    })
 }
 
 fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphics) -> Result {
