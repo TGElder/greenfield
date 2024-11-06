@@ -216,13 +216,6 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             },
             mode: HashMap::from([
                 (
-                    mode::Mode::Open,
-                    Binding::Single {
-                        button: Button::Keyboard(KeyboardKey::from("o")),
-                        state: ButtonState::Pressed,
-                    },
-                ),
-                (
                     mode::Mode::Query,
                     Binding::Single {
                         button: Button::Keyboard(KeyboardKey::from("?")),

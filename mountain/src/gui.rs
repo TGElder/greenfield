@@ -26,13 +26,7 @@ enum Panel {
     Build,
 }
 
-const MODE_BUTTONS: [ModeButton; 10] = [
-    ModeButton {
-        icon: "🚦",
-        hover_text: "Open/Close",
-        build_mode: mode::Mode::Open,
-        panel: Panel::Run,
-    },
+const MODE_BUTTONS: [ModeButton; 9] = [
     ModeButton {
         icon: "❓",
         hover_text: "Query",
