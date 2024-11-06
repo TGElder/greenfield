@@ -95,6 +95,7 @@ fn try_to_handle(
             controllers::entity_window::trigger(controllers::entity_window::Parameters {
                 mouse_xy: &game.mouse_xy,
                 lifts: &game.components.lifts,
+                gates: &game.components.gates,
                 windows: &mut game.widgets.windows,
                 graphics,
             })

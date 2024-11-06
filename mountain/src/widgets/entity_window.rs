@@ -1,5 +1,5 @@
 use commons::geometry::XY;
-use engine::egui;
+use engine::egui::{self, RichText};
 
 use crate::gui;
 use crate::widgets::ContextWidget;
@@ -14,7 +14,6 @@ pub struct EntityWindow {
 
 impl EntityWindow {
     pub fn new(id: usize, mouse_pos: XY<u32>) -> EntityWindow {
-        println!("{:?}", mouse_pos);
         EntityWindow {
             id,
             mouse_pos,
@@ -34,23 +33,26 @@ impl ContextWidget<&Components, &mut Components> for EntityWindow {
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
-        egui::Window::new(format!("Entity {}", self.id))
-            .default_pos((
-                self.mouse_pos.x as f32 / gui::PIXELS_PER_POINT,
-                self.mouse_pos.y as f32 / gui::PIXELS_PER_POINT,
-            ))
-            .movable(true)
-            .collapsible(false)
-            .open(&mut self.is_open)
-            .show(ctx, |ui| {
-                ui.vertical(|ui| {
-                    if let Some(open) = self.open.as_mut() {
-                        ui.horizontal(|ui| {
-                            ui.checkbox(open, "Open");
-                        });
-                    }
-                });
+        egui::Window::new(
+            RichText::new(format!("Entity {}", self.id)).text_style(egui::TextStyle::Body),
+        )
+        .default_pos((
+            self.mouse_pos.x as f32 / gui::PIXELS_PER_POINT,
+            self.mouse_pos.y as f32 / gui::PIXELS_PER_POINT,
+        ))
+        .movable(true)
+        .collapsible(false)
+        .resizable(false)
+        .open(&mut self.is_open)
+        .show(ctx, |ui| {
+            ui.vertical(|ui| {
+                if let Some(open) = self.open.as_mut() {
+                    ui.horizontal(|ui| {
+                        ui.checkbox(open, "Open");
+                    });
+                }
             });
+        });
     }
 
     fn update(&mut self, components: &mut Components) {
