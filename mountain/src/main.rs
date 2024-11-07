@@ -750,6 +750,7 @@ impl EventHandler for Game {
             skiers: &self.components.skiers,
             plans: &self.components.plans,
             locations: &self.components.locations,
+            doors: &self.components.doors,
             global_costs: &self.components.global_costs,
             costs: &self.components.costs,
             open: &self.components.open,
