@@ -1,8 +1,9 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use commons::map::ContainsKeyValue;
 
 use crate::model::costs::Costs;
+use crate::model::door::Door;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 use crate::network::global::GLOBAL_COST_DIVISOR;
@@ -11,6 +12,7 @@ pub struct Parameters<'a> {
     pub skiers: &'a HashMap<usize, Skier>,
     pub plans: &'a HashMap<usize, Plan>,
     pub locations: &'a HashMap<usize, usize>,
+    pub doors: &'a HashMap<usize, Door>,
     pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub open: &'a HashMap<usize, bool>,
@@ -23,6 +25,7 @@ pub fn run(
         skiers,
         plans,
         locations,
+        doors,
         global_costs,
         costs,
         open,
@@ -39,6 +42,7 @@ pub fn run(
 
         let Some(Skier {
             ability: skier_ability,
+            hotel_id,
             ..
         }) = skiers.get(skier_id)
         else {
@@ -57,7 +61,30 @@ pub fn run(
             continue;
         };
 
-        let global_costs = global_costs
+        // check skier can return home from global target
+
+        let door_ids = doors
+            .iter()
+            .filter(|(_, door)| door.building_id == *hotel_id)
+            .map(|(door_id, _)| door_id)
+            .collect::<HashSet<_>>();
+
+        if !global_costs
+            .targets_reachable_from_node(global_target, skier_ability)
+            .any(|(target, _)| door_ids.contains(target))
+        {
+            println!(
+                "Skier {} cannot get home from global target {}",
+                skier_id, global_target
+            );
+            targets.remove(skier_id);
+            global_targets.remove(skier_id);
+            return;
+        }
+
+        // find best local target for global target
+
+        let costs_to_global_target = global_costs
             .costs(*global_target, *skier_ability)
             .unwrap_or(&default_global_costs);
 
@@ -67,7 +94,7 @@ pub fn run(
             .targets_reachable_from_node(&stationary_state, skier_ability)
             .filter(|(&target, _)| open.contains_key_value(target, true))
             .flat_map(|(target, cost)| {
-                global_costs
+                costs_to_global_target
                     .get(target)
                     .map(|global_cost| (target, cost + (global_cost * GLOBAL_COST_DIVISOR)))
             })
