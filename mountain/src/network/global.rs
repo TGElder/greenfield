@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::iter::{empty, once};
 
+use commons::map::ContainsKeyValue;
 use network::model::{Edge, OutNetwork};
 
 use crate::model::ability::Ability;
@@ -17,6 +18,7 @@ pub struct GlobalNetwork<'a> {
     pub pick_up_to_lift: &'a HashMap<usize, usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
+    pub open: &'a HashMap<usize, bool>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub ability: Ability,
@@ -61,6 +63,9 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
             return Box::new(empty());
         };
 
+        if !self.open.contains_key_value(piste_id, true) {
+            return Box::new(empty());
+        }
         let Some(&piste_ability) = self.abilities.get(piste_id) else {
             return Box::new(empty());
         };

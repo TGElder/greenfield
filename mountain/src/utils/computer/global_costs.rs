@@ -48,6 +48,7 @@ pub fn compute_global_costs(
             pick_up_to_lift,
             carousels,
             entrances,
+            open,
             costs,
             abilities,
             ability,

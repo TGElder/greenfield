@@ -94,6 +94,7 @@ fn try_to_handle(
                 mouse_xy: &game.mouse_xy,
                 lifts: &game.components.lifts,
                 gates: &game.components.gates,
+                pistes: &game.components.pistes,
                 windows: &mut game.widgets.windows,
                 graphics,
             })
