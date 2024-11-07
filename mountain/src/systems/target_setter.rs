@@ -61,7 +61,8 @@ pub fn run(
             continue;
         };
 
-        // check skier can always return home
+        // check skier can return home from global target
+
         let door_ids = doors
             .iter()
             .filter(|(_, door)| door.building_id == *hotel_id)
@@ -80,6 +81,8 @@ pub fn run(
             global_targets.remove(skier_id);
             return;
         }
+
+        // find best local target for global target
 
         let costs_to_global_target = global_costs
             .costs(*global_target, *skier_ability)
