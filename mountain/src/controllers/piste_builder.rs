@@ -20,6 +20,7 @@ pub struct Controller {
 pub struct Parameters<'a> {
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
+    pub open: &'a mut HashMap<usize, bool>,
     pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
@@ -40,6 +41,7 @@ impl Controller {
         Parameters {
             pistes,
             piste_map,
+            open,
             selection,
             terrain_artist,
             tree_artist,
@@ -92,6 +94,7 @@ impl Controller {
                     class: self.class,
                     grid: point_grid,
                 });
+                open.insert(id, false);
             }
         }
 

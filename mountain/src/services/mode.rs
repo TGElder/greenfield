@@ -105,6 +105,7 @@ fn try_to_handle(
             .trigger(controllers::piste_builder::Parameters {
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
+                open: &mut game.components.open,
                 selection: &mut game.components.selection,
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
@@ -127,6 +128,7 @@ fn try_to_handle(
             .trigger(controllers::piste_builder::Parameters {
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
+                open: &mut game.components.open,
                 selection: &mut game.components.selection,
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
