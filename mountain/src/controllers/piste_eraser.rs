@@ -61,7 +61,7 @@ impl Controller {
             return NoAction;
         };
 
-        let Some(piste) = pistes.get(&id) else {
+        let Some(piste) = pistes.get_mut(&id) else {
             return NoAction;
         };
 
@@ -88,7 +88,7 @@ impl Controller {
                 .any(|cell| piste_map[cell] == Some(id))
         });
 
-        piste.grid.paste(&point_grid);
+        piste.grid = piste.grid.paste(&point_grid);
 
         // updating art
 
