@@ -3,7 +3,8 @@ use std::collections::{HashMap, HashSet};
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
 
-use crate::controllers::Result::{self, Action, NoAction};
+use crate::controllers;
+use crate::controllers::Result::{Action, NoAction};
 use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
@@ -13,6 +14,13 @@ use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist};
+
+const ZERO_DIMENSION_ERROR_MESSAGE: &str = "Selection must not have 0 width or 0 height";
+const WRONG_DIMENSION_ERROR_MESSAGE: &str = "Selection must be 2 wide or 2 high";
+const CELLS_CONTAIN_PISTE_ERROR_MESSAGE: &str = "All cells in selection must contain piste";
+const SAME_SIDE_ERROR_MESSAGE: &str =
+    "All cells on same side of selection must be from the same piste";
+const OVERLAP_ERROR_MESSAGE: &str = "Selection must overlap two pistes";
 
 pub struct Parameters<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
@@ -40,7 +48,7 @@ pub fn trigger(
         reservations,
         messenger,
     }: Parameters<'_>,
-) -> Result {
+) -> controllers::Result {
     let (Some(&origin), Some(grid)) = (selection.cells.first(), &selection.grid) else {
         return NoAction;
     };
@@ -56,14 +64,25 @@ pub fn trigger(
     // create gate
 
     if rectangle.width() == 0 || rectangle.height() == 0 {
-        messenger.send("Entrance must not be zero length");
+        messenger.send(ZERO_DIMENSION_ERROR_MESSAGE);
         return NoAction;
     }
-    let maybe_configuration = try_get_vertical_configuration(rectangle, piste_map, messenger)
-        .or_else(|| try_get_horizontal_configuration(rectangle, piste_map, messenger));
 
-    let Some(configuration) = maybe_configuration else {
+    let maybe_configuration = if rectangle.width() == 2 {
+        try_get_vertical_configuration(rectangle, piste_map)
+    } else if rectangle.height() == 2 {
+        try_get_horizontal_configuration(rectangle, piste_map)
+    } else {
+        messenger.send(WRONG_DIMENSION_ERROR_MESSAGE);
         return NoAction;
+    };
+
+    let configuration = match maybe_configuration {
+        Ok(configuration) => configuration,
+        Err(error) => {
+            messenger.send(error);
+            return NoAction;
+        }
     };
 
     let gate = match configuration.orientation {
@@ -137,32 +156,24 @@ pub fn trigger(
 fn try_get_vertical_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
-    messenger: &mut messenger::System,
-) -> Option<Configuration> {
-    if rectangle.width() != 2 {
-        messenger.send("Not vertical gate - selection must be 2 wide");
-        return None;
-    }
-
+) -> Result<Configuration, &'static str> {
     let mut pistes = [0; 2];
 
     for (index, x) in (rectangle.from.x..=rectangle.to.x).enumerate() {
-        let value = piste_map[xy(x, rectangle.from.y)]?;
+        let value = piste_map[xy(x, rectangle.from.y)].ok_or(CELLS_CONTAIN_PISTE_ERROR_MESSAGE)?;
         for y in rectangle.from.y..=rectangle.to.y {
-            if piste_map[xy(x, y)]? != value {
-                messenger.send("Not vertical gate - column does not contain piste");
-                return None;
+            if piste_map[xy(x, y)].ok_or(CELLS_CONTAIN_PISTE_ERROR_MESSAGE)? != value {
+                return Err(SAME_SIDE_ERROR_MESSAGE);
             }
         }
         pistes[index] = value;
     }
 
     if pistes[0] == pistes[1] {
-        messenger.send("Not vertical gate - same piste on both sides");
-        return None;
+        return Err(OVERLAP_ERROR_MESSAGE);
     }
 
-    Some(Configuration {
+    Ok(Configuration {
         orientation: Orientation::Vertical,
         pistes,
     })
@@ -171,32 +182,24 @@ fn try_get_vertical_configuration(
 fn try_get_horizontal_configuration(
     rectangle: XYRectangle<u32>,
     piste_map: &Grid<Option<usize>>,
-    messenger: &mut messenger::System,
-) -> Option<Configuration> {
-    if rectangle.height() != 2 {
-        messenger.send("Not horizontal gate - selection must be 2 high");
-        return None;
-    }
-
+) -> Result<Configuration, &'static str> {
     let mut pistes = [0; 2];
 
     for (index, y) in (rectangle.from.y..=rectangle.to.y).enumerate() {
-        let value = piste_map[xy(rectangle.from.x, y)]?;
+        let value = piste_map[xy(rectangle.from.x, y)].ok_or(CELLS_CONTAIN_PISTE_ERROR_MESSAGE)?;
         for x in rectangle.from.x..=rectangle.to.x {
-            if piste_map[xy(x, y)]? != value {
-                messenger.send("Not horizontal gate - row does not contain piste");
-                return None;
+            if piste_map[xy(x, y)].ok_or(CELLS_CONTAIN_PISTE_ERROR_MESSAGE)? != value {
+                return Err(SAME_SIDE_ERROR_MESSAGE);
             }
         }
         pistes[index] = value;
     }
 
     if pistes[0] == pistes[1] {
-        messenger.send("Not horizontal gate - same piste on both sides");
-        return None;
+        return Err(OVERLAP_ERROR_MESSAGE);
     }
 
-    Some(Configuration {
+    Ok(Configuration {
         orientation: Orientation::Horizontal,
         pistes,
     })
