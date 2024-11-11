@@ -1,15 +1,22 @@
 use commons::geometry::XY;
 use engine::egui::{self, RichText};
 
-use crate::gui;
+use crate::utils::opener;
 use crate::widgets::ContextWidget;
 use crate::Components;
+use crate::{gui, Systems};
 
 pub struct EntityWindow {
     entity_id: usize,
     mouse_position: XY<u32>,
     is_entity_open: Option<bool>,
+    is_entity_open_changed: bool,
     is_window_open: bool,
+}
+
+pub struct Output<'a> {
+    pub components: &'a mut Components,
+    pub systems: &'a mut Systems,
 }
 
 impl EntityWindow {
@@ -18,6 +25,7 @@ impl EntityWindow {
             entity_id: id,
             mouse_position: mouse_pos,
             is_entity_open: None,
+            is_entity_open_changed: false,
             is_window_open: true,
         }
     }
@@ -27,7 +35,7 @@ impl EntityWindow {
     }
 }
 
-impl ContextWidget<&Components, &mut Components> for EntityWindow {
+impl ContextWidget<&Components, Output<'_>> for EntityWindow {
     fn init(&mut self, components: &Components) {
         self.is_entity_open = components.open.get(&self.entity_id).copied();
     }
@@ -48,16 +56,23 @@ impl ContextWidget<&Components, &mut Components> for EntityWindow {
             ui.vertical(|ui| {
                 if let Some(open) = self.is_entity_open.as_mut() {
                     ui.horizontal(|ui| {
-                        ui.checkbox(open, "Open");
+                        self.is_entity_open_changed = ui.checkbox(open, "Open").changed();
                     });
                 }
             });
         });
     }
 
-    fn update(&mut self, components: &mut Components) {
-        if let Some(open) = self.is_entity_open {
-            components.open.insert(self.entity_id, open);
+    fn update(&mut self, output: Output) {
+        if self.is_entity_open_changed {
+            if let Some(is_entity_open) = self.is_entity_open {
+                opener::set_is_open(
+                    &self.entity_id,
+                    is_entity_open,
+                    output.components,
+                    output.systems,
+                );
+            }
         }
     }
 }
