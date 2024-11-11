@@ -8,7 +8,9 @@ use engine::graphics::Graphics;
 
 use crate::services::mode;
 use crate::widgets::entity_window::EntityWindow;
-use crate::widgets::{building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget};
+use crate::widgets::{
+    self, building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget,
+};
 use crate::{Bindings, Game};
 
 pub const PIXELS_PER_POINT: f32 = 1.5;
@@ -229,7 +231,10 @@ pub fn run(
         });
 
     game.widgets.windows.retain(|_, window| {
-        window.update(&mut game.components);
+        window.update(widgets::entity_window::Output {
+            components: &mut game.components,
+            systems: &mut game.systems,
+        });
         window.is_open()
     });
 
