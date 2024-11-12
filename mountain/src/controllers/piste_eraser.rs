@@ -2,24 +2,32 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
+use commons::map::ContainsKeyValue;
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
 
+use crate::model::gate::Gate;
+use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::selection::Selection;
-use crate::systems::{terrain_artist, tree_artist};
+use crate::systems::{messenger, terrain_artist, tree_artist};
 
 pub struct Controller {
     enabled: bool,
 }
 
 pub struct Parameters<'a> {
+    pub open: &'a HashMap<usize, bool>,
+    pub locations: &'a HashMap<usize, usize>,
+    pub lifts: &'a HashMap<usize, Lift>,
+    pub gates: &'a HashMap<usize, Gate>,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
     pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
+    pub messenger: &'a mut messenger::System,
 }
 
 impl Controller {
@@ -38,11 +46,16 @@ impl Controller {
     pub fn trigger(
         &self,
         Parameters {
+            open,
+            locations,
+            lifts,
+            gates,
             pistes,
             piste_map,
             selection,
             terrain_artist,
             tree_artist,
+            messenger,
         }: Parameters<'_>,
     ) -> Result {
         if !self.enabled {
@@ -57,18 +70,56 @@ impl Controller {
             return NoAction;
         };
 
-        let Some(id) = piste_map[origin] else {
+        let Some(piste_id) = piste_map[origin] else {
             return NoAction;
         };
 
-        let Some(piste) = pistes.get_mut(&id) else {
+        let Some(piste) = pistes.get_mut(&piste_id) else {
             return NoAction;
         };
+
+        if open.contains_key_value(piste_id, true) {
+            messenger.send("Cannot erase piste: Piste is still open");
+            return NoAction;
+        }
+
+        if let Some((entity_id, _)) = locations
+            .iter()
+            .find(|(_, &location_id)| location_id == piste_id)
+        {
+            messenger.send(format!(
+                "Cannot erase piste: Skier {} is still on piste",
+                entity_id
+            ));
+            return NoAction;
+        }
+
+        for (lift_id, lift) in lifts.iter() {
+            if rectangle.contains(lift.drop_off.state.position)
+                || rectangle.contains(lift.pick_up.state.position)
+            {
+                messenger.send(format!(
+                    "Cannot erase piste: selection contains Lift {}",
+                    lift_id
+                ));
+                return NoAction;
+            }
+        }
+
+        for (gate_id, gate) in gates.iter() {
+            if gate.footprint.overlaps(rectangle) {
+                messenger.send(format!(
+                    "Cannot erase piste: selection contains Gate {}",
+                    gate_id
+                ));
+                return NoAction;
+            }
+        }
 
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
-            if piste_map[cell] == Some(id) {
+            if piste_map[cell] == Some(piste_id) {
                 piste_map[cell] = None
             }
         }
@@ -85,7 +136,7 @@ impl Controller {
         let point_grid = point_grid.map(|point, _| {
             piste_map
                 .offsets(point, &CORNERS_INVERSE)
-                .any(|cell| piste_map[cell] == Some(id))
+                .any(|cell| piste_map[cell] == Some(piste_id))
         });
 
         piste.grid = piste.grid.paste(&point_grid);
