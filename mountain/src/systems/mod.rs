@@ -11,6 +11,7 @@ pub mod gate_artist;
 pub mod global_computer;
 pub mod global_target_setter;
 pub mod lift_artist;
+pub mod lift_open_sync;
 pub mod log;
 pub mod messenger;
 pub mod piste_adopter;

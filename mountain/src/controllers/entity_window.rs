@@ -35,10 +35,9 @@ pub fn trigger(
     };
     let position = xy(x.round() as u32, y.round() as u32);
 
-    for lift in lifts.values() {
-        let pick_up_id = &lift.pick_up.id;
-        if lift.pick_up.state.position == position {
-            windows.insert(*pick_up_id, EntityWindow::new(*pick_up_id, *mouse_xy));
+    for (lift_id, lift) in lifts.iter() {
+        if lift.pick_up.state.position == position || lift.drop_off.state.position == position {
+            windows.insert(*lift_id, EntityWindow::new(*lift_id, *mouse_xy));
             return Action;
         }
     }
