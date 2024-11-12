@@ -322,6 +322,18 @@ impl XYRectangle<usize> {
     }
 }
 
+impl<T> XYRectangle<T> {
+    pub fn overlaps<B>(&self, other: B) -> bool
+    where
+        T: PartialOrd,
+        B: Borrow<XYRectangle<T>>,
+    {
+        let other = other.borrow();
+        (self.from.x <= other.to.x && self.to.x >= other.from.x)
+            && (self.from.y <= other.to.y && self.to.y >= other.from.y)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashSet;
@@ -736,5 +748,61 @@ mod tests {
                 xy(3, 5),
             ])
         );
+    }
+
+    #[test]
+    fn test_overlaps_partially() {
+        let rectangle = XYRectangle {
+            from: xy(1usize, 2),
+            to: xy(4, 5),
+        };
+        let other = XYRectangle {
+            from: xy(3usize, 4),
+            to: xy(5, 6),
+        };
+        assert!(rectangle.overlaps(other));
+        assert!(other.overlaps(rectangle));
+    }
+
+    #[test]
+    fn test_overlaps_rectangle_contains_other_rectangle() {
+        let rectangle = XYRectangle {
+            from: xy(1usize, 2),
+            to: xy(4, 5),
+        };
+        let other = XYRectangle {
+            from: xy(2usize, 3),
+            to: xy(3, 4),
+        };
+        assert!(rectangle.overlaps(other));
+        assert!(other.overlaps(rectangle));
+    }
+
+    #[test]
+    fn test_overlaps_x_only() {
+        let rectangle = XYRectangle {
+            from: xy(1usize, 2),
+            to: xy(4, 5),
+        };
+        let other = XYRectangle {
+            from: xy(2usize, 6),
+            to: xy(3, 7),
+        };
+        assert!(!rectangle.overlaps(other));
+        assert!(!other.overlaps(rectangle));
+    }
+
+    #[test]
+    fn test_overlaps_y_only() {
+        let rectangle = XYRectangle {
+            from: xy(1usize, 2),
+            to: xy(4, 5),
+        };
+        let other = XYRectangle {
+            from: xy(5usize, 3),
+            to: xy(6, 4),
+        };
+        assert!(!rectangle.overlaps(other));
+        assert!(!other.overlaps(rectangle));
     }
 }
