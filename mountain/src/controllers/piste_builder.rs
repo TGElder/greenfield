@@ -3,6 +3,7 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
+use commons::map::ContainsKeyValue;
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
@@ -10,7 +11,7 @@ use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::piste::{self, Piste};
 use crate::model::selection::Selection;
 use crate::services::id_allocator;
-use crate::systems::{terrain_artist, tree_artist};
+use crate::systems::{messenger, terrain_artist, tree_artist};
 
 pub struct Controller {
     pub class: piste::Class,
@@ -18,6 +19,7 @@ pub struct Controller {
 }
 
 pub struct Parameters<'a> {
+    pub locations: &'a HashMap<usize, usize>,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
     pub open: &'a mut HashMap<usize, bool>,
@@ -25,6 +27,7 @@ pub struct Parameters<'a> {
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
+    pub messenger: &'a mut messenger::System,
 }
 
 impl Controller {
@@ -39,6 +42,7 @@ impl Controller {
     pub fn trigger(
         &mut self,
         Parameters {
+            locations,
             pistes,
             piste_map,
             open,
@@ -46,6 +50,7 @@ impl Controller {
             terrain_artist,
             tree_artist,
             id_allocator,
+            messenger,
         }: Parameters<'_>,
     ) -> Result {
         if !self.enabled {
@@ -60,13 +65,29 @@ impl Controller {
             return NoAction;
         };
 
-        let id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+        let piste_id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+
+        if open.contains_key_value(piste_id, true) {
+            messenger.send("Cannot build piste: Piste is still open");
+            return NoAction;
+        }
+
+        if let Some((entity_id, _)) = locations
+            .iter()
+            .find(|(_, &location_id)| location_id == piste_id)
+        {
+            messenger.send(format!(
+                "Cannot build piste: Skier {} is still on piste",
+                entity_id
+            ));
+            return NoAction;
+        }
 
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
             if piste_map[cell].is_none() {
-                piste_map[cell] = Some(id)
+                piste_map[cell] = Some(piste_id)
             }
         }
 
@@ -82,10 +103,10 @@ impl Controller {
         let point_grid = point_grid.map(|point, _| {
             piste_map
                 .offsets(point, &CORNERS_INVERSE)
-                .any(|cell| piste_map[cell] == Some(id))
+                .any(|cell| piste_map[cell] == Some(piste_id))
         });
 
-        match pistes.entry(id) {
+        match pistes.entry(piste_id) {
             Entry::Occupied(mut entry) => {
                 entry.get_mut().grid = entry.get().grid.paste(&point_grid);
             }
@@ -94,7 +115,7 @@ impl Controller {
                     class: self.class,
                     grid: point_grid,
                 });
-                open.insert(id, false);
+                open.insert(piste_id, false);
             }
         }
 

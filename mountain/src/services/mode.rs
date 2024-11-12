@@ -103,6 +103,7 @@ fn try_to_handle(
             .controllers
             .piste_builder
             .trigger(controllers::piste_builder::Parameters {
+                locations: &game.components.locations,
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
                 open: &mut game.components.open,
@@ -110,22 +111,29 @@ fn try_to_handle(
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
+                messenger: &mut game.systems.messenger,
             })
             .then_try(|| {
                 game.controllers
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
+                        open: &game.components.open,
+                        locations: &game.components.locations,
+                        lifts: &game.components.lifts,
+                        gates: &game.components.gates,
                         pistes: &mut game.components.pistes,
                         piste_map: &mut game.components.piste_map,
                         selection: &mut game.components.selection,
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
+                        messenger: &mut game.systems.messenger,
                     })
             }),
         Mode::Path => game
             .controllers
             .path_builder
             .trigger(controllers::piste_builder::Parameters {
+                locations: &game.components.locations,
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
                 open: &mut game.components.open,
@@ -133,16 +141,22 @@ fn try_to_handle(
                 terrain_artist: &mut game.systems.terrain_artist,
                 tree_artist: &mut game.systems.tree_artist,
                 id_allocator: &mut game.components.services.id_allocator,
+                messenger: &mut game.systems.messenger,
             })
             .then_try(|| {
                 game.controllers
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
+                        open: &game.components.open,
+                        locations: &game.components.locations,
+                        lifts: &game.components.lifts,
+                        gates: &game.components.gates,
                         pistes: &mut game.components.pistes,
                         piste_map: &mut game.components.piste_map,
                         selection: &mut game.components.selection,
                         terrain_artist: &mut game.systems.terrain_artist,
                         tree_artist: &mut game.systems.tree_artist,
+                        messenger: &mut game.systems.messenger,
                     })
             }),
         Mode::Lift => {
