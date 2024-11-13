@@ -196,10 +196,6 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                     state: ButtonState::Pressed,
                 },
             },
-            compute: Binding::Single {
-                button: Button::Keyboard(KeyboardKey::from("c")),
-                state: ButtonState::Pressed,
-            },
             drag: drag::Bindings {
                 start_dragging: Binding::Single {
                     button: Button::Mouse(MouseButton::Right),
@@ -513,7 +509,6 @@ struct Systems {
 pub struct Bindings {
     action: Binding,
     clock_handler: handlers::clock::Bindings,
-    compute: Binding,
     drag: drag::Bindings,
     piste_mode: piste_build_mode::Bindings,
     main_menu: Binding,
@@ -650,23 +645,6 @@ impl EventHandler for Game {
                 graphics,
             },
         );
-        handlers::piste_computer::handle(handlers::piste_computer::Parameters {
-            binding: &self.bindings.compute,
-            event,
-            mouse_xy: &self.mouse_xy,
-            terrain: &self.components.terrain,
-            pistes: &self.components.pistes,
-            piste_map: &self.components.piste_map,
-            entrances: &mut self.components.entrances,
-            exits: &mut self.components.exits,
-            reservations: &self.components.reservations,
-            costs: &mut self.components.costs,
-            abilities: &mut self.components.abilities,
-            clock: &mut self.components.services.clock,
-            global_computer: &mut self.systems.global_computer,
-            terrain_artist: &mut self.systems.terrain_artist,
-            graphics,
-        });
         lift_open_sync::run(&self.components.lifts, &mut self.components.open);
         selection_rasterizer::run(selection_rasterizer::Parameters {
             terrain: &self.components.terrain,
