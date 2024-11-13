@@ -95,8 +95,10 @@ impl Controller {
         }
 
         for (lift_id, lift) in lifts.iter() {
-            if rectangle.contains(lift.drop_off.state.position)
-                || rectangle.contains(lift.pick_up.state.position)
+            let drop_off = lift.drop_off.state.position;
+            let pick_up = lift.pick_up.state.position;
+            if (rectangle.contains(drop_off) && piste_map[drop_off] == Some(piste_id))
+                || (rectangle.contains(pick_up) && piste_map[pick_up] == Some(piste_id))
             {
                 messenger.send(format!(
                     "Cannot erase piste: selection contains Lift {}",
@@ -107,7 +109,13 @@ impl Controller {
         }
 
         for (gate_id, gate) in gates.iter() {
-            if gate.footprint.overlaps(rectangle) {
+            if gate
+                .footprint
+                .iter()
+                .filter(|position| rectangle.contains(position))
+                .filter(|position| piste_map.in_bounds(position))
+                .any(|position| piste_map[position] == Some(piste_id))
+            {
                 messenger.send(format!(
                     "Cannot erase piste: selection contains Gate {}",
                     gate_id
