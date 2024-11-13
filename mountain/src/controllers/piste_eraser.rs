@@ -1,12 +1,13 @@
 use std::collections::HashMap;
 
-use commons::geometry::{xy, XYRectangle};
+use commons::geometry::{xy, XYRectangle, XY};
 use commons::grid::{Grid, CORNERS_INVERSE};
 use commons::map::ContainsKeyValue;
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
 
+use crate::model::door::Door;
 use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
@@ -22,6 +23,7 @@ pub struct Parameters<'a> {
     pub locations: &'a HashMap<usize, usize>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
+    pub doors: &'a HashMap<usize, Door>,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
     pub selection: &'a mut Selection,
@@ -50,6 +52,7 @@ impl Controller {
             locations,
             lifts,
             gates,
+            doors,
             pistes,
             piste_map,
             selection,
@@ -94,12 +97,30 @@ impl Controller {
             return NoAction;
         }
 
+        let point_grid = OriginGrid::from_rectangle(
+            XYRectangle {
+                from: rectangle.from,
+                to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
+            },
+            false,
+        );
+        let point_grid = point_grid.map(|point, _| {
+            piste_map
+                .offsets(point, &CORNERS_INVERSE)
+                .any(|cell| piste_map[cell] == Some(piste_id))
+        });
+
+        let is_in_selection_on_piste = |position: XY<u32>| {
+            point_grid.in_bounds(position)
+                && point_grid[position]
+                && piste.grid.in_bounds(position)
+                && piste.grid[position]
+        };
+
         for (lift_id, lift) in lifts.iter() {
             let drop_off = lift.drop_off.state.position;
             let pick_up = lift.pick_up.state.position;
-            if (rectangle.contains(drop_off) && piste_map[drop_off] == Some(piste_id))
-                || (rectangle.contains(pick_up) && piste_map[pick_up] == Some(piste_id))
-            {
+            if is_in_selection_on_piste(drop_off) || is_in_selection_on_piste(pick_up) {
                 messenger.send(format!(
                     "Cannot erase piste: selection contains Lift {}",
                     lift_id
@@ -109,16 +130,24 @@ impl Controller {
         }
 
         for (gate_id, gate) in gates.iter() {
-            if gate
-                .footprint
-                .iter()
-                .filter(|position| rectangle.contains(position))
-                .filter(|position| piste_map.in_bounds(position))
-                .any(|position| piste_map[position] == Some(piste_id))
-            {
+            if gate.footprint.iter().any(is_in_selection_on_piste) {
                 messenger.send(format!(
                     "Cannot erase piste: selection contains Gate {}",
                     gate_id
+                ));
+                return NoAction;
+            }
+        }
+
+        for (door_id, door) in doors.iter() {
+            if door
+                .aperture
+                .iter()
+                .any(|&position| is_in_selection_on_piste(position))
+            {
+                messenger.send(format!(
+                    "Cannot erase piste: selection contains Door {}",
+                    door_id
                 ));
                 return NoAction;
             }
@@ -133,19 +162,6 @@ impl Controller {
         }
 
         // updating piste
-
-        let point_grid = OriginGrid::from_rectangle(
-            XYRectangle {
-                from: rectangle.from,
-                to: xy(rectangle.to.x + 1, rectangle.to.y + 1),
-            },
-            false,
-        );
-        let point_grid = point_grid.map(|point, _| {
-            piste_map
-                .offsets(point, &CORNERS_INVERSE)
-                .any(|cell| piste_map[cell] == Some(piste_id))
-        });
 
         piste.grid = piste.grid.paste(&point_grid);
 
