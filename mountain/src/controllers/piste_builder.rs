@@ -3,7 +3,6 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::{Grid, CORNERS_INVERSE};
-use commons::map::ContainsKeyValue;
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
@@ -12,6 +11,7 @@ use crate::model::piste::{self, Piste};
 use crate::model::selection::Selection;
 use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist, tree_artist};
+use crate::utils::editability::{is_editable, Editable, Reason};
 
 pub struct Controller {
     pub class: piste::Class,
@@ -67,20 +67,17 @@ impl Controller {
 
         let piste_id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
 
-        if open.contains_key_value(piste_id, true) {
-            messenger.send("Cannot build piste: Piste is still open");
-            return NoAction;
-        }
-
-        if let Some((entity_id, _)) = locations
-            .iter()
-            .find(|(_, &location_id)| location_id == piste_id)
-        {
-            messenger.send(format!(
-                "Cannot build piste: Skier {} is still on piste",
-                entity_id
-            ));
-            return NoAction;
+        match is_editable(&piste_id, open, locations) {
+            Editable::True => (),
+            Editable::False(reason) => {
+                match reason {
+                    Reason::Open => messenger.send("Cannot edit piste: Piste is open"),
+                    Reason::Occupied(id) => {
+                        messenger.send(format!("Cannot edit piste: Piste is occupied by {}", id))
+                    }
+                };
+                return NoAction;
+            }
         }
 
         // updating piste map

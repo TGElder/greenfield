@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use commons::geometry::{xy, XYRectangle, XY};
 use commons::grid::{Grid, CORNERS_INVERSE};
-use commons::map::ContainsKeyValue;
 use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
@@ -13,6 +12,7 @@ use crate::model::lift::Lift;
 use crate::model::piste::Piste;
 use crate::model::selection::Selection;
 use crate::systems::{messenger, terrain_artist, tree_artist};
+use crate::utils::editability::{is_editable, Editable, Reason};
 
 pub struct Controller {
     enabled: bool,
@@ -81,20 +81,17 @@ impl Controller {
             return NoAction;
         };
 
-        if open.contains_key_value(piste_id, true) {
-            messenger.send("Cannot erase piste: Piste is still open");
-            return NoAction;
-        }
-
-        if let Some((entity_id, _)) = locations
-            .iter()
-            .find(|(_, &location_id)| location_id == piste_id)
-        {
-            messenger.send(format!(
-                "Cannot erase piste: Skier {} is still on piste",
-                entity_id
-            ));
-            return NoAction;
+        match is_editable(&piste_id, open, locations) {
+            Editable::True => (),
+            Editable::False(reason) => {
+                match reason {
+                    Reason::Open => messenger.send("Cannot edit piste: Piste is open"),
+                    Reason::Occupied(id) => {
+                        messenger.send(format!("Cannot edit piste: Piste is occupied by {}", id))
+                    }
+                };
+                return NoAction;
+            }
         }
 
         let point_grid = OriginGrid::from_rectangle(
