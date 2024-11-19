@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use commons::geometry::{xy, XY, XYZ};
 use commons::map::ContainsKeyValue;
 use engine::graphics::Graphics;
@@ -5,6 +7,7 @@ use engine::graphics::Graphics;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
 use crate::systems::messenger;
+use crate::utils::editability::{is_editable, Editable, Reason};
 use crate::Components;
 
 pub fn trigger(
@@ -66,7 +69,7 @@ pub fn remove_lift(
     // Validate
 
     if components.open.contains_key_value(lift_id, true) {
-        messenger.send(format!("Close lift {} before removing it!", lift_id));
+        messenger.send(format!("Cannot remove lift {}: Lift is open", lift_id));
         return;
     }
 
@@ -76,22 +79,33 @@ pub fn remove_lift(
         .any(|location_id| car_ids.contains(location_id))
     {
         messenger.send(format!(
-            "Cannot remove lift {} while people are riding it!",
+            "Cannot remove lift {}: People are riding it!",
             lift_id
         ));
         return;
     }
 
-    if components
-        .targets
-        .values()
-        .any(|target_id| *target_id == *lift_id)
-    {
-        messenger.send(format!(
-            "Cannot remove lift {} while people are targeting it!",
-            lift_id
-        ));
-        return;
+    if let Some(lift) = components.lifts.get(lift_id) {
+        if let Some(entrance) = components.entrances.get(&lift.drop_off.id) {
+            if !is_piste_editable(
+                &entrance.destination_piste_id,
+                &components.open,
+                &components.locations,
+                messenger,
+            ) {
+                return;
+            }
+        }
+        if let Some(exit) = components.exits.get(&lift.pick_up.id) {
+            if !is_piste_editable(
+                &exit.origin_piste_id,
+                &components.open,
+                &components.locations,
+                messenger,
+            ) {
+                return;
+            }
+        }
     }
 
     // Remove
@@ -116,6 +130,29 @@ pub fn remove_lift(
     for (_, costs) in components.costs.iter_mut() {
         for ability in ABILITIES {
             costs.remove_costs(*lift_id, ability);
+        }
+    }
+}
+
+fn is_piste_editable(
+    piste_id: &usize,
+    open: &HashMap<usize, bool>,
+    locations: &HashMap<usize, usize>,
+    messenger: &mut messenger::System,
+) -> bool {
+    match is_editable(piste_id, open, locations) {
+        Editable::True => true,
+        Editable::False(reason) => {
+            match reason {
+                Reason::Open => {
+                    messenger.send(format!("Cannot remove lift: Piste {} is open", piste_id))
+                }
+                Reason::Occupied(id) => messenger.send(format!(
+                    "Cannot remove lift: Piste {} is occupied by {}",
+                    piste_id, id
+                )),
+            };
+            false
         }
     }
 }
