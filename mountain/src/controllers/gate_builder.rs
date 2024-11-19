@@ -14,6 +14,7 @@ use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist};
+use crate::utils::editability::{is_editable, Editable, Reason};
 
 const ZERO_DIMENSION_ERROR_MESSAGE: &str = "Selection must not have 0 width or 0 height";
 const WRONG_DIMENSION_ERROR_MESSAGE: &str = "Selection must be 2 wide or 2 high";
@@ -24,6 +25,7 @@ const OVERLAP_ERROR_MESSAGE: &str = "Selection must overlap two pistes";
 
 pub struct Parameters<'a> {
     pub piste_map: &'a Grid<Option<usize>>,
+    pub locations: &'a HashMap<usize, usize>,
     pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub id_allocator: &'a mut id_allocator::Service,
@@ -38,6 +40,7 @@ pub struct Parameters<'a> {
 pub fn trigger(
     Parameters {
         piste_map,
+        locations,
         selection,
         terrain_artist,
         id_allocator,
@@ -85,6 +88,16 @@ pub fn trigger(
         }
     };
 
+    let origin_piste_id = piste_map[origin].unwrap();
+    let destination_piste_id =
+        (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
+
+    if !is_piste_editable(&origin_piste_id, open, locations, messenger)
+        | !is_piste_editable(&destination_piste_id, open, locations, messenger)
+    {
+        return NoAction;
+    }
+
     let gate = match configuration.orientation {
         Orientation::Vertical => Gate {
             footprint: XYRectangle {
@@ -111,10 +124,6 @@ pub fn trigger(
     });
 
     // creating entrance and exit
-
-    let origin_piste_id = piste_map[origin].unwrap();
-    let destination_piste_id =
-        (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
 
     let stationary_states = gate
         .footprint
@@ -203,6 +212,29 @@ fn try_get_horizontal_configuration(
         orientation: Orientation::Horizontal,
         pistes,
     })
+}
+
+fn is_piste_editable(
+    piste_id: &usize,
+    open: &HashMap<usize, bool>,
+    locations: &HashMap<usize, usize>,
+    messenger: &mut messenger::System,
+) -> bool {
+    match is_editable(piste_id, open, locations) {
+        Editable::True => true,
+        Editable::False(reason) => {
+            match reason {
+                Reason::Open => {
+                    messenger.send(format!("Cannot build gate: Piste {} open", piste_id))
+                }
+                Reason::Occupied(id) => messenger.send(format!(
+                    "Cannot build gate: Piste {} is occupied by {}",
+                    piste_id, id
+                )),
+            };
+            false
+        }
+    }
 }
 
 struct Configuration {
