@@ -168,6 +168,7 @@ fn try_to_handle(
                     mouse_xy: &game.mouse_xy,
                     terrain: &game.components.terrain,
                     piste_map: &game.components.piste_map,
+                    locations: &game.components.locations,
                     lifts: &mut game.components.lifts,
                     open: &mut game.components.open,
                     id_allocator: &mut game.components.services.id_allocator,

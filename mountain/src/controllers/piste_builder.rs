@@ -71,9 +71,9 @@ impl Controller {
             Editable::True => (),
             Editable::False(reason) => {
                 match reason {
-                    Reason::Open => messenger.send("Cannot edit piste: Piste is open"),
+                    Reason::Open => messenger.send("Cannot build piste: Piste is open"),
                     Reason::Occupied(id) => {
-                        messenger.send(format!("Cannot edit piste: Piste is occupied by {}", id))
+                        messenger.send(format!("Cannot build piste: Piste is occupied by {}", id))
                     }
                 };
                 return NoAction;

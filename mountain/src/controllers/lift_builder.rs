@@ -18,6 +18,7 @@ use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
 use crate::systems::messenger;
 use crate::utils;
+use crate::utils::editability::{is_editable, Editable, Reason};
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
@@ -34,6 +35,7 @@ pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
+    pub locations: &'a HashMap<usize, usize>,
     pub lifts: &'a mut HashMap<usize, Lift>,
     pub open: &'a mut HashMap<usize, bool>,
     pub id_allocator: &'a mut id_allocator::Service,
@@ -58,6 +60,7 @@ impl Controller {
             terrain,
             piste_map,
             lifts,
+            locations,
             open,
             id_allocator,
             carousels,
@@ -101,6 +104,12 @@ impl Controller {
             self.from = None;
             return NoAction;
         };
+
+        if !is_piste_editable(&from_piste, open, locations, messenger)
+            | !is_piste_editable(&to_piste, open, locations, messenger)
+        {
+            return NoAction;
+        }
 
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
@@ -194,9 +203,27 @@ impl Controller {
     }
 }
 
-fn get_direction(from: &XY<u32>, to: &XY<u32>) -> Direction {
-    let vector = xy(to.x as f32 - from.x as f32, to.y as f32 - from.y as f32);
-    Direction::snap_to_direction(vector.angle())
+fn is_piste_editable(
+    piste_id: &usize,
+    open: &HashMap<usize, bool>,
+    locations: &HashMap<usize, usize>,
+    messenger: &mut messenger::System,
+) -> bool {
+    match is_editable(piste_id, open, locations) {
+        Editable::True => true,
+        Editable::False(reason) => {
+            match reason {
+                Reason::Open => {
+                    messenger.send(format!("Cannot build lift: Piste {} open", piste_id))
+                }
+                Reason::Occupied(id) => messenger.send(format!(
+                    "Cannot build lift: Piste {} is occupied by {}",
+                    piste_id, id
+                )),
+            };
+            false
+        }
+    }
 }
 
 fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>> {
@@ -233,4 +260,9 @@ fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>
                 .map(|XY { x, y }| xyz(x, y, from_3d.z)),
         )
         .collect()
+}
+
+fn get_direction(from: &XY<u32>, to: &XY<u32>) -> Direction {
+    let vector = xy(to.x as f32 - from.x as f32, to.y as f32 - from.y as f32);
+    Direction::snap_to_direction(vector.angle())
 }
