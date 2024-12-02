@@ -9,6 +9,7 @@ use crate::model::carousel::Carousel;
 use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
+use crate::model::open;
 use crate::model::skiing::State;
 
 pub const GLOBAL_COST_DIVISOR: u64 = 1000;
@@ -18,7 +19,7 @@ pub struct GlobalNetwork<'a> {
     pub pick_up_to_lift: &'a HashMap<usize, usize>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub entrances: &'a HashMap<usize, Entrance>,
-    pub open: &'a HashMap<usize, bool>,
+    pub open: &'a HashMap<usize, open::Status>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
     pub ability: Ability,
@@ -63,7 +64,7 @@ impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
             return Box::new(empty());
         };
 
-        if !self.open.contains_key_value(piste_id, true) {
+        if !self.open.contains_key_value(piste_id, open::Status::Open) {
             return Box::new(empty());
         }
         let Some(&piste_ability) = self.abilities.get(piste_id) else {

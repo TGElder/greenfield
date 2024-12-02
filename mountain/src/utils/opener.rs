@@ -1,11 +1,12 @@
 use commons::geometry::{xy, XYRectangle};
 
+use crate::model::open;
 use crate::utils::computer;
 use crate::{Components, Services, Systems};
 
-pub fn set_is_open(
+pub fn set_open_status(
     id: &usize,
-    is_open: bool,
+    status: open::Status,
     Components {
         terrain,
         pistes,
@@ -27,9 +28,9 @@ pub fn set_is_open(
     let current_speed = clock.speed();
     clock.set_speed(0.0);
 
-    open.insert(*id, is_open);
+    open.insert(*id, status);
 
-    if is_open {
+    if let open::Status::Open = status {
         computer::costs::compute_piste(id, pistes, terrain, exits, reservations, costs);
         computer::piste_ability::compute_piste(id, costs, entrances, exits, abilities);
     }

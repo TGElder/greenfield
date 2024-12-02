@@ -51,6 +51,7 @@ use crate::model::frame::Frame;
 use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
+use crate::model::open;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
 use crate::model::selection::Selection;
@@ -464,7 +465,7 @@ pub struct Components {
     abilities: HashMap<usize, Ability>,
     buildings: HashMap<usize, Building>,
     doors: HashMap<usize, Door>,
-    open: HashMap<usize, bool>,
+    open: HashMap<usize, open::Status>,
     #[serde(skip)]
     highlights: HashSet<usize>,
     terrain: Grid<f32>,

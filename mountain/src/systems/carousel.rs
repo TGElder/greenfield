@@ -6,6 +6,7 @@ use commons::map::ContainsKeyValue;
 
 use crate::model::carousel::{Car, Carousel};
 use crate::model::lift::Lift;
+use crate::model::open;
 use crate::model::reservation::{Reservation, ReservationPeriod};
 use crate::model::skiing::Plan;
 use crate::utils::carousel::{revolve, RevolveAction, RevolveEvent, RevolveResult};
@@ -17,7 +18,7 @@ pub struct System {
 pub struct Parameters<'a> {
     pub micros: &'a u128,
     pub lifts: &'a HashMap<usize, Lift>,
-    pub open: &'a HashMap<usize, bool>,
+    pub open: &'a HashMap<usize, open::Status>,
     pub carousels: &'a HashMap<usize, Carousel>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub plans: &'a mut HashMap<usize, Plan>,
@@ -108,7 +109,7 @@ impl System {
                 let car_id = car_ids[car_index];
                 match action {
                     RevolveAction::PickUp => {
-                        if !open.contains_key_value(lift.pick_up.id, true) {
+                        if !open.contains_key_value(lift.pick_up.id, open::Status::Open) {
                             continue;
                         }
                         plans.retain(|skier_id, plan| {

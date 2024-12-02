@@ -9,17 +9,17 @@ use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::door::Door;
 use crate::model::gate::Gate;
 use crate::model::lift::Lift;
+use crate::model::open;
 use crate::model::piste::Piste;
 use crate::model::selection::Selection;
 use crate::systems::{messenger, terrain_artist, tree_artist};
-use crate::utils::editability::{is_editable, Editable, Reason};
 
 pub struct Controller {
     enabled: bool,
 }
 
 pub struct Parameters<'a> {
-    pub open: &'a HashMap<usize, bool>,
+    pub open: &'a HashMap<usize, open::Status>,
     pub locations: &'a HashMap<usize, usize>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
@@ -81,17 +81,10 @@ impl Controller {
             return NoAction;
         };
 
-        match is_editable(&piste_id, open, locations) {
-            Editable::True => (),
-            Editable::False(reason) => {
-                match reason {
-                    Reason::Open => messenger.send("Cannot edit piste: Piste is open"),
-                    Reason::Occupied(id) => {
-                        messenger.send(format!("Cannot edit piste: Piste is occupied by {}", id))
-                    }
-                };
-                return NoAction;
-            }
+        if let Some(open::Status::Closed) = open.get(&piste_id) {
+        } else {
+            messenger.send("Cannot edit piste: Piste is not closed");
+            return NoAction;
         }
 
         let point_grid = OriginGrid::from_rectangle(

@@ -4,6 +4,7 @@ use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
+use crate::model::open;
 use crate::systems::messenger;
 use crate::Components;
 
@@ -65,7 +66,10 @@ pub fn remove_lift(
 
     // Validate
 
-    if components.open.contains_key_value(lift_id, true) {
+    if components
+        .open
+        .contains_key_value(lift_id, open::Status::Open)
+    {
         messenger.send(format!("Close lift {} before removing it!", lift_id));
         return;
     }
