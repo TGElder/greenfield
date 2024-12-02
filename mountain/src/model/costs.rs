@@ -45,7 +45,7 @@ where
         &'a self,
         node: &'a T,
         ability: &'a Ability,
-    ) -> impl Iterator<Item = (&usize, &u64)> + 'a {
+    ) -> impl Iterator<Item = (&'a usize, &'a u64)> + 'a {
         self.key_to_costs
             .iter()
             .filter(|(key, _)| key.ability == *ability)

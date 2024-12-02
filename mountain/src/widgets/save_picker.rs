@@ -23,7 +23,7 @@ impl Widget {
     }
 }
 
-impl<'a> UiWidget<Input<'a>, ()> for Widget {
+impl UiWidget<Input<'_>, ()> for Widget {
     fn init(&mut self, input: Input) {
         self.saves = get_saves(input.directory, input.extension);
     }
