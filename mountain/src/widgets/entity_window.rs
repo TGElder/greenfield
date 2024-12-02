@@ -11,7 +11,6 @@ pub struct EntityWindow {
     entity_id: usize,
     mouse_position: XY<u32>,
     open_status: Option<open::Status>,
-    open_status_changed: bool,
     is_window_open: bool,
 }
 
@@ -26,7 +25,6 @@ impl EntityWindow {
             entity_id: id,
             mouse_position: mouse_pos,
             open_status: None,
-            open_status_changed: false,
             is_window_open: true,
         }
     }
@@ -60,8 +58,7 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
                         .selected_text(text(status))
                         .show_ui(ui, |ui| {
                             for choice in choices(status) {
-                                self.open_status_changed =
-                                    ui.selectable_value(status, choice, text(&choice)).changed();
+                                ui.selectable_value(status, choice, text(&choice));
                             }
                         });
                 }
@@ -70,7 +67,7 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
     }
 
     fn update(&mut self, output: Output) {
-        if self.open_status_changed {
+        if output.components.open.get(&self.entity_id) != self.open_status.as_ref() {
             if let Some(open_status) = self.open_status {
                 opener::set_open_status(
                     &self.entity_id,
