@@ -61,7 +61,7 @@ use crate::model::tree::Tree;
 use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
-    building_artist, carousel, chair_artist, chair_framer, door, door_artist, frame_artist,
+    building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
     lift_open_sync, log, messenger, piste_adopter, planner, selection_rasterizer, skiing_framer,
     target_scrubber, target_setter, terrain_artist, tree_artist, window_artist,
@@ -765,6 +765,14 @@ impl EventHandler for Game {
             reservations: &mut self.components.reservations,
             planning_queue: &mut self.components.planning_queue,
         });
+
+        closer::run(
+            &self.components.targets,
+            &self.components.locations,
+            &mut self.components.open,
+            &mut self.systems.messenger,
+        );
+
         frame_wiper::run(&mut self.components.frames);
         self.systems
             .skier_colors
