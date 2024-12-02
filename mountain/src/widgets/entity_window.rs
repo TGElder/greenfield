@@ -55,10 +55,10 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
             ui.vertical(|ui| {
                 if let Some(status) = self.open_status.as_mut() {
                     egui::ComboBox::from_id_source(0)
-                        .selected_text(text(status))
+                        .selected_text(open_status_text(status))
                         .show_ui(ui, |ui| {
-                            for choice in choices(status) {
-                                ui.selectable_value(status, choice, text(&choice));
+                            for choice in open_status_choices(status) {
+                                ui.selectable_value(status, choice, open_status_text(&choice));
                             }
                         });
                 }
@@ -80,19 +80,19 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
     }
 }
 
-static OPEN: &str = "Open";
-static CLOSED: &str = "Closed";
-static CLOSING: &str = "Closing";
+static OPEN_STATUS_OPEN: &str = "Open";
+static OPEN_STATUS_CLOSED: &str = "Closed";
+static OPEN_STATUS_CLOSING: &str = "Closing";
 
-fn text(status: &open::Status) -> &'static str {
+fn open_status_text(status: &open::Status) -> &'static str {
     match status {
-        open::Status::Open => OPEN,
-        open::Status::Closing => CLOSING,
-        open::Status::Closed => CLOSED,
+        open::Status::Open => OPEN_STATUS_OPEN,
+        open::Status::Closing => OPEN_STATUS_CLOSING,
+        open::Status::Closed => OPEN_STATUS_CLOSED,
     }
 }
 
-fn choices(status: &open::Status) -> impl Iterator<Item = open::Status> {
+fn open_status_choices(status: &open::Status) -> impl Iterator<Item = open::Status> {
     match status {
         open::Status::Open => [open::Status::Open, open::Status::Closing].into_iter(),
         open::Status::Closing => [open::Status::Open, open::Status::Closing].into_iter(),
