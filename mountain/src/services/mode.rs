@@ -103,7 +103,6 @@ fn try_to_handle(
             .controllers
             .piste_builder
             .trigger(controllers::piste_builder::Parameters {
-                locations: &game.components.locations,
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
                 open: &mut game.components.open,
@@ -118,7 +117,6 @@ fn try_to_handle(
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
                         open: &game.components.open,
-                        locations: &game.components.locations,
                         lifts: &game.components.lifts,
                         gates: &game.components.gates,
                         doors: &game.components.doors,
@@ -134,7 +132,6 @@ fn try_to_handle(
             .controllers
             .path_builder
             .trigger(controllers::piste_builder::Parameters {
-                locations: &game.components.locations,
                 pistes: &mut game.components.pistes,
                 piste_map: &mut game.components.piste_map,
                 open: &mut game.components.open,
@@ -149,7 +146,6 @@ fn try_to_handle(
                     .piste_eraser
                     .trigger(controllers::piste_eraser::Parameters {
                         open: &game.components.open,
-                        locations: &game.components.locations,
                         lifts: &game.components.lifts,
                         gates: &game.components.gates,
                         doors: &game.components.doors,

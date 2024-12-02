@@ -1,5 +1,5 @@
 use commons::geometry::XY;
-use engine::egui::{self, RichText, WidgetText};
+use engine::egui::{self, RichText};
 
 use crate::model::open;
 use crate::utils::opener;
@@ -60,7 +60,7 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
                         .selected_text(text(status))
                         .show_ui(ui, |ui| {
                             for choice in choices(status) {
-                                let open_status_changed =
+                                self.open_status_changed =
                                     ui.selectable_value(status, choice, text(&choice)).changed();
                             }
                         });
@@ -89,9 +89,9 @@ static CLOSING: &str = "Closing";
 
 fn text(status: &open::Status) -> &'static str {
     match status {
-        open::Status::Open => OPEN.into(),
-        open::Status::Closing => CLOSING.into(),
-        open::Status::Closed => CLOSED.into(),
+        open::Status::Open => OPEN,
+        open::Status::Closing => CLOSING,
+        open::Status::Closed => CLOSED,
     }
 }
 

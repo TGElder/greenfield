@@ -19,7 +19,6 @@ pub struct Controller {
 }
 
 pub struct Parameters<'a> {
-    pub locations: &'a HashMap<usize, usize>,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
     pub open: &'a mut HashMap<usize, open::Status>,
@@ -42,7 +41,6 @@ impl Controller {
     pub fn trigger(
         &mut self,
         Parameters {
-            locations,
             pistes,
             piste_map,
             open,

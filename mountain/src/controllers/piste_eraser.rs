@@ -20,7 +20,6 @@ pub struct Controller {
 
 pub struct Parameters<'a> {
     pub open: &'a HashMap<usize, open::Status>,
-    pub locations: &'a HashMap<usize, usize>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
     pub doors: &'a HashMap<usize, Door>,
@@ -49,7 +48,6 @@ impl Controller {
         &self,
         Parameters {
             open,
-            locations,
             lifts,
             gates,
             doors,
