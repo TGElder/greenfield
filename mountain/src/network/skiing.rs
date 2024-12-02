@@ -32,7 +32,7 @@ pub struct SkiingNetwork<'a> {
     pub is_valid_edge_fn: &'a dyn Fn(&State, &State) -> bool,
 }
 
-impl<'a> OutNetwork<State> for SkiingNetwork<'a> {
+impl OutNetwork<State> for SkiingNetwork<'_> {
     fn edges_out<'b>(
         &'b self,
         from: &'b State,

@@ -11,7 +11,7 @@ pub struct DistanceNetwork<'a> {
     pub can_visit: &'a dyn Fn(&XY<u32>) -> bool,
 }
 
-impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
+impl InNetwork<XY<u32>> for DistanceNetwork<'_> {
     fn edges_in<'b>(
         &'b self,
         to: &'b XY<u32>,
@@ -35,7 +35,7 @@ impl<'a> InNetwork<XY<u32>> for DistanceNetwork<'a> {
     }
 }
 
-impl<'a> DistanceNetwork<'a> {
+impl DistanceNetwork<'_> {
     fn cost(&self, from: &XY<u32>, to: &XY<u32>) -> u32 {
         if from.x == to.x || from.y == to.y {
             1000

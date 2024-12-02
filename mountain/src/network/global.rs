@@ -25,7 +25,7 @@ pub struct GlobalNetwork<'a> {
     pub ability: Ability,
 }
 
-impl<'a> GlobalNetwork<'a> {
+impl GlobalNetwork<'_> {
     fn lift_travel_micros(&self, lift: &usize) -> u64 {
         self.lifts
             .get(lift)
@@ -41,7 +41,7 @@ impl<'a> GlobalNetwork<'a> {
     }
 }
 
-impl<'a> OutNetwork<usize> for GlobalNetwork<'a> {
+impl OutNetwork<usize> for GlobalNetwork<'_> {
     fn edges_out<'b>(
         &'b self,
         from: &'b usize,
