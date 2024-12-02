@@ -4,6 +4,7 @@ use commons::map::ContainsKeyValue;
 
 use crate::model::costs::Costs;
 use crate::model::door::Door;
+use crate::model::open;
 use crate::model::skier::Skier;
 use crate::model::skiing::{Plan, State};
 use crate::network::global::GLOBAL_COST_DIVISOR;
@@ -15,7 +16,7 @@ pub struct Parameters<'a> {
     pub doors: &'a HashMap<usize, Door>,
     pub global_costs: &'a Costs<usize>,
     pub costs: &'a HashMap<usize, Costs<State>>,
-    pub open: &'a HashMap<usize, bool>,
+    pub open: &'a HashMap<usize, open::Status>,
     pub global_targets: &'a mut HashMap<usize, usize>,
     pub targets: &'a mut HashMap<usize, usize>,
 }
@@ -92,7 +93,7 @@ pub fn run(
 
         let target = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
-            .filter(|(&target, _)| open.contains_key_value(target, true))
+            .filter(|(&target, _)| open.contains_key_value(target, open::Status::Open))
             .flat_map(|(target, cost)| {
                 costs_to_global_target
                     .get(target)

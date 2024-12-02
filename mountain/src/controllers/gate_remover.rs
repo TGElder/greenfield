@@ -5,6 +5,7 @@ use engine::graphics::Graphics;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
 use crate::model::gate::Gate;
+use crate::model::open;
 use crate::systems::messenger;
 use crate::Components;
 
@@ -48,7 +49,10 @@ pub fn remove_gate(
 ) {
     // Validate
 
-    if components.open.contains_key_value(gate_id, true) {
+    if components
+        .open
+        .contains_key_value(gate_id, open::Status::Open)
+    {
         messenger.send(format!("Close gate {} before removing it!", gate_id));
         return;
     }

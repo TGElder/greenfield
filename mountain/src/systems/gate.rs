@@ -5,13 +5,14 @@ use commons::map::ContainsKeyValue;
 
 use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
+use crate::model::open;
 use crate::model::skiing::{Plan, State};
 
 pub fn run(
     plans: &HashMap<usize, Plan>,
     gates: &HashMap<usize, Gate>,
     entrances: &HashMap<usize, Entrance>,
-    open: &HashMap<usize, bool>,
+    open: &HashMap<usize, open::Status>,
     targets: &mut HashMap<usize, usize>,
     global_targets: &mut HashMap<usize, usize>,
     locations: &mut HashMap<usize, usize>,
@@ -37,7 +38,7 @@ pub fn run(
             continue;
         };
 
-        if !open.contains_key_value(target_id, true) {
+        if !open.contains_key_value(target_id, open::Status::Open) {
             continue;
         }
 

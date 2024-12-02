@@ -12,6 +12,7 @@ use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::{self, Lift, Segment};
+use crate::model::open;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
@@ -35,7 +36,7 @@ pub struct Parameters<'a> {
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
     pub lifts: &'a mut HashMap<usize, Lift>,
-    pub open: &'a mut HashMap<usize, bool>,
+    pub open: &'a mut HashMap<usize, open::Status>,
     pub id_allocator: &'a mut id_allocator::Service,
     pub carousels: &'a mut HashMap<usize, Carousel>,
     pub cars: &'a mut HashMap<usize, Car>,
@@ -133,9 +134,9 @@ impl Controller {
 
         // opening lift
 
-        open.insert(lift_id, true);
-        open.insert(lift.pick_up.id, true);
-        open.insert(lift.drop_off.id, true);
+        open.insert(lift_id, open::Status::Open);
+        open.insert(lift.pick_up.id, open::Status::Open);
+        open.insert(lift.drop_off.id, open::Status::Open);
 
         // setup carousel
 

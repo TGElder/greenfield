@@ -9,6 +9,7 @@ use crate::model::costs::Costs;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::lift::Lift;
+use crate::model::open;
 use crate::model::skiing::State;
 use crate::network::global::GlobalNetwork;
 
@@ -19,7 +20,7 @@ pub struct Parameters<'a> {
     pub exits: &'a HashMap<usize, Exit>,
     pub costs: &'a HashMap<usize, Costs<State>>,
     pub abilities: &'a HashMap<usize, Ability>,
-    pub open: &'a HashMap<usize, bool>,
+    pub open: &'a HashMap<usize, open::Status>,
     pub global_costs: &'a mut Costs<usize>,
 }
 
@@ -57,7 +58,7 @@ pub fn compute_global_costs(
         let targets = entrances
             .keys()
             .chain(exits.keys())
-            .filter(|&target| open.contains_key_value(target, true))
+            .filter(|&target| open.contains_key_value(target, open::Status::Open))
             .copied()
             .collect::<HashSet<_>>();
 

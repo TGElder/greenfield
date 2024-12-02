@@ -7,11 +7,11 @@ use commons::origin_grid::OriginGrid;
 
 use crate::controllers::Result::{self, Action, NoAction};
 
+use crate::model::open;
 use crate::model::piste::{self, Piste};
 use crate::model::selection::Selection;
 use crate::services::id_allocator;
 use crate::systems::{messenger, terrain_artist, tree_artist};
-use crate::utils::editability::{is_editable, Editable, Reason};
 
 pub struct Controller {
     pub class: piste::Class,
@@ -19,10 +19,9 @@ pub struct Controller {
 }
 
 pub struct Parameters<'a> {
-    pub locations: &'a HashMap<usize, usize>,
     pub pistes: &'a mut HashMap<usize, Piste>,
     pub piste_map: &'a mut Grid<Option<usize>>,
-    pub open: &'a mut HashMap<usize, bool>,
+    pub open: &'a mut HashMap<usize, open::Status>,
     pub selection: &'a mut Selection,
     pub terrain_artist: &'a mut terrain_artist::System,
     pub tree_artist: &'a mut tree_artist::System,
@@ -42,7 +41,6 @@ impl Controller {
     pub fn trigger(
         &mut self,
         Parameters {
-            locations,
             pistes,
             piste_map,
             open,
@@ -67,19 +65,11 @@ impl Controller {
 
         let piste_id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
 
-        match is_editable(&piste_id, open, locations) {
-            Editable::True => (),
-            Editable::False(reason) => {
-                match reason {
-                    Reason::Open => messenger.send("Cannot edit piste: Piste is open"),
-                    Reason::Occupied(id) => {
-                        messenger.send(format!("Cannot edit piste: Piste is occupied by {}", id))
-                    }
-                };
-                return NoAction;
-            }
+        if let Some(open::Status::Closed) = open.get(&piste_id) {
+        } else {
+            messenger.send("Cannot edit piste: Piste is not closed");
+            return NoAction;
         }
-
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
@@ -112,7 +102,7 @@ impl Controller {
                     class: self.class,
                     grid: point_grid,
                 });
-                open.insert(piste_id, false);
+                open.insert(piste_id, open::Status::Closed);
             }
         }
 

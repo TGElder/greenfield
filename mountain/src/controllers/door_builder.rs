@@ -10,6 +10,7 @@ use crate::model::door::Door;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
+use crate::model::open;
 use crate::model::piste::Piste;
 use crate::model::selection::Selection;
 use crate::model::skiing::State;
@@ -24,7 +25,7 @@ pub struct Parameters<'a> {
     pub doors: &'a mut HashMap<usize, Door>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
-    pub open: &'a mut HashMap<usize, bool>,
+    pub open: &'a mut HashMap<usize, open::Status>,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -133,7 +134,7 @@ pub fn trigger(
             stationary_states: stationary_states(&piste_positions),
         },
     );
-    open.insert(door_id, true);
+    open.insert(door_id, open::Status::Open);
 
     selection.cells.clear();
 

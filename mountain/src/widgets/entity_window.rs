@@ -1,6 +1,7 @@
 use commons::geometry::XY;
 use engine::egui::{self, RichText};
 
+use crate::model::open;
 use crate::utils::opener;
 use crate::widgets::ContextWidget;
 use crate::Components;
@@ -9,8 +10,7 @@ use crate::{gui, Systems};
 pub struct EntityWindow {
     entity_id: usize,
     mouse_position: XY<u32>,
-    is_entity_open: Option<bool>,
-    is_entity_open_changed: bool,
+    open_status: Option<open::Status>,
     is_window_open: bool,
 }
 
@@ -24,8 +24,7 @@ impl EntityWindow {
         EntityWindow {
             entity_id: id,
             mouse_position: mouse_pos,
-            is_entity_open: None,
-            is_entity_open_changed: false,
+            open_status: None,
             is_window_open: true,
         }
     }
@@ -37,7 +36,7 @@ impl EntityWindow {
 
 impl ContextWidget<&Components, Output<'_>> for EntityWindow {
     fn init(&mut self, components: &Components) {
-        self.is_entity_open = components.open.get(&self.entity_id).copied();
+        self.open_status = components.open.get(&self.entity_id).copied();
     }
 
     fn draw(&mut self, ctx: &engine::egui::Context) {
@@ -54,25 +53,49 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
         .open(&mut self.is_window_open)
         .show(ctx, |ui| {
             ui.vertical(|ui| {
-                if let Some(open) = self.is_entity_open.as_mut() {
-                    ui.horizontal(|ui| {
-                        self.is_entity_open_changed = ui.checkbox(open, "Open").changed();
-                    });
+                if let Some(status) = self.open_status.as_mut() {
+                    egui::ComboBox::from_id_source(0)
+                        .selected_text(open_status_text(status))
+                        .show_ui(ui, |ui| {
+                            for choice in open_status_choices(status) {
+                                ui.selectable_value(status, choice, open_status_text(&choice));
+                            }
+                        });
                 }
             });
         });
     }
 
     fn update(&mut self, output: Output) {
-        if self.is_entity_open_changed {
-            if let Some(is_entity_open) = self.is_entity_open {
-                opener::set_is_open(
+        if output.components.open.get(&self.entity_id) != self.open_status.as_ref() {
+            if let Some(open_status) = self.open_status {
+                opener::set_open_status(
                     &self.entity_id,
-                    is_entity_open,
+                    open_status,
                     output.components,
                     output.systems,
                 );
             }
         }
+    }
+}
+
+static OPEN_STATUS_OPEN: &str = "Open";
+static OPEN_STATUS_CLOSED: &str = "Closed";
+static OPEN_STATUS_CLOSING: &str = "Closing";
+
+fn open_status_text(status: &open::Status) -> &'static str {
+    match status {
+        open::Status::Open => OPEN_STATUS_OPEN,
+        open::Status::Closing => OPEN_STATUS_CLOSING,
+        open::Status::Closed => OPEN_STATUS_CLOSED,
+    }
+}
+
+fn open_status_choices(status: &open::Status) -> impl Iterator<Item = open::Status> {
+    match status {
+        open::Status::Open => [open::Status::Open, open::Status::Closing].into_iter(),
+        open::Status::Closing => [open::Status::Open, open::Status::Closing].into_iter(),
+        open::Status::Closed => [open::Status::Open, open::Status::Closed].into_iter(),
     }
 }

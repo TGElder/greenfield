@@ -9,6 +9,7 @@ use crate::model::direction::DIRECTIONS;
 use crate::model::entrance::Entrance;
 use crate::model::exit::Exit;
 use crate::model::gate::Gate;
+use crate::model::open;
 use crate::model::reservation::Reservation;
 use crate::model::selection::Selection;
 use crate::model::skiing::State;
@@ -30,7 +31,7 @@ pub struct Parameters<'a> {
     pub gates: &'a mut HashMap<usize, Gate>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
-    pub open: &'a mut HashMap<usize, bool>,
+    pub open: &'a mut HashMap<usize, open::Status>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub messenger: &'a mut messenger::System,
 }
@@ -144,7 +145,7 @@ pub fn trigger(
 
     // opening gate
 
-    open.insert(gate_id, true);
+    open.insert(gate_id, open::Status::Open);
 
     // inserting gate
 
