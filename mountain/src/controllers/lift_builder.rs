@@ -112,14 +112,14 @@ impl Controller {
         let pick_up_id = id_allocator.next_id();
         let drop_off_id = id_allocator.next_id();
 
-        parents.entry(carousel_id).insert_entry(lift_id);
-        parents.entry(pick_up_id).insert_entry(lift_id);
-        parents.entry(drop_off_id).insert_entry(lift_id);
         children.entry(lift_id).or_default().append(&mut vec![
             carousel_id,
             pick_up_id,
             drop_off_id,
         ]);
+        parents.entry(carousel_id).insert_entry(lift_id);
+        parents.entry(pick_up_id).insert_entry(lift_id);
+        parents.entry(drop_off_id).insert_entry(lift_id);
 
         let points = get_points(terrain, &from, &to);
         let travel_direction = get_direction(&from, &to);
