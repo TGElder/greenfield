@@ -13,11 +13,11 @@ pub fn compute_piste(
     exits: &HashMap<usize, Exit>,
     abilities: &mut HashMap<usize, Ability>,
 ) {
-    abilities.remove(piste_id);
-
     let Some(costs) = costs.get(piste_id) else {
         return;
     };
+
+    abilities.remove(piste_id);
 
     let entrances = entrances
         .values()

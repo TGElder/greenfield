@@ -43,6 +43,8 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub parents: &'a mut HashMap<usize, usize>,
+    pub children: &'a mut HashMap<usize, Vec<usize>>,
     pub messenger: &'a mut messenger::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -67,6 +69,8 @@ impl Controller {
             entrances,
             reservations,
             messenger,
+            parents,
+            children,
             graphics,
         }: Parameters<'_>,
     ) -> Result {
@@ -105,6 +109,17 @@ impl Controller {
 
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
+        let pick_up_id = id_allocator.next_id();
+        let drop_off_id = id_allocator.next_id();
+
+        children.entry(lift_id).or_default().append(&mut vec![
+            carousel_id,
+            pick_up_id,
+            drop_off_id,
+        ]);
+        parents.entry(carousel_id).insert_entry(lift_id);
+        parents.entry(pick_up_id).insert_entry(lift_id);
+        parents.entry(drop_off_id).insert_entry(lift_id);
 
         let points = get_points(terrain, &from, &to);
         let travel_direction = get_direction(&from, &to);
@@ -112,7 +127,7 @@ impl Controller {
         let lift = Lift {
             segments: Segment::segments(&points),
             pick_up: lift::Portal {
-                id: id_allocator.next_id(),
+                id: pick_up_id,
                 segment: 0,
                 state: State {
                     position: from,
@@ -121,7 +136,7 @@ impl Controller {
                 },
             },
             drop_off: lift::Portal {
-                id: id_allocator.next_id(),
+                id: drop_off_id,
                 segment: 1,
                 state: State {
                     position: to,
@@ -147,8 +162,14 @@ impl Controller {
             .map(|_| id_allocator.next_id())
             .collect::<Vec<_>>();
 
+        children
+            .entry(carousel_id)
+            .or_default()
+            .append(&mut car_ids.clone());
+
         car_ids.iter().zip(new_cars).for_each(|(id, car)| {
             cars.insert(*id, car);
+            parents.insert(*id, carousel_id);
         });
 
         carousels.insert(

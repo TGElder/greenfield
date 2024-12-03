@@ -172,6 +172,8 @@ fn try_to_handle(
                     exits: &mut game.components.exits,
                     entrances: &mut game.components.entrances,
                     reservations: &mut game.components.reservations,
+                    parents: &mut game.components.parents,
+                    children: &mut game.components.children,
                     messenger: &mut game.systems.messenger,
                     graphics,
                 })
@@ -205,6 +207,8 @@ fn try_to_handle(
             entrances: &mut game.components.entrances,
             exits: &mut game.components.exits,
             open: &mut game.components.open,
+            parents: &mut game.components.parents,
+            children: &mut game.components.children,
             messenger: &mut game.systems.messenger,
         }),
         Mode::Demolish => try_to_demolish(game, graphics),
