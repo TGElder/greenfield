@@ -62,9 +62,9 @@ use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
-    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
-    lift_open_sync, log, messenger, piste_adopter, planner, selection_rasterizer, skiing_framer,
-    target_scrubber, target_setter, terrain_artist, tree_artist, window_artist,
+    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
+    messenger, piste_adopter, planner, selection_rasterizer, skiing_framer, target_scrubber,
+    target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 use crate::widgets::{building_editor, menu, toaster};
@@ -650,7 +650,6 @@ impl EventHandler for Game {
                 graphics,
             },
         );
-        lift_open_sync::run(&self.components.lifts, &mut self.components.open);
         selection_rasterizer::run(selection_rasterizer::Parameters {
             terrain: &self.components.terrain,
             selection: &mut self.components.selection,
@@ -773,6 +772,7 @@ impl EventHandler for Game {
         closer::run(
             &self.components.targets,
             &self.components.locations,
+            &self.components.children,
             &mut self.components.open,
             &mut self.systems.messenger,
         );

@@ -21,11 +21,12 @@ pub fn compute_piste(
     reservations: &Grid<HashMap<usize, Reservation>>,
     costs: &mut HashMap<usize, Costs<State>>,
 ) {
-    costs.remove(piste_id);
-
     let Some(piste) = pistes.get(piste_id) else {
         return;
     };
+
+    costs.remove(piste_id);
+
     let exits = exits
         .iter()
         .filter(
