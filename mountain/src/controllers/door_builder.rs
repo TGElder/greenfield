@@ -26,6 +26,8 @@ pub struct Parameters<'a> {
     pub entrances: &'a mut HashMap<usize, Entrance>,
     pub exits: &'a mut HashMap<usize, Exit>,
     pub open: &'a mut HashMap<usize, open::Status>,
+    pub parents: &'a mut HashMap<usize, usize>,
+    pub children: &'a mut HashMap<usize, Vec<usize>>,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -39,6 +41,8 @@ pub fn trigger(
         entrances,
         exits,
         open,
+        parents,
+        children,
         messenger,
     }: Parameters<'_>,
 ) -> Result {
@@ -119,6 +123,9 @@ pub fn trigger(
             aperture,
         },
     );
+
+    children.entry(*building_id).or_default().push(door_id);
+    parents.entry(door_id).insert_entry(*building_id);
 
     entrances.insert(
         door_id,
