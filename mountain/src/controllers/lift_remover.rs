@@ -57,42 +57,14 @@ pub fn remove_lift(
         .map(|(carousel_id, _)| *carousel_id)
         .collect::<Vec<_>>();
 
-    let car_ids = components
-        .carousels
-        .iter()
-        .filter(|(_, carousel)| carousel.lift_id == *lift_id)
-        .flat_map(|(_, carousel)| carousel.car_ids.iter().copied())
-        .collect::<Vec<_>>();
-
     // Validate
 
-    if components
+    if !components
         .open
-        .contains_key_value(lift_id, open::Status::Open)
-    {
-        messenger.send(format!("Close lift {} before removing it!", lift_id));
-        return;
-    }
-
-    if components
-        .locations
-        .values()
-        .any(|location_id| car_ids.contains(location_id))
+        .contains_key_value(lift_id, open::Status::Closed)
     {
         messenger.send(format!(
-            "Cannot remove lift {} while people are riding it!",
-            lift_id
-        ));
-        return;
-    }
-
-    if components
-        .targets
-        .values()
-        .any(|target_id| *target_id == *lift_id)
-    {
-        messenger.send(format!(
-            "Cannot remove lift {} while people are targeting it!",
+            "Lift {} must be closed before it can be removed",
             lift_id
         ));
         return;
