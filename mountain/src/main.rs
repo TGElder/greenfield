@@ -63,7 +63,7 @@ use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
-    messenger, piste_adopter, planner, selection_rasterizer, skiing_framer, target_scrubber,
+    messenger, piste_adopter, planner, selection_rasterizer, skiing_framer, target_checker,
     target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
@@ -712,7 +712,7 @@ impl EventHandler for Game {
             cars: &mut self.components.cars,
         });
 
-        // target_scrubber::run(&self.components.open, &mut self.components.targets);
+        target_checker::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(
             &self.components.plans,
             &self.components.piste_map,
