@@ -1,6 +1,7 @@
 use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle, XY};
+use commons::map::ContainsKeyValue;
 
 use crate::model::building::Building;
 
@@ -105,6 +106,14 @@ pub fn trigger(
         selection.cells.clear();
         return NoAction;
     };
+
+    if !open.contains_key_value(piste_id, open::Status::Closed) {
+        messenger.send(format!(
+            "Piste {} must be closed before an entrance can be added to it",
+            piste_id
+        ));
+        return NoAction;
+    }
 
     let aperture = piste_positions
         .iter()

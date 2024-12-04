@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::{xy, XYRectangle};
 use commons::grid::Grid;
+use commons::map::ContainsKeyValue;
 
 use crate::controllers;
 use crate::controllers::Result::{Action, NoAction};
@@ -104,6 +105,25 @@ pub fn trigger(
     // creating gate
 
     let gate_id = id_allocator.next_id();
+    let origin_piste_id = piste_map[origin].unwrap();
+    let destination_piste_id =
+        (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
+
+    if !open.contains_key_value(origin_piste_id, open::Status::Closed) {
+        messenger.send(format!(
+            "Piste {} must be closed before an gate can be added to it",
+            origin_piste_id
+        ));
+        return NoAction;
+    }
+
+    if !open.contains_key_value(destination_piste_id, open::Status::Closed) {
+        messenger.send(format!(
+            "Piste {} must be closed before an gate can be added to it",
+            destination_piste_id
+        ));
+        return NoAction;
+    }
 
     // reserving footprint
 
@@ -112,10 +132,6 @@ pub fn trigger(
     });
 
     // creating entrance and exit
-
-    let origin_piste_id = piste_map[origin].unwrap();
-    let destination_piste_id =
-        (configuration.pistes[0] + configuration.pistes[1]) - origin_piste_id;
 
     let stationary_states = gate
         .footprint

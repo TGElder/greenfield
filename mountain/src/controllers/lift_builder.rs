@@ -5,6 +5,7 @@ use std::iter::once;
 use commons::curves::approximate_curve;
 use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
+use commons::map::ContainsKeyValue;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::carousel::{Car, Carousel};
@@ -96,16 +97,32 @@ impl Controller {
 
         let to = position;
 
-        let Some(from_piste) = piste_map[from] else {
+        let Some(origin_piste_id) = piste_map[from] else {
             messenger.send("Lift needs piste at start position!");
             self.from = None;
             return NoAction;
         };
-        let Some(to_piste) = piste_map[to] else {
+        let Some(destination_piste_id) = piste_map[to] else {
             messenger.send("Lift needs piste at end position!");
             self.from = None;
             return NoAction;
         };
+
+        if !open.contains_key_value(origin_piste_id, open::Status::Closed) {
+            messenger.send(format!(
+                "Piste {} must be closed before a lift can be added to it",
+                origin_piste_id
+            ));
+            return NoAction;
+        }
+
+        if !open.contains_key_value(destination_piste_id, open::Status::Closed) {
+            messenger.send(format!(
+                "Piste {} must be closed before a lift can be added to it",
+                destination_piste_id
+            ));
+            return NoAction;
+        }
 
         let lift_id = id_allocator.next_id();
         let carousel_id = id_allocator.next_id();
@@ -186,7 +203,7 @@ impl Controller {
         exits.insert(
             lift.pick_up.id,
             Exit {
-                origin_piste_id: from_piste,
+                origin_piste_id,
                 stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
             },
         );
@@ -196,7 +213,7 @@ impl Controller {
         entrances.insert(
             lift.drop_off.id,
             Entrance {
-                destination_piste_id: to_piste,
+                destination_piste_id,
                 stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
             },
         );

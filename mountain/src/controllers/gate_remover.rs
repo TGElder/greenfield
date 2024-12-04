@@ -49,11 +49,11 @@ pub fn remove_gate(
 ) {
     // Validate
 
-    if components
+    if !components
         .open
         .contains_key_value(gate_id, open::Status::Open)
     {
-        messenger.send(format!("Close gate {} before removing it!", gate_id));
+        messenger.send(format!("Gate {} before removing it!", gate_id));
         return;
     }
 
@@ -67,6 +67,32 @@ pub fn remove_gate(
             gate_id
         ));
         return;
+    }
+
+    if let Some(entrance) = components.entrances.get(gate_id) {
+        if !components
+            .open
+            .contains_key_value(entrance.destination_piste_id, open::Status::Closed)
+        {
+            messenger.send(format!(
+                "Piste {} must be closed before gate {} can be removed from it",
+                entrance.destination_piste_id, gate_id
+            ));
+            return;
+        }
+    }
+
+    if let Some(exit) = components.exits.get(gate_id) {
+        if !components
+            .open
+            .contains_key_value(exit.origin_piste_id, open::Status::Closed)
+        {
+            messenger.send(format!(
+                "Piste {} must be closed before gate {} can be removed from it",
+                exit.origin_piste_id, gate_id
+            ));
+            return;
+        }
     }
 
     // Remove
