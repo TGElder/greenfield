@@ -703,6 +703,7 @@ impl EventHandler for Game {
             lifts: &self.components.lifts,
             open: &self.components.open,
             carousels: &self.components.carousels,
+            entrances: &self.components.entrances,
             reservations: &mut self.components.reservations,
             plans: &mut self.components.plans,
             locations: &mut self.components.locations,
@@ -711,7 +712,7 @@ impl EventHandler for Game {
             cars: &mut self.components.cars,
         });
 
-        target_scrubber::run(&self.components.open, &mut self.components.targets);
+        // target_scrubber::run(&self.components.open, &mut self.components.targets);
         piste_adopter::run(
             &self.components.plans,
             &self.components.piste_map,
