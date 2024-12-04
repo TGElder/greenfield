@@ -49,21 +49,12 @@ pub fn remove_gate(
 ) {
     // Validate
 
-    if components
+    if !components
         .open
-        .contains_key_value(gate_id, open::Status::Open)
-    {
-        messenger.send(format!("Close gate {} before removing it!", gate_id));
-        return;
-    }
-
-    if components
-        .targets
-        .values()
-        .any(|target_id| *target_id == *gate_id)
+        .contains_key_value(gate_id, open::Status::Closed)
     {
         messenger.send(format!(
-            "Cannot remove gate {} while people are targeting it!",
+            "Gate {} must be closed before it can be removed",
             gate_id
         ));
         return;
