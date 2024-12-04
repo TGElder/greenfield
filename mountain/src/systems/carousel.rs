@@ -5,6 +5,7 @@ use commons::grid::Grid;
 use commons::map::ContainsKeyValue;
 
 use crate::model::carousel::{Car, Carousel};
+use crate::model::entrance::Entrance;
 use crate::model::lift::Lift;
 use crate::model::open;
 use crate::model::reservation::{Reservation, ReservationPeriod};
@@ -20,6 +21,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub open: &'a HashMap<usize, open::Status>,
     pub carousels: &'a HashMap<usize, Carousel>,
+    pub entrances: &'a HashMap<usize, Entrance>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub plans: &'a mut HashMap<usize, Plan>,
     pub locations: &'a mut HashMap<usize, usize>,
@@ -40,6 +42,7 @@ impl System {
             lifts,
             open,
             carousels,
+            entrances,
             reservations,
             plans,
             locations,
@@ -58,7 +61,15 @@ impl System {
 
         for carousel in carousels.values() {
             let Some(lift) = lifts.get(&carousel.lift_id) else {
-                return;
+                continue;
+            };
+
+            let Some(Entrance {
+                destination_piste_id,
+                ..
+            }) = entrances.get(&lift.drop_off.id)
+            else {
+                continue;
             };
 
             // get cars
@@ -119,7 +130,7 @@ impl System {
                             if !matches!(plan, Plan::Stationary(state) if *state == lift.pick_up.state) {
                                 return true;
                             }
-                            targets.remove(skier_id);
+                            targets.insert(*skier_id, *destination_piste_id);
                             if let Entry::Occupied(entry) = global_targets.entry(*skier_id) {
                                 if *entry.get() == lift.pick_up.id {
                                     entry.remove();
