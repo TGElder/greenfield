@@ -69,19 +69,6 @@ pub fn remove_gate(
         return;
     }
 
-    if let Some(entrance) = components.entrances.get(gate_id) {
-        if !components
-            .open
-            .contains_key_value(entrance.destination_piste_id, open::Status::Closed)
-        {
-            messenger.send(format!(
-                "Piste {} must be closed before gate {} can be removed from it",
-                entrance.destination_piste_id, gate_id
-            ));
-            return;
-        }
-    }
-
     if let Some(exit) = components.exits.get(gate_id) {
         if !components
             .open
