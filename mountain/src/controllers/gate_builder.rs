@@ -14,7 +14,7 @@ use crate::model::reservation::Reservation;
 use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
-use crate::systems::{messenger, terrain_artist};
+use crate::systems::{messenger, piste_computer, terrain_artist};
 
 const ZERO_DIMENSION_ERROR_MESSAGE: &str = "Selection must not have 0 width or 0 height";
 const WRONG_DIMENSION_ERROR_MESSAGE: &str = "Selection must be 2 wide or 2 high";
@@ -33,6 +33,7 @@ pub struct Parameters<'a> {
     pub exits: &'a mut HashMap<usize, Exit>,
     pub open: &'a mut HashMap<usize, open::Status>,
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
+    pub piste_computer: &'a mut piste_computer::System,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -47,6 +48,7 @@ pub fn trigger(
         exits,
         open,
         reservations,
+        piste_computer,
         messenger,
     }: Parameters<'_>,
 ) -> controllers::Result {
@@ -150,6 +152,10 @@ pub fn trigger(
     // inserting gate
 
     gates.insert(gate_id, gate);
+
+    // recomputing pistes
+    piste_computer.compute(origin_piste_id);
+    piste_computer.compute(destination_piste_id);
 
     Action
 }

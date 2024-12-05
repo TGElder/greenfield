@@ -38,7 +38,7 @@ pub fn run(
             continue;
         };
 
-        if !open.contains_key_value(target_id, open::Status::Open) {
+        if open.contains_key_value(target_id, open::Status::Closed) {
             continue;
         }
 

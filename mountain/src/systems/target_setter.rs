@@ -93,7 +93,7 @@ pub fn run(
 
         let target = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
-            .filter(|(&target, _)| open.contains_key_value(target, open::Status::Open))
+            .filter(|(&target, _)| !open.contains_key_value(target, open::Status::Closed))
             .flat_map(|(target, cost)| {
                 costs_to_global_target
                     .get(target)
