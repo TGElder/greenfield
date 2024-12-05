@@ -63,8 +63,8 @@ use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
-    messenger, piste_adopter, planner, selection_rasterizer, skiing_framer, target_checker,
-    target_setter, terrain_artist, tree_artist, window_artist,
+    messenger, piste_adopter, piste_computer, planner, selection_rasterizer, skiing_framer,
+    target_checker, target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 use crate::widgets::{building_editor, menu, toaster};
@@ -154,6 +154,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             carousel: carousel::System::new(),
             chair_artist: chair_artist::System::new(),
             global_computer: global_computer::System::new(),
+            piste_computer: piste_computer::System::new(),
             skier_colors: systems::skier_colors::System::new(
                 systems::skier_colors::AbilityColors {
                     intermedite: Rgb::new(0.01, 0.41, 0.76),
@@ -504,6 +505,7 @@ struct Systems {
     carousel: carousel::System,
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
+    piste_computer: piste_computer::System,
     messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
@@ -683,6 +685,19 @@ impl EventHandler for Game {
                 building_artist: &mut self.systems.building_artist,
                 window_artist: &mut self.systems.window_artist,
                 messenger: &mut self.systems.messenger,
+            });
+
+        self.systems
+            .piste_computer
+            .run(systems::piste_computer::Parameters {
+                pistes: &self.components.pistes,
+                entrances: &self.components.entrances,
+                exits: &self.components.exits,
+                terrain: &self.components.terrain,
+                reservations: &self.components.reservations,
+                costs: &mut self.components.costs,
+                abilities: &mut self.components.abilities,
+                global_computer: &mut self.systems.global_computer,
             });
 
         self.systems

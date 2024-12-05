@@ -1,7 +1,6 @@
 use commons::geometry::{xy, XYRectangle};
 
 use crate::model::open;
-use crate::utils::computer;
 use crate::{Components, Systems};
 
 pub fn set_open_status(
@@ -27,15 +26,9 @@ fn set_open_status_internal(
     systems: &mut Systems,
 ) {
     let Components {
-        terrain,
         pistes,
-        abilities,
-        entrances,
-        exits,
         open,
         children,
-        reservations,
-        costs,
         ..
     } = components;
 
@@ -47,10 +40,8 @@ fn set_open_status_internal(
     open.insert(*id, status);
 
     if let open::Status::Open = status {
-        computer::costs::compute_piste(id, pistes, terrain, exits, reservations, costs);
-        computer::piste_ability::compute_piste(id, costs, entrances, exits, abilities);
+        systems.piste_computer.compute(*id);
     }
-    systems.global_computer.update();
 
     if let Some(piste) = pistes.get(id) {
         let grid = &piste.grid;
