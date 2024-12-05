@@ -697,6 +697,7 @@ impl EventHandler for Game {
                 reservations: &self.components.reservations,
                 costs: &mut self.components.costs,
                 abilities: &mut self.components.abilities,
+                clock: &mut self.components.services.clock,
                 global_computer: &mut self.systems.global_computer,
             });
 

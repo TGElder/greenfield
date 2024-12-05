@@ -9,6 +9,7 @@ use crate::model::exit::Exit;
 use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
+use crate::services::clock;
 use crate::systems::global_computer;
 use crate::utils::computer;
 
@@ -24,6 +25,7 @@ pub struct Parameters<'a> {
     pub reservations: &'a Grid<HashMap<usize, Reservation>>,
     pub costs: &'a mut HashMap<usize, Costs<State>>,
     pub abilities: &'a mut HashMap<usize, Ability>,
+    pub clock: &'a mut clock::Service,
     pub global_computer: &'a mut global_computer::System,
 }
 
@@ -43,11 +45,16 @@ impl System {
             return;
         }
 
+        let current_speed = parameters.clock.speed();
+        parameters.clock.set_speed(0.0);
+
         for id in self.pistes_to_compute.drain() {
             recompute_piste(&id, &mut parameters);
         }
 
         parameters.global_computer.update();
+
+        parameters.clock.set_speed(current_speed);
     }
 }
 
