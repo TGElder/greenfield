@@ -63,13 +63,18 @@ impl Controller {
             return NoAction;
         };
 
-        let piste_id = piste_map[origin].unwrap_or_else(|| id_allocator.next_id());
+        let piste_id = piste_map[origin];
 
-        if let Some(open::Status::Closed) = open.get(&piste_id) {
-        } else {
-            messenger.send("Cannot edit piste: Piste is not closed");
-            return NoAction;
+        if let Some(piste_id) = piste_id {
+            if let Some(open::Status::Closed) = open.get(&piste_id) {
+            } else {
+                messenger.send("Cannot edit piste: Piste is not closed");
+                return NoAction;
+            }
         }
+
+        let piste_id = piste_id.unwrap_or_else(|| id_allocator.next_id());
+
         // updating piste map
 
         for cell in grid.iter().filter(|cell| grid[cell]) {
