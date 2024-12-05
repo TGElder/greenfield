@@ -4,14 +4,17 @@ use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::gate::Gate;
 use crate::model::open;
-use crate::systems::messenger;
+use crate::systems::{messenger, piste_computer};
 use crate::Components;
 
 pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     components: &mut Components,
+    piste_computer: &mut piste_computer::System,
     messenger: &mut messenger::System,
     graphics: &mut dyn engine::graphics::Graphics,
 ) -> Result {
@@ -35,7 +38,7 @@ pub fn trigger(
     }
 
     for gate_id in gate_ids {
-        remove_gate(components, &gate_id, messenger, graphics);
+        remove_gate(components, &gate_id, piste_computer, messenger, graphics);
     }
 
     Action
@@ -44,6 +47,7 @@ pub fn trigger(
 pub fn remove_gate(
     components: &mut Components,
     gate_id: &usize,
+    piste_computer: &mut piste_computer::System,
     messenger: &mut messenger::System,
     graphics: &mut dyn Graphics,
 ) {
@@ -64,8 +68,19 @@ pub fn remove_gate(
 
     let gate = components.gates.remove(gate_id);
     components.open.remove(gate_id);
-    components.entrances.remove(gate_id);
-    components.exits.remove(gate_id);
+    if let Some(Entrance {
+        destination_piste_id,
+        ..
+    }) = components.entrances.remove(gate_id)
+    {
+        piste_computer.compute(destination_piste_id);
+    }
+    if let Some(Exit {
+        origin_piste_id, ..
+    }) = components.exits.remove(gate_id)
+    {
+        piste_computer.compute(origin_piste_id);
+    }
 
     if let Some(gate) = gate {
         gate.footprint.iter().for_each(|position| {

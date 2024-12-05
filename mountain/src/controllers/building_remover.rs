@@ -3,6 +3,8 @@ use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::building::Building;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::{Components, Systems};
 
 pub fn trigger(
@@ -83,8 +85,19 @@ pub fn remove_building(
 
     for door_id in doors_to_remove.iter() {
         components.doors.remove(door_id);
-        components.entrances.remove(door_id);
-        components.exits.remove(door_id);
+        if let Some(Entrance {
+            destination_piste_id,
+            ..
+        }) = components.entrances.remove(door_id)
+        {
+            systems.piste_computer.compute(destination_piste_id);
+        }
+        if let Some(Exit {
+            origin_piste_id, ..
+        }) = components.exits.remove(door_id)
+        {
+            systems.piste_computer.compute(origin_piste_id);
+        }
         components.open.remove(door_id);
         remove_drawing(graphics, components, door_id);
     }

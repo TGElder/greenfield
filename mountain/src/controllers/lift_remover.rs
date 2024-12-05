@@ -3,14 +3,16 @@ use commons::map::ContainsKeyValue;
 use engine::graphics::Graphics;
 
 use crate::controllers::Result::{self, Action, NoAction};
-use crate::model::ability::ABILITIES;
+use crate::model::entrance::Entrance;
+use crate::model::exit::Exit;
 use crate::model::open;
-use crate::systems::messenger;
+use crate::systems::{messenger, piste_computer};
 use crate::Components;
 
 pub fn trigger(
     mouse_xy: &Option<XY<u32>>,
     components: &mut Components,
+    piste_computer: &mut piste_computer::System,
     messenger: &mut messenger::System,
     graphics: &mut dyn engine::graphics::Graphics,
 ) -> Result {
@@ -36,7 +38,7 @@ pub fn trigger(
     }
 
     for lift_id in lift_ids {
-        remove_lift(components, &lift_id, messenger, graphics);
+        remove_lift(components, &lift_id, piste_computer, messenger, graphics);
     }
 
     Action
@@ -45,6 +47,7 @@ pub fn trigger(
 pub fn remove_lift(
     components: &mut Components,
     lift_id: &usize,
+    piste_computer: &mut piste_computer::System,
     messenger: &mut messenger::System,
     graphics: &mut dyn Graphics,
 ) {
@@ -76,11 +79,22 @@ pub fn remove_lift(
     components.open.remove(lift_id);
 
     if let Some(lift) = lift {
-        components.exits.remove(&lift.pick_up.id);
+        if let Some(Exit {
+            origin_piste_id, ..
+        }) = components.exits.remove(&lift.pick_up.id)
+        {
+            piste_computer.compute(origin_piste_id);
+        }
         components.open.remove(&lift.pick_up.id);
         components.reservations[lift.pick_up.state.position].remove(&lift.pick_up.id);
 
-        components.entrances.remove(&lift.drop_off.id);
+        if let Some(Entrance {
+            destination_piste_id,
+            ..
+        }) = components.entrances.remove(&lift.drop_off.id)
+        {
+            piste_computer.compute(destination_piste_id);
+        }
         components.open.remove(&lift.drop_off.id);
     }
 
@@ -88,12 +102,6 @@ pub fn remove_lift(
         remove_carousel(graphics, components, &carousel_id);
     }
     remove_drawing(graphics, components, lift_id);
-
-    for (_, costs) in components.costs.iter_mut() {
-        for ability in ABILITIES {
-            costs.remove_costs(*lift_id, ability);
-        }
-    }
 }
 
 fn remove_carousel(graphics: &mut dyn Graphics, components: &mut Components, carousel_id: &usize) {

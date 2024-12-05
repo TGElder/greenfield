@@ -17,7 +17,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
-use crate::systems::messenger;
+use crate::systems::{messenger, piste_computer};
 use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
@@ -45,6 +45,7 @@ pub struct Parameters<'a> {
     pub reservations: &'a mut Grid<HashMap<usize, Reservation>>,
     pub parents: &'a mut HashMap<usize, usize>,
     pub children: &'a mut HashMap<usize, Vec<usize>>,
+    pub piste_computer: &'a mut piste_computer::System,
     pub messenger: &'a mut messenger::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -68,9 +69,10 @@ impl Controller {
             exits,
             entrances,
             reservations,
-            messenger,
             parents,
             children,
+            piste_computer,
+            messenger,
             graphics,
         }: Parameters<'_>,
     ) -> Result {
@@ -96,12 +98,12 @@ impl Controller {
 
         let to = position;
 
-        let Some(from_piste) = piste_map[from] else {
+        let Some(origin_piste_id) = piste_map[from] else {
             messenger.send("Lift needs piste at start position!");
             self.from = None;
             return NoAction;
         };
-        let Some(to_piste) = piste_map[to] else {
+        let Some(destination_piste_id) = piste_map[to] else {
             messenger.send("Lift needs piste at end position!");
             self.from = None;
             return NoAction;
@@ -186,7 +188,7 @@ impl Controller {
         exits.insert(
             lift.pick_up.id,
             Exit {
-                origin_piste_id: from_piste,
+                origin_piste_id,
                 stationary_states: HashSet::from([lift.pick_up.state.stationary()]),
             },
         );
@@ -196,7 +198,7 @@ impl Controller {
         entrances.insert(
             lift.drop_off.id,
             Entrance {
-                destination_piste_id: to_piste,
+                destination_piste_id,
                 stationary_states: HashSet::from([lift.drop_off.state.stationary()]),
             },
         );
@@ -212,6 +214,11 @@ impl Controller {
         // register lift
 
         lifts.insert(lift_id, lift);
+
+        // recomputing pistes
+        piste_computer.compute(origin_piste_id);
+        piste_computer.compute(destination_piste_id);
+
         Action
     }
 }

@@ -174,6 +174,7 @@ fn try_to_handle(
                     reservations: &mut game.components.reservations,
                     parents: &mut game.components.parents,
                     children: &mut game.components.children,
+                    piste_computer: &mut game.systems.piste_computer,
                     messenger: &mut game.systems.messenger,
                     graphics,
                 })
@@ -196,6 +197,7 @@ fn try_to_handle(
             exits: &mut game.components.exits,
             open: &mut game.components.open,
             reservations: &mut game.components.reservations,
+            piste_computer: &mut game.systems.piste_computer,
             messenger: &mut game.systems.messenger,
         }),
         Mode::Door => controllers::door_builder::trigger(controllers::door_builder::Parameters {
@@ -209,6 +211,7 @@ fn try_to_handle(
             open: &mut game.components.open,
             parents: &mut game.components.parents,
             children: &mut game.components.children,
+            piste_computer: &mut game.systems.piste_computer,
             messenger: &mut game.systems.messenger,
         }),
         Mode::Demolish => try_to_demolish(game, graphics),
@@ -227,6 +230,7 @@ fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphic
         controllers::gate_remover::trigger(
             &game.mouse_xy,
             &mut game.components,
+            &mut game.systems.piste_computer,
             &mut game.systems.messenger,
             graphics,
         )
@@ -235,6 +239,7 @@ fn try_to_demolish(game: &mut Game, graphics: &mut dyn engine::graphics::Graphic
         controllers::lift_remover::trigger(
             &game.mouse_xy,
             &mut game.components,
+            &mut game.systems.piste_computer,
             &mut game.systems.messenger,
             graphics,
         )

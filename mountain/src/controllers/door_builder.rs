@@ -15,7 +15,7 @@ use crate::model::piste::Piste;
 use crate::model::selection::Selection;
 use crate::model::skiing::State;
 use crate::services::id_allocator;
-use crate::systems::messenger;
+use crate::systems::{messenger, piste_computer};
 
 pub struct Parameters<'a> {
     pub pistes: &'a HashMap<usize, Piste>,
@@ -28,6 +28,7 @@ pub struct Parameters<'a> {
     pub open: &'a mut HashMap<usize, open::Status>,
     pub parents: &'a mut HashMap<usize, usize>,
     pub children: &'a mut HashMap<usize, Vec<usize>>,
+    pub piste_computer: &'a mut piste_computer::System,
     pub messenger: &'a mut messenger::System,
 }
 
@@ -43,6 +44,7 @@ pub fn trigger(
         open,
         parents,
         children,
+        piste_computer,
         messenger,
     }: Parameters<'_>,
 ) -> Result {
@@ -144,6 +146,8 @@ pub fn trigger(
     open.insert(door_id, open::Status::Open);
 
     selection.cells.clear();
+
+    piste_computer.compute(*piste_id);
 
     Action
 }
