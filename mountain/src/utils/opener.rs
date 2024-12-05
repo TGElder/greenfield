@@ -9,22 +9,6 @@ pub fn set_open_status(
     components: &mut Components,
     systems: &mut Systems,
 ) {
-    let clock = &mut components.services.clock;
-    let current_speed = clock.speed();
-    clock.set_speed(0.0);
-
-    set_open_status_internal(id, status, components, systems);
-
-    let clock = &mut components.services.clock;
-    clock.set_speed(current_speed);
-}
-
-fn set_open_status_internal(
-    id: &usize,
-    status: open::Status,
-    components: &mut Components,
-    systems: &mut Systems,
-) {
     let Components {
         pistes,
         open,
@@ -53,7 +37,7 @@ fn set_open_status_internal(
 
     if let Some(children) = children.get(id).cloned() {
         for child_id in children {
-            set_open_status_internal(&child_id, status, components, systems);
+            set_open_status(&child_id, status, components, systems);
         }
     }
 }
