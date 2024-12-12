@@ -17,4 +17,5 @@ pub mod reservation;
 pub mod selection;
 pub mod skier;
 pub mod skiing;
+pub mod structure;
 pub mod tree;

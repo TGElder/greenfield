@@ -37,7 +37,9 @@ use tokio::sync::broadcast::{self};
 use crate::controllers::building_builder::FinalizeParameters;
 use crate::controllers::{building_builder, lift_builder, piste_builder, piste_eraser};
 use crate::gui::Widgets;
-use crate::handlers::{lift_targeter, piste_build_mode, piste_highlighter, selection};
+use crate::handlers::{
+    lift_targeter, piste_build_mode, piste_highlighter, selection, structure_builder,
+};
 use crate::init::terrain::generate_heightmap;
 use crate::init::trees::generate_trees;
 use crate::model::ability::Ability;
@@ -57,6 +59,7 @@ use crate::model::reservation::Reservation;
 use crate::model::selection::Selection;
 use crate::model::skier::{Clothes, Skier};
 use crate::model::skiing::{self, State};
+use crate::model::structure::Structure;
 use crate::model::tree::Tree;
 use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
@@ -64,7 +67,7 @@ use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
     frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
     messenger, piste_adopter, piste_computer, planner, selection_rasterizer, skiing_framer,
-    target_checker, target_setter, terrain_artist, tree_artist, window_artist,
+    structure_artist, target_checker, target_setter, terrain_artist, tree_artist, window_artist,
 };
 use crate::utils::computer;
 use crate::widgets::{building_editor, menu, toaster};
@@ -125,6 +128,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             drag: drag::Handler::default(),
             piste_highlighter: piste_highlighter::Handler::default(),
             selection: selection::Handler::new(),
+            stucture_builder: structure_builder::Handler::new(),
             yaw: yaw::Handler::new(yaw::Parameters {
                 initial_angle: 216,
                 angles: 720,
@@ -408,6 +412,7 @@ fn new_components(parameters: NewGameParameters) -> Components {
         clothes: HashMap::default(),
         buildings: HashMap::default(),
         doors: HashMap::default(),
+        structures: HashMap::default(),
         open: HashMap::default(),
         parents: HashMap::default(),
         children: HashMap::default(),
@@ -468,6 +473,7 @@ pub struct Components {
     abilities: HashMap<usize, Ability>,
     buildings: HashMap<usize, Building>,
     doors: HashMap<usize, Door>,
+    structures: HashMap<usize, Structure>,
     open: HashMap<usize, open::Status>,
     parents: HashMap<usize, usize>,
     children: HashMap<usize, Vec<usize>>,
@@ -496,6 +502,7 @@ struct Handlers {
     drag: drag::Handler,
     piste_highlighter: piste_highlighter::Handler,
     selection: selection::Handler,
+    stucture_builder: structure_builder::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
 }
@@ -673,6 +680,14 @@ impl EventHandler for Game {
                 graphics,
             },
         );
+        self.handlers.stucture_builder.handle(
+            event,
+            &self.mouse_xy,
+            &mut self.components.services.id_allocator,
+            &mut self.components.structures,
+            &mut self.components.drawings,
+            graphics,
+        );
 
         self.controllers
             .building_builder
@@ -842,6 +857,12 @@ impl EventHandler for Game {
             &self.components.entrances,
             &self.components.terrain,
             &self.components.piste_map,
+            &mut self.components.drawings,
+        );
+        structure_artist::run(
+            graphics,
+            &self.components.structures,
+            &self.components.terrain,
             &mut self.components.drawings,
         );
         self.handlers
