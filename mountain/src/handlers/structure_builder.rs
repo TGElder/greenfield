@@ -46,7 +46,7 @@ impl Handler {
         );
 
         if let Some(drawing_id) = drawings.remove(id) {
-            graphics.draw_triangles(&drawing_id, &[]).unwrap();
+            graphics.draw_hologram(&drawing_id, &[]).unwrap();
         }
     }
 }

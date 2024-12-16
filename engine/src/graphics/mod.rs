@@ -31,6 +31,8 @@ pub trait Graphics {
 
     fn create_triangles(&mut self) -> Result<usize, IndexError>;
 
+    fn create_hologram(&mut self) -> Result<usize, IndexError>;
+
     fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError>;
 
     fn create_overlay_triangles(&mut self) -> Result<usize, IndexError>;
@@ -43,6 +45,12 @@ pub trait Graphics {
     fn create_billboards(&mut self) -> Result<usize, IndexError>;
 
     fn draw_triangles(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), DrawError>;
+
+    fn draw_hologram(
         &mut self,
         index: &usize,
         triangles: &[Triangle<Rgb<f32>>],

@@ -15,7 +15,7 @@ pub fn run(
 ) {
     for (structure_id, structure) in structures {
         if let Entry::Vacant(cell) = drawings.entry(*structure_id) {
-            if let Ok(index) = graphics.create_triangles() {
+            if let Ok(index) = graphics.create_hologram() {
                 draw(graphics, &index, structure, terrain);
                 cell.insert(index);
             }

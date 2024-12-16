@@ -33,5 +33,5 @@ pub fn draw(
             ..Transformation::default()
         }));
     let triangles = triangles_from_quads(&quads);
-    graphics.draw_triangles(index, &triangles).unwrap();
+    graphics.draw_hologram(index, &triangles).unwrap();
 }
