@@ -1,17 +1,19 @@
 use std::collections::HashMap;
 
 use commons::geometry::{xy, xyz, XY, XYZ};
+use engine::binding::Binding;
+use engine::events::{Button, ButtonState, MouseButton};
 
 use crate::model::structure::{Structure, StructureClass};
 use crate::services::id_allocator;
 
 pub struct Handler {
-    structure: Option<usize>,
+    structure: Vec<usize>,
 }
 
 impl Handler {
     pub fn new() -> Handler {
-        Handler { structure: None }
+        Handler { structure: vec![] }
     }
     pub fn handle(
         &mut self,
@@ -22,8 +24,22 @@ impl Handler {
         drawings: &mut HashMap<usize, usize>,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
+        if (Binding::Single {
+            button: Button::Mouse(MouseButton::Left),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            self.structure.push(id_allocator.next_id());
+            return;
+        }
+
         if !matches!(event, engine::events::Event::MouseMoved(..)) {
             return;
+        }
+
+        if self.structure.is_empty() {
+            self.structure.push(id_allocator.next_id());
         }
 
         let Some(mouse_xy) = mouse_xy else { return };
@@ -32,7 +48,7 @@ impl Handler {
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
-        let id = self.structure.get_or_insert_with(|| id_allocator.next_id());
+        let id = self.structure.last().unwrap();
 
         structures.insert(
             *id,
