@@ -166,6 +166,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
                     expert: Rgb::new(0.01, 0.01, 0.01),
                 },
             ),
+            structure_artist: structure_artist::System::new(),
             terrain_artist: terrain_artist::System::new(terrain_artist::Colors {
                 piste: terrain_artist::AbilityColors {
                     beginner: Rgba::new(0, 98, 19, 128),
@@ -515,6 +516,7 @@ struct Systems {
     piste_computer: piste_computer::System,
     messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
+    structure_artist: systems::structure_artist::System,
     terrain_artist: terrain_artist::System,
     tree_artist: tree_artist::System,
     window_artist: window_artist::System,
@@ -859,10 +861,12 @@ impl EventHandler for Game {
             &self.components.piste_map,
             &mut self.components.drawings,
         );
-        structure_artist::run(
+        self.systems.structure_artist.run(
             graphics,
             &self.components.structures,
             &self.components.terrain,
+            &self.handlers.stucture_builder,
+            &mut self.components.services.id_allocator,
             &mut self.components.drawings,
         );
         self.handlers

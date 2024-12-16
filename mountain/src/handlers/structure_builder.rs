@@ -8,12 +8,12 @@ use crate::model::structure::{Structure, StructureClass};
 use crate::services::id_allocator;
 
 pub struct Handler {
-    structure: Vec<usize>,
+    pub structures: Vec<usize>,
 }
 
 impl Handler {
     pub fn new() -> Handler {
-        Handler { structure: vec![] }
+        Handler { structures: vec![] }
     }
     pub fn handle(
         &mut self,
@@ -30,7 +30,7 @@ impl Handler {
         })
         .binds_event(event)
         {
-            self.structure.push(id_allocator.next_id());
+            self.structures.push(id_allocator.next_id());
             return;
         }
 
@@ -38,8 +38,8 @@ impl Handler {
             return;
         }
 
-        if self.structure.is_empty() {
-            self.structure.push(id_allocator.next_id());
+        if self.structures.is_empty() {
+            self.structures.push(id_allocator.next_id());
         }
 
         let Some(mouse_xy) = mouse_xy else { return };
@@ -48,7 +48,7 @@ impl Handler {
         };
         let position = xy(x.round() as u32, y.round() as u32);
 
-        let id = self.structure.last().unwrap();
+        let id = self.structures.last().unwrap();
 
         structures.insert(
             *id,
