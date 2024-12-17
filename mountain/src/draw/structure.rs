@@ -23,12 +23,17 @@ pub fn draw_chain(
 
     let wire = quads
         .windows(2)
-        .map(|window| [window[0][0].corners[0], window[1][0].corners[0]])
+        .flat_map(|window| {
+            [
+                [window[0][5].corners[0], window[1][5].corners[1]],
+                [window[0][5].corners[3], window[1][5].corners[2]],
+            ]
+        })
         .collect::<Vec<_>>();
 
     let quads = quads.into_iter().flatten().collect::<Vec<_>>();
 
-    line::draw2(graphics, wire_index, &wire, 0.1);
+    line::draw2(graphics, wire_index, &wire, 0.5);
 
     let triangles = triangles_from_quads(&quads);
     graphics.draw_hologram(index, &triangles).unwrap();
