@@ -1,8 +1,9 @@
 use std::collections::HashMap;
+use std::f32::consts::PI;
 
 use commons::geometry::{xy, xyz, XY, XYZ};
 use engine::binding::Binding;
-use engine::events::{Button, ButtonState, MouseButton};
+use engine::events::{Button, ButtonState, KeyboardKey, MouseButton};
 
 use crate::model::structure::{Structure, StructureClass};
 use crate::services::id_allocator;
@@ -34,6 +35,36 @@ impl Handler {
             return;
         }
 
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::String("Q".to_string())),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            if let Some(structure) = self
+                .structures
+                .last()
+                .and_then(|structure| structures.get_mut(structure))
+            {
+                structure.rotation += PI / 4.0;
+            }
+        }
+
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::String("E".to_string())),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            if let Some(structure) = self
+                .structures
+                .last()
+                .and_then(|structure| structures.get_mut(structure))
+            {
+                structure.rotation -= PI / 4.0;
+            }
+        }
+
         if !matches!(event, engine::events::Event::MouseMoved(..)) {
             return;
         }
@@ -56,7 +87,10 @@ impl Handler {
                 class: StructureClass::ChairliftBaseStation,
                 position,
                 footprint: xyz(8, 4, 3),
-                rotation: 0.0,
+                rotation: structures
+                    .get(id)
+                    .map(|structure| structure.rotation)
+                    .unwrap_or_default(),
                 under_construction: false,
             },
         );
