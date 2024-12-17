@@ -85,7 +85,8 @@ fn get_wire_path(structures: &[&Structure], terrain: &Grid<f32>) -> Vec<[XYZ<f32
 fn get_wire_path_out(structure: &Structure, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
     let matrix = transformation_matrix_for_structure(structure, terrain);
     structure
-        .wire_path_out
+        .class
+        .wire_path_out()
         .iter()
         .map(|point| [point[0].transform(&matrix), point[1].transform(&matrix)])
         .collect()
@@ -94,7 +95,8 @@ fn get_wire_path_out(structure: &Structure, terrain: &Grid<f32>) -> Vec<[XYZ<f32
 fn get_wire_path_back(structure: &Structure, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
     let matrix = transformation_matrix_for_structure(structure, terrain);
     structure
-        .wire_path_back
+        .class
+        .wire_path_back()
         .iter()
         .map(|point| [point[0].transform(&matrix), point[1].transform(&matrix)])
         .collect()

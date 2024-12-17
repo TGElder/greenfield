@@ -58,8 +58,6 @@ impl Handler {
                 footprint: xyz(8, 4, 3),
                 rotation: 0.0,
                 under_construction: false,
-                wire_path_out: vec![[xyz(-0.5, -0.5, 0.5), xyz(0.5, -0.5, 0.5)]],
-                wire_path_back: vec![[xyz(0.5, 0.5, 0.5), xyz(-0.5, 0.5, 0.5)]],
             },
         );
 
