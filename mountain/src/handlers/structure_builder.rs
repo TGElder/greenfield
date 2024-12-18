@@ -3,18 +3,22 @@ use std::f32::consts::PI;
 
 use commons::geometry::{xy, xyz, XY, XYZ};
 use engine::binding::Binding;
-use engine::events::{Button, ButtonState, KeyboardKey, MouseButton};
+use engine::events::{Button, ButtonState, KeyboardKey};
 
 use crate::model::structure::{Structure, StructureClass};
 use crate::services::id_allocator;
 
 pub struct Handler {
+    pub enabled: bool,
     pub structures: Vec<usize>,
 }
 
 impl Handler {
     pub fn new() -> Handler {
-        Handler { structures: vec![] }
+        Handler {
+            enabled: false,
+            structures: vec![],
+        }
     }
     pub fn handle(
         &mut self,
@@ -26,13 +30,25 @@ impl Handler {
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if (Binding::Single {
-            button: Button::Mouse(MouseButton::Left),
+            button: Button::Keyboard(KeyboardKey::String("W".to_string())),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            self.enabled = !self.enabled;
+        }
+
+        if !self.enabled {
+            return;
+        }
+
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::String("S".to_string())),
             state: ButtonState::Pressed,
         })
         .binds_event(event)
         {
             self.structures.push(id_allocator.next_id());
-            return;
         }
 
         if (Binding::Single {
@@ -63,10 +79,6 @@ impl Handler {
             {
                 structure.rotation -= PI / 4.0;
             }
-        }
-
-        if !matches!(event, engine::events::Event::MouseMoved(..)) {
-            return;
         }
 
         if self.structures.is_empty() {

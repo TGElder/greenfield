@@ -161,9 +161,9 @@ fn try_to_handle(
             game.controllers
                 .lift_builder
                 .trigger(controllers::lift_builder::Parameters {
-                    mouse_xy: &game.mouse_xy,
                     terrain: &game.components.terrain,
                     piste_map: &game.components.piste_map,
+                    structures: &game.components.structures,
                     lifts: &mut game.components.lifts,
                     open: &mut game.components.open,
                     id_allocator: &mut game.components.services.id_allocator,
@@ -175,8 +175,8 @@ fn try_to_handle(
                     parents: &mut game.components.parents,
                     children: &mut game.components.children,
                     piste_computer: &mut game.systems.piste_computer,
+                    structure_builder: &mut game.handlers.stucture_builder,
                     messenger: &mut game.systems.messenger,
-                    graphics,
                 })
         }
         Mode::Building => game.controllers.building_builder.select(

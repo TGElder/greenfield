@@ -1,12 +1,10 @@
 use std::collections::{HashMap, HashSet};
-use std::f32::consts::PI;
-use std::iter::once;
 
-use commons::curves::approximate_curve;
-use commons::geometry::{xy, xyz, XY, XYZ};
+use commons::geometry::{xy, XY};
 use commons::grid::Grid;
 
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::handlers::structure_builder;
 use crate::model::carousel::{Car, Carousel};
 use crate::model::direction::Direction;
 use crate::model::entrance::Entrance;
@@ -15,6 +13,7 @@ use crate::model::lift::{self, Lift, Segment};
 use crate::model::open;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
+use crate::model::structure::{get_wire_path, get_wire_path_out, Structure};
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
 use crate::systems::{messenger, piste_computer};
@@ -22,19 +21,15 @@ use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
 pub const CAR_INTERVAL_METERS: f32 = 10.0;
-pub const CIRCLE_SEGMENTS: u8 = 16;
-pub const CURVE_INCREMENT: f32 = (2.0 * PI) / CIRCLE_SEGMENTS as f32;
-pub const CURVE_RADIUS: f32 = 2.0;
-pub const WIRE_HEIGHT: f32 = 2.5;
 
 pub struct Controller {
     from: Option<XY<u32>>,
 }
 
 pub struct Parameters<'a> {
-    pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub piste_map: &'a Grid<Option<usize>>,
+    pub structures: &'a HashMap<usize, Structure>,
     pub lifts: &'a mut HashMap<usize, Lift>,
     pub open: &'a mut HashMap<usize, open::Status>,
     pub id_allocator: &'a mut id_allocator::Service,
@@ -46,8 +41,8 @@ pub struct Parameters<'a> {
     pub parents: &'a mut HashMap<usize, usize>,
     pub children: &'a mut HashMap<usize, Vec<usize>>,
     pub piste_computer: &'a mut piste_computer::System,
+    pub structure_builder: &'a mut structure_builder::Handler,
     pub messenger: &'a mut messenger::System,
-    pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
 impl Controller {
@@ -58,7 +53,6 @@ impl Controller {
     pub fn trigger(
         &mut self,
         Parameters {
-            mouse_xy,
             terrain,
             piste_map,
             lifts,
@@ -72,31 +66,29 @@ impl Controller {
             parents,
             children,
             piste_computer,
+            structures,
+            structure_builder,
             messenger,
-            graphics,
         }: Parameters<'_>,
     ) -> Result {
-        let Some(mouse_xy) = mouse_xy else {
-            return NoAction;
-        };
-        let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(mouse_xy) else {
-            return NoAction;
-        };
-        let position = xy(x.round() as u32, y.round() as u32);
-        if !terrain.in_bounds(position) {
+        let lift_structures = &mut structure_builder.structures;
+
+        if lift_structures.is_empty() || lift_structures.len() < 2 {
             return NoAction;
         }
 
-        // handle case where from position is not set
-
-        let Some(from) = self.from else {
-            self.from = Some(position);
-            return Action;
-        };
-
         // create lift
 
-        let to = position;
+        let from_structure = &structures[lift_structures.first().unwrap()];
+        let from_position = get_wire_path_out(from_structure, terrain)[0][0];
+        let from = xy(
+            from_position.x.round() as u32,
+            from_position.y.round() as u32,
+        );
+
+        let to_structure = &structures[lift_structures.last().unwrap()];
+        let to_position = get_wire_path_out(to_structure, terrain)[0][0];
+        let to = xy(to_position.x.round() as u32, to_position.y.round() as u32);
 
         let Some(origin_piste_id) = piste_map[from] else {
             messenger.send("Lift needs piste at start position!");
@@ -123,11 +115,20 @@ impl Controller {
         parents.entry(pick_up_id).insert_entry(lift_id);
         parents.entry(drop_off_id).insert_entry(lift_id);
 
-        let points = get_points(terrain, &from, &to);
+        let segments = get_wire_path(
+            &lift_structures
+                .iter()
+                .map(|id| &structures[id])
+                .collect::<Vec<_>>(),
+            terrain,
+        )
+        .drain(..)
+        .map(|segment| Segment::new(segment[0], segment[1]))
+        .collect();
         let travel_direction = get_direction(&from, &to);
 
         let lift = Lift {
-            segments: Segment::segments(&points),
+            segments,
             pick_up: lift::Portal {
                 id: pick_up_id,
                 segment: 0,
@@ -139,7 +140,7 @@ impl Controller {
             },
             drop_off: lift::Portal {
                 id: drop_off_id,
-                segment: 1,
+                segment: lift_structures.len(), // le haque
                 state: State {
                     position: to,
                     travel_direction,
@@ -219,6 +220,9 @@ impl Controller {
         piste_computer.compute(origin_piste_id);
         piste_computer.compute(destination_piste_id);
 
+        lift_structures.clear();
+        structure_builder.enabled = false;
+
         Action
     }
 }
@@ -226,40 +230,4 @@ impl Controller {
 fn get_direction(from: &XY<u32>, to: &XY<u32>) -> Direction {
     let vector = xy(to.x as f32 - from.x as f32, to.y as f32 - from.y as f32);
     Direction::snap_to_direction(vector.angle())
-}
-
-fn get_points(terrain: &Grid<f32>, from: &XY<u32>, to: &XY<u32>) -> Vec<XYZ<f32>> {
-    let from_3d = xyz(from.x as f32, from.y as f32, terrain[from] + WIRE_HEIGHT);
-    let to_3d = xyz(to.x as f32, to.y as f32, terrain[to] + WIRE_HEIGHT);
-    let from_2d = from_3d.xy();
-    let to_2d = to_3d.xy();
-
-    let angle = (to_2d - from_2d).angle();
-
-    let top_curve = approximate_curve(
-        &to_2d,
-        angle,
-        CURVE_INCREMENT,
-        CURVE_RADIUS,
-        CIRCLE_SEGMENTS / 2 + 1,
-    );
-    let top_curve_last = top_curve.last().unwrap();
-    let bottom_curve_first = *top_curve_last - (to_2d - from_2d);
-    let bottom_curve = approximate_curve(
-        &bottom_curve_first,
-        angle + PI,
-        CURVE_INCREMENT,
-        CURVE_RADIUS,
-        CIRCLE_SEGMENTS / 2 + 1,
-    );
-
-    once(from_3d)
-        .chain(once(to_3d))
-        .chain(top_curve.into_iter().map(|XY { x, y }| xyz(x, y, to_3d.z)))
-        .chain(
-            once(bottom_curve_first)
-                .chain(bottom_curve)
-                .map(|XY { x, y }| xyz(x, y, from_3d.z)),
-        )
-        .collect()
 }
