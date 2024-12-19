@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::f32::consts::PI;
 
-use commons::geometry::{xy, xyz, XY, XYZ};
+use commons::geometry::{xy, XY, XYZ};
 use engine::binding::Binding;
 use engine::events::{Button, ButtonState, KeyboardKey};
 
@@ -11,6 +11,7 @@ use crate::services::id_allocator;
 pub struct Handler {
     pub enabled: bool,
     pub structures: Vec<usize>,
+    pub class: StructureClass,
 }
 
 impl Handler {
@@ -18,8 +19,16 @@ impl Handler {
         Handler {
             enabled: false,
             structures: vec![],
+            class: StructureClass::ChairliftStation,
         }
     }
+
+    pub fn reset(&mut self) {
+        self.enabled = false;
+        // self.structures.clear();
+        self.class = StructureClass::ChairliftStation;
+    }
+
     pub fn handle(
         &mut self,
         event: &engine::events::Event,
@@ -40,6 +49,18 @@ impl Handler {
 
         if !self.enabled {
             return;
+        }
+
+        if (Binding::Single {
+            button: Button::Keyboard(KeyboardKey::String("A".to_string())),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            self.class = match self.class {
+                StructureClass::ChairliftStation => StructureClass::ChairliftPylon,
+                StructureClass::ChairliftPylon => StructureClass::ChairliftStation,
+            }
         }
 
         if (Binding::Single {
@@ -96,9 +117,8 @@ impl Handler {
         structures.insert(
             *id,
             Structure {
-                class: StructureClass::ChairliftBaseStation,
+                class: self.class,
                 position,
-                footprint: xyz(8, 4, 3),
                 rotation: structures
                     .get(id)
                     .map(|structure| structure.rotation)

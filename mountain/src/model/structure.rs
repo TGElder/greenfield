@@ -5,23 +5,35 @@ use engine::graphics::utils::{transformation_matrix, Transformation};
 use nalgebra::Matrix4;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum StructureClass {
-    ChairliftBaseStation,
+    ChairliftStation,
+    ChairliftPylon,
 }
 
 impl StructureClass {
     pub fn wire_path_out(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
-            StructureClass::ChairliftBaseStation => {
-                vec![[xyz(-0.5, -0.5, 0.5), xyz(0.5, -0.5, 0.5)]]
+            StructureClass::ChairliftPylon => {
+                vec![[xyz(-0.125, -0.5, 1.0), xyz(0.125, -0.5, 1.0)]]
+            }
+            StructureClass::ChairliftStation => {
+                vec![[xyz(-0.5, -0.5, 3.5), xyz(0.5, -0.5, 3.5)]]
             }
         }
     }
 
     pub fn wire_path_back(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
-            StructureClass::ChairliftBaseStation => vec![[xyz(0.5, 0.5, 0.5), xyz(-0.5, 0.5, 0.5)]],
+            StructureClass::ChairliftPylon => vec![[xyz(0.125, 0.5, 1.0), xyz(-0.125, 0.5, 1.0)]],
+            StructureClass::ChairliftStation => vec![[xyz(0.5, 0.5, 3.5), xyz(-0.5, 0.5, 3.5)]],
+        }
+    }
+
+    pub fn footprint(&self) -> XYZ<u32> {
+        match self {
+            StructureClass::ChairliftPylon => xyz(4, 3, 12),
+            StructureClass::ChairliftStation => xyz(8, 4, 1),
         }
     }
 }
@@ -30,7 +42,6 @@ impl StructureClass {
 pub struct Structure {
     pub class: StructureClass,
     pub position: XY<u32>,
-    pub footprint: XYZ<u32>,
     pub rotation: f32,
     pub under_construction: bool,
 }
@@ -64,6 +75,7 @@ pub fn transformation_matrix_for_structure(
     structure: &Structure,
     terrain: &Grid<f32>,
 ) -> Matrix4<f32> {
+    let footprint = structure.class.footprint();
     transformation_matrix(Transformation {
         translation: Some(xyz(
             structure.position.x as f32,
@@ -71,9 +83,9 @@ pub fn transformation_matrix_for_structure(
             terrain[structure.position],
         )),
         scale: Some(xyz(
-            structure.footprint.x as f32,
-            structure.footprint.y as f32,
-            structure.footprint.z as f32,
+            footprint.x as f32,
+            footprint.y as f32,
+            footprint.z as f32,
         )),
         yaw: Some(structure.rotation),
         ..Transformation::default()

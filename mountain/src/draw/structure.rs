@@ -1,8 +1,7 @@
 use commons::color::Rgb;
 use commons::grid::Grid;
-use engine::graphics::elements::Quad;
+use engine::graphics::elements::Triangle;
 use engine::graphics::transform::Transform;
-use engine::graphics::utils::triangles_from_quads;
 use engine::graphics::Graphics;
 
 use crate::draw::{line, model};
@@ -20,22 +19,18 @@ pub fn draw_chain(
     let wire = get_wire_path(structures, terrain);
     line::draw2(graphics, wire_index, &wire, 0.5);
 
-    let quads = structures
+    let triangles = structures
         .iter()
-        .map(|structure| get_quads(structure, terrain))
+        .flat_map(|structure| get_triangles(structure, terrain))
         .collect::<Vec<_>>();
 
-    let quads = quads.into_iter().flatten().collect::<Vec<_>>();
-
-    let triangles = triangles_from_quads(&quads);
     graphics.draw_hologram(index, &triangles).unwrap();
 }
 
-pub fn get_quads(structure: &Structure, terrain: &Grid<f32>) -> Vec<Quad<Rgb<f32>>> {
-    let model = match &structure.class {
-        StructureClass::ChairliftBaseStation => model::chairlift::base_station(),
+pub fn get_triangles(structure: &Structure, terrain: &Grid<f32>) -> Vec<Triangle<Rgb<f32>>> {
+    let triangles = match &structure.class {
+        StructureClass::ChairliftPylon => model::chairlift::pylon(),
+        StructureClass::ChairliftStation => model::chairlift::station(),
     };
-    model
-        .quads
-        .transform(&transformation_matrix_for_structure(structure, terrain))
+    triangles.transform(&transformation_matrix_for_structure(structure, terrain))
 }

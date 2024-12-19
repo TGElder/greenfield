@@ -70,5 +70,5 @@ pub fn draw2(graphics: &mut dyn Graphics, index: &usize, segments: &[[XYZ<f32>; 
         .collect::<Vec<_>>();
 
     let triangles = triangles_from_quads(&quads);
-    graphics.draw_triangles(index, &triangles).unwrap();
+    graphics.draw_hologram(index, &triangles).unwrap();
 }

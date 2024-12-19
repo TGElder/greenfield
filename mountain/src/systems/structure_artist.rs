@@ -43,7 +43,7 @@ impl System {
         };
 
         if let Entry::Vacant(cell) = drawings.entry(*wire_index) {
-            if let Ok(index) = graphics.create_triangles() {
+            if let Ok(index) = graphics.create_hologram() {
                 cell.insert(index);
             }
         };

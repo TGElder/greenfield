@@ -220,8 +220,7 @@ impl Controller {
         piste_computer.compute(origin_piste_id);
         piste_computer.compute(destination_piste_id);
 
-        lift_structures.clear();
-        structure_builder.enabled = false;
+        structure_builder.reset();
 
         Action
     }
