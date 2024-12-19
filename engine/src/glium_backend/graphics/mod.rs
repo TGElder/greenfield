@@ -22,7 +22,7 @@ use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use egui_glium::egui_winit::egui::{self, ViewportId};
 use glium::glutin::surface::WindowSurface;
-use glium::VertexBuffer;
+use glium::{DrawParameters, VertexBuffer};
 use nalgebra::Matrix4;
 use programs::*;
 use vertices::*;
@@ -64,6 +64,7 @@ pub struct GliumGraphics {
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
+    holograms: Vec<Option<Primitive>>,
     dynamic_primitives: Vec<DynamicPrimitive>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     instanced_primitives: Vec<Option<InstancedPrimitives>>,
@@ -121,6 +122,7 @@ impl GliumGraphics {
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
             textures: vec![],
             primitives: vec![],
+            holograms: vec![],
             dynamic_primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
@@ -132,6 +134,7 @@ impl GliumGraphics {
                     write: true,
                     ..Default::default()
                 },
+                color_mask: (true, true, true, true),
                 backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
                 ..Default::default()
             },
@@ -170,6 +173,32 @@ impl GliumGraphics {
                 &self.programs.primitive,
                 &uniforms,
                 &self.draw_parameters,
+            )?;
+        }
+        Ok(())
+    }
+
+    fn render_holograms_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    where
+        S: glium::Surface,
+    {
+        let uniforms = glium::uniform! {
+            transform: self.projection.projection(),
+            light_direction: self.light_direction
+        };
+
+        let parameters = DrawParameters {
+            color_mask: (true, true, true, false),
+            ..self.draw_parameters.clone()
+        };
+
+        for primitive in self.holograms.iter().flatten() {
+            surface.draw(
+                &primitive.vertex_buffer,
+                INDICES,
+                &self.programs.primitive,
+                &uniforms,
+                &parameters,
             )?;
         }
         Ok(())
@@ -408,6 +437,14 @@ impl GliumGraphics {
         Ok(self.primitives.len() - 1)
     }
 
+    fn create_hologram_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
+        if self.holograms.len() == isize::MAX as usize {
+            return Err("No space for more holograms".into());
+        }
+        self.holograms.push(None);
+        Ok(self.holograms.len() - 1)
+    }
+
     fn create_dynamic_triangles_unsafe(
         &mut self,
         triangles: &usize,
@@ -482,6 +519,30 @@ impl GliumGraphics {
         };
 
         self.primitives[*index] = Some(primitive);
+
+        Ok(())
+    }
+
+    fn add_hologram_unsafe(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), Box<dyn Error>> {
+        if *index >= self.holograms.len() {
+            return Err(format!(
+                "Trying to draw hologram #{} but there are only {} holograms",
+                index,
+                self.primitives.len()
+            )
+            .into());
+        }
+
+        let vertices = colored_vertices_from_triangles(triangles);
+        let primitive = Primitive {
+            vertex_buffer: VertexBuffer::new(&self.display, &vertices)?,
+        };
+
+        self.holograms[*index] = Some(primitive);
 
         Ok(())
     }
@@ -665,6 +726,7 @@ impl GliumGraphics {
         self.render_overlay_primitives_to_canvas(&mut canvas)?;
         self.render_instanced_primitives_to_canvas(&mut canvas)?;
         self.render_billboards_to_canvas(&mut canvas)?;
+        self.render_holograms_to_canvas(&mut canvas)?;
         self.render_canvas_to_frame(&mut frame)?;
 
         self.gui.paint(&self.display, &mut frame);
@@ -713,6 +775,10 @@ impl Graphics for GliumGraphics {
         Ok(self.create_triangles_unsafe()?)
     }
 
+    fn create_hologram(&mut self) -> Result<usize, IndexError> {
+        Ok(self.create_hologram_unsafe()?)
+    }
+
     fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError> {
         Ok(self.create_dynamic_triangles_unsafe(triangles)?)
     }
@@ -738,6 +804,14 @@ impl Graphics for GliumGraphics {
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError> {
         Ok(self.add_triangles_unsafe(index, triangles)?)
+    }
+
+    fn draw_hologram(
+        &mut self,
+        index: &usize,
+        triangles: &[Triangle<Rgb<f32>>],
+    ) -> Result<(), DrawError> {
+        Ok(self.add_hologram_unsafe(index, triangles)?)
     }
 
     fn update_dynamic_triangles(

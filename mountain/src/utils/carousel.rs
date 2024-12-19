@@ -175,7 +175,7 @@ mod tests {
     fn test_create_cars() {
         // given
         let segments =
-            Segment::segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
+            Segment::_segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
 
         // when
         let result = create_cars(7, &segments, &0.19);
@@ -234,7 +234,7 @@ mod tests {
                     velocity: 0,
                 },
             },
-            segments: Segment::segments(&[
+            segments: Segment::_segments(&[
                 xyz(0.0, 0.0, 0.0),
                 xyz(1.0, 0.0, 0.0),
                 xyz(0.0, 0.0, 0.0),
@@ -325,7 +325,7 @@ mod tests {
                     velocity: 0,
                 },
             },
-            segments: Segment::segments(&[
+            segments: Segment::_segments(&[
                 xyz(0.0, 0.0, 0.0),
                 xyz(1.0, 0.0, 0.0),
                 xyz(0.0, 0.0, 0.0),

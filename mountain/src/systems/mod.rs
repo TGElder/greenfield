@@ -20,6 +20,7 @@ pub mod planner;
 pub mod selection_rasterizer;
 pub mod skier_colors;
 pub mod skiing_framer;
+pub mod structure_artist;
 pub mod target_checker;
 pub mod target_setter;
 pub mod terrain_artist;
