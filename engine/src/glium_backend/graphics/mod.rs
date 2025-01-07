@@ -5,7 +5,9 @@ mod tests;
 mod utils;
 mod vertices;
 
+use std::collections::{HashMap, HashSet};
 use std::error::Error;
+use std::hash::Hash;
 use std::mem;
 
 use crate::glium_backend::graphics::utils::colored_vertices_from_triangles;
@@ -14,7 +16,7 @@ use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
 use crate::graphics::projection::Projection;
-use crate::graphics::Graphics;
+use crate::graphics::{DrawMode, Graphics};
 use canvas::*;
 use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
@@ -22,7 +24,7 @@ use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use egui_glium::egui_winit::egui::{self, ViewportId};
 use glium::glutin::surface::WindowSurface;
-use glium::VertexBuffer;
+use glium::{draw_parameters, DrawParameters, VertexBuffer};
 use nalgebra::Matrix4;
 use programs::*;
 use vertices::*;
@@ -63,7 +65,7 @@ pub struct GliumGraphics {
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
-    primitives: Vec<Option<Primitive>>,
+    primitives: Drawings<DrawMode, Option<Primitive>>,
     dynamic_primitives: Vec<DynamicPrimitive>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     instanced_primitives: Vec<Option<InstancedPrimitives>>,
@@ -73,6 +75,37 @@ pub struct GliumGraphics {
     gui: egui_glium::EguiGlium,
     display: glium::Display<WindowSurface>,
     window: winit::window::Window,
+}
+
+#[derive(Default)]
+pub struct Drawings<T, U>
+where
+    T: Eq + Hash,
+{
+    data: Vec<U>,
+    partitions: HashMap<T, Vec<usize>>,
+}
+
+impl<T, U> Drawings<T, U>
+where
+    T: Eq + Hash,
+{
+    fn add(&mut self, partition: T, drawing: U) -> Result<usize, Box<dyn Error>> {
+        if self.data.len() == usize::MAX {
+            return Err("No more space".into());
+        }
+        self.data.push(drawing);
+        let index = self.data.len() - 1;
+
+        self.partitions.entry(partition).or_default().push(index);
+
+        Ok(index)
+    }
+
+    fn clear(&mut self) {
+        self.data.clear();
+        self.partitions.clear();
+    }
 }
 
 pub struct Parameters {
@@ -120,7 +153,7 @@ impl GliumGraphics {
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
             textures: vec![],
-            primitives: vec![],
+            primitives: Drawings::default(),
             dynamic_primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
@@ -163,15 +196,31 @@ impl GliumGraphics {
             light_direction: self.light_direction
         };
 
-        for primitive in self.primitives.iter().flatten() {
-            surface.draw(
-                &primitive.vertex_buffer,
-                INDICES,
-                &self.programs.primitive,
-                &uniforms,
-                &self.draw_parameters,
-            )?;
+        for (draw_mode, partition) in self.primitives.partitions.iter() {
+            let color_mask = match draw_mode {
+                DrawMode::Solid => (true, true, true, true),
+                DrawMode::Hologram => (true, true, true, false),
+            };
+            let draw_parameters = DrawParameters {
+                color_mask,
+                ..self.draw_parameters.clone()
+            };
+
+            for primitive in partition
+                .iter()
+                .map(|index| &self.primitives.data[*index])
+                .flatten()
+            {
+                surface.draw(
+                    &primitive.vertex_buffer,
+                    INDICES,
+                    &self.programs.primitive,
+                    &uniforms,
+                    &self.draw_parameters,
+                )?;
+            }
         }
+
         Ok(())
     }
 
@@ -400,12 +449,8 @@ impl GliumGraphics {
         Ok(())
     }
 
-    fn create_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
-        if self.primitives.len() == isize::MAX as usize {
-            return Err("No space for more primitives".into());
-        }
-        self.primitives.push(None);
-        Ok(self.primitives.len() - 1)
+    fn create_triangles_unsafe(&mut self, draw_mode: DrawMode) -> Result<usize, Box<dyn Error>> {
+        self.primitives.add(draw_mode, None)
     }
 
     fn create_dynamic_triangles_unsafe(
@@ -467,11 +512,11 @@ impl GliumGraphics {
         index: &usize,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), Box<dyn Error>> {
-        if *index >= self.primitives.len() {
+        if *index >= self.primitives.data.len() {
             return Err(format!(
                 "Trying to draw primitive #{} but there are only {} primitives",
                 index,
-                self.primitives.len()
+                self.primitives.data.len()
             )
             .into());
         }
@@ -481,7 +526,7 @@ impl GliumGraphics {
             vertex_buffer: VertexBuffer::new(&self.display, &vertices)?,
         };
 
-        self.primitives[*index] = Some(primitive);
+        self.primitives.data[*index] = Some(primitive);
 
         Ok(())
     }
@@ -709,8 +754,8 @@ impl Graphics for GliumGraphics {
         Ok(self.modify_texture_unsafe(id, image)?)
     }
 
-    fn create_triangles(&mut self) -> Result<usize, IndexError> {
-        Ok(self.create_triangles_unsafe()?)
+    fn create_triangles(&mut self, draw_mode: DrawMode) -> Result<usize, IndexError> {
+        Ok(self.create_triangles_unsafe(draw_mode)?)
     }
 
     fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError> {

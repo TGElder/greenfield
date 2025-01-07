@@ -21,6 +21,13 @@ use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
 
+#[derive(Default, Eq, PartialEq, Hash)]
+pub enum DrawMode {
+    #[default]
+    Solid,
+    Hologram,
+}
+
 pub trait Graphics {
     fn load_texture(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, InitializationError>;
 
@@ -29,7 +36,7 @@ pub trait Graphics {
     fn modify_texture(&mut self, id: &usize, image: &OriginGrid<Rgba<u8>>)
         -> Result<(), DrawError>;
 
-    fn create_triangles(&mut self) -> Result<usize, IndexError>;
+    fn create_triangles(&mut self, draw_mode: DrawMode) -> Result<usize, IndexError>;
 
     fn create_dynamic_triangles(&mut self, triangles: &usize) -> Result<usize, IndexError>;
 

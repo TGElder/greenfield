@@ -1,7 +1,7 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::draw::line::draw;
 use crate::model::lift::{Lift, Segment};
@@ -20,7 +20,7 @@ pub fn run(
         match drawings.entry(*id) {
             Entry::Occupied(value) => draw(graphics, value.get(), &segments, 0.5),
             Entry::Vacant(cell) => {
-                if let Ok(index) = graphics.create_triangles() {
+                if let Ok(index) = graphics.create_triangles(DrawMode::Solid) {
                     draw(graphics, &index, &segments, 0.5);
                     cell.insert(index);
                 }

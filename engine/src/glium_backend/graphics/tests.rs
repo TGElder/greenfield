@@ -72,7 +72,7 @@ fn render_cube() {
     .unwrap();
 
     // when
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
@@ -366,7 +366,7 @@ fn render_billboard() {
     };
     let index = graphics.create_billboards().unwrap();
     graphics.draw_billboard(&index, &billboard).unwrap();
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = triangles_from_quads(&[Quad {
         corners: [
             xyz(-0.5, -0.5, 0.0),
@@ -572,7 +572,7 @@ fn look_at() {
     .unwrap();
 
     // when
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
@@ -636,7 +636,7 @@ fn drag_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
@@ -726,7 +726,7 @@ fn yaw_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
@@ -933,7 +933,7 @@ fn zoom_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
     graphics.render().unwrap();
@@ -1048,7 +1048,7 @@ fn resize_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles().unwrap();
+    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
     let triangles = cube_triangles();
     graphics.draw_triangles(&index, &triangles).unwrap();
 
