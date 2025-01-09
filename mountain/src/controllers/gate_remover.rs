@@ -1,6 +1,6 @@
 use commons::geometry::{xy, XY, XYZ};
 use commons::map::ContainsKeyValue;
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::ability::ABILITIES;
@@ -98,7 +98,7 @@ pub fn remove_gate(
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
     if let Some(drawing_id) = components.drawings.get(id) {
-        let _ = graphics.draw_triangles(drawing_id, &[]);
+        let _ = graphics.draw_triangles(drawing_id, DrawMode::Invisible, &[]);
     }
     components.drawings.remove(id);
 }

@@ -1,5 +1,5 @@
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::draw::model::window::MODEL;
 use crate::model::building::Building;
@@ -11,7 +11,9 @@ pub struct Drawing {
 impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let triangles = triangles_from_quads(&[MODEL]);
-        let index = graphics.create_instanced_triangles(&triangles).unwrap();
+        let index = graphics
+            .create_instanced_triangles(DrawMode::Solid, &triangles)
+            .unwrap();
         Drawing { index }
     }
 

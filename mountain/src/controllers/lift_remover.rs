@@ -1,6 +1,6 @@
 use commons::geometry::{xy, XY, XYZ};
 use commons::map::ContainsKeyValue;
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::entrance::Entrance;
@@ -126,14 +126,14 @@ fn remove_car(graphics: &mut dyn Graphics, components: &mut Components, car_id: 
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
     if let Some(drawing_id) = components.drawings.get(id) {
-        let _ = graphics.draw_triangles(drawing_id, &[]);
+        let _ = graphics.draw_triangles(drawing_id, DrawMode::Invisible, &[]);
     }
     components.drawings.remove(id);
 }
 
 fn remove_dynamic_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
     if let Some(drawing_id) = components.drawings.get(id) {
-        let _ = graphics.update_dynamic_triangles(drawing_id, None);
+        let _ = graphics.update_dynamic_triangles(drawing_id, DrawMode::Invisible, &[]);
     }
     components.drawings.remove(id);
 }

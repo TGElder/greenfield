@@ -8,7 +8,7 @@ use commons::unsafe_ordering::UnsafeOrderable;
 use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::draw::model::building;
 use crate::model::building::{Building, Roof};
@@ -85,7 +85,9 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
         .into_iter()
         .collect::<Vec<_>>();
 
-    graphics.draw_triangles(index, &triangles).unwrap();
+    graphics
+        .draw_triangles(index, DrawMode::Solid, &triangles)
+        .unwrap();
 }
 
 fn min_max<T>(iter: impl Iterator<Item = T>) -> Option<(T, T)>

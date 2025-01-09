@@ -6,7 +6,7 @@ use commons::origin_grid::OriginGrid;
 use engine::graphics::elements::{OverlayTriangles, TexturedPosition};
 
 use engine::graphics::utils::{quad_normal, textured_triangles_from_textured_quads};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 const WHITE: Rgba<u8> = Rgba::new(255, 255, 255, 255);
 
@@ -106,7 +106,7 @@ impl Drawing {
         };
         let index = self.slabs[slab];
         graphics
-            .draw_overlay_triangles(&index, &overlay_triangles)
+            .draw_overlay_triangles(&index, DrawMode::Solid, &overlay_triangles)
             .unwrap();
     }
 

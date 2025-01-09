@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::draw::model::{self};
 use crate::model::frame::{Frame, Model};
@@ -14,7 +14,9 @@ impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let quads = model::chair::model().quads;
         let triangles = triangles_from_quads(&quads);
-        let index = graphics.create_instanced_triangles(&triangles).unwrap();
+        let index = graphics
+            .create_instanced_triangles(DrawMode::Hologram, &triangles)
+            .unwrap();
         Drawing { index }
     }
 
