@@ -21,6 +21,14 @@ use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
 
+#[derive(Default, Eq, PartialEq, Hash)]
+pub enum DrawMode {
+    #[default]
+    Solid,
+    Hologram,
+    Invisible,
+}
+
 pub trait Graphics {
     fn load_texture(&mut self, image: &Grid<Rgba<u8>>) -> Result<usize, InitializationError>;
 
@@ -37,6 +45,7 @@ pub trait Graphics {
 
     fn create_instanced_triangles(
         &mut self,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<usize, IndexError>;
 
@@ -45,13 +54,15 @@ pub trait Graphics {
     fn draw_triangles(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError>;
 
     fn update_dynamic_triangles(
         &mut self,
         index: &usize,
-        triangles: Option<&[Triangle<Rgb<f32>>]>,
+        draw_mode: DrawMode,
+        triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError>;
 
     fn update_instanced_triangles(
@@ -63,10 +74,16 @@ pub trait Graphics {
     fn draw_overlay_triangles(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         overlay_triangles: &OverlayTriangles,
     ) -> Result<(), DrawError>;
 
-    fn draw_billboard(&mut self, index: &usize, billboard: &Billboard) -> Result<(), DrawError>;
+    fn draw_billboard(
+        &mut self,
+        index: &usize,
+        draw_mode: DrawMode,
+        billboard: &Billboard,
+    ) -> Result<(), DrawError>;
 
     fn draw_gui(&mut self, run_ui: &mut dyn FnMut(&egui::Context));
 

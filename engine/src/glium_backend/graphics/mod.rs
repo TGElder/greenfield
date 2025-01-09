@@ -14,7 +14,7 @@ use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
 use crate::graphics::projection::Projection;
-use crate::graphics::Graphics;
+use crate::graphics::{DrawMode, Graphics};
 use canvas::*;
 use commons::color::{Rgb, Rgba};
 use commons::geometry::{xy, xyz, XY, XYZ};
@@ -64,15 +64,19 @@ pub struct GliumGraphics {
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
     primitives: Vec<Option<Primitive>>,
-    dynamic_primitives: Vec<DynamicPrimitive>,
     overlay_primitives: Vec<Option<OverlayPrimitive>>,
     instanced_primitives: Vec<Option<InstancedPrimitives>>,
     billboards: Vec<Option<Billboard>>,
     programs: Programs,
-    draw_parameters: glium::DrawParameters<'static>,
+    draw_parameters: DrawParameters,
     gui: egui_glium::EguiGlium,
     display: glium::Display<WindowSurface>,
     window: winit::window::Window,
+}
+
+pub struct DrawParameters {
+    solid: glium::DrawParameters<'static>,
+    hologram: glium::DrawParameters<'static>,
 }
 
 pub struct Parameters {
@@ -113,6 +117,15 @@ impl GliumGraphics {
             .with_inner_size(parameters.width, parameters.height)
             .with_title(&parameters.name)
             .build(event_loop);
+        let default_draw_parameters = glium::DrawParameters {
+            depth: glium::Depth {
+                test: glium::DepthTest::IfLess,
+                write: true,
+                ..Default::default()
+            },
+            backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
+            ..Default::default()
+        };
 
         let mut out = GliumGraphics {
             projection: parameters.projection,
@@ -121,19 +134,19 @@ impl GliumGraphics {
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
             textures: vec![],
             primitives: vec![],
-            dynamic_primitives: vec![],
             overlay_primitives: vec![],
             billboards: vec![],
             instanced_primitives: vec![],
             programs: Programs::new(&display)?,
-            draw_parameters: glium::DrawParameters {
-                depth: glium::Depth {
-                    test: glium::DepthTest::IfLess,
-                    write: true,
-                    ..Default::default()
+            draw_parameters: DrawParameters {
+                solid: glium::DrawParameters {
+                    color_mask: (true, true, true, true),
+                    ..default_draw_parameters.clone()
                 },
-                backface_culling: glium::draw_parameters::BackfaceCullingMode::CullClockwise,
-                ..Default::default()
+                hologram: glium::DrawParameters {
+                    color_mask: (true, true, true, false),
+                    ..default_draw_parameters
+                },
             },
             gui: egui_glium::EguiGlium::new(ViewportId::ROOT, &display, &window, event_loop),
             display,
@@ -154,28 +167,18 @@ impl GliumGraphics {
         Canvas::new(&self.display, &self.display.get_framebuffer_dimensions())
     }
 
-    fn render_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
-    where
-        S: glium::Surface,
-    {
-        let uniforms = glium::uniform! {
-            transform: self.projection.projection(),
-            light_direction: self.light_direction
-        };
-
-        for primitive in self.primitives.iter().flatten() {
-            surface.draw(
-                &primitive.vertex_buffer,
-                INDICES,
-                &self.programs.primitive,
-                &uniforms,
-                &self.draw_parameters,
-            )?;
-        }
-        Ok(())
+    fn draw_modes(&self) -> impl IntoIterator<Item = (DrawMode, &glium::DrawParameters)> {
+        [
+            (DrawMode::Solid, &self.draw_parameters.solid),
+            (DrawMode::Hologram, &self.draw_parameters.hologram),
+        ]
     }
 
-    fn render_dynamic_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    fn render_primitives_to_canvas<S>(
+        &self,
+        surface: &mut S,
+        primitives: &[Option<Primitive>],
+    ) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
@@ -184,17 +187,22 @@ impl GliumGraphics {
             light_direction: self.light_direction
         };
 
-        for primitive in self.dynamic_primitives.iter() {
-            if primitive.visible {
+        for (draw_mode, draw_parameters) in self.draw_modes() {
+            for primitive in primitives
+                .iter()
+                .flatten()
+                .filter(|primitive| primitive.draw_mode == draw_mode)
+            {
                 surface.draw(
                     &primitive.vertex_buffer,
                     INDICES,
                     &self.programs.primitive,
                     &uniforms,
-                    &self.draw_parameters,
+                    draw_parameters,
                 )?;
             }
         }
+
         Ok(())
     }
 
@@ -212,37 +220,44 @@ impl GliumGraphics {
             ..Default::default()
         };
 
-        for primitive in self.overlay_primitives.iter().flatten() {
-            if current_base_texture != Some(primitive.base_texture)
-                || current_overlay_texture != Some(primitive.overlay_texture)
+        for (draw_mode, draw_parameters) in self.draw_modes() {
+            for primitive in self
+                .overlay_primitives
+                .iter()
+                .flatten()
+                .filter(|primitive| primitive.draw_mode == draw_mode)
             {
-                current_base_texture = Some(primitive.base_texture);
-                current_overlay_texture = Some(primitive.overlay_texture);
-                let base = self.textures.get(primitive.base_texture).ok_or(format!(
-                    "Overlay primitive refers to missing base texture {}",
-                    primitive.base_texture
-                ))?;
-                let base = glium::uniforms::Sampler(base, sampler_behavior);
-                let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
-                    "Overlay primitive refers to missing overlay texture {}",
-                    primitive.overlay_texture
-                ))?;
-                let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
-                uniforms = Some(glium::uniform! {
-                    transform: self.projection.projection(),
-                    light_direction: self.light_direction,
-                    base: base,
-                    overlay: overlay,
-                });
-            }
-            if let Some(uniforms) = uniforms {
-                surface.draw(
-                    &primitive.vertex_buffer,
-                    INDICES,
-                    &self.programs.overlay_primitive,
-                    &uniforms,
-                    &self.draw_parameters,
-                )?;
+                if current_base_texture != Some(primitive.base_texture)
+                    || current_overlay_texture != Some(primitive.overlay_texture)
+                {
+                    current_base_texture = Some(primitive.base_texture);
+                    current_overlay_texture = Some(primitive.overlay_texture);
+                    let base = self.textures.get(primitive.base_texture).ok_or(format!(
+                        "Overlay primitive refers to missing base texture {}",
+                        primitive.base_texture
+                    ))?;
+                    let base = glium::uniforms::Sampler(base, sampler_behavior);
+                    let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
+                        "Overlay primitive refers to missing overlay texture {}",
+                        primitive.overlay_texture
+                    ))?;
+                    let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
+                    uniforms = Some(glium::uniform! {
+                        transform: self.projection.projection(),
+                        light_direction: self.light_direction,
+                        base: base,
+                        overlay: overlay,
+                    });
+                }
+                if let Some(uniforms) = uniforms {
+                    surface.draw(
+                        &primitive.vertex_buffer,
+                        INDICES,
+                        &self.programs.overlay_primitive,
+                        &uniforms,
+                        draw_parameters,
+                    )?;
+                }
             }
         }
         Ok(())
@@ -255,23 +270,30 @@ impl GliumGraphics {
         let mut uniforms = None;
         let mut current_texture = None;
 
-        for billboard in self.billboards.iter().flatten() {
-            if current_texture != Some(billboard.texture) {
-                current_texture = Some(billboard.texture);
-                uniforms = Some(glium::uniform! {
-                    transform: self.projection.projection(),
-                    scale: self.projection.scale(),
-                    tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
-                });
-            }
-            if let Some(uniforms) = uniforms {
-                surface.draw(
-                    &billboard.vertex_buffer,
-                    INDICES,
-                    &self.programs.billboard,
-                    &uniforms,
-                    &self.draw_parameters,
-                )?;
+        for (draw_mode, draw_parameters) in self.draw_modes() {
+            for billboard in self
+                .billboards
+                .iter()
+                .flatten()
+                .filter(|billboard| billboard.draw_mode == draw_mode)
+            {
+                if current_texture != Some(billboard.texture) {
+                    current_texture = Some(billboard.texture);
+                    uniforms = Some(glium::uniform! {
+                        transform: self.projection.projection(),
+                        scale: self.projection.scale(),
+                        tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
+                    });
+                }
+                if let Some(uniforms) = uniforms {
+                    surface.draw(
+                        &billboard.vertex_buffer,
+                        INDICES,
+                        &self.programs.billboard,
+                        &uniforms,
+                        draw_parameters,
+                    )?;
+                }
             }
         }
         Ok(())
@@ -289,26 +311,33 @@ impl GliumGraphics {
             light_direction: self.light_direction,
         };
 
-        for InstancedPrimitives {
-            primitive,
-            vertex_buffer,
-        } in self.instanced_primitives.iter().flatten()
-        {
-            let Some(vertex_buffer) = vertex_buffer else {
-                continue;
-            };
-            surface.draw(
-                (
-                    &primitive.vertex_buffer,
-                    vertex_buffer
-                        .per_instance()
-                        .map_err(|_| String::from("Instancing is not supported"))?,
-                ),
-                INDICES,
-                &self.programs.instanced_primitive,
-                &uniforms,
-                &self.draw_parameters,
-            )?;
+        for (draw_mode, draw_parameters) in self.draw_modes() {
+            for InstancedPrimitives {
+                primitive,
+                vertex_buffer,
+                ..
+            } in self
+                .instanced_primitives
+                .iter()
+                .flatten()
+                .filter(|primitives| primitives.primitive.draw_mode == draw_mode)
+            {
+                let Some(vertex_buffer) = vertex_buffer else {
+                    continue;
+                };
+                surface.draw(
+                    (
+                        &primitive.vertex_buffer,
+                        vertex_buffer
+                            .per_instance()
+                            .map_err(|_| String::from("Instancing is not supported"))?,
+                    ),
+                    INDICES,
+                    &self.programs.instanced_primitive,
+                    &uniforms,
+                    draw_parameters,
+                )?;
+            }
         }
         Ok(())
     }
@@ -412,18 +441,18 @@ impl GliumGraphics {
         &mut self,
         triangles: &usize,
     ) -> Result<usize, Box<dyn Error>> {
-        if self.dynamic_primitives.len() == isize::MAX as usize {
-            return Err("No space for more dynamic primitives".into());
+        if self.primitives.len() == isize::MAX as usize {
+            return Err("No space for more primitives".into());
         }
-        let primitive = DynamicPrimitive {
-            visible: false,
+        let primitive = Primitive {
+            draw_mode: DrawMode::Invisible,
             vertex_buffer: glium::VertexBuffer::dynamic(
                 &self.display,
                 &vec![ColoredVertex::default(); triangles * 3],
             )?,
         };
-        self.dynamic_primitives.push(primitive);
-        Ok(self.dynamic_primitives.len() - 1)
+        self.primitives.push(Some(primitive));
+        Ok(self.primitives.len() - 1)
     }
 
     fn create_overlay_triangles_unsafe(&mut self) -> Result<usize, Box<dyn Error>> {
@@ -436,6 +465,7 @@ impl GliumGraphics {
 
     fn create_instanced_triangles_unsafe(
         &mut self,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<usize, Box<dyn Error>> {
         if self.instanced_primitives.len() == isize::MAX as usize {
@@ -445,6 +475,7 @@ impl GliumGraphics {
         let primitive_vertices = colored_vertices_from_triangles(triangles);
         let instanced_primitives = InstancedPrimitives {
             primitive: Primitive {
+                draw_mode,
                 vertex_buffer: glium::VertexBuffer::new(&self.display, &primitive_vertices)?,
             },
             vertex_buffer: None,
@@ -465,6 +496,7 @@ impl GliumGraphics {
     fn add_triangles_unsafe(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), Box<dyn Error>> {
         if *index >= self.primitives.len() {
@@ -478,6 +510,7 @@ impl GliumGraphics {
 
         let vertices = colored_vertices_from_triangles(triangles);
         let primitive = Primitive {
+            draw_mode,
             vertex_buffer: VertexBuffer::new(&self.display, &vertices)?,
         };
 
@@ -489,29 +522,29 @@ impl GliumGraphics {
     fn update_dynamic_triangles_unsafe(
         &mut self,
         index: &usize,
-        triangles: Option<&[Triangle<Rgb<f32>>]>,
+        draw_mode: DrawMode,
+        triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), Box<dyn Error>> {
-        if *index >= self.dynamic_primitives.len() {
+        if *index >= self.primitives.len() {
             return Err(format!(
                 "Trying to draw dynamic primitive #{} but there are only {} dynamic primitives",
                 index,
-                self.dynamic_primitives.len()
+                self.primitives.len()
             )
             .into());
         }
 
-        let primitive = &mut self.dynamic_primitives[*index];
+        let primitive = &mut self.primitives[*index].as_mut().unwrap();
 
-        match triangles {
-            Some(triangles) => {
+        match draw_mode {
+            DrawMode::Invisible => {}
+            _ => {
                 let vertices = colored_vertices_from_triangles(triangles);
-                primitive.visible = true;
                 primitive.vertex_buffer.write(&vertices);
             }
-            None => {
-                primitive.visible = false;
-            }
         }
+
+        primitive.draw_mode = draw_mode;
 
         Ok(())
     }
@@ -519,6 +552,7 @@ impl GliumGraphics {
     fn add_overlay_triangles_unsafe(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         overlay: &OverlayTriangles,
     ) -> Result<(), Box<dyn Error>> {
         if *index >= self.overlay_primitives.len() {
@@ -549,6 +583,7 @@ impl GliumGraphics {
             .collect::<Vec<TexturedVertex>>();
 
         self.overlay_primitives[*index] = Some(OverlayPrimitive {
+            draw_mode,
             base_texture: overlay.base_texture,
             overlay_texture: overlay.overlay_texture,
             vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices)?,
@@ -610,6 +645,7 @@ impl GliumGraphics {
     fn add_billboard_unsafe(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         elements::Billboard {
             position,
             dimensions,
@@ -647,6 +683,7 @@ impl GliumGraphics {
         ];
 
         self.billboards[*index] = Some(Billboard {
+            draw_mode,
             texture: *texture,
             vertex_buffer: glium::VertexBuffer::new(&self.display, &vertices)?,
         });
@@ -660,8 +697,7 @@ impl GliumGraphics {
         let canvas = self.canvas.as_ref().unwrap();
         let mut canvas = canvas.frame(&self.display)?;
 
-        self.render_primitives_to_canvas(&mut canvas)?;
-        self.render_dynamic_primitives_to_canvas(&mut canvas)?;
+        self.render_primitives_to_canvas(&mut canvas, &self.primitives)?;
         self.render_overlay_primitives_to_canvas(&mut canvas)?;
         self.render_instanced_primitives_to_canvas(&mut canvas)?;
         self.render_billboards_to_canvas(&mut canvas)?;
@@ -723,9 +759,10 @@ impl Graphics for GliumGraphics {
 
     fn create_instanced_triangles(
         &mut self,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<usize, IndexError> {
-        Ok(self.create_instanced_triangles_unsafe(triangles)?)
+        Ok(self.create_instanced_triangles_unsafe(draw_mode, triangles)?)
     }
 
     fn create_billboards(&mut self) -> Result<usize, IndexError> {
@@ -735,25 +772,28 @@ impl Graphics for GliumGraphics {
     fn draw_triangles(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError> {
-        Ok(self.add_triangles_unsafe(index, triangles)?)
+        Ok(self.add_triangles_unsafe(index, draw_mode, triangles)?)
     }
 
     fn update_dynamic_triangles(
         &mut self,
         index: &usize,
-        triangles: Option<&[Triangle<Rgb<f32>>]>,
+        draw_mode: DrawMode,
+        triangles: &[Triangle<Rgb<f32>>],
     ) -> Result<(), DrawError> {
-        Ok(self.update_dynamic_triangles_unsafe(index, triangles)?)
+        Ok(self.update_dynamic_triangles_unsafe(index, draw_mode, triangles)?)
     }
 
     fn draw_overlay_triangles(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         overlay_triangles: &OverlayTriangles,
     ) -> Result<(), DrawError> {
-        Ok(self.add_overlay_triangles_unsafe(index, overlay_triangles)?)
+        Ok(self.add_overlay_triangles_unsafe(index, draw_mode, overlay_triangles)?)
     }
 
     fn update_instanced_triangles(
@@ -767,9 +807,10 @@ impl Graphics for GliumGraphics {
     fn draw_billboard(
         &mut self,
         index: &usize,
+        draw_mode: DrawMode,
         billboard: &elements::Billboard,
     ) -> Result<(), DrawError> {
-        Ok(self.add_billboard_unsafe(index, billboard)?)
+        Ok(self.add_billboard_unsafe(index, draw_mode, billboard)?)
     }
 
     fn draw_gui(&mut self, run_ui: &mut dyn FnMut(&egui::Context)) {
@@ -800,7 +841,6 @@ impl Graphics for GliumGraphics {
     fn clear(&mut self) {
         self.textures.clear();
         self.primitives.clear();
-        self.dynamic_primitives.clear();
         self.overlay_primitives.clear();
         self.billboards.clear();
         self.instanced_primitives.clear();
@@ -808,15 +848,12 @@ impl Graphics for GliumGraphics {
 }
 
 struct Primitive {
-    vertex_buffer: glium::VertexBuffer<ColoredVertex>,
-}
-
-struct DynamicPrimitive {
-    visible: bool,
+    draw_mode: DrawMode,
     vertex_buffer: glium::VertexBuffer<ColoredVertex>,
 }
 
 struct OverlayPrimitive {
+    draw_mode: DrawMode,
     base_texture: usize,
     overlay_texture: usize,
     vertex_buffer: glium::VertexBuffer<TexturedVertex>,
@@ -828,6 +865,7 @@ struct InstancedPrimitives {
 }
 
 struct Billboard {
+    draw_mode: DrawMode,
     texture: usize,
     vertex_buffer: glium::VertexBuffer<BillboardVertex>,
 }
