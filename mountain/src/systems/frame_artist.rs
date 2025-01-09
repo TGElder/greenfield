@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::draw::frame;
 use crate::model::frame::{Frame, Model};
@@ -21,12 +21,14 @@ pub fn run(
                     graphics.create_dynamic_triangles(&triangles.len()).unwrap()
                 });
                 graphics
-                    .update_dynamic_triangles(index, Some(&triangles))
+                    .update_dynamic_triangles(index, DrawMode::Hologram, &triangles)
                     .unwrap()
             }
             None => {
                 if let Some(index) = drawings.get(id) {
-                    graphics.update_dynamic_triangles(index, None).unwrap()
+                    graphics
+                        .update_dynamic_triangles(index, DrawMode::Invisible, &[])
+                        .unwrap()
                 }
             }
         }

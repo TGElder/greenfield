@@ -1,7 +1,7 @@
 use commons::geometry::{xyz, XY};
 use commons::grid::{Grid, CORNERS_INVERSE};
 use engine::graphics::utils::{transformation_matrix, Transformation};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 use nalgebra::Matrix4;
 
 use crate::draw::model::tree;
@@ -17,7 +17,9 @@ pub struct Drawing {
 impl Drawing {
     pub fn init(graphics: &mut dyn Graphics) -> Drawing {
         let triangles = tree::model();
-        let index = graphics.create_instanced_triangles(&triangles).unwrap();
+        let index = graphics
+            .create_instanced_triangles(DrawMode::Hologram, &triangles)
+            .unwrap();
         Drawing { index }
     }
 

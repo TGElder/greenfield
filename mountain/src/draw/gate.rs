@@ -7,7 +7,7 @@ use engine::graphics::elements::Quad;
 use engine::graphics::models::cube;
 use engine::graphics::transform::{Recolor, Transform};
 use engine::graphics::utils::{transformation_matrix, triangles_from_quads, Transformation};
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 use crate::model::entrance::Entrance;
 use crate::model::gate::Gate;
@@ -77,7 +77,9 @@ pub fn draw(
 
     let quads = from_pole.chain(to_pole).chain(banner).collect::<Vec<_>>();
     let triangles = triangles_from_quads(&quads);
-    graphics.draw_triangles(index, &triangles).unwrap();
+    graphics
+        .draw_triangles(index, DrawMode::Hologram, &triangles)
+        .unwrap();
 }
 
 fn entrance_side(

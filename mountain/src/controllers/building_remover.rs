@@ -114,14 +114,18 @@ pub fn remove_building(
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
     if let Some(drawing_id) = components.drawings.get(id) {
-        let _ = graphics.draw_triangles(drawing_id, &[]);
+        let _ = graphics.draw_triangles(drawing_id, engine::graphics::DrawMode::Invisible, &[]);
     }
     components.drawings.remove(id);
 }
 
 fn remove_dynamic_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
     if let Some(drawing_id) = components.drawings.get(id) {
-        let _ = graphics.update_dynamic_triangles(drawing_id, None);
+        let _ = graphics.update_dynamic_triangles(
+            drawing_id,
+            engine::graphics::DrawMode::Invisible,
+            &[],
+        );
     }
     components.drawings.remove(id);
 }

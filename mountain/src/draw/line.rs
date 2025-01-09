@@ -3,7 +3,7 @@ use commons::geometry::{xyz, XYZ};
 
 use engine::graphics::elements::Quad;
 use engine::graphics::utils::triangles_from_quads;
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
 const GREY: Rgb<f32> = Rgb::new(0.125, 0.125, 0.125);
 
@@ -37,5 +37,7 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 
         .collect::<Vec<_>>();
 
     let triangles = triangles_from_quads(&quads);
-    graphics.draw_triangles(index, &triangles).unwrap();
+    graphics
+        .draw_triangles(index, DrawMode::Hologram, &triangles)
+        .unwrap();
 }
