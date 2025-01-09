@@ -72,9 +72,11 @@ fn render_cube() {
     .unwrap();
 
     // when
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -94,7 +96,7 @@ fn render_cube() {
     }));
 
     graphics
-        .draw_triangles(&index, &rear_facing_triangles)
+        .draw_triangles(&index, DrawMode::Solid, &rear_facing_triangles)
         .unwrap();
     graphics.render().unwrap();
 
@@ -151,7 +153,7 @@ fn render_cube_dynamic() {
     let index_1 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     let index_2 = graphics.create_dynamic_triangles(&triangles.len()).unwrap();
     graphics
-        .update_dynamic_triangles(&index_1, Some(&triangles))
+        .update_dynamic_triangles(&index_1, DrawMode::Solid, &triangles)
         .unwrap();
     graphics.render().unwrap();
 
@@ -175,10 +177,10 @@ fn render_cube_dynamic() {
     }));
 
     graphics
-        .update_dynamic_triangles(&index_1, Some(&triangles_left))
+        .update_dynamic_triangles(&index_1, DrawMode::Solid, &triangles_left)
         .unwrap();
     graphics
-        .update_dynamic_triangles(&index_2, Some(&triangles_right))
+        .update_dynamic_triangles(&index_2, DrawMode::Solid, &triangles_right)
         .unwrap();
     graphics.render().unwrap();
 
@@ -193,7 +195,9 @@ fn render_cube_dynamic() {
     assert_eq!(actual, expected);
 
     // when
-    graphics.update_dynamic_triangles(&index_1, None).unwrap();
+    graphics
+        .update_dynamic_triangles(&index_1, DrawMode::Invisible, &[])
+        .unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -242,7 +246,9 @@ fn instanced_cubes() {
 
     // when
     let triangles = cube_triangles();
-    let index = graphics.create_instanced_triangles(&triangles).unwrap();
+    let index = graphics
+        .create_instanced_triangles(DrawMode::Solid, &triangles)
+        .unwrap();
 
     let left_transformation = transformation_matrix(Transformation {
         translation: Some(xyz(-0.5, 0.0, 0.0)),
@@ -365,8 +371,10 @@ fn render_billboard() {
         texture,
     };
     let index = graphics.create_billboards().unwrap();
-    graphics.draw_billboard(&index, &billboard).unwrap();
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    graphics
+        .draw_billboard(&index, DrawMode::Solid, &billboard)
+        .unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = triangles_from_quads(&[Quad {
         corners: [
             xyz(-0.5, -0.5, 0.0),
@@ -376,7 +384,9 @@ fn render_billboard() {
         ],
         color: Rgb::new(0.0, 0.0, 1.0),
     }]);
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let temp_path = temp_dir().join("test.png");
@@ -484,7 +494,7 @@ fn render_overlay_quads() {
     };
     let index = graphics.create_overlay_triangles().unwrap();
     graphics
-        .draw_overlay_triangles(&index, &overlay_triangles)
+        .draw_overlay_triangles(&index, DrawMode::Solid, &overlay_triangles)
         .unwrap();
     graphics.render().unwrap();
 
@@ -572,9 +582,11 @@ fn look_at() {
     .unwrap();
 
     // when
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.look_at(&xyz(-0.5, -0.5, -0.5), &xy(192, 64));
     graphics.render().unwrap();
 
@@ -636,9 +648,11 @@ fn drag_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let mut drag_handler = drag::Handler::default();
@@ -726,9 +740,11 @@ fn yaw_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let mut yaw_handler = yaw::Handler::new(yaw::Parameters {
@@ -933,9 +949,11 @@ fn zoom_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
     graphics.render().unwrap();
 
     let mut zoom_handler = zoom::Handler::new(zoom::Parameters {
@@ -1048,9 +1066,11 @@ fn resize_handler() {
     )
     .unwrap();
 
-    let index = graphics.create_triangles(DrawMode::Solid).unwrap();
+    let index = graphics.create_triangles().unwrap();
     let triangles = cube_triangles();
-    graphics.draw_triangles(&index, &triangles).unwrap();
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
 
     // when
     handlers::resize::handle(

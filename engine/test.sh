@@ -1,5 +1,5 @@
 cargo test glium_backend::graphics::tests::render_cube -- --exact &&
-cargo test glium_backend::graphics::tests::render_cube_dynamic -- --exact  &&
+cargo test glium_backend::graphics::tests::render_cube_dynamic -- --exact &&
 cargo test glium_backend::graphics::tests::instanced_cubes -- --exact &&
 cargo test glium_backend::graphics::tests::render_billboard -- --exact &&
 cargo test glium_backend::graphics::tests::render_overlay_quads -- --exact &&
