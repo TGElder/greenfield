@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::grid::Grid;
-use engine::graphics::{DrawMode, Graphics};
+use engine::graphics::Graphics;
 
 use crate::draw::door::draw;
 use crate::model::building::Building;
@@ -20,7 +20,7 @@ pub fn run(
             continue;
         };
         if let Entry::Vacant(cell) = drawings.entry(*door_id) {
-            if let Ok(index) = graphics.create_triangles(DrawMode::Solid) {
+            if let Ok(index) = graphics.create_triangles() {
                 draw(graphics, &index, door, building, terrain);
                 cell.insert(index);
             }

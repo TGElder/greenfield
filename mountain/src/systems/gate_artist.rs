@@ -2,7 +2,7 @@ use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 use commons::grid::Grid;
-use engine::graphics::{DrawMode, Graphics};
+use engine::graphics::Graphics;
 
 use crate::draw::gate::draw;
 use crate::model::entrance::Entrance;
@@ -18,7 +18,7 @@ pub fn run(
 ) {
     for (gate_id, gate) in gates {
         if let Entry::Vacant(cell) = drawings.entry(*gate_id) {
-            if let Ok(index) = graphics.create_triangles(DrawMode::Solid) {
+            if let Ok(index) = graphics.create_triangles() {
                 let Some(entrance) = entrances.get(gate_id) else {
                     continue;
                 };
