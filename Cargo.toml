@@ -4,6 +4,7 @@ resolver = "2"
 members = [
     "commons",
     "engine",
+    "market",
     "mountain",
     "network",
     "terrain_gen"
