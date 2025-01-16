@@ -6,7 +6,8 @@ members = [
     "engine",
     "mountain",
     "network",
-    "terrain_gen"
+    "terrain_gen",
+    "world"
 ]
 
 [workspace.dependencies]
