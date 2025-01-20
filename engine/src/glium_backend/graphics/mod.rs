@@ -60,6 +60,7 @@ const SCREEN_QUAD: [ScreenVertex; 6] = [
 pub struct GliumGraphics {
     projection: Box<dyn Projection>,
     light_direction: [f32; 3],
+    ambient_light: f32,
     canvas: Option<Canvas>,
     screen_vertices: glium::VertexBuffer<ScreenVertex>,
     textures: Vec<glium::Texture2d>,
@@ -85,6 +86,7 @@ pub struct Parameters {
     pub height: u32,
     pub projection: Box<dyn Projection>,
     pub light_direction: XYZ<f32>,
+    pub ambient_light: f32,
 }
 
 impl GliumGraphics {
@@ -130,6 +132,7 @@ impl GliumGraphics {
         let mut out = GliumGraphics {
             projection: parameters.projection,
             light_direction: parameters.light_direction.into(),
+            ambient_light: parameters.ambient_light,
             canvas: None,
             screen_vertices: glium::VertexBuffer::new(&display, &SCREEN_QUAD)?,
             textures: vec![],
@@ -184,7 +187,8 @@ impl GliumGraphics {
     {
         let uniforms = glium::uniform! {
             transform: self.projection.projection(),
-            light_direction: self.light_direction
+            light_direction: self.light_direction,
+            ambient_light: self.ambient_light
         };
 
         for (draw_mode, draw_parameters) in self.draw_modes() {
@@ -245,6 +249,7 @@ impl GliumGraphics {
                     uniforms = Some(glium::uniform! {
                         transform: self.projection.projection(),
                         light_direction: self.light_direction,
+                        ambient_light: self.ambient_light,
                         base: base,
                         overlay: overlay,
                     });
@@ -320,6 +325,7 @@ impl GliumGraphics {
         let uniforms = glium::uniform! {
             transform: self.projection.projection(),
             light_direction: self.light_direction,
+            ambient_light: self.ambient_light,
         };
 
         for (draw_mode, draw_parameters) in self.draw_modes() {

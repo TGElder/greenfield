@@ -66,6 +66,7 @@ fn render_cube() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -138,6 +139,7 @@ fn render_cube_dynamic() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -239,6 +241,7 @@ fn instanced_cubes() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -352,7 +355,8 @@ fn render_billboard() {
                     },
                 },
             })),
-            light_direction: xyz(1.0, 0.0, 0.0),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -431,6 +435,7 @@ fn render_overlay_quads() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -577,6 +582,7 @@ fn look_at() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -644,6 +650,7 @@ fn drag_handler() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -736,6 +743,7 @@ fn yaw_handler() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -945,6 +953,7 @@ fn zoom_handler() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )
@@ -1062,6 +1071,7 @@ fn resize_handler() {
                 },
             })),
             light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
         },
         &event_loop,
     )

@@ -63,16 +63,17 @@ impl Canvas {
                 height: self.texture.height(),
             });
 
-        let data_gamma_corrected = raw_image.data.iter().map(|x| x.powf(1.0 / 2.2)).collect();
-
-        let image =
-            image::ImageBuffer::from_vec(raw_image.width, raw_image.height, data_gamma_corrected)
-                .ok_or_else(|| {
-                format!(
-                    "Canvas texture data does not fit into buffer of size {}x{}",
-                    raw_image.width, raw_image.height
-                )
-            })?;
+        let image = image::ImageBuffer::from_vec(
+            raw_image.width,
+            raw_image.height,
+            raw_image.data.to_vec(),
+        )
+        .ok_or_else(|| {
+            format!(
+                "Canvas texture data does not fit into buffer of size {}x{}",
+                raw_image.width, raw_image.height
+            )
+        })?;
         let image =
             image::DynamicImage::ImageRgb8(image::DynamicImage::ImageRgb32F(image).into_rgb8());
         let image = image.flipv();
