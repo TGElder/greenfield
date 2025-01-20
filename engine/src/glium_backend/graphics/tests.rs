@@ -352,7 +352,7 @@ fn render_billboard() {
                     },
                 },
             })),
-            light_direction: xyz(-1.0, 0.0, 0.0),
+            light_direction: xyz(1.0, 0.0, 0.0),
         },
         &event_loop,
     )
@@ -370,6 +370,7 @@ fn render_billboard() {
         },
         texture,
     };
+
     let index = graphics.create_billboards().unwrap();
     graphics
         .draw_billboard(&index, DrawMode::Solid, &billboard)
