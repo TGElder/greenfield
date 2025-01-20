@@ -8,6 +8,7 @@ in vec2 texture_coordinates;
 
 uniform mat4 transform;
 uniform vec3 light_direction;
+uniform float ambient_light;
 
 out vec2 fragment_texture_coordinates;
 out float depth;
@@ -20,6 +21,6 @@ void main() {
 
     fragment_texture_coordinates = texture_coordinates;
     depth = position.z; 
-    shade = light_angle / PI;
+    shade = ambient_light + (1.0 - ambient_light) * (light_angle / PI);
     gl_Position = position;
 }
