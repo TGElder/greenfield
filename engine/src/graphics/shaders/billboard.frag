@@ -9,5 +9,10 @@ out vec4 color;
 
 void main() {
     color = texture(tex, fragment_texture_coordinates);
+
+    if (color.a < 0.5) {
+        discard;
+    }
+    
     color.a = depth;
 }

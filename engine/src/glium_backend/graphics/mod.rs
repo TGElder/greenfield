@@ -270,6 +270,12 @@ impl GliumGraphics {
         let mut uniforms = None;
         let mut current_texture = None;
 
+        let sampler_behavior = glium::uniforms::SamplerBehavior {
+            minify_filter: glium::uniforms::MinifySamplerFilter::Nearest,
+            magnify_filter: glium::uniforms::MagnifySamplerFilter::Nearest,
+            ..Default::default()
+        };
+
         for (draw_mode, draw_parameters) in self.draw_modes() {
             for billboard in self
                 .billboards
@@ -279,10 +285,15 @@ impl GliumGraphics {
             {
                 if current_texture != Some(billboard.texture) {
                     current_texture = Some(billboard.texture);
+                    let texture = self.textures.get(billboard.texture).ok_or(format!(
+                        "Billboard refers to missing texture {}",
+                        billboard.texture
+                    ))?;
+                    let sampler = glium::uniforms::Sampler(texture, sampler_behavior);
                     uniforms = Some(glium::uniform! {
                         transform: self.projection.projection(),
                         scale: self.projection.scale(),
-                        tex: self.textures.get(billboard.texture).ok_or(format!("Billboard refers to missing texture {}", billboard.texture))?
+                        tex: sampler
                     });
                 }
                 if let Some(uniforms) = uniforms {
