@@ -11,9 +11,14 @@ use engine::handlers::{drag, yaw, zoom};
 
 use crate::draw::sea;
 use crate::draw::terrain::Drawing;
+use crate::init::resources::{self, generate_resources};
+use crate::model::resource::{Resource, RESOURCES};
+use crate::utils::tile_heights;
 
 mod draw;
 mod init;
+mod model;
+mod utils;
 
 struct Game {
     components: Components,
@@ -25,12 +30,15 @@ struct Game {
 struct Components {
     sea_level: f32,
     terrain: Grid<f32>,
+    tile_heights: Grid<f32>,
+    resources: Grid<Option<Resource>>,
 }
 
 struct Handlers {
     drag: drag::Handler,
     yaw: yaw::Handler,
     zoom: zoom::Handler,
+    resource_artist: draw::resource::Artist,
 }
 
 struct Bindings {
@@ -42,14 +50,22 @@ struct Bindings {
 fn main() {
     let max_z = 4096.0;
 
+    let sea_level = 16.0;
+    println!("Generating terrain");
+    let terrain =
+        init::terrain::generate_heightmap(init::terrain::Parameters { power: 10, seed: 0 });
+    println!("Computing tile heights");
+    let tile_heights = tile_heights(&terrain);
+    println!("Generating resources");
+    let resources = generate_resources(10, &tile_heights, sea_level);
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
-                terrain: init::terrain::generate_heightmap(init::terrain::Parameters {
-                    power: 11,
-                    seed: 0,
-                }),
-                sea_level: 16.0,
+                sea_level,
+                terrain,
+                tile_heights,
+                resources,
             },
             drawing: None,
             handlers: Handlers {
@@ -64,6 +80,7 @@ fn main() {
                     min_level: -1,
                     max_level: 8,
                 }),
+                resource_artist: draw::resource::Artist::default(),
             },
             bindings: Bindings {
                 drag: drag::Bindings {
@@ -140,6 +157,7 @@ fn main() {
                 },
             })),
             light_direction: xyz(0.707_106_77, 0.424_264_07, -0.565_685_45),
+            ambient_light: 0.5,
         },
     )
     .unwrap();
@@ -162,6 +180,13 @@ impl engine::events::EventHandler for Game {
             sea::draw(
                 &self.components.terrain,
                 self.components.sea_level,
+                graphics,
+            );
+
+            self.handlers.resource_artist.init(graphics);
+            self.handlers.resource_artist.draw(
+                &self.components.resources,
+                &self.components.tile_heights,
                 graphics,
             );
         }
