@@ -8,7 +8,10 @@ use engine::graphics::elements::{OverlayTriangles, TexturedPosition};
 use engine::graphics::utils::{quad_normal, textured_triangles_from_textured_quads};
 use engine::graphics::{DrawMode, Graphics};
 
-const WHITE: Rgba<u8> = Rgba::new(63, 155, 11, 255);
+use crate::utils::is_cliff;
+
+const GRASS: Rgba<u8> = Rgba::new(63, 155, 11, 255);
+const CLIFF: Rgba<u8> = Rgba::new(128, 128, 128, 255);
 
 pub struct Drawing {
     width: u32,
@@ -20,7 +23,12 @@ pub struct Drawing {
 }
 
 impl Drawing {
-    pub fn init(graphics: &mut dyn Graphics, terrain: &Grid<f32>) -> Drawing {
+    pub fn init(
+        graphics: &mut dyn Graphics,
+        terrain: &Grid<f32>,
+        tile_heights: &Grid<f32>,
+        cliff_slope: f32,
+    ) -> Drawing {
         let slab_size = 256;
         let slabs = Grid::from_fn(
             (terrain.width() / slab_size) + 1,
@@ -30,7 +38,13 @@ impl Drawing {
         let width = terrain.width() - 1;
         let height = terrain.height() - 1;
 
-        let colors = Grid::from_element(width, height, WHITE);
+        let colors = Grid::from_fn(width, height, |xy| {
+            if is_cliff(xy, tile_heights, cliff_slope) {
+                CLIFF
+            } else {
+                GRASS
+            }
+        });
         let base_texture = graphics.load_texture(&colors).unwrap();
         let overlay = Grid::from_element(width, height, Rgba::new(0, 0, 0, 0));
         let overlay_texture = graphics.load_texture(&overlay).unwrap();
