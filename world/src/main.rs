@@ -11,8 +11,8 @@ use engine::handlers::{drag, yaw, zoom};
 
 use crate::draw::sea;
 use crate::draw::terrain::Drawing;
-use crate::init::resources::{self, generate_resources};
-use crate::model::resource::{Resource, RESOURCES};
+use crate::init::resources::generate_resources;
+use crate::model::resource::Resource;
 use crate::utils::tile_heights;
 
 mod draw;
@@ -29,6 +29,7 @@ struct Game {
 
 struct Components {
     sea_level: f32,
+    cliff_slope: f32,
     terrain: Grid<f32>,
     tile_heights: Grid<f32>,
     resources: Grid<Option<Resource>>,
@@ -51,18 +52,20 @@ fn main() {
     let max_z = 4096.0;
 
     let sea_level = 16.0;
+    let cliff_slope = 1.0;
     println!("Generating terrain");
     let terrain =
         init::terrain::generate_heightmap(init::terrain::Parameters { power: 10, seed: 0 });
     println!("Computing tile heights");
     let tile_heights = tile_heights(&terrain);
     println!("Generating resources");
-    let resources = generate_resources(10, &tile_heights, sea_level);
+    let resources = generate_resources(10, &tile_heights, sea_level, cliff_slope);
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
                 sea_level,
+                cliff_slope,
                 terrain,
                 tile_heights,
                 resources,
@@ -173,7 +176,12 @@ impl engine::events::EventHandler for Game {
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
         if let engine::events::Event::Init = event {
-            let drawing = Drawing::init(graphics, &self.components.terrain);
+            let drawing = Drawing::init(
+                graphics,
+                &self.components.terrain,
+                &self.components.tile_heights,
+                self.components.cliff_slope,
+            );
             drawing.draw_geometry(graphics, &self.components.terrain);
             self.drawing = Some(drawing);
 
