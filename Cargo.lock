@@ -3019,6 +3019,7 @@ version = "0.1.0"
 dependencies = [
  "commons",
  "engine",
+ "rand",
  "terrain_gen",
 ]
 

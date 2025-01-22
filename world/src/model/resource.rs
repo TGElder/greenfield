@@ -1,0 +1,38 @@
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+pub enum Resource {
+    Apple,
+    Banana,
+    Blueberry,
+    Cherry,
+    Coconut,
+    Grapes,
+    Kiwi,
+    Lemon,
+    Lime,
+    Orange,
+    Peach,
+    Pear,
+    Pineapple,
+    Strawberry,
+    Tomato,
+    Watermelon,
+}
+
+pub const RESOURCES: [Resource; 16] = [
+    Resource::Apple,
+    Resource::Banana,
+    Resource::Blueberry,
+    Resource::Cherry,
+    Resource::Coconut,
+    Resource::Grapes,
+    Resource::Kiwi,
+    Resource::Lemon,
+    Resource::Lime,
+    Resource::Orange,
+    Resource::Peach,
+    Resource::Pear,
+    Resource::Pineapple,
+    Resource::Strawberry,
+    Resource::Tomato,
+    Resource::Watermelon,
+];
