@@ -9,9 +9,10 @@ use engine::glium_backend;
 use engine::graphics::projections::isometric;
 use engine::handlers::{drag, yaw, zoom};
 
-use crate::draw::sea;
 use crate::draw::terrain::Drawing;
+use crate::draw::{sea, town};
 use crate::init::resources::generate_resources;
+use crate::init::towns::generate_towns;
 use crate::model::resource::Resource;
 use crate::utils::tile_heights;
 
@@ -32,6 +33,7 @@ struct Components {
     cliff_slope: f32,
     terrain: Grid<f32>,
     tile_heights: Grid<f32>,
+    towns: Grid<bool>,
     resources: Grid<Option<Resource>>,
 }
 
@@ -60,6 +62,8 @@ fn main() {
     let tile_heights = tile_heights(&terrain);
     println!("Generating resources");
     let resources = generate_resources(10, &tile_heights, sea_level, cliff_slope);
+    println!("Placing towns");
+    let towns = generate_towns(&tile_heights, sea_level, cliff_slope, 1024);
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -69,6 +73,7 @@ fn main() {
                 terrain,
                 tile_heights,
                 resources,
+                towns,
             },
             drawing: None,
             handlers: Handlers {
@@ -188,6 +193,12 @@ impl engine::events::EventHandler for Game {
             sea::draw(
                 &self.components.terrain,
                 self.components.sea_level,
+                graphics,
+            );
+
+            town::draw(
+                &self.components.towns,
+                &self.components.tile_heights,
                 graphics,
             );
 
