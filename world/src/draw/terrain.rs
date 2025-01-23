@@ -39,7 +39,7 @@ impl Drawing {
         let height = terrain.height() - 1;
 
         let colors = Grid::from_fn(width, height, |xy| {
-            if is_cliff(xy, tile_heights, cliff_slope) {
+            if is_cliff(&xy, tile_heights, cliff_slope) {
                 CLIFF
             } else {
                 GRASS

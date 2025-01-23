@@ -28,7 +28,7 @@ pub fn generate_resources(
         if z <= sea_level {
             return None;
         }
-        if is_cliff(xy, tile_heights, cliff_rise) {
+        if is_cliff(&xy, tile_heights, cliff_rise) {
             return None;
         }
         for (i, resource) in resources.iter().enumerate() {
