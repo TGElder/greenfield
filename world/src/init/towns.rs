@@ -40,7 +40,7 @@ where
         if tile_heights[xy] <= sea_level {
             continue;
         }
-        if is_cliff(xy, tile_heights, cliff_rise) {
+        if is_cliff(&xy, tile_heights, cliff_rise) {
             continue;
         }
         if towns[xy] {

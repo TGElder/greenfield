@@ -11,7 +11,7 @@ pub fn tile_heights(terrain: &Grid<f32>) -> Grid<f32> {
     })
 }
 
-pub fn is_cliff(position: XY<u32>, tile_heights: &Grid<f32>, cliff_rise: f32) -> bool {
+pub fn is_cliff(position: &XY<u32>, tile_heights: &Grid<f32>, cliff_rise: f32) -> bool {
     tile_heights
         .neighbours_4(position)
         .any(|neighbour| (tile_heights[position] - tile_heights[neighbour]).abs() >= cliff_rise)
