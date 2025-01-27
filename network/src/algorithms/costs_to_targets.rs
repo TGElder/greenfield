@@ -32,8 +32,8 @@ where
 
 #[derive(Debug, Eq, PartialEq)]
 pub struct Cost<T> {
-    closest_target: T,
-    cost_to_target: u64,
+    pub closest_target: T,
+    pub cost_to_target: u64,
 }
 
 pub trait CostsToTargets<T> {
