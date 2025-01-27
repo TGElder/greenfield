@@ -1,5 +1,5 @@
 use commons::map::ContainsKeyValue;
-use network::algorithms::costs_to_targets::CostsToTargets;
+use network::algorithms::costs_to_targets::{self, CostsToTargets};
 use network::utils::MaterializedInNetwork;
 use std::collections::{HashMap, HashSet};
 
@@ -65,7 +65,15 @@ pub fn compute_global_costs(
         let network = MaterializedInNetwork::from_out_network(&network, &targets);
 
         for target in targets.iter() {
-            let costs = network.costs_to_targets(&HashSet::from([*target]), None, None);
+            let costs = network
+                .costs_to_targets(&HashSet::from([*target]), None, None)
+                .drain()
+                .map(
+                    |(position, costs_to_targets::Cost { cost_to_target, .. })| {
+                        (position, cost_to_target)
+                    },
+                )
+                .collect::<HashMap<_, _>>();
             global_costs.set_costs(*target, ability, costs)
         }
     }

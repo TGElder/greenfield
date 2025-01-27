@@ -11,7 +11,7 @@ use crate::network::skiing::{SkiingNetwork, StationaryNetwork};
 use commons::geometry::XY;
 use commons::grid::Grid;
 use commons::unsafe_ordering::unsafe_ordering;
-use network::algorithms::costs_to_targets::CostsToTargets;
+use network::algorithms::costs_to_targets::{self, CostsToTargets};
 
 pub fn compute_piste(
     piste_id: &usize,
@@ -84,7 +84,15 @@ fn compute_costs(
 
             let costs = {
                 let network = &network;
-                network.costs_to_targets(stationary_states, None, None)
+                network
+                    .costs_to_targets(stationary_states, None, None)
+                    .drain()
+                    .map(
+                        |(position, costs_to_targets::Cost { cost_to_target, .. })| {
+                            (position, cost_to_target)
+                        },
+                    )
+                    .collect::<HashMap<_, _>>()
             };
             let coverage =
                 costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;
