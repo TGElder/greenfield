@@ -84,7 +84,7 @@ fn compute_costs(
 
             let costs = {
                 let network = &network;
-                network.costs_to_targets(stationary_states, None)
+                network.costs_to_targets(stationary_states, None, None)
             };
             let coverage =
                 costs.len() as f32 / (piste_positions(piste).len() * DIRECTIONS.len()) as f32;

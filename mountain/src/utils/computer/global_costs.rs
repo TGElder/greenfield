@@ -65,7 +65,7 @@ pub fn compute_global_costs(
         let network = MaterializedInNetwork::from_out_network(&network, &targets);
 
         for target in targets.iter() {
-            let costs = network.costs_to_targets(&HashSet::from([*target]), None);
+            let costs = network.costs_to_targets(&HashSet::from([*target]), None, None);
             global_costs.set_costs(*target, ability, costs)
         }
     }
