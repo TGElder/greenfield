@@ -7,7 +7,8 @@ use crate::model::InNetwork;
 #[derive(Eq, PartialEq)]
 struct Node<T> {
     location: T,
-    cost_from_targets: u64,
+    closest_target: T,
+    cost_to_target: u64,
     steps_from_start: u64,
 }
 
@@ -16,9 +17,7 @@ where
     T: Eq,
 {
     fn cmp(&self, other: &Node<T>) -> Ordering {
-        self.cost_from_targets
-            .cmp(&other.cost_from_targets)
-            .reverse()
+        self.cost_to_target.cmp(&other.cost_to_target).reverse()
     }
 }
 
@@ -31,13 +30,19 @@ where
     }
 }
 
+#[derive(Debug, Eq, PartialEq)]
+pub struct Cost<T> {
+    closest_target: T,
+    cost_to_target: u64,
+}
+
 pub trait CostsToTargets<T> {
     fn costs_to_targets(
         &self,
         targets: &HashSet<T>,
         max_steps: Option<u64>,
         max_cost: Option<u64>,
-    ) -> HashMap<T, u64>;
+    ) -> HashMap<T, Cost<T>>;
 }
 
 impl<T, N> CostsToTargets<T> for N
@@ -50,22 +55,24 @@ where
         targets: &HashSet<T>,
         max_steps: Option<u64>,
         max_cost: Option<u64>,
-    ) -> HashMap<T, u64> {
+    ) -> HashMap<T, Cost<T>> {
         let mut heap = BinaryHeap::new();
         let mut closed = HashSet::new();
         let mut out = HashMap::new();
 
-        for location in targets.iter() {
+        for target in targets.iter() {
             heap.push(Node {
-                location: *location,
-                cost_from_targets: 0,
+                location: *target,
+                closest_target: *target,
+                cost_to_target: 0,
                 steps_from_start: 0,
             });
         }
 
         while let Some(Node {
             location,
-            cost_from_targets,
+            closest_target,
+            cost_to_target,
             steps_from_start,
         }) = heap.pop()
         {
@@ -73,7 +80,13 @@ where
                 continue;
             }
             closed.insert(location);
-            out.insert(location, cost_from_targets);
+            out.insert(
+                location,
+                Cost {
+                    closest_target,
+                    cost_to_target,
+                },
+            );
 
             for edge in self.edges_in(&location) {
                 let from = edge.from;
@@ -89,14 +102,15 @@ where
                 }
 
                 if let Some(max_cost) = max_cost {
-                    if cost_from_targets >= max_cost {
+                    if cost_to_target >= max_cost {
                         continue;
                     }
                 }
 
                 heap.push(Node {
                     location: from,
-                    cost_from_targets: cost_from_targets + edge.cost as u64,
+                    closest_target,
+                    cost_to_target: cost_to_target + edge.cost as u64,
                     steps_from_start: steps_from_start + 1,
                 });
             }
@@ -111,7 +125,7 @@ mod tests {
     use maplit::{hashmap, hashset};
     use std::iter;
 
-    use crate::algorithms::costs_to_targets::CostsToTargets;
+    use crate::algorithms::costs_to_targets::{Cost, CostsToTargets};
     use crate::model::{Edge, InNetwork};
 
     #[test]
@@ -187,12 +201,30 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
-                1 => 1,
-                2 => 2,
-                3 => 2,
-                4 => 3,
-                5 => 4
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
+                1 => Cost{
+                    cost_to_target: 1,
+                    closest_target: 0,
+                },
+                2 => Cost{
+                    cost_to_target: 2,
+                    closest_target: 0,
+                },
+                3 => Cost{
+                    cost_to_target: 2,
+                    closest_target: 0,
+                },
+                4 => Cost{
+                    cost_to_target: 3,
+                    closest_target: 0,
+                },
+                5 => Cost{
+                    cost_to_target: 4,
+                    closest_target: 0,
+                }
             }
         );
     }
@@ -201,7 +233,7 @@ mod tests {
     fn multiple_targets() {
         // given
         //
-        // [0] <-1-- [1] --2-> [2]
+        // [0] <-1-- [1] <-3-> [2] --2-> [3]
 
         struct TestNetwork {}
 
@@ -219,10 +251,26 @@ mod tests {
                         }]
                         .into_iter(),
                     ),
+                    1 => Box::new(
+                        [Edge {
+                            from: 2,
+                            to: 1,
+                            cost: 3,
+                        }]
+                        .into_iter(),
+                    ),
                     2 => Box::new(
                         [Edge {
                             from: 1,
                             to: 2,
+                            cost: 3,
+                        }]
+                        .into_iter(),
+                    ),
+                    3 => Box::new(
+                        [Edge {
+                            from: 2,
+                            to: 3,
                             cost: 2,
                         }]
                         .into_iter(),
@@ -235,15 +283,28 @@ mod tests {
         let network = TestNetwork {};
 
         // when
-        let result = network.costs_to_targets(&hashset! {0, 2}, None, None);
+        let result = network.costs_to_targets(&hashset! {0, 3}, None, None);
 
         // then
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
-                1 => 1,
-                2 => 0,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
+                1 => Cost{
+                    cost_to_target: 1,
+                    closest_target: 0,
+                },
+                2 => Cost{
+                    cost_to_target: 2,
+                    closest_target: 3,
+                },
+                3 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 3,
+                },
             }
         );
     }
@@ -305,7 +366,10 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
             },
         );
     }
@@ -354,8 +418,14 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
-                1 => 1,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
+                1 => Cost{
+                    cost_to_target: 1,
+                    closest_target: 0,
+                },
             }
         );
     }
@@ -396,7 +466,10 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
             }
         );
     }
@@ -445,8 +518,14 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
-                1 => 2,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
+                1 => Cost{
+                    cost_to_target: 2,
+                    closest_target: 0,
+                },
             }
         );
     }
@@ -487,7 +566,10 @@ mod tests {
         assert_eq!(
             result,
             hashmap! {
-                0 => 0,
+                0 => Cost{
+                    cost_to_target: 0,
+                    closest_target: 0,
+                },
             }
         );
     }
