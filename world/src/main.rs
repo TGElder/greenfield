@@ -1,7 +1,8 @@
+use std::collections::HashMap;
 use std::f32::consts::PI;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
-use commons::geometry::{xyz, Rectangle};
+use commons::geometry::{xyz, Rectangle, XY};
 use commons::grid::Grid;
 use engine::binding::Binding;
 use engine::events::{Button, ButtonState, KeyboardKey, MouseButton};
@@ -14,11 +15,13 @@ use crate::draw::{sea, town};
 use crate::init::resources::generate_resources;
 use crate::init::towns::generate_towns;
 use crate::model::resource::Resource;
+use crate::system::inter_town_distances;
 use crate::utils::tile_heights;
 
 mod draw;
 mod init;
 mod model;
+mod system;
 mod utils;
 
 struct Game {
@@ -35,6 +38,7 @@ struct Components {
     tile_heights: Grid<f32>,
     towns: Grid<bool>,
     resources: Grid<Option<Resource>>,
+    _distances: Grid<HashMap<XY<u32>, u64>>,
 }
 
 struct Handlers {
@@ -64,6 +68,13 @@ fn main() {
     let resources = generate_resources(10, &tile_heights, sea_level, cliff_slope);
     println!("Placing towns");
     let towns = generate_towns(&tile_heights, sea_level, cliff_slope, 1024);
+    println!("Computing inter-town distances");
+    let start = Instant::now();
+    let distances = inter_town_distances::run(&towns, cliff_slope, &tile_heights);
+    println!(
+        "Computed inter town distances in {}ms",
+        start.elapsed().as_millis()
+    );
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -74,6 +85,7 @@ fn main() {
                 tile_heights,
                 resources,
                 towns,
+                _distances: distances,
             },
             drawing: None,
             handlers: Handlers {
