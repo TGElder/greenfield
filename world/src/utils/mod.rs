@@ -1,5 +1,6 @@
 use commons::geometry::XY;
 use commons::grid::{Grid, CORNERS};
+use network::model::{Edge, InNetwork};
 
 pub fn tile_heights(terrain: &Grid<f32>) -> Grid<f32> {
     Grid::from_fn(terrain.width() - 1, terrain.height() - 1, |xy| {
@@ -28,4 +29,25 @@ pub fn cost(
         return None;
     }
     Some(((rise + 1.0) * 1000.0).round() as u32)
+}
+
+pub struct Network<'a> {
+    pub cliff_rise: f32,
+    pub tile_heights: &'a Grid<f32>,
+}
+
+impl InNetwork<XY<u32>> for Network<'_> {
+    fn edges_in<'a>(
+        &'a self,
+        to: &'a XY<u32>,
+    ) -> Box<dyn Iterator<Item = network::model::Edge<XY<u32>>> + 'a> {
+        Box::new(self.tile_heights.neighbours_4(to).filter_map(|from| {
+            let cost = cost(&from, to, self.tile_heights, self.cliff_rise)?;
+            Some(Edge {
+                from,
+                to: *to,
+                cost,
+            })
+        }))
+    }
 }

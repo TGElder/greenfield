@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 
 use commons::geometry::XY;
 use commons::grid::Grid;
-use network::algorithms::costs_to_targets::CostsToTargets;
+use network::algorithms::costs_to_targets::{Cost, CostsToTargets};
 
 use crate::utils::Network;
 
@@ -19,10 +19,16 @@ pub fn run(
 
     let towns = towns.iter().filter(|xy| towns[xy]).collect::<HashSet<_>>();
 
-    for town in &towns {
-        let town_distances = network.costs_to_targets(&HashSet::from([*town]), None, Some(50000));
-        for (tile, cost) in town_distances.iter() {
-            distances[tile].insert(*town, cost.cost_to_target);
-        }
+    let costs = network.costs_to_targets(&towns, None, None);
+
+    for (
+        tile,
+        Cost {
+            closest_target,
+            cost_to_target,
+        },
+    ) in costs
+    {
+        distances[tile].insert(closest_target, cost_to_target);
     }
 }

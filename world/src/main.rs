@@ -15,7 +15,7 @@ use crate::draw::{sea, town};
 use crate::init::resources::generate_resources;
 use crate::init::towns::generate_towns;
 use crate::model::resource::Resource;
-use crate::system::inter_town_distances;
+use crate::system::{inter_town_distances, intra_town_distances};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -62,17 +62,31 @@ fn main() {
     println!("Generating terrain");
     let terrain =
         init::terrain::generate_heightmap(init::terrain::Parameters { power: 10, seed: 0 });
+
     println!("Computing tile heights");
     let tile_heights = tile_heights(&terrain);
+
     println!("Generating resources");
     let resources = generate_resources(10, &tile_heights, sea_level, cliff_slope);
+
     println!("Placing towns");
     let towns = generate_towns(&tile_heights, sea_level, cliff_slope, 1024);
+
+    let mut distances = tile_heights.map(|_, _| HashMap::default());
+
     println!("Computing inter-town distances");
     let start = Instant::now();
-    let distances = inter_town_distances::run(&towns, cliff_slope, &tile_heights);
+    inter_town_distances::run(&towns, cliff_slope, &tile_heights, &mut distances);
     println!(
         "Computed inter town distances in {}ms",
+        start.elapsed().as_millis()
+    );
+
+    println!("Computing intra-town distances");
+    let start = Instant::now();
+    intra_town_distances::run(&towns, cliff_slope, &tile_heights, &mut distances);
+    println!(
+        "Computed intra town distances in {}ms",
         start.elapsed().as_millis()
     );
 
