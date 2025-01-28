@@ -14,8 +14,9 @@ use crate::draw::terrain::Drawing;
 use crate::draw::{sea, town};
 use crate::init::resources::generate_resources;
 use crate::init::towns::generate_towns;
+use crate::model::path::Path;
 use crate::model::resource::Resource;
-use crate::system::{inter_town_distances, intra_town_distances};
+use crate::system::{intra_town_distances, paths_between_towns};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -33,12 +34,13 @@ struct Game {
 
 struct Components {
     sea_level: f32,
-    cliff_slope: f32,
+    cliff_rise: f32,
     terrain: Grid<f32>,
     tile_heights: Grid<f32>,
     towns: Grid<bool>,
     resources: Grid<Option<Resource>>,
     _distances: Grid<HashMap<XY<u32>, u64>>,
+    _paths: HashMap<(XY<u32>, XY<u32>), Path>,
 }
 
 struct Handlers {
@@ -58,7 +60,7 @@ fn main() {
     let max_z = 4096.0;
 
     let sea_level = 16.0;
-    let cliff_slope = 1.0;
+    let cliff_rise = 1.0;
     println!("Generating terrain");
     let terrain =
         init::terrain::generate_heightmap(init::terrain::Parameters { power: 10, seed: 0 });
@@ -67,24 +69,25 @@ fn main() {
     let tile_heights = tile_heights(&terrain);
 
     println!("Generating resources");
-    let resources = generate_resources(10, &tile_heights, sea_level, cliff_slope);
+    let resources = generate_resources(10, &tile_heights, sea_level, cliff_rise);
 
     println!("Placing towns");
-    let towns = generate_towns(&tile_heights, sea_level, cliff_slope, 1024);
+    let towns = generate_towns(&tile_heights, sea_level, cliff_rise, 1024);
 
     let mut distances = tile_heights.map(|_, _| HashMap::default());
+    let mut paths = HashMap::default();
 
-    println!("Computing inter-town distances");
+    println!("Computing paths between towns");
     let start = Instant::now();
-    inter_town_distances::run(&towns, cliff_slope, &tile_heights, &mut distances);
+    paths_between_towns::run(&towns, cliff_rise, &tile_heights, &mut paths);
     println!(
-        "Computed inter town distances in {}ms",
+        "Computed paths between towns in {}ms",
         start.elapsed().as_millis()
     );
 
     println!("Computing intra-town distances");
     let start = Instant::now();
-    intra_town_distances::run(&towns, cliff_slope, &tile_heights, &mut distances);
+    intra_town_distances::run(&towns, cliff_rise, &tile_heights, &mut distances);
     println!(
         "Computed intra town distances in {}ms",
         start.elapsed().as_millis()
@@ -94,12 +97,13 @@ fn main() {
         Game {
             components: Components {
                 sea_level,
-                cliff_slope,
+                cliff_rise,
                 terrain,
                 tile_heights,
                 resources,
                 towns,
                 _distances: distances,
+                _paths: paths,
             },
             drawing: None,
             handlers: Handlers {
@@ -211,7 +215,7 @@ impl engine::events::EventHandler for Game {
                 graphics,
                 &self.components.terrain,
                 &self.components.tile_heights,
-                self.components.cliff_slope,
+                self.components.cliff_rise,
             );
             drawing.draw_geometry(graphics, &self.components.terrain);
             self.drawing = Some(drawing);
