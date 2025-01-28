@@ -108,6 +108,19 @@ where
     }
 }
 
+impl<T> PartialOrd<XY<T>> for XY<T>
+where
+    T: PartialOrd,
+{
+    fn partial_cmp(&self, other: &XY<T>) -> Option<std::cmp::Ordering> {
+        Some(
+            self.x
+                .partial_cmp(&other.x)?
+                .then(self.y.partial_cmp(&other.y)?),
+        )
+    }
+}
+
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct XYZ<T> {
     pub x: T,
