@@ -4,13 +4,17 @@ use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::{Cost, CostsToTargets};
 
+use crate::model::resource::Resource;
+use crate::model::source::Source;
 use crate::utils::Network;
 
 pub fn run(
     towns: &Grid<bool>,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
+    resources: &Grid<Option<Resource>>,
     distances: &mut Grid<HashMap<XY<u32>, u64>>,
+    markets: &mut Grid<Vec<Source>>,
 ) {
     let network = Network {
         cliff_rise,
@@ -30,5 +34,12 @@ pub fn run(
     ) in costs
     {
         distances[tile].insert(closest_target, cost_to_target);
+
+        if let Some(resource) = resources[tile] {
+            markets[closest_target].push(Source {
+                _tile: tile,
+                _resource: resource,
+            });
+        }
     }
 }
