@@ -21,7 +21,7 @@ pub fn run(
     let towns = towns.iter().filter(|xy| towns[xy]).collect::<HashSet<_>>();
 
     for town in &towns {
-        let town_distances = network
+        let costs = network
             .costs_to_targets(&HashSet::from([*town]), None, Some(50000))
             .drain()
             .map(
@@ -31,9 +31,7 @@ pub fn run(
             )
             .collect::<HashMap<_, _>>();
 
-        for (neighbour, path) in
-            paths_to_town(town, cliff_rise, tile_heights, &towns, &town_distances)
-        {
+        for (neighbour, path) in paths_to_town(town, cliff_rise, tile_heights, &towns, &costs) {
             paths.insert((neighbour, *town), path);
         }
     }
@@ -44,9 +42,9 @@ fn paths_to_town(
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
     towns: &HashSet<XY<u32>>,
-    distances: &HashMap<XY<u32>, u64>,
+    costs: &HashMap<XY<u32>, u64>,
 ) -> HashMap<XY<u32>, Path> {
-    let neighbours = distances
+    let neighbours = costs
         .keys()
         .filter(|town| towns.contains(town))
         .copied()
@@ -63,10 +61,10 @@ fn paths_to_town(
 
             focus = tile_heights
                 .neighbours_4(focus)
-                .filter(|candidate| distances.contains_key(candidate))
-                .filter(|candidate| distances[candidate] < distances[&focus])
+                .filter(|candidate| costs.contains_key(candidate))
+                .filter(|candidate| costs[candidate] < costs[&focus])
                 .filter(|candidate| cost(&focus, candidate, tile_heights, cliff_rise).is_some())
-                .min_by_key(|n| distances[n])
+                .min_by_key(|n| costs[n])
                 .unwrap();
         }
 
@@ -74,7 +72,7 @@ fn paths_to_town(
             neighbour,
             Path {
                 _tiles: tiles,
-                _cost: distances[&neighbour],
+                _cost: costs[&neighbour],
             },
         );
     }

@@ -17,7 +17,7 @@ use crate::init::towns::generate_towns;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{intra_town_distances, paths_between_towns};
+use crate::system::{paths_between_towns, sources};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -41,7 +41,6 @@ struct Components {
     towns: Grid<bool>,
     resources: Grid<Option<Resource>>,
     _markets: Grid<Vec<Source>>,
-    _distances: Grid<HashMap<XY<u32>, u64>>,
     _paths: HashMap<(XY<u32>, XY<u32>), Path>,
 }
 
@@ -86,23 +85,19 @@ fn main() {
         start.elapsed().as_millis()
     );
 
-    let mut distances = tile_heights.map(|_, _| HashMap::default());
     let mut markets = tile_heights.map(|_, _| vec![]);
 
-    println!("Computing intra-town distances");
+    println!("Computing sources");
     let start = Instant::now();
-    intra_town_distances::run(
+    sources::run(
         &towns,
         cliff_rise,
         &tile_heights,
         &resources,
-        &mut distances,
         &mut markets,
+        &mut paths,
     );
-    println!(
-        "Computed intra town distances in {}ms",
-        start.elapsed().as_millis()
-    );
+    println!("Computed sources in {}ms", start.elapsed().as_millis());
 
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
@@ -114,7 +109,6 @@ fn main() {
                 resources,
                 towns,
                 _markets: markets,
-                _distances: distances,
                 _paths: paths,
             },
             drawing: None,
