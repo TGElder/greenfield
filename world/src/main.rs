@@ -17,7 +17,7 @@ use crate::init::towns::generate_towns;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{paths_between_towns, sources};
+use crate::system::{paths_between_towns, routes, sources};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -42,6 +42,7 @@ struct Components {
     resources: Grid<Option<Resource>>,
     _markets: Grid<Vec<Source>>,
     _paths: HashMap<(XY<u32>, XY<u32>), Path>,
+    _routes: HashMap<(XY<u32>, XY<u32>), Path>,
 }
 
 struct Handlers {
@@ -85,6 +86,13 @@ fn main() {
         start.elapsed().as_millis()
     );
 
+    let mut routes = HashMap::default();
+
+    println!("Computing routes");
+    let start = Instant::now();
+    routes::run(&paths, &mut routes);
+    println!("Computed routes in {}ms", start.elapsed().as_millis());
+
     let mut markets = tile_heights.map(|_, _| vec![]);
 
     println!("Computing sources");
@@ -110,6 +118,7 @@ fn main() {
                 towns,
                 _markets: markets,
                 _paths: paths,
+                _routes: routes,
             },
             drawing: None,
             handlers: Handlers {
