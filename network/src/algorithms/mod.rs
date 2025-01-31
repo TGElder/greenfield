@@ -7,6 +7,7 @@ use crate::model::Edge;
 pub mod costs_to_targets;
 pub mod find_best_within_steps;
 pub mod find_path;
+pub mod floyd_warshall;
 
 fn get_path<T>(from: &HashSet<T>, focus: &T, entrances: &mut HashMap<T, Edge<T>>) -> Vec<Edge<T>>
 where
