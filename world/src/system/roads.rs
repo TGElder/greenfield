@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::model::allocation::Allocation;
 use crate::model::path::Path;
@@ -10,6 +10,7 @@ pub fn run(
     paths: &HashMap<(XY<u32>, XY<u32>), Path>,
     routes: &HashMap<(XY<u32>, XY<u32>), Path>,
     roads: &mut Grid<bool>,
+    links: &mut HashSet<(XY<u32>, XY<u32>)>,
 ) {
     let mut traffic: HashMap<(XY<u32>, XY<u32>), usize> = HashMap::new();
 
@@ -27,11 +28,15 @@ pub fn run(
         }
     }
 
-    for (pair, traffic) in traffic {
-        if traffic > 32 {
-            for tile in paths[&pair].tiles.iter() {
-                roads[tile] = true;
-            }
+    let max = traffic
+        .iter()
+        .filter(|(pair, _)| !links.contains(pair))
+        .max_by_key(|(_, traffic)| *traffic);
+
+    if let Some((pair, _)) = max {
+        links.insert(*pair);
+        for tile in paths[pair].tiles.iter() {
+            roads[tile] = true;
         }
     }
 }
