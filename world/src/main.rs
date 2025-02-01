@@ -1,5 +1,7 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::f32::consts::PI;
+use std::sync::mpsc::{self, Receiver, Sender};
+use std::thread;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
@@ -30,10 +32,11 @@ mod system;
 mod utils;
 
 struct Game {
-    components: Components,
     handlers: Handlers,
     bindings: Bindings,
     drawing: Option<Drawing>,
+    compute_tx: Sender<Components>,
+    draw_rx: Receiver<Components>,
 }
 
 struct Components {
@@ -50,6 +53,7 @@ struct Components {
     allocation: Vec<Allocation>,
     traffic: Grid<usize>,
     roads: Grid<bool>,
+    links: HashSet<(XY<u32>, XY<u32>)>,
 }
 
 struct Handlers {
@@ -87,23 +91,105 @@ fn main() {
     let mut demand = tile_heights.map(|_, _| vec![]);
     demand::run(&towns, &mut demand);
 
+    let (compute_tx, compute_rx) = mpsc::channel::<Components>();
+    let (draw_tx, draw_rx) = mpsc::channel::<Components>();
+
+    let components = Components {
+        sea_level,
+        cliff_rise,
+        terrain,
+        resources,
+        towns,
+        markets: tile_heights.map(|_, _| vec![]),
+        demand,
+        paths: HashMap::default(),
+        routes: HashMap::default(),
+        allocation: vec![],
+        traffic: tile_heights.map(|_, _| 0),
+        roads: tile_heights.map(|_, _| false),
+        links: HashSet::new(),
+        tile_heights,
+    };
+
+    draw_tx.send(components).unwrap();
+
+    thread::spawn(move || loop {
+        if let Ok(mut components) = compute_rx.try_recv() {
+            println!("Computing paths between towns");
+            let start = Instant::now();
+            components.paths.clear();
+            paths_between_towns::run(
+                &components.towns,
+                components.sea_level,
+                components.cliff_rise,
+                &components.tile_heights,
+                &components.roads,
+                &mut components.paths,
+            );
+            println!(
+                "Computed paths between towns in {}ms",
+                start.elapsed().as_millis()
+            );
+
+            println!("Computing routes");
+            let start = Instant::now();
+            components.routes.clear();
+            routes::run(&components.paths, &mut components.routes);
+            println!("Computed routes in {}ms", start.elapsed().as_millis());
+
+            println!("Computing sources");
+            let start = Instant::now();
+            components.markets = components.tile_heights.map(|_, _| vec![]);
+            sources::run(
+                &components.towns,
+                components.sea_level,
+                components.cliff_rise,
+                &components.tile_heights,
+                &components.roads,
+                &components.resources,
+                &mut components.markets,
+                &mut components.paths,
+            );
+            println!("Computed sources in {}ms", start.elapsed().as_millis());
+
+            println!("Allocating");
+            let start = Instant::now();
+            allocation::run(
+                &components.markets,
+                &components.demand,
+                &components.routes,
+                &mut components.allocation,
+            );
+            println!("Computed allocation in {}ms", start.elapsed().as_millis());
+
+            println!("Computing traffic");
+            components.traffic = components.tile_heights.map(|_, _| 0);
+            let start = Instant::now();
+            traffic::run(
+                &components.allocation,
+                &components.paths,
+                &components.routes,
+                &mut components.traffic,
+            );
+            println!("Computed traffc in {}ms", start.elapsed().as_millis());
+
+            println!("Computing roads");
+            let start = Instant::now();
+            roads::run(
+                &components.allocation,
+                &components.paths,
+                &components.routes,
+                &mut components.roads,
+                &mut components.links,
+            );
+            println!("Computed roads in {}ms", start.elapsed().as_millis());
+
+            draw_tx.send(components).unwrap();
+        }
+    });
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
-            components: Components {
-                sea_level,
-                cliff_rise,
-                terrain,
-                resources,
-                towns,
-                markets: tile_heights.map(|_, _| vec![]),
-                demand,
-                paths: HashMap::default(),
-                routes: HashMap::default(),
-                allocation: vec![],
-                traffic: tile_heights.map(|_, _| 0),
-                roads: tile_heights.map(|_, _| false),
-                tile_heights,
-            },
             drawing: None,
             handlers: Handlers {
                 drag: drag::Handler::default(),
@@ -119,6 +205,8 @@ fn main() {
                 }),
                 resource_artist: draw::resource::Artist::default(),
             },
+            compute_tx,
+            draw_rx,
             bindings: Bindings {
                 drag: drag::Bindings {
                     start_dragging: Binding::Single {
@@ -209,127 +297,45 @@ impl engine::events::EventHandler for Game {
         engine: &mut dyn engine::engine::Engine,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
-        if let engine::events::Event::Init = event {
-            let drawing = Drawing::init(
-                graphics,
-                &self.components.terrain,
-                &self.components.tile_heights,
-                self.components.cliff_rise,
-            );
-            drawing.draw_geometry(graphics, &self.components.terrain);
-            self.drawing = Some(drawing);
+        if let engine::events::Event::Tick = event {
+            if let Ok(components) = self.draw_rx.try_recv() {
+                if self.drawing.is_none() {
+                    let drawing = Drawing::init(
+                        graphics,
+                        &components.terrain,
+                        &components.tile_heights,
+                        components.cliff_rise,
+                    );
+                    drawing.draw_geometry(graphics, &components.terrain);
+                    self.drawing = Some(drawing);
 
-            sea::draw(
-                &self.components.terrain,
-                self.components.sea_level,
-                graphics,
-            );
+                    sea::draw(&components.terrain, components.sea_level, graphics);
 
-            town::draw(
-                &self.components.towns,
-                &self.components.tile_heights,
-                graphics,
-            );
+                    town::draw(&components.towns, &components.tile_heights, graphics);
 
-            self.handlers.resource_artist.init(graphics);
-            self.handlers.resource_artist.draw(
-                &self.components.resources,
-                &self.components.tile_heights,
-                graphics,
-            );
-        }
+                    self.handlers.resource_artist.init(graphics);
+                    self.handlers.resource_artist.draw(
+                        &components.resources,
+                        &components.tile_heights,
+                        graphics,
+                    );
+                }
+                if let Some(drawing) = &self.drawing {
+                    let traffic = components.traffic.map(|_, value| *value as f32).normalize();
+                    let overlay = components.roads.map(|xy, is_road| {
+                        if *is_road {
+                            ROAD
+                        } else {
+                            // Rgba::new(0, 0, 0, 0)
+                            Rgba::new(0, 0, 0, (traffic[xy] * 255.0).round() as u8)
+                        }
+                    });
+                    let overlay = OriginGrid::new(xy(0, 0), overlay);
 
-        if (Binding::Single {
-            button: Button::Keyboard(KeyboardKey::String("c".to_string())),
-            state: ButtonState::Pressed,
-        })
-        .binds_event(event)
-        {
-            println!("Computing paths between towns");
-            let start = Instant::now();
-            self.components.paths.clear();
-            paths_between_towns::run(
-                &self.components.towns,
-                self.components.sea_level,
-                self.components.cliff_rise,
-                &self.components.tile_heights,
-                &self.components.roads,
-                &mut self.components.paths,
-            );
-            println!(
-                "Computed paths between towns in {}ms",
-                start.elapsed().as_millis()
-            );
+                    drawing.modify_overlay(graphics, &overlay).unwrap();
+                }
 
-            println!("Computing routes");
-            let start = Instant::now();
-            self.components.routes.clear();
-            routes::run(&self.components.paths, &mut self.components.routes);
-            println!("Computed routes in {}ms", start.elapsed().as_millis());
-
-            println!("Computing sources");
-            let start = Instant::now();
-            self.components.markets = self.components.tile_heights.map(|_, _| vec![]);
-            sources::run(
-                &self.components.towns,
-                self.components.sea_level,
-                self.components.cliff_rise,
-                &self.components.tile_heights,
-                &self.components.roads,
-                &self.components.resources,
-                &mut self.components.markets,
-                &mut self.components.paths,
-            );
-            println!("Computed sources in {}ms", start.elapsed().as_millis());
-
-            println!("Allocating");
-            let start = Instant::now();
-            allocation::run(
-                &self.components.markets,
-                &self.components.demand,
-                &self.components.routes,
-                &mut self.components.allocation,
-            );
-            println!("Computed allocation in {}ms", start.elapsed().as_millis());
-
-            println!("Computing traffic");
-            self.components.traffic = self.components.tile_heights.map(|_, _| 0);
-            let start = Instant::now();
-            traffic::run(
-                &self.components.allocation,
-                &self.components.paths,
-                &self.components.routes,
-                &mut self.components.traffic,
-            );
-            println!("Computed traffc in {}ms", start.elapsed().as_millis());
-
-            println!("Computing roads");
-            let start = Instant::now();
-            roads::run(
-                &self.components.allocation,
-                &self.components.paths,
-                &self.components.routes,
-                &mut self.components.roads,
-            );
-            println!("Computed roads in {}ms", start.elapsed().as_millis());
-
-            if let Some(drawing) = &self.drawing {
-                let traffic = self
-                    .components
-                    .traffic
-                    .map(|_, value| *value as f32)
-                    .normalize();
-                let overlay = self.components.roads.map(|xy, is_road| {
-                    if *is_road {
-                        ROAD
-                    } else {
-                        // Rgba::new(0, 0, 0, 0)
-                        Rgba::new(0, 0, 0, (traffic[xy] * 255.0).round() as u8)
-                    }
-                });
-                let overlay = OriginGrid::new(xy(0, 0), overlay);
-
-                drawing.modify_overlay(graphics, &overlay).unwrap();
+                self.compute_tx.send(components).unwrap();
             }
         }
 
