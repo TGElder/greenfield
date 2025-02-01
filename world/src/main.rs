@@ -14,10 +14,11 @@ use crate::draw::terrain::Drawing;
 use crate::draw::{sea, town};
 use crate::init::resources::generate_resources;
 use crate::init::towns::generate_towns;
+use crate::model::allocation::Allocation;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{demand, paths_between_towns, routes, sources};
+use crate::system::{allocation, demand, paths_between_towns, routes, sources};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -44,6 +45,7 @@ struct Components {
     _demand: Grid<Vec<Source>>,
     _paths: HashMap<(XY<u32>, XY<u32>), Path>,
     _routes: HashMap<(XY<u32>, XY<u32>), Path>,
+    _allocation: Vec<Allocation>,
 }
 
 struct Handlers {
@@ -113,6 +115,12 @@ fn main() {
     println!("Generating demand");
     demand::run(&towns, &mut demand);
 
+    let mut allocation = vec![];
+    println!("Allocating");
+    let start = Instant::now();
+    allocation::run(&markets, &demand, &routes, &mut allocation);
+    println!("Computed allocation in {}ms", start.elapsed().as_millis());
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
@@ -126,6 +134,7 @@ fn main() {
                 _demand: demand,
                 _paths: paths,
                 _routes: routes,
+                _allocation: allocation,
             },
             drawing: None,
             handlers: Handlers {

@@ -26,11 +26,19 @@ pub fn run(
 
     let costs = network.costs_to_targets(&towns, None, None);
 
-    for (&tile, &Cost { closest_target, .. }) in costs.iter() {
+    for (
+        &tile,
+        &Cost {
+            closest_target,
+            cost_to_target,
+        },
+    ) in costs.iter()
+    {
         if let Some(resource) = resources[tile] {
             markets[closest_target].push(Source {
-                _tile: tile,
-                _resource: resource,
+                tile,
+                resource,
+                cost: cost_to_target,
             });
             paths.insert(
                 (tile, closest_target),
@@ -65,6 +73,6 @@ fn path_from_source(
 
     Path {
         _tiles: tiles,
-        _cost: costs[&focus].cost_to_target,
+        cost: costs[&focus].cost_to_target,
     }
 }

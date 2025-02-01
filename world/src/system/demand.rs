@@ -9,8 +9,9 @@ pub fn run(towns: &Grid<bool>, demand: &mut Grid<Vec<Source>>) {
             RESOURCES
                 .into_iter()
                 .map(|resource| Source {
-                    _tile: tile,
-                    _resource: resource,
+                    tile,
+                    resource,
+                    cost: 0,
                 })
                 .collect()
         } else {

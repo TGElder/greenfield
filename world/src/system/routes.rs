@@ -15,7 +15,7 @@ pub fn run(
         .map(|((from, to), path)| Edge {
             from,
             to,
-            cost: path._cost as u32, // TODO
+            cost: path.cost as u32, // TODO
         })
         .collect::<Vec<_>>();
 
@@ -25,7 +25,7 @@ pub fn run(
         routes.insert(
             (*from, *to),
             Path {
-                _cost: result.cost,
+                cost: result.cost,
                 _tiles: result.path.into_iter().copied().collect(),
             },
         );

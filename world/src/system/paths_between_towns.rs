@@ -72,7 +72,7 @@ fn paths_to_town(
             neighbour,
             Path {
                 _tiles: tiles,
-                _cost: costs[&neighbour],
+                cost: costs[&neighbour],
             },
         );
     }
