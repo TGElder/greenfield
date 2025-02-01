@@ -18,7 +18,7 @@ use crate::model::allocation::Allocation;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{allocation, demand, paths_between_towns, routes, sources, traffic};
+use crate::system::{allocation, demand, paths_between_towns, roads, routes, sources, traffic};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -47,6 +47,7 @@ struct Components {
     _routes: HashMap<(XY<u32>, XY<u32>), Path>,
     _allocation: Vec<Allocation>,
     traffic: Grid<usize>,
+    roads: Grid<bool>,
 }
 
 struct Handlers {
@@ -129,6 +130,12 @@ fn main() {
     traffic::run(&allocation, &paths, &routes, &mut traffic);
     println!("Computed traffc in {}ms", start.elapsed().as_millis());
 
+    let mut roads = tile_heights.map(|_, _| false);
+    println!("Computing roads");
+    let start = Instant::now();
+    roads::run(&allocation, &paths, &routes, &mut roads);
+    println!("Computed roads in {}ms", start.elapsed().as_millis());
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
@@ -144,6 +151,7 @@ fn main() {
                 _routes: routes,
                 _allocation: allocation,
                 traffic,
+                roads,
             },
             drawing: None,
             handlers: Handlers {
@@ -257,6 +265,7 @@ impl engine::events::EventHandler for Game {
                 &self.components.tile_heights,
                 self.components.cliff_rise,
                 &self.components.traffic,
+                &self.components.roads,
             );
             drawing.draw_geometry(graphics, &self.components.terrain);
             self.drawing = Some(drawing);

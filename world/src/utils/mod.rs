@@ -29,7 +29,7 @@ pub fn cost(
         return None;
     }
     let rise = (tile_heights[from] - tile_heights[to]).abs();
-    if rise > cliff_rise {
+    if is_cliff(from, tile_heights, cliff_rise) || is_cliff(to, tile_heights, cliff_rise) {
         return None;
     }
     Some(((rise + 1.0) * 1000.0).round() as u32)

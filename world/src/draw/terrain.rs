@@ -12,6 +12,7 @@ use crate::utils::is_cliff;
 
 const GRASS: Rgba<u8> = Rgba::new(63, 155, 11, 255);
 const CLIFF: Rgba<u8> = Rgba::new(128, 128, 128, 255);
+const ROAD: Rgba<u8> = Rgba::new(137, 81, 41, 255);
 
 pub struct Drawing {
     width: u32,
@@ -29,6 +30,7 @@ impl Drawing {
         tile_heights: &Grid<f32>,
         cliff_slope: f32,
         traffic: &Grid<usize>,
+        roads: &Grid<bool>,
     ) -> Drawing {
         let traffic = traffic.map(|_, &value| value as f32).normalize();
         let slab_size = 256;
@@ -43,6 +45,8 @@ impl Drawing {
         let colors = Grid::from_fn(width, height, |xy| {
             if is_cliff(&xy, tile_heights, cliff_slope) {
                 CLIFF
+            } else if roads[xy] {
+                ROAD
             } else {
                 GRASS
             }
@@ -51,6 +55,7 @@ impl Drawing {
         let overlay = Grid::from_fn(width, height, |xy| {
             Rgba::new(255, 0, 0, (traffic[xy] * 255.0).round() as u8)
         });
+        // let overlay = Grid::from_element(width, height, Rgba::new(0, 0, 0, 0));
         let overlay_texture = graphics.load_texture(&overlay).unwrap();
 
         Drawing {
