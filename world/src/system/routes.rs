@@ -26,7 +26,7 @@ pub fn run(
             (*from, *to),
             Path {
                 cost: result.cost,
-                _tiles: result.path.into_iter().copied().collect(),
+                tiles: result.path.into_iter().copied().collect(),
             },
         );
     }

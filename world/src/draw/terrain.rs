@@ -28,7 +28,9 @@ impl Drawing {
         terrain: &Grid<f32>,
         tile_heights: &Grid<f32>,
         cliff_slope: f32,
+        traffic: &Grid<usize>,
     ) -> Drawing {
+        let traffic = traffic.map(|_, &value| value as f32).normalize();
         let slab_size = 256;
         let slabs = Grid::from_fn(
             (terrain.width() / slab_size) + 1,
@@ -46,7 +48,9 @@ impl Drawing {
             }
         });
         let base_texture = graphics.load_texture(&colors).unwrap();
-        let overlay = Grid::from_element(width, height, Rgba::new(0, 0, 0, 0));
+        let overlay = Grid::from_fn(width, height, |xy| {
+            Rgba::new(255, 0, 0, (traffic[xy] * 255.0).round() as u8)
+        });
         let overlay_texture = graphics.load_texture(&overlay).unwrap();
 
         Drawing {

@@ -71,7 +71,7 @@ fn paths_to_town(
         out.insert(
             neighbour,
             Path {
-                _tiles: tiles,
+                tiles,
                 cost: costs[&neighbour],
             },
         );

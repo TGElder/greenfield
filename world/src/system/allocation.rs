@@ -42,9 +42,9 @@ pub fn run(
                 let supply = supply.pop().unwrap();
                 demand.pop().unwrap();
                 allocation.push(Allocation {
-                    _from: supply.tile,
-                    _from_market: *from_market,
-                    _to_market: *to_market,
+                    from: supply.tile,
+                    from_market: *from_market,
+                    to_market: *to_market,
                     _resource: resource,
                 });
             }

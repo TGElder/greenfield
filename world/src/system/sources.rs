@@ -72,7 +72,7 @@ fn path_from_source(
     }
 
     Path {
-        _tiles: tiles,
+        tiles,
         cost: costs[&focus].cost_to_target,
     }
 }
