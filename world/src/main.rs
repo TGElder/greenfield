@@ -17,7 +17,7 @@ use crate::init::towns::generate_towns;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{paths_between_towns, routes, sources};
+use crate::system::{demand, paths_between_towns, routes, sources};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -41,6 +41,7 @@ struct Components {
     towns: Grid<bool>,
     resources: Grid<Option<Resource>>,
     _markets: Grid<Vec<Source>>,
+    _demand: Grid<Vec<Source>>,
     _paths: HashMap<(XY<u32>, XY<u32>), Path>,
     _routes: HashMap<(XY<u32>, XY<u32>), Path>,
 }
@@ -107,6 +108,11 @@ fn main() {
     );
     println!("Computed sources in {}ms", start.elapsed().as_millis());
 
+    let mut demand = tile_heights.map(|_, _| vec![]);
+
+    println!("Generating demand");
+    demand::run(&towns, &mut demand);
+
     let engine = glium_backend::engine::GliumEngine::new(
         Game {
             components: Components {
@@ -117,6 +123,7 @@ fn main() {
                 resources,
                 towns,
                 _markets: markets,
+                _demand: demand,
                 _paths: paths,
                 _routes: routes,
             },
