@@ -253,6 +253,7 @@ impl engine::events::EventHandler for Game {
                 self.components.sea_level,
                 self.components.cliff_rise,
                 &self.components.tile_heights,
+                &self.components.roads,
                 &mut self.components.paths,
             );
             println!(
@@ -274,6 +275,7 @@ impl engine::events::EventHandler for Game {
                 self.components.sea_level,
                 self.components.cliff_rise,
                 &self.components.tile_heights,
+                &self.components.roads,
                 &self.components.resources,
                 &mut self.components.markets,
                 &mut self.components.paths,
@@ -321,7 +323,8 @@ impl engine::events::EventHandler for Game {
                     if *is_road {
                         ROAD
                     } else {
-                        Rgba::new(255, 0, 0, (traffic[xy] * 255.0).round() as u8)
+                        // Rgba::new(0, 0, 0, 0)
+                        Rgba::new(0, 0, 0, (traffic[xy] * 255.0).round() as u8)
                     }
                 });
                 let overlay = OriginGrid::new(xy(0, 0), overlay);

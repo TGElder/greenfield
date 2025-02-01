@@ -14,6 +14,7 @@ pub fn run(
     sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
+    roads: &Grid<bool>,
     resources: &Grid<Option<Resource>>,
     markets: &mut Grid<Vec<Source>>,
     paths: &mut HashMap<(XY<u32>, XY<u32>), Path>,
@@ -22,6 +23,7 @@ pub fn run(
         sea_level,
         cliff_rise,
         tile_heights,
+        roads,
     };
 
     let towns = towns.iter().filter(|xy| towns[xy]).collect::<HashSet<_>>();
@@ -44,7 +46,7 @@ pub fn run(
             });
             paths.insert(
                 (tile, closest_target),
-                path_from_source(&tile, sea_level, cliff_rise, tile_heights, &costs),
+                path_from_source(&tile, sea_level, cliff_rise, tile_heights, roads, &costs),
             );
         }
     }
@@ -55,6 +57,7 @@ fn path_from_source(
     sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
+    roads: &Grid<bool>,
     costs: &HashMap<XY<u32>, costs_to_targets::Cost<XY<u32>>>,
 ) -> Path {
     let mut tiles = vec![];
@@ -70,7 +73,15 @@ fn path_from_source(
             .filter(|candidate| costs[candidate].closest_target == target)
             .filter(|candidate| costs[candidate].cost_to_target < costs[&focus].cost_to_target)
             .filter(|candidate| {
-                cost(&focus, candidate, tile_heights, sea_level, cliff_rise).is_some()
+                cost(
+                    &focus,
+                    candidate,
+                    tile_heights,
+                    sea_level,
+                    cliff_rise,
+                    roads,
+                )
+                .is_some()
             })
             .min_by_key(|n| costs[n].cost_to_target)
             .unwrap();

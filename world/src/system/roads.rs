@@ -28,7 +28,7 @@ pub fn run(
     }
 
     for (pair, traffic) in traffic {
-        if traffic > 64 {
+        if traffic > 32 {
             for tile in paths[&pair].tiles.iter() {
                 roads[tile] = true;
             }

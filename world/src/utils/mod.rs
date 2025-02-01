@@ -24,6 +24,7 @@ pub fn cost(
     tile_heights: &Grid<f32>,
     sea_level: f32,
     cliff_rise: f32,
+    roads: &Grid<bool>,
 ) -> Option<u32> {
     if tile_heights[from] < sea_level || tile_heights[to] < sea_level {
         return None;
@@ -32,13 +33,18 @@ pub fn cost(
     if is_cliff(from, tile_heights, cliff_rise) || is_cliff(to, tile_heights, cliff_rise) {
         return None;
     }
-    Some(((rise + 1.0) * 1000.0).round() as u32)
+    if roads[from] && roads[to] {
+        Some(((rise + 1.0) * 250.0).round() as u32)
+    } else {
+        Some(((rise + 1.0) * 1000.0).round() as u32)
+    }
 }
 
 pub struct Network<'a> {
     pub sea_level: f32,
     pub cliff_rise: f32,
     pub tile_heights: &'a Grid<f32>,
+    pub roads: &'a Grid<bool>,
 }
 
 impl InNetwork<XY<u32>> for Network<'_> {
@@ -53,6 +59,7 @@ impl InNetwork<XY<u32>> for Network<'_> {
                 self.tile_heights,
                 self.sea_level,
                 self.cliff_rise,
+                self.roads,
             )?;
             Some(Edge {
                 from,

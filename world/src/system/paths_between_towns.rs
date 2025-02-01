@@ -12,12 +12,14 @@ pub fn run(
     sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
+    roads: &Grid<bool>,
     paths: &mut HashMap<(XY<u32>, XY<u32>), Path>,
 ) {
     let network = Network {
         sea_level,
         cliff_rise,
         tile_heights,
+        roads,
     };
 
     let towns = towns.iter().filter(|xy| towns[xy]).collect::<HashSet<_>>();
@@ -33,9 +35,15 @@ pub fn run(
             )
             .collect::<HashMap<_, _>>();
 
-        for (neighbour, path) in
-            paths_to_town(town, sea_level, cliff_rise, tile_heights, &towns, &costs)
-        {
+        for (neighbour, path) in paths_to_town(
+            town,
+            sea_level,
+            cliff_rise,
+            tile_heights,
+            roads,
+            &towns,
+            &costs,
+        ) {
             paths.insert((neighbour, *town), path);
         }
     }
@@ -46,6 +54,7 @@ fn paths_to_town(
     sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
+    roads: &Grid<bool>,
     towns: &HashSet<XY<u32>>,
     costs: &HashMap<XY<u32>, u64>,
 ) -> HashMap<XY<u32>, Path> {
@@ -69,7 +78,15 @@ fn paths_to_town(
                 .filter(|candidate| costs.contains_key(candidate))
                 .filter(|candidate| costs[candidate] < costs[&focus])
                 .filter(|candidate| {
-                    cost(&focus, candidate, tile_heights, sea_level, cliff_rise).is_some()
+                    cost(
+                        &focus,
+                        candidate,
+                        tile_heights,
+                        sea_level,
+                        cliff_rise,
+                        roads,
+                    )
+                    .is_some()
                 })
                 .min_by_key(|n| costs[n])
                 .unwrap();
