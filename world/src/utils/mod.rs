@@ -22,8 +22,12 @@ pub fn cost(
     from: &XY<u32>,
     to: &XY<u32>,
     tile_heights: &Grid<f32>,
+    sea_level: f32,
     cliff_rise: f32,
 ) -> Option<u32> {
+    if tile_heights[from] < sea_level || tile_heights[to] < sea_level {
+        return None;
+    }
     let rise = (tile_heights[from] - tile_heights[to]).abs();
     if rise > cliff_rise {
         return None;
@@ -32,6 +36,7 @@ pub fn cost(
 }
 
 pub struct Network<'a> {
+    pub sea_level: f32,
     pub cliff_rise: f32,
     pub tile_heights: &'a Grid<f32>,
 }
@@ -42,7 +47,13 @@ impl InNetwork<XY<u32>> for Network<'_> {
         to: &'a XY<u32>,
     ) -> Box<dyn Iterator<Item = network::model::Edge<XY<u32>>> + 'a> {
         Box::new(self.tile_heights.neighbours_4(to).filter_map(|from| {
-            let cost = cost(&from, to, self.tile_heights, self.cliff_rise)?;
+            let cost = cost(
+                &from,
+                to,
+                self.tile_heights,
+                self.sea_level,
+                self.cliff_rise,
+            )?;
             Some(Edge {
                 from,
                 to: *to,

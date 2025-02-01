@@ -11,6 +11,7 @@ use crate::utils::{cost, Network};
 
 pub fn run(
     towns: &Grid<bool>,
+    sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
     resources: &Grid<Option<Resource>>,
@@ -18,6 +19,7 @@ pub fn run(
     paths: &mut HashMap<(XY<u32>, XY<u32>), Path>,
 ) {
     let network = Network {
+        sea_level,
         cliff_rise,
         tile_heights,
     };
@@ -42,7 +44,7 @@ pub fn run(
             });
             paths.insert(
                 (tile, closest_target),
-                path_from_source(&tile, cliff_rise, tile_heights, &costs),
+                path_from_source(&tile, sea_level, cliff_rise, tile_heights, &costs),
             );
         }
     }
@@ -50,6 +52,7 @@ pub fn run(
 
 fn path_from_source(
     &source: &XY<u32>,
+    sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
     costs: &HashMap<XY<u32>, costs_to_targets::Cost<XY<u32>>>,
@@ -66,7 +69,9 @@ fn path_from_source(
             .filter(|candidate| costs.contains_key(candidate))
             .filter(|candidate| costs[candidate].closest_target == target)
             .filter(|candidate| costs[candidate].cost_to_target < costs[&focus].cost_to_target)
-            .filter(|candidate| cost(&focus, candidate, tile_heights, cliff_rise).is_some())
+            .filter(|candidate| {
+                cost(&focus, candidate, tile_heights, sea_level, cliff_rise).is_some()
+            })
             .min_by_key(|n| costs[n].cost_to_target)
             .unwrap();
     }

@@ -9,11 +9,13 @@ use crate::utils::{cost, Network};
 
 pub fn run(
     towns: &Grid<bool>,
+    sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
     paths: &mut HashMap<(XY<u32>, XY<u32>), Path>,
 ) {
     let network = Network {
+        sea_level,
         cliff_rise,
         tile_heights,
     };
@@ -31,7 +33,9 @@ pub fn run(
             )
             .collect::<HashMap<_, _>>();
 
-        for (neighbour, path) in paths_to_town(town, cliff_rise, tile_heights, &towns, &costs) {
+        for (neighbour, path) in
+            paths_to_town(town, sea_level, cliff_rise, tile_heights, &towns, &costs)
+        {
             paths.insert((neighbour, *town), path);
         }
     }
@@ -39,6 +43,7 @@ pub fn run(
 
 fn paths_to_town(
     &town: &XY<u32>,
+    sea_level: f32,
     cliff_rise: f32,
     tile_heights: &Grid<f32>,
     towns: &HashSet<XY<u32>>,
@@ -63,7 +68,9 @@ fn paths_to_town(
                 .neighbours_4(focus)
                 .filter(|candidate| costs.contains_key(candidate))
                 .filter(|candidate| costs[candidate] < costs[&focus])
-                .filter(|candidate| cost(&focus, candidate, tile_heights, cliff_rise).is_some())
+                .filter(|candidate| {
+                    cost(&focus, candidate, tile_heights, sea_level, cliff_rise).is_some()
+                })
                 .min_by_key(|n| costs[n])
                 .unwrap();
         }

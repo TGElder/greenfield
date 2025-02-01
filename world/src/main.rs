@@ -84,7 +84,7 @@ fn main() {
 
     println!("Computing paths between towns");
     let start = Instant::now();
-    paths_between_towns::run(&towns, cliff_rise, &tile_heights, &mut paths);
+    paths_between_towns::run(&towns, sea_level, cliff_rise, &tile_heights, &mut paths);
     println!(
         "Computed paths between towns in {}ms",
         start.elapsed().as_millis()
@@ -103,6 +103,7 @@ fn main() {
     let start = Instant::now();
     sources::run(
         &towns,
+        sea_level,
         cliff_rise,
         &tile_heights,
         &resources,
