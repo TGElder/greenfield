@@ -179,6 +179,7 @@ fn main() {
                 &components.allocation,
                 &components.paths,
                 &components.routes,
+                &components.towns,
                 &mut components.roads,
                 &mut components.links,
             );
@@ -324,7 +325,12 @@ impl engine::events::EventHandler for Game {
                     let traffic = components.traffic.map(|_, value| *value as f32).normalize();
                     let overlay = components.roads.map(|xy, is_road| {
                         if *is_road {
-                            ROAD
+                            Rgba::new(
+                                ROAD.r,
+                                ROAD.g,
+                                ROAD.b,
+                                127 + (traffic[xy] * 128.0).round() as u8,
+                            )
                         } else {
                             // Rgba::new(0, 0, 0, 0)
                             Rgba::new(0, 0, 0, (traffic[xy] * 255.0).round() as u8)
