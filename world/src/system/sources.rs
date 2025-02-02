@@ -87,6 +87,8 @@ fn path_from_source(
             .unwrap();
     }
 
+    tiles.push(target);
+
     Path {
         tiles,
         cost: costs[&focus].cost_to_target,

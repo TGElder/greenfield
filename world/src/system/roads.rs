@@ -64,6 +64,7 @@ fn link_does_not_touch_any_other_new_link(
 ) -> bool {
     tiles
         .iter()
+        .filter(|&tile| !towns[tile])
         .all(|position| tile_does_not_touch_any_other_new_link(position, towns, new_roads))
 }
 
@@ -74,6 +75,5 @@ fn tile_does_not_touch_any_other_new_link(
 ) -> bool {
     !towns
         .neighbours_4(tile)
-        .filter(|neighbour| !towns[neighbour])
-        .any(|neighbour| new_roads[neighbour])
+        .any(|neighbour| !towns[neighbour] && new_roads[neighbour])
 }

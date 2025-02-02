@@ -92,6 +92,8 @@ fn paths_to_town(
                 .unwrap();
         }
 
+        tiles.push(town);
+
         out.insert(
             neighbour,
             Path {
