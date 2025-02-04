@@ -23,7 +23,7 @@ use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
 use crate::system::{
-    allocation, demand, paths_between_towns, population, roads, routes, sources, traffic,
+    allocation, demand, new_towns, paths_between_towns, population, roads, routes, sources, traffic,
 };
 use crate::utils::tile_heights;
 
@@ -57,6 +57,7 @@ struct Components {
     roads: Grid<bool>,
     links: HashSet<(XY<u32>, XY<u32>)>,
     population: Grid<f32>,
+    distances: Grid<u64>,
 }
 
 struct Handlers {
@@ -108,6 +109,7 @@ fn main() {
         traffic: tile_heights.map(|_, _| 0),
         roads: tile_heights.map(|_, _| false),
         links: HashSet::new(),
+        distances: tile_heights.map(|_, _| 0),
         tile_heights,
     };
 
@@ -149,6 +151,7 @@ fn main() {
                 &components.resources,
                 &mut components.markets,
                 &mut components.paths,
+                &mut components.distances,
             );
             println!("Computed sources in {}ms", start.elapsed().as_millis());
 
@@ -188,6 +191,14 @@ fn main() {
                 &mut components.links,
             );
             println!("Computed roads in {}ms", start.elapsed().as_millis());
+
+            println!("New towns");
+            new_towns::run(
+                &components.traffic,
+                &components.distances,
+                &mut components.towns,
+                &mut components.population,
+            );
 
             population::run(&mut components.population);
 
@@ -318,8 +329,6 @@ impl engine::events::EventHandler for Game {
 
                     sea::draw(&components.terrain, components.sea_level, graphics);
 
-                    town::draw(&components.towns, &components.tile_heights, graphics);
-
                     self.handlers.resource_artist.init(graphics);
                     self.handlers.resource_artist.draw(
                         &components.resources,
@@ -346,6 +355,8 @@ impl engine::events::EventHandler for Game {
 
                     drawing.modify_overlay(graphics, &overlay).unwrap();
                 }
+
+                town::draw(&components.towns, &components.tile_heights, graphics);
 
                 self.compute_tx.send(components).unwrap();
             }

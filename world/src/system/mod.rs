@@ -1,5 +1,6 @@
 pub mod allocation;
 pub mod demand;
+pub mod new_towns;
 pub mod paths_between_towns;
 pub mod population;
 pub mod roads;
