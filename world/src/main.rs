@@ -22,7 +22,9 @@ use crate::model::allocation::Allocation;
 use crate::model::path::Path;
 use crate::model::resource::Resource;
 use crate::model::source::Source;
-use crate::system::{allocation, demand, paths_between_towns, roads, routes, sources, traffic};
+use crate::system::{
+    allocation, demand, paths_between_towns, population, roads, routes, sources, traffic,
+};
 use crate::utils::tile_heights;
 
 mod draw;
@@ -54,6 +56,7 @@ struct Components {
     traffic: Grid<usize>,
     roads: Grid<bool>,
     links: HashSet<(XY<u32>, XY<u32>)>,
+    population: Grid<f32>,
 }
 
 struct Handlers {
@@ -85,11 +88,7 @@ fn main() {
     let resources = generate_resources(10, &tile_heights, sea_level, cliff_rise);
 
     println!("Placing towns");
-    let towns = generate_towns(&tile_heights, sea_level, cliff_rise, 1024);
-
-    println!("Generating demand");
-    let mut demand = tile_heights.map(|_, _| vec![]);
-    demand::run(&towns, &mut demand);
+    let towns = generate_towns(&tile_heights, sea_level, cliff_rise, 1);
 
     let (compute_tx, compute_rx) = mpsc::channel::<Components>();
     let (draw_tx, draw_rx) = mpsc::channel::<Components>();
@@ -99,9 +98,10 @@ fn main() {
         cliff_rise,
         terrain,
         resources,
+        population: towns.map(|_, &is_town| if is_town { 1.0 } else { 0.0 }),
         towns,
         markets: tile_heights.map(|_, _| vec![]),
-        demand,
+        demand: tile_heights.map(|_, _| vec![]),
         paths: HashMap::default(),
         routes: HashMap::default(),
         allocation: vec![],
@@ -152,6 +152,10 @@ fn main() {
             );
             println!("Computed sources in {}ms", start.elapsed().as_millis());
 
+            println!("Generating demand");
+            components.demand = components.tile_heights.map(|_, _| vec![]);
+            demand::run(&components.population, &mut components.demand);
+
             println!("Allocating");
             let start = Instant::now();
             allocation::run(
@@ -184,6 +188,8 @@ fn main() {
                 &mut components.links,
             );
             println!("Computed roads in {}ms", start.elapsed().as_millis());
+
+            population::run(&mut components.population);
 
             draw_tx.send(components).unwrap();
         }

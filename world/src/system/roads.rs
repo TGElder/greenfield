@@ -36,7 +36,7 @@ pub fn run(
         .filter(|(link, _)| !links.contains(link))
         .collect::<Vec<_>>();
 
-    unlinked.sort_by_key(|(link, traffic)| Reverse((*traffic, paths[link].cost)));
+    unlinked.sort_by_key(|(link, traffic)| (Reverse(*traffic), paths[link].cost));
 
     let mut new_link_count = 0;
 
