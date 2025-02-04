@@ -42,7 +42,7 @@ pub fn run(
 
     for (link, _) in unlinked {
         let tiles = &paths[link].tiles;
-        if link_does_not_touch_any_other_new_link(tiles, towns, &new_roads) {
+        if link_does_not_touch_any_other_new_link(tiles, towns, roads, &new_roads) {
             links.insert(*link);
             links.insert((link.1, link.0));
             for tile in tiles {
@@ -60,20 +60,22 @@ pub fn run(
 fn link_does_not_touch_any_other_new_link(
     tiles: &[XY<u32>],
     towns: &Grid<bool>,
+    roads: &Grid<bool>,
     new_roads: &Grid<bool>,
 ) -> bool {
     tiles
         .iter()
         .filter(|&tile| !towns[tile])
-        .all(|position| tile_does_not_touch_any_other_new_link(position, towns, new_roads))
+        .all(|position| tile_does_not_touch_any_other_new_link(position, towns, roads, new_roads))
 }
 
 fn tile_does_not_touch_any_other_new_link(
     tile: &XY<u32>,
     towns: &Grid<bool>,
+    roads: &Grid<bool>,
     new_roads: &Grid<bool>,
 ) -> bool {
     !towns
         .neighbours_4(tile)
-        .any(|neighbour| !towns[neighbour] && new_roads[neighbour])
+        .any(|neighbour| !towns[neighbour] && !roads[neighbour] && new_roads[neighbour])
 }
