@@ -194,6 +194,10 @@ fn main() {
 
             println!("New towns");
             new_towns::run(
+                components.sea_level,
+                components.cliff_rise,
+                &components.tile_heights,
+                &components.roads,
                 &components.traffic,
                 &components.distances,
                 &mut components.towns,
