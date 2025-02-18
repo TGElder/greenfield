@@ -19,6 +19,7 @@ pub fn run(
     markets: &mut Grid<Vec<Source>>,
     paths: &mut HashMap<(XY<u32>, XY<u32>), Path>,
     distances: &mut Grid<u64>,
+    owners: &mut Grid<Option<XY<u32>>>,
 ) {
     let network = Network {
         sea_level,
@@ -40,6 +41,7 @@ pub fn run(
     ) in costs.iter()
     {
         distances[tile] = cost_to_target;
+        owners[tile] = Some(closest_target);
         if let Some(resource) = resources[tile] {
             markets[closest_target].push(Source {
                 tile,

@@ -1,8 +1,10 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
+use commons::geometry::XY;
 use commons::grid::Grid;
 use network::algorithms::costs_to_targets::CostsToTargets;
 
+use crate::model::resource::Resource;
 use crate::utils::Network;
 
 const TRAFFIC_THRESHOLD: usize = 4;
@@ -16,8 +18,10 @@ pub fn run(
     roads: &Grid<bool>,
     traffic: &Grid<usize>,
     distances: &Grid<u64>,
+    owners: &Grid<Option<XY<u32>>>,
     towns: &mut Grid<bool>,
     population: &mut Grid<f32>,
+    prices: &mut Grid<HashMap<Resource, f32>>,
 ) {
     let mut candidates = traffic
         .iter()
@@ -41,6 +45,11 @@ pub fn run(
     let mut new_town_count = 0;
     while let Some((tile, _)) = candidates.pop() {
         if !reserved[tile] {
+            let Some(owner) = owners[tile] else {
+                continue;
+            };
+            prices[tile] = prices[owner].clone();
+
             new_town_count += 1;
             towns[tile] = true;
             population[tile] = 1.0;

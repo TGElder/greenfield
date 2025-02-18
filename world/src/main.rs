@@ -20,7 +20,7 @@ use crate::init::resources::generate_resources;
 use crate::init::towns::generate_towns;
 use crate::model::allocation::Allocation;
 use crate::model::path::Path;
-use crate::model::resource::Resource;
+use crate::model::resource::{Resource, RESOURCES};
 use crate::model::source::Source;
 use crate::system::{
     allocation, demand, new_towns, paths_between_towns, population, roads, routes, sources, traffic,
@@ -50,6 +50,8 @@ struct Components {
     resources: Grid<Option<Resource>>,
     markets: Grid<Vec<Source>>,
     demand: Grid<Vec<Source>>,
+    owners: Grid<Option<XY<u32>>>,
+    prices: Grid<HashMap<Resource, f32>>,
     paths: HashMap<(XY<u32>, XY<u32>), Path>,
     routes: HashMap<(XY<u32>, XY<u32>), Path>,
     allocation: Vec<Allocation>,
@@ -100,9 +102,17 @@ fn main() {
         terrain,
         resources,
         population: towns.map(|_, &is_town| if is_town { 1.0 } else { 0.0 }),
+        prices: towns.map(|_, &is_town| {
+            if is_town {
+                RESOURCES.iter().map(|resource| (*resource, 1.0)).collect()
+            } else {
+                HashMap::default()
+            }
+        }),
         towns,
         markets: tile_heights.map(|_, _| vec![]),
         demand: tile_heights.map(|_, _| vec![]),
+        owners: tile_heights.map(|_, _| None),
         paths: HashMap::default(),
         routes: HashMap::default(),
         allocation: vec![],
@@ -152,6 +162,7 @@ fn main() {
                 &mut components.markets,
                 &mut components.paths,
                 &mut components.distances,
+                &mut components.owners,
             );
             println!("Computed sources in {}ms", start.elapsed().as_millis());
 
@@ -200,8 +211,10 @@ fn main() {
                 &components.roads,
                 &components.traffic,
                 &components.distances,
+                &components.owners,
                 &mut components.towns,
                 &mut components.population,
+                &mut components.prices,
             );
 
             population::run(&mut components.population);
