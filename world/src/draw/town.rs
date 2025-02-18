@@ -12,7 +12,7 @@ pub fn draw(towns: &Grid<bool>, tile_heights: &Grid<f32>, graphics: &mut dyn Gra
     let quads = cube::model().recolor(&|_| COLOR);
     let triangles = triangles_from_quads(&quads);
     let index = graphics
-        .create_instanced_triangles(DrawMode::Hologram, &triangles)
+        .create_instanced_triangles(DrawMode::Solid, &triangles)
         .unwrap();
     let matrices = towns
         .iter()

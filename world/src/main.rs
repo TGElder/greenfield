@@ -5,7 +5,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use commons::color::Rgba;
-use commons::geometry::{xy, xyz, Rectangle, XY};
+use commons::geometry::{xy, xyz, Rectangle, XY, XYZ};
 use commons::grid::Grid;
 use commons::origin_grid::OriginGrid;
 use engine::binding::Binding;
@@ -26,40 +26,44 @@ use crate::system::{
     allocation, demand, new_towns, paths_between_towns, population, roads, routes, sources, traffic,
 };
 use crate::utils::tile_heights;
+use crate::widgets::town_window;
 
 mod draw;
 mod init;
 mod model;
 mod system;
 mod utils;
+mod widgets;
 
 struct Game {
     handlers: Handlers,
     bindings: Bindings,
     drawing: Option<Drawing>,
+    widgets: Widgets,
     compute_tx: Sender<Components>,
     draw_rx: Receiver<Components>,
+    mouse_xy: Option<XY<u32>>,
 }
 
-struct Components {
-    sea_level: f32,
-    cliff_rise: f32,
-    terrain: Grid<f32>,
-    tile_heights: Grid<f32>,
-    towns: Grid<bool>,
-    resources: Grid<Option<Resource>>,
-    markets: Grid<Vec<Source>>,
-    demand: Grid<Vec<Source>>,
-    owners: Grid<Option<XY<u32>>>,
-    prices: Grid<HashMap<Resource, f32>>,
-    paths: HashMap<(XY<u32>, XY<u32>), Path>,
-    routes: HashMap<(XY<u32>, XY<u32>), Path>,
-    allocation: Vec<Allocation>,
-    traffic: Grid<usize>,
-    roads: Grid<bool>,
-    links: HashSet<(XY<u32>, XY<u32>)>,
-    population: Grid<f32>,
-    distances: Grid<u64>,
+pub struct Components {
+    pub sea_level: f32,
+    pub cliff_rise: f32,
+    pub terrain: Grid<f32>,
+    pub tile_heights: Grid<f32>,
+    pub towns: Grid<bool>,
+    pub resources: Grid<Option<Resource>>,
+    pub markets: Grid<Vec<Source>>,
+    pub demand: Grid<Vec<Source>>,
+    pub owners: Grid<Option<XY<u32>>>,
+    pub prices: Grid<HashMap<Resource, f32>>,
+    pub paths: HashMap<(XY<u32>, XY<u32>), Path>,
+    pub routes: HashMap<(XY<u32>, XY<u32>), Path>,
+    pub allocation: Vec<Allocation>,
+    pub traffic: Grid<usize>,
+    pub roads: Grid<bool>,
+    pub links: HashSet<(XY<u32>, XY<u32>)>,
+    pub population: Grid<f32>,
+    pub distances: Grid<u64>,
 }
 
 struct Handlers {
@@ -67,6 +71,10 @@ struct Handlers {
     yaw: yaw::Handler,
     zoom: zoom::Handler,
     resource_artist: draw::resource::Artist,
+}
+
+struct Widgets {
+    town_windows: Vec<town_window::Widget>,
 }
 
 struct Bindings {
@@ -294,6 +302,10 @@ fn main() {
                     ]),
                 },
             },
+            widgets: Widgets {
+                town_windows: vec![],
+            },
+            mouse_xy: None,
         },
         glium_backend::engine::Parameters {
             frame_duration: Duration::from_nanos(16_666_667),
@@ -332,6 +344,9 @@ impl engine::events::EventHandler for Game {
         engine: &mut dyn engine::engine::Engine,
         graphics: &mut dyn engine::graphics::Graphics,
     ) {
+        if let engine::events::Event::MouseMoved(xy) = event {
+            self.mouse_xy = Some(*xy);
+        };
         if let engine::events::Event::Tick = event {
             if let Ok(components) = self.draw_rx.try_recv() {
                 if self.drawing.is_none() {
@@ -375,6 +390,10 @@ impl engine::events::EventHandler for Game {
 
                 town::draw(&components.towns, &components.tile_heights, graphics);
 
+                for window in &mut self.widgets.town_windows {
+                    window.init(&components);
+                }
+
                 self.compute_tx.send(components).unwrap();
             }
         }
@@ -389,5 +408,27 @@ impl engine::events::EventHandler for Game {
             .zoom
             .handle(&self.bindings.zoom, event, engine, graphics);
         engine::handlers::resize::handle(event, engine, graphics);
+
+        if (Binding::Single {
+            button: Button::Mouse(MouseButton::Right),
+            state: ButtonState::Pressed,
+        })
+        .binds_event(event)
+        {
+            if let Some(mouse_xy) = self.mouse_xy {
+                if let Ok(XYZ { x, y, .. }) = graphics.world_xyz_at(&mouse_xy) {
+                    self.widgets.town_windows.push(town_window::Widget::new(xy(
+                        x.floor() as u32,
+                        y.floor() as u32,
+                    )));
+                }
+            }
+        }
+
+        graphics.draw_gui(&mut |ctx| {
+            for window in &mut self.widgets.town_windows {
+                window.draw(ctx);
+            }
+        });
     }
 }
