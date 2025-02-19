@@ -6,7 +6,7 @@ use crate::Components;
 
 pub struct Widget {
     town: XY<u32>,
-    rows: Vec<(Resource, usize, usize, usize, usize, f32)>,
+    rows: Vec<(Resource, usize, usize, f32)>,
     is_window_open: bool,
 }
 
@@ -25,21 +25,9 @@ impl Widget {
             .map(|resource| {
                 (
                     *resource,
-                    components
-                        .allocation
-                        .iter()
-                        .filter(|allocation| allocation.from_market == self.town)
-                        .filter(|allocation| allocation.resource == *resource)
-                        .count(),
-                    components.markets[self.town]
+                    components.supply[self.town]
                         .iter()
                         .filter(|source| source.resource == *resource)
-                        .count(),
-                    components
-                        .allocation
-                        .iter()
-                        .filter(|allocation| allocation.to_market == self.town)
-                        .filter(|allocation| allocation.resource == *resource)
                         .count(),
                     components.demand[self.town]
                         .iter()
@@ -67,25 +55,25 @@ impl Widget {
             ui.horizontal(|ui| {
                 ui.vertical(|ui| {
                     ui.label("Resource");
-                    for (resource, _, _, _, _, _) in &self.rows {
+                    for (resource, _, _, _) in &self.rows {
                         ui.label(format!("{:?}", resource));
                     }
                 });
                 ui.vertical(|ui| {
                     ui.label("Supply");
-                    for (_, used, supply, _, _, _) in &self.rows {
-                        ui.label(format!("{}/{}", used, supply));
+                    for (_, supply, _, _) in &self.rows {
+                        ui.label(format!("{}", supply));
                     }
                 });
                 ui.vertical(|ui| {
                     ui.label("Demand");
-                    for (_, _, _, met, demand, _) in &self.rows {
-                        ui.label(format!("{}/{}", met, demand));
+                    for (_, _, demand, _) in &self.rows {
+                        ui.label(format!("{}", demand));
                     }
                 });
                 ui.vertical(|ui| {
                     ui.label("Price");
-                    for (_, _, _, _, _, price) in &self.rows {
+                    for (_, _, _, price) in &self.rows {
                         ui.label(format!("{}", price));
                     }
                 });

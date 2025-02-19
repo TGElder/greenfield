@@ -2,14 +2,13 @@ use std::collections::{HashMap, HashSet};
 
 use commons::grid::Grid;
 
-use crate::model::allocation::Allocation;
 use crate::model::resource::{Resource, RESOURCES};
 use crate::model::source::Source;
 
 pub fn run(
     towns: &Grid<bool>,
+    supply: &Grid<Vec<Source>>,
     demand: &Grid<Vec<Source>>,
-    allocation: &[Allocation],
     prices: &mut Grid<HashMap<Resource, f32>>,
 ) {
     let towns = towns.iter().filter(|xy| towns[xy]).collect::<HashSet<_>>();
@@ -20,10 +19,9 @@ pub fn run(
                 .iter()
                 .filter(|source| source.resource == resource)
                 .count();
-            let supply = allocation
+            let supply = supply[town]
                 .iter()
-                .filter(|allocation| allocation.to_market == town)
-                .filter(|allocation| allocation.resource == resource)
+                .filter(|source| source.resource == resource)
                 .count();
             let price = prices[town][&resource];
 

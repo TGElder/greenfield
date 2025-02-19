@@ -24,7 +24,7 @@ use crate::model::resource::{Resource, RESOURCES};
 use crate::model::source::Source;
 use crate::system::{
     allocation, demand, new_towns, paths_between_towns, population, prices, roads, routes, sources,
-    traffic,
+    supply, traffic,
 };
 use crate::utils::tile_heights;
 use crate::widgets::town_window;
@@ -54,6 +54,7 @@ pub struct Components {
     pub towns: Grid<bool>,
     pub resources: Grid<Option<Resource>>,
     pub markets: Grid<Vec<Source>>,
+    pub supply: Grid<Vec<Source>>,
     pub demand: Grid<Vec<Source>>,
     pub owners: Grid<Option<XY<u32>>>,
     pub prices: Grid<HashMap<Resource, f32>>,
@@ -120,6 +121,7 @@ fn main() {
         }),
         towns,
         markets: tile_heights.map(|_, _| vec![]),
+        supply: tile_heights.map(|_, _| vec![]),
         demand: tile_heights.map(|_, _| vec![]),
         owners: tile_heights.map(|_, _| None),
         paths: HashMap::default(),
@@ -175,6 +177,15 @@ fn main() {
             );
             println!("Computed sources in {}ms", start.elapsed().as_millis());
 
+            println!("Generating supply");
+            supply::run(
+                &components.towns,
+                &components.population,
+                &components.markets,
+                &components.prices,
+                &mut components.supply,
+            );
+
             println!("Generating demand");
             components.demand = components.tile_heights.map(|_, _| vec![]);
             demand::run(&components.population, &mut components.demand);
@@ -192,8 +203,8 @@ fn main() {
             println!("Computing prices");
             prices::run(
                 &components.towns,
+                &components.supply,
                 &components.demand,
-                &components.allocation,
                 &mut components.prices,
             );
 

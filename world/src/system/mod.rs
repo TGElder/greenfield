@@ -7,4 +7,5 @@ pub mod prices;
 pub mod roads;
 pub mod routes;
 pub mod sources;
+pub mod supply;
 pub mod traffic;
