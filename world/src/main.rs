@@ -23,7 +23,8 @@ use crate::model::path::Path;
 use crate::model::resource::{Resource, RESOURCES};
 use crate::model::source::Source;
 use crate::system::{
-    allocation, demand, new_towns, paths_between_towns, population, roads, routes, sources, traffic,
+    allocation, demand, new_towns, paths_between_towns, population, prices, roads, routes, sources,
+    traffic,
 };
 use crate::utils::tile_heights;
 use crate::widgets::town_window;
@@ -187,6 +188,14 @@ fn main() {
                 &mut components.allocation,
             );
             println!("Computed allocation in {}ms", start.elapsed().as_millis());
+
+            println!("Computing prices");
+            prices::run(
+                &components.towns,
+                &components.demand,
+                &components.allocation,
+                &mut components.prices,
+            );
 
             println!("Computing traffic");
             components.traffic = components.tile_heights.map(|_, _| 0);
