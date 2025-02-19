@@ -45,7 +45,7 @@ pub fn run(
                     from: supply.tile,
                     from_market: *from_market,
                     to_market: *to_market,
-                    _resource: resource,
+                    resource,
                 });
             }
         }
