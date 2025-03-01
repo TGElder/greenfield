@@ -12,18 +12,6 @@ pub struct Lift {
     pub carousel_id: usize,
 }
 
-impl Lift {
-    pub fn ride_length_meters(&self) -> f32 {
-        let mut segment = self.pick_up.segment;
-        let mut out = 0.0;
-        while segment != self.drop_off.segment {
-            out += self.segments[segment].length_meters;
-            segment = (segment + 1) % self.segments.len();
-        }
-        out
-    }
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct Segment {
     pub from: XYZ<f32>,
@@ -36,6 +24,18 @@ pub struct Portal {
     pub id: usize,
     pub segment: usize,
     pub state: State,
+}
+
+impl Lift {
+    pub fn ride_length_meters(&self) -> f32 {
+        let mut segment = self.pick_up.segment;
+        let mut out = 0.0;
+        while segment != self.drop_off.segment {
+            out += self.segments[segment].length_meters;
+            segment = (segment + 1) % self.segments.len();
+        }
+        out
+    }
 }
 
 impl Segment {

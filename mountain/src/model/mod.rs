@@ -10,6 +10,7 @@ pub mod frame;
 pub mod gate;
 pub mod hash_vec;
 pub mod lift;
+pub mod lift_building;
 pub mod message;
 pub mod open;
 pub mod piste;
