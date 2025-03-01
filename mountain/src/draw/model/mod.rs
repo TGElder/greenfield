@@ -5,6 +5,7 @@ use engine::graphics::elements::Quad;
 
 pub mod building;
 pub mod chair;
+pub mod lift_building;
 pub mod prism;
 pub mod pyramid;
 pub mod skier;
