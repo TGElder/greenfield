@@ -51,6 +51,7 @@ use crate::model::frame::Frame;
 use crate::model::gate::Gate;
 use crate::model::hash_vec::HashVec;
 use crate::model::lift::Lift;
+use crate::model::lift_building::LiftBuildings;
 use crate::model::open;
 use crate::model::piste::{self, Piste};
 use crate::model::reservation::Reservation;
@@ -62,9 +63,10 @@ use crate::services::{id_allocator, mode};
 use crate::systems::door::Parameters;
 use crate::systems::{
     building_artist, carousel, chair_artist, chair_framer, closer, door, door_artist, frame_artist,
-    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist, log,
-    messenger, piste_adopter, piste_computer, planner, selection_rasterizer, skiing_framer,
-    target_checker, target_setter, terrain_artist, tree_artist, window_artist,
+    frame_wiper, gate, gate_artist, global_computer, global_target_setter, lift_artist,
+    lift_building_artist, log, messenger, piste_adopter, piste_computer, planner,
+    selection_rasterizer, skiing_framer, target_checker, target_setter, terrain_artist,
+    tree_artist, window_artist,
 };
 use crate::utils::computer;
 use crate::widgets::{building_editor, menu, toaster};
@@ -398,6 +400,7 @@ fn new_components(parameters: NewGameParameters) -> Components {
         costs: HashMap::default(),
         global_costs: Costs::new(),
         lifts: HashMap::default(),
+        lift_buildings: HashMap::default(),
         carousels: HashMap::default(),
         cars: HashMap::default(),
         gates: HashMap::default(),
@@ -461,6 +464,7 @@ pub struct Components {
     costs: HashMap<usize, Costs<State>>,
     global_costs: Costs<usize>,
     lifts: HashMap<usize, Lift>,
+    lift_buildings: HashMap<usize, LiftBuildings>,
     cars: HashMap<usize, Car>,
     carousels: HashMap<usize, Carousel>,
     gates: HashMap<usize, Gate>,
@@ -835,6 +839,12 @@ impl EventHandler for Game {
         lift_artist::run(
             graphics,
             &self.components.lifts,
+            &mut self.components.drawings,
+        );
+        lift_building_artist::run(
+            graphics,
+            &self.components.lift_buildings,
+            &self.components.terrain,
             &mut self.components.drawings,
         );
         gate_artist::run(
