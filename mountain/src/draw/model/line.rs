@@ -1,13 +1,12 @@
 use commons::color::Rgb;
 use commons::geometry::{xyz, XYZ};
 
-use engine::graphics::elements::Quad;
+use engine::graphics::elements::{Quad, Triangle};
 use engine::graphics::utils::triangles_from_quads;
-use engine::graphics::{DrawMode, Graphics};
 
 const GREY: Rgb<f32> = Rgb::new(0.389, 0.389, 0.389);
 
-pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 2]], height: f32) {
+pub fn model(segments: &[[XYZ<f32>; 2]], height: f32) -> Vec<Triangle<Rgb<f32>>> {
     let quads = segments
         .iter()
         .flat_map(|segment| {
@@ -36,8 +35,5 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, segments: &[[&XYZ<f32>; 
         })
         .collect::<Vec<_>>();
 
-    let triangles = triangles_from_quads(&quads);
-    graphics
-        .draw_triangles(index, DrawMode::Hologram, &triangles)
-        .unwrap();
+    triangles_from_quads(&quads)
 }

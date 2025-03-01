@@ -1,9 +1,9 @@
 use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
-use engine::graphics::Graphics;
+use engine::graphics::{DrawMode, Graphics};
 
-use crate::draw::line::draw;
+use crate::draw::model::line;
 use crate::model::lift::{Lift, Segment};
 
 pub fn run(
@@ -15,13 +15,17 @@ pub fn run(
         let segments = lift
             .segments
             .iter()
-            .map(|Segment { from, to, .. }| [from, to])
+            .map(|Segment { from, to, .. }| [*from, *to])
             .collect::<Vec<_>>();
+
         match drawings.entry(*id) {
-            Entry::Occupied(value) => draw(graphics, value.get(), &segments, 0.5),
+            Entry::Occupied(_) => (),
             Entry::Vacant(cell) => {
                 if let Ok(index) = graphics.create_triangles() {
-                    draw(graphics, &index, &segments, 0.5);
+                    let triangles = line::model(&segments, 0.5);
+                    graphics
+                        .draw_triangles(&index, DrawMode::Hologram, &triangles)
+                        .unwrap();
                     cell.insert(index);
                 }
             }
