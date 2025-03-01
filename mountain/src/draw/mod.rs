@@ -3,6 +3,7 @@ pub mod chairs;
 pub mod door;
 pub mod frame;
 pub mod gate;
+pub mod lift_building;
 pub mod model;
 pub mod terrain;
 pub mod trees;
