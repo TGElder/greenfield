@@ -1,6 +1,7 @@
 use std::env::temp_dir;
 use std::f32::consts::PI;
 
+use commons::almost_eq::assert_almost_eq;
 use commons::color::Rgb;
 use commons::geometry::Rectangle;
 use winit::event_loop::EventLoop;
@@ -614,6 +615,75 @@ fn look_at() {
     // then
     let actual = image::open(temp_path).unwrap();
     assert_eq!(actual, expected);
+
+    // finally
+    clear(&mut graphics);
+    event_loop.exit();
+}
+
+#[test]
+fn draw_hologram() {
+    // given
+    let event_loop = event_loop();
+    let mut graphics = GliumGraphics::new(
+        graphics::Parameters {
+            name: "Test".to_string(),
+            width: 256,
+            height: 256,
+            projection: Box::new(isometric::Projection::new(isometric::Parameters {
+                projection: isometric::ProjectionParameters {
+                    pitch: PI / 4.0,
+                    yaw: PI * (5.0 / 8.0),
+                },
+                scale: isometric::ScaleParameters {
+                    zoom: 256.0,
+                    z_max: 1.0,
+                    viewport: Rectangle {
+                        width: 256,
+                        height: 256,
+                    },
+                },
+            })),
+            light_direction: xyz(-1.0, 0.0, 0.0),
+            ambient_light: 0.5,
+        },
+        &event_loop,
+    )
+    .unwrap();
+
+    // when
+    // draw a solid white plain
+    let index = graphics.create_triangles().unwrap();
+    let triangles = triangles_from_quads(&[Quad {
+        corners: [
+            xyz(-2.0, -2.0, 0.0),
+            xyz(2.0, -2.0, 0.0),
+            xyz(2.0, 2.0, 0.0),
+            xyz(-2.0, 2.0, 0.0),
+        ],
+        color: Rgb::new(1.0, 1.0, 1.0),
+    }]);
+    graphics
+        .draw_triangles(&index, DrawMode::Solid, &triangles)
+        .unwrap();
+
+    // draw a hologram cube in the middle
+    let index = graphics.create_triangles().unwrap();
+    let triangles = cube_triangles();
+    graphics
+        .draw_triangles(&index, DrawMode::Hologram, &triangles)
+        .unwrap();
+
+    graphics.render().unwrap();
+
+    // then
+    // if the cube is a hologram the world xyz in the middle of the screen should be the middle of the plain, i.e. xyz(0, 0, 0)
+
+    let XYZ { x, y, z } = graphics.world_xyz_at(&xy(128, 128)).unwrap();
+
+    assert_almost_eq(x, 0.0);
+    assert_almost_eq(y, 0.0);
+    assert_almost_eq(z, 0.0);
 
     // finally
     clear(&mut graphics);
