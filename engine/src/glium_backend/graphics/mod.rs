@@ -170,50 +170,62 @@ impl GliumGraphics {
         Canvas::new(&self.display, &self.display.get_framebuffer_dimensions())
     }
 
-    fn draw_modes(&self) -> impl IntoIterator<Item = (DrawMode, &glium::DrawParameters)> {
-        [
-            (DrawMode::Solid, &self.draw_parameters.solid),
-            (DrawMode::Hologram, &self.draw_parameters.hologram),
-        ]
+    fn draw_parameters(&self, draw_mode: DrawMode) -> Option<&glium::DrawParameters> {
+        match draw_mode {
+            DrawMode::Solid => Some(&self.draw_parameters.solid),
+            DrawMode::Hologram => Some(&self.draw_parameters.hologram),
+            _ => None,
+        }
     }
 
     fn render_primitives_to_canvas<S>(
         &self,
+        draw_mode: DrawMode,
         surface: &mut S,
         primitives: &[Option<Primitive>],
     ) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
+        let draw_parameters = self
+            .draw_parameters(draw_mode)
+            .ok_or(format!("No draw parameters for draw mode {:?}", draw_mode))?;
+
         let uniforms = glium::uniform! {
             transform: self.projection.projection(),
             light_direction: self.light_direction,
             ambient_light: self.ambient_light
         };
 
-        for (draw_mode, draw_parameters) in self.draw_modes() {
-            for primitive in primitives
-                .iter()
-                .flatten()
-                .filter(|primitive| primitive.draw_mode == draw_mode)
-            {
-                surface.draw(
-                    &primitive.vertex_buffer,
-                    INDICES,
-                    &self.programs.primitive,
-                    &uniforms,
-                    draw_parameters,
-                )?;
-            }
+        for primitive in primitives
+            .iter()
+            .flatten()
+            .filter(|primitive| primitive.draw_mode == draw_mode)
+        {
+            surface.draw(
+                &primitive.vertex_buffer,
+                INDICES,
+                &self.programs.primitive,
+                &uniforms,
+                draw_parameters,
+            )?;
         }
 
         Ok(())
     }
 
-    fn render_overlay_primitives_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    fn render_overlay_primitives_to_canvas<S>(
+        &self,
+        draw_mode: DrawMode,
+        surface: &mut S,
+    ) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
+        let draw_parameters = self
+            .draw_parameters(draw_mode)
+            .ok_or(format!("No draw parameters for draw mode {:?}", draw_mode))?;
+
         let mut uniforms = None;
         let mut current_base_texture = None;
         let mut current_overlay_texture = None;
@@ -224,54 +236,60 @@ impl GliumGraphics {
             ..Default::default()
         };
 
-        for (draw_mode, draw_parameters) in self.draw_modes() {
-            for primitive in self
-                .overlay_primitives
-                .iter()
-                .flatten()
-                .filter(|primitive| primitive.draw_mode == draw_mode)
+        for primitive in self
+            .overlay_primitives
+            .iter()
+            .flatten()
+            .filter(|primitive| primitive.draw_mode == draw_mode)
+        {
+            if current_base_texture != Some(primitive.base_texture)
+                || current_overlay_texture != Some(primitive.overlay_texture)
             {
-                if current_base_texture != Some(primitive.base_texture)
-                    || current_overlay_texture != Some(primitive.overlay_texture)
-                {
-                    current_base_texture = Some(primitive.base_texture);
-                    current_overlay_texture = Some(primitive.overlay_texture);
-                    let base = self.textures.get(primitive.base_texture).ok_or(format!(
-                        "Overlay primitive refers to missing base texture {}",
-                        primitive.base_texture
-                    ))?;
-                    let base = glium::uniforms::Sampler(base, sampler_behavior);
-                    let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
-                        "Overlay primitive refers to missing overlay texture {}",
-                        primitive.overlay_texture
-                    ))?;
-                    let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
-                    uniforms = Some(glium::uniform! {
-                        transform: self.projection.projection(),
-                        light_direction: self.light_direction,
-                        ambient_light: self.ambient_light,
-                        base: base,
-                        overlay: overlay,
-                    });
-                }
-                if let Some(uniforms) = uniforms {
-                    surface.draw(
-                        &primitive.vertex_buffer,
-                        INDICES,
-                        &self.programs.overlay_primitive,
-                        &uniforms,
-                        draw_parameters,
-                    )?;
-                }
+                current_base_texture = Some(primitive.base_texture);
+                current_overlay_texture = Some(primitive.overlay_texture);
+                let base = self.textures.get(primitive.base_texture).ok_or(format!(
+                    "Overlay primitive refers to missing base texture {}",
+                    primitive.base_texture
+                ))?;
+                let base = glium::uniforms::Sampler(base, sampler_behavior);
+                let overlay = self.textures.get(primitive.overlay_texture).ok_or(format!(
+                    "Overlay primitive refers to missing overlay texture {}",
+                    primitive.overlay_texture
+                ))?;
+                let overlay = glium::uniforms::Sampler(overlay, sampler_behavior);
+                uniforms = Some(glium::uniform! {
+                    transform: self.projection.projection(),
+                    light_direction: self.light_direction,
+                    ambient_light: self.ambient_light,
+                    base: base,
+                    overlay: overlay,
+                });
+            }
+            if let Some(uniforms) = uniforms {
+                surface.draw(
+                    &primitive.vertex_buffer,
+                    INDICES,
+                    &self.programs.overlay_primitive,
+                    &uniforms,
+                    draw_parameters,
+                )?;
             }
         }
         Ok(())
     }
 
-    fn render_billboards_to_canvas<S>(&self, surface: &mut S) -> Result<(), Box<dyn Error>>
+    fn render_billboards_to_canvas<S>(
+        &self,
+        draw_mode: DrawMode,
+        surface: &mut S,
+    ) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
+        let draw_parameters = self
+            .draw_parameters(draw_mode)
+            .ok_or(format!("No draw parameters for draw mode {:?}", draw_mode))?;
+
         let mut uniforms = None;
         let mut current_texture = None;
 
@@ -281,81 +299,84 @@ impl GliumGraphics {
             ..Default::default()
         };
 
-        for (draw_mode, draw_parameters) in self.draw_modes() {
-            for billboard in self
-                .billboards
-                .iter()
-                .flatten()
-                .filter(|billboard| billboard.draw_mode == draw_mode)
-            {
-                if current_texture != Some(billboard.texture) {
-                    current_texture = Some(billboard.texture);
-                    let texture = self.textures.get(billboard.texture).ok_or(format!(
-                        "Billboard refers to missing texture {}",
-                        billboard.texture
-                    ))?;
-                    let sampler = glium::uniforms::Sampler(texture, sampler_behavior);
-                    uniforms = Some(glium::uniform! {
-                        transform: self.projection.projection(),
-                        scale: self.projection.scale(),
-                        tex: sampler
-                    });
-                }
-                if let Some(uniforms) = uniforms {
-                    surface.draw(
-                        &billboard.vertex_buffer,
-                        INDICES,
-                        &self.programs.billboard,
-                        &uniforms,
-                        draw_parameters,
-                    )?;
-                }
+        for billboard in self
+            .billboards
+            .iter()
+            .flatten()
+            .filter(|billboard| billboard.draw_mode == draw_mode)
+        {
+            if current_texture != Some(billboard.texture) {
+                current_texture = Some(billboard.texture);
+                let texture = self.textures.get(billboard.texture).ok_or(format!(
+                    "Billboard refers to missing texture {}",
+                    billboard.texture
+                ))?;
+                let sampler = glium::uniforms::Sampler(texture, sampler_behavior);
+                uniforms = Some(glium::uniform! {
+                    transform: self.projection.projection(),
+                    scale: self.projection.scale(),
+                    tex: sampler
+                });
+            }
+            if let Some(uniforms) = uniforms {
+                surface.draw(
+                    &billboard.vertex_buffer,
+                    INDICES,
+                    &self.programs.billboard,
+                    &uniforms,
+                    draw_parameters,
+                )?;
             }
         }
+
         Ok(())
     }
 
     fn render_instanced_primitives_to_canvas<S>(
         &self,
+        draw_mode: DrawMode,
         surface: &mut S,
     ) -> Result<(), Box<dyn Error>>
     where
         S: glium::Surface,
     {
+        let draw_parameters = self
+            .draw_parameters(draw_mode)
+            .ok_or(format!("No draw parameters for draw mode {:?}", draw_mode))?;
+
         let uniforms = glium::uniform! {
             transform: self.projection.projection(),
             light_direction: self.light_direction,
             ambient_light: self.ambient_light,
         };
 
-        for (draw_mode, draw_parameters) in self.draw_modes() {
-            for InstancedPrimitives {
-                primitive,
-                vertex_buffer,
-                ..
-            } in self
-                .instanced_primitives
-                .iter()
-                .flatten()
-                .filter(|primitives| primitives.primitive.draw_mode == draw_mode)
-            {
-                let Some(vertex_buffer) = vertex_buffer else {
-                    continue;
-                };
-                surface.draw(
-                    (
-                        &primitive.vertex_buffer,
-                        vertex_buffer
-                            .per_instance()
-                            .map_err(|_| String::from("Instancing is not supported"))?,
-                    ),
-                    INDICES,
-                    &self.programs.instanced_primitive,
-                    &uniforms,
-                    draw_parameters,
-                )?;
-            }
+        for InstancedPrimitives {
+            primitive,
+            vertex_buffer,
+            ..
+        } in self
+            .instanced_primitives
+            .iter()
+            .flatten()
+            .filter(|primitives| primitives.primitive.draw_mode == draw_mode)
+        {
+            let Some(vertex_buffer) = vertex_buffer else {
+                continue;
+            };
+            surface.draw(
+                (
+                    &primitive.vertex_buffer,
+                    vertex_buffer
+                        .per_instance()
+                        .map_err(|_| String::from("Instancing is not supported"))?,
+                ),
+                INDICES,
+                &self.programs.instanced_primitive,
+                &uniforms,
+                draw_parameters,
+            )?;
         }
+
         Ok(())
     }
 
@@ -714,10 +735,13 @@ impl GliumGraphics {
         let canvas = self.canvas.as_ref().unwrap();
         let mut canvas = canvas.frame(&self.display)?;
 
-        self.render_primitives_to_canvas(&mut canvas, &self.primitives)?;
-        self.render_overlay_primitives_to_canvas(&mut canvas)?;
-        self.render_instanced_primitives_to_canvas(&mut canvas)?;
-        self.render_billboards_to_canvas(&mut canvas)?;
+        for draw_mode in [DrawMode::Solid, DrawMode::Hologram] {
+            self.render_primitives_to_canvas(draw_mode, &mut canvas, &self.primitives)?;
+            self.render_overlay_primitives_to_canvas(draw_mode, &mut canvas)?;
+            self.render_instanced_primitives_to_canvas(draw_mode, &mut canvas)?;
+            self.render_billboards_to_canvas(draw_mode, &mut canvas)?;
+        }
+
         self.render_canvas_to_frame(&mut frame)?;
 
         self.gui.paint(&self.display, &mut frame);
