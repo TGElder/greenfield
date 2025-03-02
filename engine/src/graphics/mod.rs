@@ -21,7 +21,7 @@ use crate::graphics::errors::{
     DrawError, IndexError, InitializationError, RenderError, ScreenshotError,
 };
 
-#[derive(Default, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Default, Eq, PartialEq, Hash, Debug)]
 pub enum DrawMode {
     #[default]
     Solid,
