@@ -80,17 +80,21 @@ impl LiftBuilding {
 
 #[derive(Clone, Copy, Serialize, Deserialize)]
 pub enum LiftBuildingClass {
-    ChairliftStation,
-    ChairliftPylon,
+    PickUpStation,
+    Pylon,
+    DropOffStation,
 }
 
 impl LiftBuildingClass {
     pub fn wire_path_out(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
-            LiftBuildingClass::ChairliftPylon => {
+            LiftBuildingClass::PickUpStation => {
+                vec![[xyz(-0.5, -0.5, 1.0), xyz(0.5, -0.5, 1.0)]]
+            }
+            LiftBuildingClass::Pylon => {
                 vec![[xyz(-0.125, -0.5, 1.0), xyz(0.125, -0.5, 1.0)]]
             }
-            LiftBuildingClass::ChairliftStation => {
+            LiftBuildingClass::DropOffStation => {
                 vec![[xyz(-0.5, -0.5, 1.0), xyz(0.5, -0.5, 1.0)]]
             }
         }
@@ -98,10 +102,11 @@ impl LiftBuildingClass {
 
     pub fn wire_path_back(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
-            LiftBuildingClass::ChairliftPylon => {
+            LiftBuildingClass::PickUpStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
+            LiftBuildingClass::Pylon => {
                 vec![[xyz(0.125, 0.5, 1.0), xyz(-0.125, 0.5, 1.0)]]
             }
-            LiftBuildingClass::ChairliftStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
+            LiftBuildingClass::DropOffStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
         }
     }
 }

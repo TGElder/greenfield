@@ -27,8 +27,9 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, lift: &LiftBuildings, te
 
 fn building_triangles(building: &LiftBuilding, terrain: &Grid<f32>) -> Vec<Triangle<Rgb<f32>>> {
     let triangles = match &building.class {
-        LiftBuildingClass::ChairliftPylon => lift_building::chairlift_pylon(),
-        LiftBuildingClass::ChairliftStation => lift_building::chairlift_station(),
+        LiftBuildingClass::PickUpStation => lift_building::chairlift_station(),
+        LiftBuildingClass::Pylon => lift_building::chairlift_pylon(),
+        LiftBuildingClass::DropOffStation => lift_building::chairlift_station(),
     };
     triangles.transform(&building.transformation_matrix(terrain))
 }
