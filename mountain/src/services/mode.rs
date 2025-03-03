@@ -1,3 +1,4 @@
+use crate::controllers::lift_builder::MouseMoveParameters;
 use crate::controllers::Result::{self, Action, NoAction};
 use crate::handlers::selection::Parameters;
 use crate::model::selection::Selection;
@@ -84,6 +85,19 @@ fn try_to_handle(
     game: &mut Game,
     graphics: &mut dyn engine::graphics::Graphics,
 ) -> controllers::Result {
+    if matches!(event, engine::events::Event::MouseMoved(..)) {
+        if let Mode::Lift = mode {
+            game.controllers
+                .lift_builder
+                .on_mouse_move(MouseMoveParameters {
+                    mouse_xy: &game.mouse_xy,
+                    terrain: &game.components.terrain,
+                    lift_buildings: &mut game.components.lift_buildings,
+                    graphics,
+                });
+        }
+    }
+
     if !game.bindings.action.binds_event(event) {
         return NoAction;
     }
@@ -160,22 +174,11 @@ fn try_to_handle(
         Mode::Lift => {
             game.controllers
                 .lift_builder
-                .trigger(controllers::lift_builder::Parameters {
+                .trigger(controllers::lift_builder::TriggerParameters {
                     mouse_xy: &game.mouse_xy,
                     terrain: &game.components.terrain,
-                    piste_map: &game.components.piste_map,
-                    lifts: &mut game.components.lifts,
-                    open: &mut game.components.open,
                     id_allocator: &mut game.components.services.id_allocator,
-                    carousels: &mut game.components.carousels,
-                    cars: &mut game.components.cars,
-                    exits: &mut game.components.exits,
-                    entrances: &mut game.components.entrances,
-                    reservations: &mut game.components.reservations,
-                    parents: &mut game.components.parents,
-                    children: &mut game.components.children,
-                    piste_computer: &mut game.systems.piste_computer,
-                    messenger: &mut game.systems.messenger,
+                    lift_buildings: &mut game.components.lift_buildings,
                     graphics,
                 })
         }
