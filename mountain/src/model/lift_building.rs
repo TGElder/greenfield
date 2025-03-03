@@ -109,4 +109,18 @@ impl LiftBuildingClass {
             LiftBuildingClass::DropOffStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
         }
     }
+
+    pub fn pick_up_segment(&self) -> Option<usize> {
+        match self {
+            LiftBuildingClass::PickUpStation => Some(0),
+            _ => None,
+        }
+    }
+
+    pub fn drop_off_segment(&self) -> Option<usize> {
+        match self {
+            LiftBuildingClass::DropOffStation => Some(0),
+            _ => None,
+        }
+    }
 }
