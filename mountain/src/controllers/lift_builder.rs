@@ -58,13 +58,21 @@ impl Controller {
         let Some(lift_buildings) = lift_buildings.get_mut(editing) else {
             return NoAction;
         };
+        let last_lift_building = lift_buildings.buildings.last();
+
+        if last_lift_building.map(|building| building.class)
+            == Some(LiftBuildingClass::DropOffStation)
+        {
+            self.editing = None;
+            return Action;
+        }
 
         let Some(position) = get_position(mouse_xy, terrain, graphics) else {
             return NoAction;
         };
 
         lift_buildings.buildings.push(LiftBuilding {
-            class: self.brush,
+            class: next_class(last_lift_building.map(|building| building.class)),
             position,
             yaw: 0.0,
         });
@@ -97,6 +105,13 @@ impl Controller {
         };
 
         lift_building.position = position;
+    }
+}
+
+fn next_class(class: Option<LiftBuildingClass>) -> LiftBuildingClass {
+    match class {
+        None => LiftBuildingClass::PickUpStation,
+        Some(_) => LiftBuildingClass::Pylon,
     }
 }
 
