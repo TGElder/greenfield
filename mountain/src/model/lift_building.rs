@@ -38,7 +38,6 @@ impl LiftBuildings {
 pub struct LiftBuilding {
     pub class: LiftBuildingClass,
     pub position: XY<u32>,
-    pub footprint: XYZ<f32>,
     pub yaw: f32,
 }
 
@@ -50,7 +49,7 @@ impl LiftBuilding {
                 self.position.y as f32,
                 terrain[self.position],
             )),
-            scale: Some(xyz(self.footprint.x, self.footprint.y, self.footprint.z)),
+            scale: Some(self.class.footprint()),
             yaw: Some(self.yaw),
             ..Transformation::default()
         })
@@ -107,6 +106,14 @@ impl LiftBuildingClass {
                 vec![[xyz(0.125, 0.5, 1.0), xyz(-0.125, 0.5, 1.0)]]
             }
             LiftBuildingClass::DropOffStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
+        }
+    }
+
+    pub fn footprint(&self) -> XYZ<f32> {
+        match self {
+            LiftBuildingClass::PickUpStation => xyz(9.0, 3.0, 3.5),
+            LiftBuildingClass::Pylon => xyz(4.0, 3.0, 12.0),
+            LiftBuildingClass::DropOffStation => xyz(8.0, 4.0, 3.5),
         }
     }
 
