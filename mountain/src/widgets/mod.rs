@@ -2,6 +2,7 @@ use engine::egui;
 
 pub mod building_editor;
 pub mod entity_window;
+pub mod lift_editor;
 pub mod menu;
 pub mod piste_build_mode;
 pub mod save_picker;

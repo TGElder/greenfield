@@ -35,6 +35,10 @@ impl Controller {
         }
     }
 
+    pub fn lift_building_id(&self) -> &Option<usize> {
+        &self.editing
+    }
+
     pub fn trigger(
         &mut self,
         TriggerParameters {

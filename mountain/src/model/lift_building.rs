@@ -78,7 +78,7 @@ impl LiftBuilding {
     }
 }
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum LiftBuildingClass {
     PickUpStation,
     Pylon,

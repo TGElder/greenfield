@@ -69,7 +69,7 @@ use crate::systems::{
     tree_artist, window_artist,
 };
 use crate::utils::computer;
-use crate::widgets::{building_editor, menu, toaster};
+use crate::widgets::{building_editor, lift_editor, menu, toaster};
 
 fn main() {
     let max_z = 4096.0;
@@ -141,6 +141,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
         },
         widgets: Widgets {
             building_editor: building_editor::Widget::default(),
+            lift_editor: lift_editor::Widget::default(),
             menu: menu::Widget::default(),
             piste_build_mode: widgets::piste_build_mode::Widget::default(),
             toaster: toaster::Widget::new(log::System::new(

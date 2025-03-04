@@ -9,7 +9,7 @@ use engine::graphics::Graphics;
 use crate::services::mode;
 use crate::widgets::entity_window::EntityWindow;
 use crate::widgets::{
-    self, building_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget,
+    self, building_editor, lift_editor, menu, piste_build_mode, toaster, ContextWidget, UiWidget,
 };
 use crate::{Bindings, Game};
 
@@ -87,6 +87,7 @@ const MODE_BUTTONS: [ModeButton; 9] = [
 
 pub struct Widgets {
     pub building_editor: building_editor::Widget,
+    pub lift_editor: lift_editor::Widget,
     pub piste_build_mode: piste_build_mode::Widget,
     pub menu: menu::Widget,
     pub toaster: toaster::Widget,
@@ -137,6 +138,11 @@ pub fn run(
         mode: build_mode,
         builder: &game.controllers.building_builder,
         buildings: &game.components.buildings,
+    });
+    game.widgets.lift_editor.init(lift_editor::Input {
+        mode: build_mode,
+        lift_builder: &game.controllers.lift_builder,
+        lift_buildings: &game.components.lift_buildings,
     });
     game.widgets.piste_build_mode.init(piste_build_mode::Input {
         mode: build_mode,
@@ -198,6 +204,7 @@ pub fn run(
                 });
                 ui.separator();
                 game.widgets.building_editor.draw(ui);
+                game.widgets.lift_editor.draw(ui);
                 game.widgets.piste_build_mode.draw(ui);
             });
         });
@@ -222,6 +229,9 @@ pub fn run(
             buildings: &mut game.components.buildings,
             artist: &mut game.systems.building_artist,
         });
+    game.widgets.lift_editor.update(lift_editor::Output {
+        lift_buildings: &mut game.components.lift_buildings,
+    });
     game.widgets
         .piste_build_mode
         .update(piste_build_mode::Output {
