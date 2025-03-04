@@ -44,12 +44,14 @@ pub struct LiftBuilding {
 impl LiftBuilding {
     pub fn transformation_matrix(&self, terrain: &Grid<f32>) -> Matrix4<f32> {
         transformation_matrix(Transformation {
-            translation: Some(xyz(
-                self.position.x as f32,
-                self.position.y as f32,
-                terrain[self.position],
-            )),
-            scale: Some(self.class.footprint()),
+            translation: Some(
+                xyz(
+                    self.position.x as f32,
+                    self.position.y as f32,
+                    terrain[self.position],
+                ) + self.class.offset(),
+            ),
+            scale: Some(self.class.scale()),
             yaw: Some(self.yaw),
             ..Transformation::default()
         })
@@ -88,32 +90,40 @@ impl LiftBuildingClass {
     pub fn wire_path_out(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
             LiftBuildingClass::PickUpStation => {
-                vec![[xyz(-0.5, -0.5, 1.0), xyz(0.5, -0.5, 1.0)]]
+                vec![[xyz(-0.5, -0.5, 0.0), xyz(0.5, -0.5, 0.0)]]
             }
             LiftBuildingClass::Pylon => {
                 vec![[xyz(-0.125, -0.5, 1.0), xyz(0.125, -0.5, 1.0)]]
             }
             LiftBuildingClass::DropOffStation => {
-                vec![[xyz(-0.5, -0.5, 1.0), xyz(0.5, -0.5, 1.0)]]
+                vec![[xyz(-0.5, -0.5, 0.0), xyz(0.5, -0.5, 0.0)]]
             }
         }
     }
 
     pub fn wire_path_back(&self) -> Vec<[XYZ<f32>; 2]> {
         match self {
-            LiftBuildingClass::PickUpStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
+            LiftBuildingClass::PickUpStation => vec![[xyz(0.5, 0.5, 0.0), xyz(-0.5, 0.5, 0.0)]],
             LiftBuildingClass::Pylon => {
                 vec![[xyz(0.125, 0.5, 1.0), xyz(-0.125, 0.5, 1.0)]]
             }
-            LiftBuildingClass::DropOffStation => vec![[xyz(0.5, 0.5, 1.0), xyz(-0.5, 0.5, 1.0)]],
+            LiftBuildingClass::DropOffStation => vec![[xyz(0.5, 0.5, 0.0), xyz(-0.5, 0.5, 0.0)]],
         }
     }
 
-    pub fn footprint(&self) -> XYZ<f32> {
+    pub fn offset(&self) -> XYZ<f32> {
         match self {
-            LiftBuildingClass::PickUpStation => xyz(9.0, 3.0, 3.5),
+            LiftBuildingClass::PickUpStation => xyz(4.0, 2.0, 3.0),
+            LiftBuildingClass::Pylon => xyz(0.0, 0.0, 6.0),
+            LiftBuildingClass::DropOffStation => xyz(-4.0, 2.0, 3.0),
+        }
+    }
+
+    pub fn scale(&self) -> XYZ<f32> {
+        match self {
+            LiftBuildingClass::PickUpStation => xyz(8.0, 4.0, 1.0),
             LiftBuildingClass::Pylon => xyz(4.0, 3.0, 12.0),
-            LiftBuildingClass::DropOffStation => xyz(8.0, 4.0, 3.5),
+            LiftBuildingClass::DropOffStation => xyz(8.0, 4.0, 1.0),
         }
     }
 

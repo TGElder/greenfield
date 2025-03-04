@@ -32,7 +32,6 @@ pub fn chairlift_station() -> Vec<Triangle<Rgb<f32>>> {
     triangles_from_quads(
         &cube::model()
             .transform(&transformation_matrix(Transformation {
-                translation: Some(xyz(0.0, 0.0, 1.0)),
                 ..Transformation::default()
             }))
             .recolor(&|_| COLOR),
