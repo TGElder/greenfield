@@ -136,13 +136,20 @@ fn revolve_car(lift: &Lift, car_index: &usize, car: &Car, revolve_meters: f32) -
 #[cfg(test)]
 mod tests {
     use commons::almost_eq::assert_almost_eq;
-    use commons::geometry::{xy, xyz};
+    use commons::geometry::{xy, xyz, XYZ};
 
     use crate::model::direction::Direction;
     use crate::model::lift;
     use crate::model::skiing::State;
 
     use super::*;
+
+    fn segments(points: &[XYZ<f32>]) -> Vec<Segment> {
+        points
+            .windows(2)
+            .map(|pair| Segment::new(pair[0], pair[1]))
+            .collect()
+    }
 
     fn compare_results(actual: &RevolveResult, expected: &RevolveResult) {
         compare_cars(&actual.cars, &expected.cars);
@@ -174,8 +181,7 @@ mod tests {
     #[test]
     fn test_create_cars() {
         // given
-        let segments =
-            Segment::segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
+        let segments = segments(&[xyz(0.0, 0.0, 0.0), xyz(0.5, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]);
 
         // when
         let result = create_cars(7, &segments, &0.19);
@@ -234,11 +240,7 @@ mod tests {
                     velocity: 0,
                 },
             },
-            segments: Segment::segments(&[
-                xyz(0.0, 0.0, 0.0),
-                xyz(1.0, 0.0, 0.0),
-                xyz(0.0, 0.0, 0.0),
-            ]),
+            segments: segments(&[xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]),
             carousel_id: 0,
         };
         let cars = vec![
@@ -325,11 +327,7 @@ mod tests {
                     velocity: 0,
                 },
             },
-            segments: Segment::segments(&[
-                xyz(0.0, 0.0, 0.0),
-                xyz(1.0, 0.0, 0.0),
-                xyz(0.0, 0.0, 0.0),
-            ]),
+            segments: segments(&[xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]),
             carousel_id: 0,
         };
         let cars = vec![&Car {

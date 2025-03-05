@@ -1,4 +1,4 @@
-use commons::geometry::{xyz, XY, XYZ};
+use commons::geometry::{xy, xyz, XY, XYZ};
 use commons::grid::Grid;
 use engine::graphics::transform::Transform;
 use engine::graphics::utils::{transformation_matrix, Transformation};
@@ -10,8 +10,13 @@ pub struct LiftBuildings {
     pub buildings: Vec<LiftBuilding>,
 }
 
+pub struct GlobalTransfer {
+    pub position: XY<u32>,
+    pub global_segment: usize,
+}
+
 impl LiftBuildings {
-    pub fn wire_path_over_terrain(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
+    pub fn wire_path(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
         let unlinked = self
             .buildings
             .iter()
@@ -31,6 +36,40 @@ impl LiftBuildings {
             linked.push([unlinked[i][1], unlinked[j][0]]);
         }
         linked
+    }
+
+    pub fn get_pick_up_and_drop_off(
+        &self,
+        terrain: &Grid<f32>,
+    ) -> (Option<GlobalTransfer>, Option<GlobalTransfer>) {
+        let mut pick_up = None;
+        let mut drop_off = None;
+        let mut index = 0;
+        let mut global_segment = 0;
+        while pick_up.is_none() || drop_off.is_none() {
+            if index >= self.buildings.len() {
+                break;
+            }
+            let building = &self.buildings[index];
+
+            if let Some(LocalTransfer { segment, class }) = building.class.transfer() {
+                let position = building.wire_path_out(terrain)[segment][0];
+                let position = xy(position.x.round() as u32, position.y.round() as u32);
+                let transfer = GlobalTransfer {
+                    position,
+                    global_segment: global_segment + segment,
+                };
+
+                match class {
+                    LocalTransferClass::PickUp => pick_up = Some(transfer),
+                    LocalTransferClass::DropOff => drop_off = Some(transfer),
+                }
+            }
+
+            index += 1;
+            global_segment += building.class.wire_path_out().len() + 1;
+        }
+        (pick_up, drop_off)
     }
 }
 
@@ -57,11 +96,11 @@ impl LiftBuilding {
         })
     }
 
-    fn wire_path_out(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
+    pub fn wire_path_out(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
         self.wire_path_over_terrain(&self.class.wire_path_out(), terrain)
     }
 
-    fn wire_path_back(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
+    pub fn wire_path_back(&self, terrain: &Grid<f32>) -> Vec<[XYZ<f32>; 2]> {
         self.wire_path_over_terrain(&self.class.wire_path_back(), terrain)
     }
 
@@ -84,6 +123,16 @@ pub enum LiftBuildingClass {
     PickUpStation,
     Pylon,
     DropOffStation,
+}
+
+pub enum LocalTransferClass {
+    PickUp,
+    DropOff,
+}
+
+pub struct LocalTransfer {
+    pub class: LocalTransferClass,
+    pub segment: usize,
 }
 
 impl LiftBuildingClass {
@@ -127,16 +176,16 @@ impl LiftBuildingClass {
         }
     }
 
-    pub fn pick_up_segment(&self) -> Option<usize> {
+    pub fn transfer(&self) -> Option<LocalTransfer> {
         match self {
-            LiftBuildingClass::PickUpStation => Some(0),
-            _ => None,
-        }
-    }
-
-    pub fn drop_off_segment(&self) -> Option<usize> {
-        match self {
-            LiftBuildingClass::DropOffStation => Some(0),
+            LiftBuildingClass::PickUpStation => Some(LocalTransfer {
+                class: LocalTransferClass::PickUp,
+                segment: 0,
+            }),
+            LiftBuildingClass::DropOffStation => Some(LocalTransfer {
+                class: LocalTransferClass::DropOff,
+                segment: 0,
+            }),
             _ => None,
         }
     }

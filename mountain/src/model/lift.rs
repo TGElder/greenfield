@@ -51,13 +51,6 @@ impl Segment {
         }
     }
 
-    pub fn segments(points: &[XYZ<f32>]) -> Vec<Segment> {
-        points
-            .windows(2)
-            .map(|pair| Segment::new(pair[0], pair[1]))
-            .collect()
-    }
-
     pub fn length_meters(&self) -> &f32 {
         &self.length_meters
     }
@@ -71,11 +64,18 @@ mod tests {
 
     use super::*;
 
+    fn segments(points: &[XYZ<f32>]) -> Vec<Segment> {
+        points
+            .windows(2)
+            .map(|pair| Segment::new(pair[0], pair[1]))
+            .collect()
+    }
+
     #[test]
     fn test_ride_length_meters_pick_up_before_drop_off() {
         // given
         let lift = Lift {
-            segments: Segment::segments(&[
+            segments: segments(&[
                 xyz(0.0, 0.0, 0.0),
                 xyz(2.0, 0.0, 0.0),
                 xyz(2.0, 1.0, 0.0),
@@ -114,7 +114,7 @@ mod tests {
     fn test_ride_length_meters_pick_up_after_drop_off() {
         // given
         let lift = Lift {
-            segments: Segment::segments(&[
+            segments: segments(&[
                 xyz(2.0, 1.0, 0.0),
                 xyz(0.0, 1.0, 0.0),
                 xyz(0.0, 0.0, 0.0),

@@ -8,7 +8,7 @@ use crate::draw::model::{lift_building, line};
 use crate::model::lift_building::{LiftBuilding, LiftBuildingClass, LiftBuildings};
 
 pub fn draw(graphics: &mut dyn Graphics, index: &usize, lift: &LiftBuildings, terrain: &Grid<f32>) {
-    let wire = lift.wire_path_over_terrain(terrain);
+    let wire = lift.wire_path(terrain);
 
     let mut wire_triangles = line::model(&wire, 0.5);
     let building_triangles = lift

@@ -177,8 +177,20 @@ fn try_to_handle(
                 .trigger(controllers::lift_builder::TriggerParameters {
                     mouse_xy: &game.mouse_xy,
                     terrain: &game.components.terrain,
-                    id_allocator: &mut game.components.services.id_allocator,
+                    piste_map: &game.components.piste_map,
                     lift_buildings: &mut game.components.lift_buildings,
+                    lifts: &mut game.components.lifts,
+                    open: &mut game.components.open,
+                    id_allocator: &mut game.components.services.id_allocator,
+                    carousels: &mut game.components.carousels,
+                    cars: &mut game.components.cars,
+                    exits: &mut game.components.exits,
+                    entrances: &mut game.components.entrances,
+                    reservations: &mut game.components.reservations,
+                    parents: &mut game.components.parents,
+                    children: &mut game.components.children,
+                    piste_computer: &mut game.systems.piste_computer,
+                    messenger: &mut game.systems.messenger,
                     graphics,
                 })
         }
