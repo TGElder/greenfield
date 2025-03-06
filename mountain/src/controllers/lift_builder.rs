@@ -283,15 +283,30 @@ impl Controller {
         let Some(lift_buildings) = lift_buildings.get_mut(&lift_building_id) else {
             return;
         };
-        let Some(lift_building) = lift_buildings.buildings.last_mut() else {
+        let lift_buildings = &mut lift_buildings.buildings;
+
+        if lift_buildings.is_empty() {
             return;
-        };
+        }
 
         let Some(position) = get_position(mouse_xy, terrain, graphics) else {
             return;
         };
 
-        lift_building.position = position;
+        let lift_building_count = lift_buildings.len();
+        if lift_building_count >= 2 {
+            let penultimate_building = &mut lift_buildings[lift_building_count - 2];
+            let yaw = (xy(position.x as f32, position.y as f32)
+                - xy(
+                    penultimate_building.position.x as f32,
+                    penultimate_building.position.y as f32,
+                ))
+            .angle();
+            penultimate_building.yaw = yaw;
+            lift_buildings.last_mut().unwrap().yaw = yaw;
+        }
+
+        lift_buildings.last_mut().unwrap().position = position;
     }
 }
 

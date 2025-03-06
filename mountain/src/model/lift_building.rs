@@ -83,15 +83,16 @@ pub struct LiftBuilding {
 impl LiftBuilding {
     pub fn transformation_matrix(&self, terrain: &Grid<f32>) -> Matrix4<f32> {
         transformation_matrix(Transformation {
-            translation: Some(
-                xyz(
-                    self.position.x as f32,
-                    self.position.y as f32,
-                    terrain[self.position],
-                ) + self.class.offset(),
-            ),
-            scale: Some(self.class.scale()),
+            translation: Some(xyz(
+                self.position.x as f32,
+                self.position.y as f32,
+                terrain[self.position],
+            )),
             yaw: Some(self.yaw),
+            ..Transformation::default()
+        }) * transformation_matrix(Transformation {
+            translation: Some(self.class.offset()),
+            scale: Some(self.class.scale()),
             ..Transformation::default()
         })
     }
