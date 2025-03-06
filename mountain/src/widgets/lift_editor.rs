@@ -16,6 +16,8 @@ struct State {
     pub lift_building_id: usize,
     pub class: LiftBuildingClass,
     pub new_class: LiftBuildingClass,
+    pub show_undo_button: bool,
+    pub undo: bool,
 }
 
 pub struct Input<'a> {
@@ -50,11 +52,19 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
             lift_building_id,
             class: lift_building.class,
             new_class: lift_building.class,
+            show_undo_button: !lift_buildings.buildings.is_empty(),
+            undo: false,
         });
     }
 
     fn draw(&mut self, ui: &mut engine::egui::Ui) {
-        let Some(State { new_class, .. }) = self.state.as_mut() else {
+        let Some(State {
+            new_class,
+            show_undo_button,
+            undo,
+            ..
+        }) = self.state.as_mut()
+        else {
             return;
         };
         ui.vertical(|ui| {
@@ -68,6 +78,9 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
                             ui.selectable_value(new_class, option, describe_class(&option));
                         }
                     });
+                if *show_undo_button {
+                    *undo = ui.button("Undo").clicked();
+                }
             });
         });
     }
@@ -77,15 +90,22 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
             lift_building_id,
             class,
             new_class,
+            undo,
+            ..
         }) = self.state
         else {
             return;
         };
 
+        let Some(lift_buildings) = output.lift_buildings.get_mut(&lift_building_id) else {
+            return;
+        };
+
+        if undo {
+            lift_buildings.buildings.pop();
+        }
+
         if class != new_class {
-            let Some(lift_buildings) = output.lift_buildings.get_mut(&lift_building_id) else {
-                return;
-            };
             let Some(lift_building) = lift_buildings.buildings.last_mut() else {
                 return;
             };
