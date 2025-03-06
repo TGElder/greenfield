@@ -95,7 +95,7 @@ impl Controller {
         let point_grid = point_grid.map(|point, _| {
             piste_map
                 .offsets(point, &CORNERS_INVERSE)
-                .any(|cell| piste_map[cell] == Some(piste_id))
+                .any(|cell| piste_map[cell] != Some(piste_id))
         });
 
         let is_in_selection_on_piste = |position: XY<u32>| {
