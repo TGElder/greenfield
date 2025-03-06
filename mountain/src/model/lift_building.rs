@@ -163,8 +163,8 @@ impl LiftBuildingClass {
     pub fn offset(&self) -> XYZ<f32> {
         match self {
             LiftBuildingClass::PickUpStation => xyz(4.0, 2.0, 3.0),
-            LiftBuildingClass::Pylon => xyz(0.0, 0.0, 6.0),
-            LiftBuildingClass::DropOffStation => xyz(-4.0, 2.0, 3.0),
+            LiftBuildingClass::Pylon => xyz(0.0, 0.0, 0.0),
+            LiftBuildingClass::DropOffStation => xyz(4.0, 2.0, 3.0),
         }
     }
 
