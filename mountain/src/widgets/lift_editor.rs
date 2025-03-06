@@ -5,6 +5,7 @@ use engine::egui;
 use crate::controllers::lift_builder;
 use crate::model::lift_building::{LiftBuildingClass, LiftBuildings};
 use crate::services;
+use crate::systems::lift_building_artist;
 use crate::widgets;
 
 #[derive(Default)]
@@ -28,6 +29,7 @@ pub struct Input<'a> {
 
 pub struct Output<'a> {
     pub lift_buildings: &'a mut HashMap<usize, LiftBuildings>,
+    pub lift_building_artist: &'a mut lift_building_artist::System,
 }
 
 impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
@@ -103,6 +105,7 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
 
         if undo {
             lift_buildings.buildings.pop();
+            output.lift_building_artist.redraw(lift_building_id);
         }
 
         if class != new_class {
@@ -110,6 +113,7 @@ impl<'a> widgets::UiWidget<Input<'a>, Output<'a>> for Widget {
                 return;
             };
             lift_building.class = new_class;
+            output.lift_building_artist.redraw(lift_building_id);
         }
     }
 }

@@ -15,7 +15,7 @@ use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::network::velocity_encoding::{encode_velocity, VELOCITY_LEVELS};
 use crate::services::id_allocator;
-use crate::systems::{messenger, piste_computer};
+use crate::systems::{lift_building_artist, messenger, piste_computer};
 use crate::utils;
 
 pub const LIFT_VELOCITY: f32 = 2.0;
@@ -42,6 +42,7 @@ pub struct TriggerParameters<'a> {
     pub children: &'a mut HashMap<usize, Vec<usize>>,
     pub piste_computer: &'a mut piste_computer::System,
     pub messenger: &'a mut messenger::System,
+    pub lift_building_artist: &'a mut lift_building_artist::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -49,6 +50,7 @@ pub struct MouseMoveParameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
     pub terrain: &'a Grid<f32>,
     pub lift_buildings: &'a mut HashMap<usize, LiftBuildings>,
+    pub lift_building_artist: &'a mut lift_building_artist::System,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
 
@@ -64,14 +66,14 @@ impl Controller {
     }
 
     pub fn trigger(&mut self, parameters: TriggerParameters) -> Result {
-        let editing = self.lift_building_id.get_or_insert_with(|| {
+        let lift_building_id = self.lift_building_id.get_or_insert_with(|| {
             let id = parameters.id_allocator.next_id();
             parameters
                 .lift_buildings
                 .insert(id, LiftBuildings { buildings: vec![] });
             id
         });
-        let Some(lift_buildings) = parameters.lift_buildings.get_mut(editing) else {
+        let Some(lift_buildings) = parameters.lift_buildings.get_mut(lift_building_id) else {
             return NoAction;
         };
         let last_lift_building = lift_buildings.buildings.last();
@@ -97,6 +99,7 @@ impl Controller {
             position,
             yaw: 0.0,
         });
+        parameters.lift_building_artist.redraw(*lift_building_id);
 
         Action
     }
@@ -274,6 +277,7 @@ impl Controller {
             mouse_xy,
             terrain,
             lift_buildings,
+            lift_building_artist,
             graphics,
         }: MouseMoveParameters<'_>,
     ) {
@@ -307,6 +311,8 @@ impl Controller {
         }
 
         lift_buildings.last_mut().unwrap().position = position;
+
+        lift_building_artist.redraw(lift_building_id);
     }
 }
 

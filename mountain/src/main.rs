@@ -159,6 +159,7 @@ fn new_game(components: Components, save_file: Option<String>) -> Game {
             chair_artist: chair_artist::System::new(),
             global_computer: global_computer::System::new(),
             piste_computer: piste_computer::System::new(),
+            lift_building_artist: lift_building_artist::System::default(),
             skier_colors: systems::skier_colors::System::new(
                 systems::skier_colors::AbilityColors {
                     intermedite: Rgb::new(0.123, 0.667, 0.883),
@@ -512,6 +513,7 @@ struct Systems {
     chair_artist: chair_artist::System,
     global_computer: global_computer::System,
     piste_computer: piste_computer::System,
+    lift_building_artist: lift_building_artist::System,
     messenger: messenger::System,
     skier_colors: systems::skier_colors::System,
     terrain_artist: terrain_artist::System,
@@ -842,7 +844,7 @@ impl EventHandler for Game {
             &self.components.lifts,
             &mut self.components.drawings,
         );
-        lift_building_artist::run(
+        self.systems.lift_building_artist.run(
             graphics,
             &self.components.lift_buildings,
             &self.components.terrain,

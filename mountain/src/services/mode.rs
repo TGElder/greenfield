@@ -93,6 +93,7 @@ fn try_to_handle(
                     mouse_xy: &game.mouse_xy,
                     terrain: &game.components.terrain,
                     lift_buildings: &mut game.components.lift_buildings,
+                    lift_building_artist: &mut game.systems.lift_building_artist,
                     graphics,
                 });
         }
@@ -191,6 +192,7 @@ fn try_to_handle(
                     children: &mut game.components.children,
                     piste_computer: &mut game.systems.piste_computer,
                     messenger: &mut game.systems.messenger,
+                    lift_building_artist: &mut game.systems.lift_building_artist,
                     graphics,
                 })
         }

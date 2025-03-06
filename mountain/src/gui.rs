@@ -231,6 +231,7 @@ pub fn run(
         });
     game.widgets.lift_editor.update(lift_editor::Output {
         lift_buildings: &mut game.components.lift_buildings,
+        lift_building_artist: &mut game.systems.lift_building_artist,
     });
     game.widgets
         .piste_build_mode
