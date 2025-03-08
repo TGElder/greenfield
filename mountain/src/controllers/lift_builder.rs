@@ -197,6 +197,7 @@ impl Controller {
                 },
             },
             carousel_id,
+            buildings_id: editing,
         };
 
         // opening lift

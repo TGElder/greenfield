@@ -10,6 +10,7 @@ pub struct Lift {
     pub pick_up: Portal,
     pub drop_off: Portal,
     pub carousel_id: usize,
+    pub buildings_id: usize,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -101,6 +102,7 @@ mod tests {
                 },
             },
             carousel_id: 0,
+            buildings_id: 0,
         };
 
         // when
@@ -140,6 +142,7 @@ mod tests {
                 },
             },
             carousel_id: 0,
+            buildings_id: 0,
         };
 
         // when

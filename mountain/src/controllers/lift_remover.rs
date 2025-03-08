@@ -51,15 +51,6 @@ pub fn remove_lift(
     messenger: &mut messenger::System,
     graphics: &mut dyn Graphics,
 ) {
-    // Fetch entities
-
-    let carousel_ids = components
-        .carousels
-        .iter()
-        .filter(|(_, carousel)| carousel.lift_id == *lift_id)
-        .map(|(carousel_id, _)| *carousel_id)
-        .collect::<Vec<_>>();
-
     // Validate
 
     if !components
@@ -96,11 +87,12 @@ pub fn remove_lift(
             piste_computer.compute(destination_piste_id);
         }
         components.open.remove(&lift.drop_off.id);
+
+        remove_carousel(graphics, components, &lift.carousel_id);
+
+        remove_lift_buildings(graphics, components, &lift.buildings_id);
     }
 
-    for carousel_id in carousel_ids {
-        remove_carousel(graphics, components, &carousel_id);
-    }
     remove_drawing(graphics, components, lift_id);
 }
 
@@ -122,6 +114,11 @@ fn remove_car(graphics: &mut dyn Graphics, components: &mut Components, car_id: 
     components.cars.remove(car_id);
     components.frames.remove(car_id);
     remove_dynamic_drawing(graphics, components, car_id);
+}
+
+fn remove_lift_buildings(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {
+    components.lift_buildings.remove(id);
+    remove_drawing(graphics, components, id);
 }
 
 fn remove_drawing(graphics: &mut dyn Graphics, components: &mut Components, id: &usize) {

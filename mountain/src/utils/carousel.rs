@@ -242,6 +242,7 @@ mod tests {
             },
             segments: segments(&[xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]),
             carousel_id: 0,
+            buildings_id: 0,
         };
         let cars = vec![
             &Car {
@@ -329,6 +330,7 @@ mod tests {
             },
             segments: segments(&[xyz(0.0, 0.0, 0.0), xyz(1.0, 0.0, 0.0), xyz(0.0, 0.0, 0.0)]),
             carousel_id: 0,
+            buildings_id: 0,
         };
         let cars = vec![&Car {
             carousel_id: 7,
