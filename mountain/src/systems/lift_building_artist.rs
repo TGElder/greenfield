@@ -24,32 +24,23 @@ impl System {
         terrain: &Grid<f32>,
         drawings: &mut HashMap<usize, usize>,
     ) {
-        for id in self.to_draw.drain() {
-            let Some(lift_buildings) = lift_buildings.get(&id) else {
-                continue;
-            };
-            let Some(graphics_index) = try_get_graphics_index(&id, drawings, graphics) else {
-                continue;
-            };
-            draw(graphics, &graphics_index, lift_buildings, terrain);
-        }
-    }
-}
-
-fn try_get_graphics_index(
-    index: &usize,
-    drawings: &mut HashMap<usize, usize>,
-    graphics: &mut dyn Graphics,
-) -> Option<usize> {
-    match drawings.entry(*index) {
-        Entry::Occupied(cell) => Some(*cell.get()),
-        Entry::Vacant(cell) => {
-            if let Ok(graphics_index) = graphics.create_triangles() {
-                cell.insert(graphics_index);
-                Some(graphics_index)
-            } else {
-                None
+        for (lift_building_id, lift_buildings) in lift_buildings {
+            if let Entry::Vacant(cell) = drawings.entry(*lift_building_id) {
+                if let Ok(graphics_index) = graphics.create_triangles() {
+                    cell.insert(graphics_index);
+                    draw(graphics, &graphics_index, lift_buildings, terrain);
+                }
             }
+        }
+
+        for lift_building_id in self.to_draw.drain() {
+            let Some(lift_buildings) = lift_buildings.get(&lift_building_id) else {
+                continue;
+            };
+            let Some(drawing_id) = drawings.get(&lift_building_id) else {
+                continue;
+            };
+            draw(graphics, drawing_id, lift_buildings, terrain);
         }
     }
 }
