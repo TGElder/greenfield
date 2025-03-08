@@ -6,6 +6,7 @@ use crate::controllers::Result::{self, Action, NoAction};
 use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
+use crate::model::skiing::{Plan, State};
 use crate::widgets::entity_window::EntityWindow;
 
 pub struct Parameters<'a> {
@@ -13,6 +14,7 @@ pub struct Parameters<'a> {
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
     pub pistes: &'a HashMap<usize, Piste>,
+    pub plans: &'a HashMap<usize, Plan>,
     pub windows: &'a mut HashMap<usize, EntityWindow>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -23,6 +25,7 @@ pub fn trigger(
         lifts,
         gates,
         pistes,
+        plans,
         windows,
         graphics,
     }: Parameters<'_>,
@@ -34,6 +37,18 @@ pub fn trigger(
         return NoAction;
     };
     let position = xy(x.round() as u32, y.round() as u32);
+
+    for (skier_id, plan) in plans.iter() {
+        if let Plan::Stationary(State {
+            position: skier_position,
+            ..
+        }) = plan
+        {
+            if *skier_position == position {
+                windows.insert(*skier_id, EntityWindow::new(*skier_id, *mouse_xy));
+            }
+        }
+    }
 
     for (lift_id, lift) in lifts.iter() {
         if lift.pick_up.state.position == position || lift.drop_off.state.position == position {

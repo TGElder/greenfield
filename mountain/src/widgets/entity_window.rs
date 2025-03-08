@@ -11,6 +11,9 @@ pub struct EntityWindow {
     entity_id: usize,
     mouse_position: XY<u32>,
     open_status: Option<open::Status>,
+    location: Option<usize>,
+    target: Option<usize>,
+    global_target: Option<usize>,
     is_window_open: bool,
 }
 
@@ -24,6 +27,9 @@ impl EntityWindow {
         EntityWindow {
             entity_id: id,
             mouse_position: mouse_pos,
+            location: None,
+            target: None,
+            global_target: None,
             open_status: None,
             is_window_open: true,
         }
@@ -36,6 +42,9 @@ impl EntityWindow {
 
 impl ContextWidget<&Components, Output<'_>> for EntityWindow {
     fn init(&mut self, components: &Components) {
+        self.location = components.locations.get(&self.entity_id).copied();
+        self.target = components.targets.get(&self.entity_id).copied();
+        self.global_target = components.global_targets.get(&self.entity_id).copied();
         self.open_status = components.open.get(&self.entity_id).copied();
     }
 
@@ -53,6 +62,15 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
         .open(&mut self.is_window_open)
         .show(ctx, |ui| {
             ui.vertical(|ui| {
+                if let Some(location) = self.location {
+                    ui.label(format!("Location: {}", location));
+                }
+                if let Some(target) = self.target {
+                    ui.label(format!("Target: {}", target));
+                }
+                if let Some(global_target) = self.global_target {
+                    ui.label(format!("Global target: {}", global_target));
+                }
                 if let Some(status) = self.open_status.as_mut() {
                     egui::ComboBox::from_id_source(0)
                         .selected_text(open_status_text(status))

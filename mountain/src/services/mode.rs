@@ -110,6 +110,7 @@ fn try_to_handle(
                 lifts: &game.components.lifts,
                 gates: &game.components.gates,
                 pistes: &game.components.pistes,
+                plans: &game.components.plans,
                 windows: &mut game.widgets.windows,
                 graphics,
             })
