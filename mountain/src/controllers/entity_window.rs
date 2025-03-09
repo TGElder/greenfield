@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use commons::geometry::{xy, XY, XYZ};
 
 use crate::controllers::Result::{self, Action, NoAction};
+use crate::model::building::Building;
 use crate::model::gate::Gate;
 use crate::model::lift::Lift;
 use crate::model::piste::Piste;
@@ -11,10 +12,11 @@ use crate::widgets::entity_window::EntityWindow;
 
 pub struct Parameters<'a> {
     pub mouse_xy: &'a Option<XY<u32>>,
+    pub plans: &'a HashMap<usize, Plan>,
     pub lifts: &'a HashMap<usize, Lift>,
     pub gates: &'a HashMap<usize, Gate>,
     pub pistes: &'a HashMap<usize, Piste>,
-    pub plans: &'a HashMap<usize, Plan>,
+    pub buildings: &'a HashMap<usize, Building>,
     pub windows: &'a mut HashMap<usize, EntityWindow>,
     pub graphics: &'a mut dyn engine::graphics::Graphics,
 }
@@ -22,10 +24,11 @@ pub struct Parameters<'a> {
 pub fn trigger(
     Parameters {
         mouse_xy,
+        plans,
         lifts,
         gates,
         pistes,
-        plans,
+        buildings,
         windows,
         graphics,
     }: Parameters<'_>,
@@ -67,6 +70,13 @@ pub fn trigger(
     for (piste_id, piste) in pistes.iter() {
         if piste.grid.in_bounds(position) && piste.grid[position] {
             windows.insert(*piste_id, EntityWindow::new(*piste_id, *mouse_xy));
+            return Action;
+        }
+    }
+
+    for (building_id, building) in buildings.iter() {
+        if building.footprint.contains(position) {
+            windows.insert(*building_id, EntityWindow::new(*building_id, *mouse_xy));
             return Action;
         }
     }
