@@ -107,10 +107,11 @@ fn try_to_handle(
         Mode::Query => {
             controllers::entity_window::trigger(controllers::entity_window::Parameters {
                 mouse_xy: &game.mouse_xy,
+                plans: &game.components.plans,
                 lifts: &game.components.lifts,
                 gates: &game.components.gates,
                 pistes: &game.components.pistes,
-                plans: &game.components.plans,
+                buildings: &game.components.buildings,
                 windows: &mut game.widgets.windows,
                 graphics,
             })

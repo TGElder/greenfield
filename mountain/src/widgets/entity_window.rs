@@ -13,6 +13,7 @@ pub struct EntityWindow {
     open_status: Option<open::Status>,
     location: Option<usize>,
     target: Option<usize>,
+    hotel: Option<usize>,
     global_target: Option<usize>,
     is_window_open: bool,
 }
@@ -29,6 +30,7 @@ impl EntityWindow {
             mouse_position: mouse_pos,
             location: None,
             target: None,
+            hotel: None,
             global_target: None,
             open_status: None,
             is_window_open: true,
@@ -45,6 +47,10 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
         self.location = components.locations.get(&self.entity_id).copied();
         self.target = components.targets.get(&self.entity_id).copied();
         self.global_target = components.global_targets.get(&self.entity_id).copied();
+        self.hotel = components
+            .skiers
+            .get(&self.entity_id)
+            .map(|skier| skier.hotel_id);
         self.open_status = components.open.get(&self.entity_id).copied();
     }
 
@@ -70,6 +76,9 @@ impl ContextWidget<&Components, Output<'_>> for EntityWindow {
                 }
                 if let Some(global_target) = self.global_target {
                     ui.label(format!("Global target: {}", global_target));
+                }
+                if let Some(hotel) = self.hotel {
+                    ui.label(format!("Hotel: {}", hotel));
                 }
                 if let Some(status) = self.open_status.as_mut() {
                     egui::ComboBox::from_id_source(0)
