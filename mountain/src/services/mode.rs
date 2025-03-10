@@ -7,7 +7,6 @@ use crate::{controllers, Game};
 #[derive(Clone, Copy, Default, Eq, Hash, PartialEq)]
 pub enum Mode {
     #[default]
-    None,
     Query,
     Piste,
     PisteEraser,
