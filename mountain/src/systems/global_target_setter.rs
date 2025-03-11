@@ -36,6 +36,8 @@ pub fn run(
 ) {
     let mut rng = thread_rng();
 
+    let all_door_ids = doors.keys().collect::<HashSet<_>>();
+
     let lift_drop_offs = lifts
         .values()
         .map(|lift| lift.drop_off.id)
@@ -67,12 +69,6 @@ pub fn run(
         };
         let stationary_state = state.stationary();
 
-        let door_ids = doors
-            .iter()
-            .filter(|(_, door)| door.building_id == *hotel_id)
-            .map(|(door_id, _)| door_id)
-            .collect::<HashSet<_>>();
-
         let targets_on_this_piste = costs
             .targets_reachable_from_node(&stationary_state, skier_ability)
             .map(|(piste_target, _)| piste_target);
@@ -96,12 +92,35 @@ pub fn run(
                 .collect()
         };
 
+        // Trying to find "safe" candidate from which skier can return to own hotel
+
+        let hotel_door_ids = doors
+            .iter()
+            .filter(|(_, door)| door.building_id == *hotel_id)
+            .map(|(door_id, _)| door_id)
+            .collect::<HashSet<_>>();
+
+        let safe_candidates: Vec<&usize> = candidates
+            .iter()
+            .filter(|global_target| {
+                global_costs
+                    .targets_reachable_from_node(global_target, skier_ability)
+                    .any(|(target, _)| hotel_door_ids.contains(target))
+            })
+            .collect();
+
+        if let Some(&new_target) = safe_candidates.choose(&mut rng) {
+            global_targets.insert(*skier_id, *new_target);
+        }
+
+        // Alternatively finding candidate from which skier can return to any hotel
+
         let safe_candidates: Vec<usize> = candidates
             .into_iter()
             .filter(|global_target| {
                 global_costs
                     .targets_reachable_from_node(global_target, skier_ability)
-                    .any(|(target, _)| door_ids.contains(target))
+                    .any(|(target, _)| all_door_ids.contains(target))
             })
             .collect();
 
