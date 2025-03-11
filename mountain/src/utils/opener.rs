@@ -23,9 +23,7 @@ pub fn set_open_status(
 
     open.insert(*id, status);
 
-    if let open::Status::Open = status {
-        systems.piste_computer.compute(*id);
-    }
+    systems.piste_computer.compute(*id);
 
     if let Some(piste) = pistes.get(id) {
         let grid = &piste.grid;
