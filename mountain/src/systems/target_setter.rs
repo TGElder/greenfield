@@ -36,6 +36,8 @@ pub fn run(
 ) {
     let default_global_costs = HashMap::default();
 
+    let door_ids = doors.keys().collect::<HashSet<_>>();
+
     for (skier_id, plan) in plans {
         let Plan::Stationary(state) = plan else {
             continue;
@@ -43,7 +45,6 @@ pub fn run(
 
         let Some(Skier {
             ability: skier_ability,
-            hotel_id,
             ..
         }) = skiers.get(skier_id)
         else {
@@ -62,13 +63,7 @@ pub fn run(
             continue;
         };
 
-        // check skier can return home from global target
-
-        let door_ids = doors
-            .iter()
-            .filter(|(_, door)| door.building_id == *hotel_id)
-            .map(|(door_id, _)| door_id)
-            .collect::<HashSet<_>>();
+        // check skier can return to any building from global target
 
         if !global_costs
             .targets_reachable_from_node(global_target, skier_ability)
