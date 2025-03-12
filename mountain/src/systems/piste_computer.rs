@@ -10,7 +10,7 @@ use crate::model::piste::Piste;
 use crate::model::reservation::Reservation;
 use crate::model::skiing::State;
 use crate::services::clock;
-use crate::systems::global_computer;
+use crate::systems::{global_computer, terrain_artist};
 use crate::utils::computer;
 
 pub struct System {
@@ -27,6 +27,7 @@ pub struct Parameters<'a> {
     pub abilities: &'a mut HashMap<usize, Ability>,
     pub clock: &'a mut clock::Service,
     pub global_computer: &'a mut global_computer::System,
+    pub terrain_artist: &'a mut terrain_artist::System,
 }
 
 impl System {
@@ -68,9 +69,18 @@ fn recompute_piste(
         reservations,
         abilities,
         costs,
+        terrain_artist,
         ..
     }: &mut Parameters<'_>,
 ) {
     computer::costs::compute_piste(id, pistes, terrain, exits, reservations, costs);
-    computer::piste_ability::compute_piste(id, costs, entrances, exits, abilities);
+    computer::piste_ability::compute_piste(
+        id,
+        pistes,
+        costs,
+        entrances,
+        exits,
+        abilities,
+        terrain_artist,
+    );
 }
