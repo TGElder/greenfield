@@ -36,6 +36,8 @@ pub fn trigger(
         remove_building(graphics, components, systems, &building_id);
     }
 
+    systems.window_artist.update();
+
     Action
 }
 
