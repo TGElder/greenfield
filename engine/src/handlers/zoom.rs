@@ -37,6 +37,10 @@ impl Handler {
         }
     }
 
+    pub fn init(&self, graphics: &mut dyn Graphics) {
+        graphics.projection().zoom(self.compute_zoom());
+    }
+
     fn step_level(&mut self, positive: bool, graphics: &mut dyn Graphics) {
         let Some(mouse_xy) = self.mouse_xy else {
             return;
@@ -68,6 +72,10 @@ impl Handler {
         _: &mut dyn Engine,
         graphics: &mut dyn Graphics,
     ) {
+        if let Event::Init = event {
+            self.init(graphics);
+        }
+
         if let Event::MouseMoved(xy) = event {
             self.mouse_xy = Some(*xy);
         }

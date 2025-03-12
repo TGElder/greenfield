@@ -49,6 +49,10 @@ impl Handler {
         }
     }
 
+    pub fn init(&self, graphics: &mut dyn Graphics) {
+        graphics.projection().yaw(self.compute_yaw());
+    }
+
     fn step_angle(&mut self, positive: bool, graphics: &mut dyn Graphics) {
         let Some(mouse_xy) = self.mouse_xy else {
             return;
@@ -103,6 +107,10 @@ impl Handler {
         _: &mut dyn Engine,
         graphics: &mut dyn Graphics,
     ) {
+        if let Event::Init = event {
+            self.init(graphics);
+        }
+
         if bindings.mouse_yaw_enable.binds_event(event) {
             self.mouse_yaw_origin = self.mouse_yaw_origin(graphics);
         }
