@@ -553,6 +553,9 @@ impl Game {
     fn init(&mut self, graphics: &mut dyn Graphics) {
         self.try_create_save_directory();
         let terrain = &self.components.terrain;
+
+        self.handlers.yaw.init(graphics);
+        self.handlers.zoom.init(graphics);
         self.systems.chair_artist.init(graphics);
         self.systems.terrain_artist.init(graphics, terrain);
         self.systems.tree_artist.init(graphics);
