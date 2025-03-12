@@ -71,7 +71,10 @@ pub fn trigger(
         return NoAction;
     }
 
-    let maybe_configuration = if rectangle.width() == 2 {
+    let maybe_configuration = if rectangle.width() == 2 && rectangle.height() == 2 {
+        try_get_vertical_configuration(rectangle, piste_map)
+            .or_else(|_| try_get_horizontal_configuration(rectangle, piste_map))
+    } else if rectangle.width() == 2 {
         try_get_vertical_configuration(rectangle, piste_map)
     } else if rectangle.height() == 2 {
         try_get_horizontal_configuration(rectangle, piste_map)
