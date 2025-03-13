@@ -63,11 +63,14 @@ pub fn draw(graphics: &mut dyn Graphics, index: &usize, building: &Building, ter
             }
         }
     };
-    let flat_coloring = |&_: &_| {
+    let flat_coloring = |&side: &_| {
         if *under_construction {
             UNDER_CONSTRUCTION_COLOR
         } else {
-            CONCRETE_COLOR
+            match side {
+                cube::Side::Top => ROOF_COLOR,
+                _ => CONCRETE_COLOR,
+            }
         }
     };
     let model = match roof {
